@@ -7,6 +7,9 @@ import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
 import { InvitationList } from '@/modules/invitation/components/invitation-list';
 import { usePlanInvitations } from '@/modules/invitation/hooks/use-plan-invitations';
+import { useExpenseCategories } from '@/modules/category/hooks/use-expense-categories';
+import { TimelineList } from '@/modules/expense/components/timeline-list';
+import { useExpenses } from '@/modules/expense/hooks/use-expenses';
 import { MemberList } from '@/modules/member/components/member-list';
 import { MemberManagementPanel } from '@/modules/member/components/member-management-panel';
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
@@ -32,6 +35,8 @@ export default function PlanDetailPage() {
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('Timeline');
   const { members, currentMember, permissions } = usePlanMembers(planId);
   const { invitations } = usePlanInvitations(planId);
+  const { categories } = useExpenseCategories(planId);
+  const { expenses } = useExpenses(planId);
   const [memberActionError, setMemberActionError] = useState<string | null>(null);
   const [memberActionMessage, setMemberActionMessage] = useState<string | null>(null);
   const [isMemberActionSubmitting, setIsMemberActionSubmitting] = useState(false);
@@ -169,8 +174,8 @@ export default function PlanDetailPage() {
           <>
             <SectionHeading
               eyebrow="Timeline"
-              title="Phase 4 will turn this into the live expense timeline."
-              description="For now, the plan detail shell is ready and populated from Firestore. Members, statistic, and timeline tabs will expand in the next phases."
+              title="Live expense timeline"
+              description="This is the primary working surface of the app. New expenses appear here in realtime and are grouped by day."
             />
             <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
               Start date: {startDate ? formatDate(startDate) : 'Not set'}
@@ -179,8 +184,9 @@ export default function PlanDetailPage() {
               <br />
               Timezone: {plan.timezone}
             </div>
+            <TimelineList categories={categories} expenses={expenses} members={members} planId={planId} />
             <div className="flex justify-end">
-              <Button disabled>Add Expense</Button>
+              <Button href={`/plans/${planId}/expenses/new`}>Add Expense</Button>
             </div>
           </>
         ) : null}

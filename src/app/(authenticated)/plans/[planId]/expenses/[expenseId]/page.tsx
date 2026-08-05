@@ -1,0 +1,79 @@
+'use client';
+
+import { useRouter, useParams } from 'next/navigation';
+import { useState } from 'react';
+
+import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
+import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
+import { useExpenseCategories } from '@/modules/category/hooks/use-expense-categories';
+import { ExpenseDetailCard } from '@/modules/expense/components/expense-detail-card';
+import { useExpense } from '@/modules/expense/hooks/use-expense';
+import { expenseService } from '@/modules/expense/services';
+import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
+import { usePlan } from '@/modules/plan/hooks/use-plan';
+import { Button } from '@/shared/components/ui/button';
+import { Card } from '@/shared/components/ui/card';
+import { Skeleton } from '@/shared/components/ui/skeleton';
+
+export default function ExpenseDetailPage() {
+  const router = useRouter();
+  const params = useParams<{ planId: string; expenseId: string }>();
+  const planId = Array.isArray(params.planId) ? params.planId[0] : params.planId;
+  const expenseId = Array.isArray(params.expenseId) ? params.expenseId[0] : params.expenseId;
+  const { user } = useAuthSession();
+  const { plan } = usePlan(planId);
+  const { members, currentMember, permissions } = usePlanMembers(planId);
+  const { categories } = useExpenseCategories(planId);
+  const { expense, isLoading } = useExpense(planId, expenseId);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  if (isLoading) {
+    return (
+      <main className="flex flex-col gap-5">
+        <Skeleton className="h-72 rounded-[32px]" />
+      </main>
+    );
+  }
+
+  if (!expense || !plan || !user) {
+    return null;
+  }
+
+  const currentUser = user;
+  const currentExpense = expense;
+  const canEdit = permissions.canEditAllExpenses || currentExpense.createdByUserId === currentUser.uid;
+  const canDelete = permissions.canDeleteAllExpenses || currentExpense.createdByUserId === currentUser.uid;
+
+  async function handleDelete() {
+    setIsDeleting(true);
+    setErrorMessage(null);
+
+    try {
+      await expenseService.deleteExpense(planId, currentExpense, currentUser, currentMember);
+      router.replace(`/plans/${planId}`);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Unable to delete this expense.');
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
+  return (
+    <main className="flex flex-col gap-5">
+      <ExpenseDetailCard categories={categories} expense={expense} members={members} />
+      {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
+      <Card className="gap-3 sm:flex-row sm:justify-end">
+        <Button href={`/plans/${planId}`} variant="secondary">
+          Back to plan
+        </Button>
+        {canEdit ? <Button href={`/plans/${planId}/expenses/${currentExpense.id}/edit`}>Edit</Button> : null}
+        {canDelete ? (
+          <Button disabled={isDeleting} onClick={handleDelete} variant="ghost">
+            {isDeleting ? 'Deleting...' : 'Delete'}
+          </Button>
+        ) : null}
+      </Card>
+    </main>
+  );
+}
