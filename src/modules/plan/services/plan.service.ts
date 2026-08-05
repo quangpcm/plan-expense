@@ -1,8 +1,10 @@
 import { appConfig } from '@/config/app.config';
 import type { AuthUser } from '@/modules/auth/types/auth';
 import { categoryPresetsByPlanType } from '@/modules/category/constants/category-presets';
+import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
+import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanRepository } from '@/modules/plan/repositories/plan.repository';
-import type { CreatePlanInput, PlanSummary } from '@/modules/plan/types/plan';
+import type { CreatePlanInput, PlanDocument, PlanSummary } from '@/modules/plan/types/plan';
 import { AppError } from '@/shared/errors/app-error';
 
 export class PlanService {
@@ -38,8 +40,19 @@ export class PlanService {
     return this.planRepository.watchUserPlans(userId, callback);
   }
 
+  async closePlan(plan: PlanDocument, currentMember: PlanMemberDocument | null) {
+    if (!resolvePlanPermissions(currentMember).canManagePlan) {
+      throw new AppError('Only the owner can close this plan.', 'PLAN_CLOSE_PERMISSION_DENIED', 403);
+    }
+
+    if (plan.status === 'closed') {
+      throw new AppError('This plan is already closed.', 'PLAN_ALREADY_CLOSED', 400);
+    }
+
+    await this.planRepository.closePlan(plan.id);
+  }
+
   watchPlan(planId: string, callback: Parameters<PlanRepository['watchPlan']>[1]) {
     return this.planRepository.watchPlan(planId, callback);
   }
 }
-

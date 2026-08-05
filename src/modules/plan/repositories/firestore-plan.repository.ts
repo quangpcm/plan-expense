@@ -4,6 +4,7 @@ import {
   Timestamp,
   collection,
   doc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
@@ -151,6 +152,35 @@ export class FirestorePlanRepository implements PlanRepository {
     }
 
     return { planId: planRef.id };
+  }
+
+  async closePlan(planId: string) {
+    const db = getFirebaseFirestore();
+    const batch = writeBatch(db);
+    const now = Timestamp.now();
+    const planRef = doc(db, 'plans', planId);
+    const membersSnapshot = await getDocs(collection(db, 'plans', planId, 'members'));
+
+    batch.update(planRef, {
+      status: 'closed',
+      closedAt: now,
+      updatedAt: now,
+    });
+
+    membersSnapshot.docs.forEach((memberSnapshot) => {
+      const member = memberSnapshot.data() as { userId: string | null };
+
+      if (!member.userId) {
+        return;
+      }
+
+      batch.update(doc(db, 'userPlans', member.userId, 'plans', planId), {
+        planStatus: 'closed',
+        updatedAt: now,
+      });
+    });
+
+    await batch.commit();
   }
 
   watchUserPlans(userId: string, callback: (plans: PlanSummary[]) => void) {

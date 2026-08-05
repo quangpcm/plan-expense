@@ -18,7 +18,15 @@ type IncomeContext = {
 export class IncomeService {
   constructor(private readonly incomeRepository: IncomeRepository) {}
 
+  private assertEditablePlan(plan: PlanDocument) {
+    if (plan.status === 'closed') {
+      throw new AppError('This plan is closed and cannot be edited.', 'PLAN_CLOSED', 400);
+    }
+  }
+
   async createIncome(input: CreateIncomeInput, context: IncomeContext) {
+    this.assertEditablePlan(context.plan);
+
     if (!resolvePlanPermissions(context.currentMember).canCreateIncome) {
       throw new AppError('You do not have permission to create incomes.', 'INCOME_PERMISSION_DENIED', 403);
     }
@@ -52,4 +60,3 @@ export class IncomeService {
     return this.incomeRepository.watchIncomes(planId, callback);
   }
 }
-

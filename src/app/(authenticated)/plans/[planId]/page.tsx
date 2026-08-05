@@ -16,12 +16,18 @@ import { MemberManagementPanel } from '@/modules/member/components/member-manage
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
 import { memberService } from '@/modules/member/services';
 import type { PlanMemberDocument, PlanRole } from '@/modules/member/types/member';
+import { planService } from '@/modules/plan/services';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
 import { CategoryBreakdown } from '@/modules/statistic/components/category-breakdown';
 import { ExpenseTimelineChart } from '@/modules/statistic/components/expense-timeline-chart';
 import { MemberBalanceTable } from '@/modules/statistic/components/member-balance-table';
 import { StatisticOverview } from '@/modules/statistic/components/statistic-overview';
 import { statisticService } from '@/modules/statistic/services';
+import { SettlementList } from '@/modules/settlement/components/settlement-list';
+import { SettlementSuggestionCard } from '@/modules/settlement/components/settlement-suggestion-card';
+import { useSettlements } from '@/modules/settlement/hooks/use-settlements';
+import { settlementService } from '@/modules/settlement/services';
+import type { SettlementDocument, SettlementSuggestion } from '@/modules/settlement/types/settlement';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
@@ -44,9 +50,15 @@ export default function PlanDetailPage() {
   const { categories } = useExpenseCategories(planId);
   const { expenses } = useExpenses(planId);
   const { incomes } = useIncomes(planId);
+  const { settlements } = useSettlements(planId);
   const [memberActionError, setMemberActionError] = useState<string | null>(null);
   const [memberActionMessage, setMemberActionMessage] = useState<string | null>(null);
   const [isMemberActionSubmitting, setIsMemberActionSubmitting] = useState(false);
+  const [settlementError, setSettlementError] = useState<string | null>(null);
+  const [settlementMessage, setSettlementMessage] = useState<string | null>(null);
+  const [isSettlementSubmitting, setIsSettlementSubmitting] = useState(false);
+  const [closingError, setClosingError] = useState<string | null>(null);
+  const [isClosingPlan, setIsClosingPlan] = useState(false);
 
   if (!planId) {
     notFound();
@@ -66,6 +78,7 @@ export default function PlanDetailPage() {
     notFound();
   }
 
+  const currentPlan = plan;
   const updatedAt = timestampToDate(plan.updatedAt);
   const startDate = timestampToDate(plan.startDate);
   const endDate = timestampToDate(plan.endDate);
@@ -74,7 +87,9 @@ export default function PlanDetailPage() {
     expenses,
     incomes,
     categories,
+    settlements,
   });
+  const suggestions = settlementService.suggest(statistic.memberBalances);
   const activeMembers = members.filter((member) => member.status === 'active');
 
   async function handleUpdateRole(
@@ -125,6 +140,62 @@ export default function PlanDetailPage() {
       setMemberActionError(error instanceof Error ? error.message : 'Unable to remove the member.');
     } finally {
       setIsMemberActionSubmitting(false);
+    }
+  }
+
+  async function handleConfirmSettlement(suggestion: SettlementSuggestion) {
+    if (!user) {
+      return;
+    }
+
+    setIsSettlementSubmitting(true);
+    setSettlementError(null);
+    setSettlementMessage(null);
+
+    try {
+      await settlementService.confirm(suggestion, {
+        plan: currentPlan,
+        members,
+        currentMember,
+        currentUser: user,
+      });
+      setSettlementMessage('Settlement saved as completed.');
+    } catch (error) {
+      setSettlementError(error instanceof Error ? error.message : 'Unable to save this settlement.');
+    } finally {
+      setIsSettlementSubmitting(false);
+    }
+  }
+
+  async function handleCancelSettlement(settlement: SettlementDocument) {
+    if (!user) {
+      return;
+    }
+
+    setIsSettlementSubmitting(true);
+    setSettlementError(null);
+    setSettlementMessage(null);
+
+    try {
+      await settlementService.cancel(currentPlan, settlement, user, currentMember);
+      setSettlementMessage('Settlement cancelled.');
+    } catch (error) {
+      setSettlementError(error instanceof Error ? error.message : 'Unable to cancel this settlement.');
+    } finally {
+      setIsSettlementSubmitting(false);
+    }
+  }
+
+  async function handleClosePlan() {
+    setIsClosingPlan(true);
+    setClosingError(null);
+
+    try {
+      await planService.closePlan(currentPlan, currentMember);
+    } catch (error) {
+      setClosingError(error instanceof Error ? error.message : 'Unable to close this plan right now.');
+    } finally {
+      setIsClosingPlan(false);
     }
   }
 
@@ -190,6 +261,12 @@ export default function PlanDetailPage() {
               title="Live expense timeline"
               description="This is the primary working surface of the app. New expenses appear here in realtime and are grouped by day."
             />
+            {plan.status === 'closed' ? (
+              <AuthFormMessage
+                message="This plan is closed. Timeline remains visible, but new expense changes are locked."
+                type="success"
+              />
+            ) : null}
             <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
               Start date: {startDate ? formatDate(startDate) : 'Not set'}
               <br />
@@ -199,7 +276,11 @@ export default function PlanDetailPage() {
             </div>
             <TimelineList categories={categories} expenses={expenses} members={members} planId={planId} />
             <div className="flex justify-end">
-              <Button href={`/plans/${planId}/expenses/new`}>Add Expense</Button>
+              {plan.status === 'closed' ? (
+                <Button disabled>Add Expense</Button>
+              ) : (
+                <Button href={`/plans/${planId}/expenses/new`}>Add Expense</Button>
+              )}
             </div>
           </>
         ) : null}
@@ -212,8 +293,51 @@ export default function PlanDetailPage() {
             />
             <StatisticOverview statistic={statistic} />
             <MemberBalanceTable statistic={statistic} />
+            <Card>
+              <SectionHeading
+                eyebrow="Settlement Suggestion"
+                title="Suggested transfers to settle balances"
+                description="Suggestions use adjusted balance, so completed settlements are not proposed again."
+              />
+              {settlementError ? <AuthFormMessage message={settlementError} type="error" /> : null}
+              {settlementMessage ? <AuthFormMessage message={settlementMessage} type="success" /> : null}
+              <div className="grid gap-3">
+                {suggestions.length > 0 ? (
+                  suggestions.map((suggestion) => (
+                    <SettlementSuggestionCard
+                      canConfirm={permissions.canManageSettlements && plan.status !== 'closed'}
+                      isSubmitting={isSettlementSubmitting}
+                      key={`${suggestion.fromMemberId}-${suggestion.toMemberId}-${suggestion.amount}`}
+                      members={members}
+                      onConfirm={() => handleConfirmSettlement(suggestion)}
+                      suggestion={suggestion}
+                    />
+                  ))
+                ) : (
+                  <Card className="border-slate-200 bg-slate-50 shadow-none">
+                    <p className="text-sm leading-6 text-slate-600">
+                      No settlement suggestion is needed right now. Adjusted balances are already aligned.
+                    </p>
+                  </Card>
+                )}
+              </div>
+            </Card>
             <CategoryBreakdown statistic={statistic} />
             <ExpenseTimelineChart statistic={statistic} />
+            <div className="space-y-3">
+              <SectionHeading
+                eyebrow="Settlements"
+                title="Completed and cancelled records"
+                description="These are the real transfers that have been confirmed by the owner."
+              />
+              <SettlementList
+                canCancel={permissions.canManageSettlements && plan.status !== 'closed'}
+                isSubmitting={isSettlementSubmitting}
+                members={members}
+                onCancel={handleCancelSettlement}
+                settlements={settlements}
+              />
+            </div>
             <Card>
               <SectionHeading
                 eyebrow="Income"
@@ -221,9 +345,15 @@ export default function PlanDetailPage() {
                 description="Income is tracked separately from expense balance so the cashflow model stays explicit."
               />
               <div className="mt-4">
-                <Button href={`/plans/${planId}/incomes/new`} variant="secondary">
-                  Add Income
-                </Button>
+                {plan.status === 'closed' ? (
+                  <Button disabled variant="secondary">
+                    Add Income
+                  </Button>
+                ) : (
+                  <Button href={`/plans/${planId}/incomes/new`} variant="secondary">
+                    Add Income
+                  </Button>
+                )}
               </div>
             </Card>
           </div>
@@ -272,14 +402,30 @@ export default function PlanDetailPage() {
           <>
             <SectionHeading
               eyebrow="Setting"
-              title="Plan settings shell is ready."
-              description="Editing plan data, closing plans, and advanced permissions will be expanded in later phases."
+              title="Plan status and safeguards"
+              description="Owner can close the plan to lock new writes while keeping timeline and statistic readable."
             />
+            {closingError ? <AuthFormMessage message={closingError} type="error" /> : null}
             <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
               Current timezone: {plan.timezone}
               <br />
               Owner member: {plan.ownerMemberId}
+              <br />
+              Plan status: {plan.status}
+              <br />
+              Closed at: {plan.closedAt ? formatDate(timestampToDate(plan.closedAt) ?? new Date()) : 'Not closed'}
             </div>
+            {permissions.canManagePlan ? (
+              <div className="flex justify-end">
+                <Button disabled={isClosingPlan || plan.status === 'closed'} onClick={handleClosePlan} variant="ghost">
+                  {plan.status === 'closed'
+                    ? 'Plan Closed'
+                    : isClosingPlan
+                      ? 'Closing plan...'
+                      : 'Close Plan'}
+                </Button>
+              </div>
+            ) : null}
           </>
         ) : null}
       </Card>

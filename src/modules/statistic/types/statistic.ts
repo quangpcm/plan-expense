@@ -2,6 +2,7 @@ import type { IncomeDocument } from '@/modules/income/types/income';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
 import type { CategoryDocument } from '@/modules/category/types/category';
+import type { SettlementDocument } from '@/modules/settlement/types/settlement';
 
 export type MemberBalanceRow = {
   memberId: string;
@@ -10,6 +11,9 @@ export type MemberBalanceRow = {
   owed: number;
   balance: number;
   totalIncome: number;
+  settlementPaid: number;
+  settlementReceived: number;
+  adjustedBalance: number;
 };
 
 export type CategoryStatisticRow = {
@@ -42,5 +46,5 @@ export type StatisticInput = {
   expenses: ExpenseDocument[];
   incomes: IncomeDocument[];
   categories: CategoryDocument[];
+  settlements: SettlementDocument[];
 };
-

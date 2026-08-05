@@ -42,6 +42,7 @@ export default function ExpenseDetailPage() {
 
   const currentUser = user;
   const currentExpense = expense;
+  const currentPlan = plan;
   const canEdit = permissions.canEditAllExpenses || currentExpense.createdByUserId === currentUser.uid;
   const canDelete = permissions.canDeleteAllExpenses || currentExpense.createdByUserId === currentUser.uid;
 
@@ -50,7 +51,7 @@ export default function ExpenseDetailPage() {
     setErrorMessage(null);
 
     try {
-      await expenseService.deleteExpense(planId, currentExpense, currentUser, currentMember);
+      await expenseService.deleteExpense(currentPlan, currentExpense, currentUser, currentMember);
       router.replace(`/plans/${planId}`);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Unable to delete this expense.');

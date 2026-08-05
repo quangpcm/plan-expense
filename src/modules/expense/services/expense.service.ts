@@ -100,7 +100,13 @@ export class ExpenseService {
     await this.expenseRepository.updateExpense(context.plan.id, input, participants);
   }
 
-  async deleteExpense(planId: string, expense: ExpenseDocument, currentUser: AuthUser, currentMember: PlanMemberDocument | null) {
+  async deleteExpense(
+    plan: PlanDocument,
+    expense: ExpenseDocument,
+    currentUser: AuthUser,
+    currentMember: PlanMemberDocument | null,
+  ) {
+    this.assertEditablePlan(plan);
     const permissions = resolvePlanPermissions(currentMember);
     const canDelete = permissions.canDeleteAllExpenses || expense.createdByUserId === currentUser.uid;
 
@@ -108,7 +114,7 @@ export class ExpenseService {
       throw new AppError('You do not have permission to delete this expense.', 'EXPENSE_DELETE_DENIED', 403);
     }
 
-    await this.expenseRepository.softDeleteExpense(planId, expense.id, currentUser);
+    await this.expenseRepository.softDeleteExpense(plan.id, expense.id, currentUser);
   }
 
   watchExpenses(planId: string, callback: (expenses: ExpenseDocument[]) => void) {
@@ -119,4 +125,3 @@ export class ExpenseService {
     return this.expenseRepository.watchExpense(planId, expenseId, callback);
   }
 }
-

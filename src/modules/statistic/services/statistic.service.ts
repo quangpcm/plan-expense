@@ -45,17 +45,27 @@ export class StatisticService {
         const totalIncome = input.incomes
           .filter((income) => income.contributedByMemberId === member.id)
           .reduce((sum, income) => sum + income.amount, 0);
+        const settlementPaid = input.settlements
+          .filter((settlement) => settlement.status === 'completed' && settlement.fromMemberId === member.id)
+          .reduce((sum, settlement) => sum + settlement.amount, 0);
+        const settlementReceived = input.settlements
+          .filter((settlement) => settlement.status === 'completed' && settlement.toMemberId === member.id)
+          .reduce((sum, settlement) => sum + settlement.amount, 0);
+        const balance = paid - owed;
 
         return {
           memberId: member.id,
           nickname: member.nickname,
           paid,
           owed,
-          balance: paid - owed,
+          balance,
           totalIncome,
+          settlementPaid,
+          settlementReceived,
+          adjustedBalance: balance + settlementPaid - settlementReceived,
         };
       })
-      .sort((a, b) => b.balance - a.balance);
+      .sort((a, b) => b.adjustedBalance - a.adjustedBalance);
   }
 
   calculateCategory(input: StatisticInput): CategoryStatisticRow[] {
@@ -90,4 +100,3 @@ export class StatisticService {
     }));
   }
 }
-
