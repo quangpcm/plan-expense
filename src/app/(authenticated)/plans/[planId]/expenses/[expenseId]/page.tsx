@@ -11,6 +11,7 @@ import { useExpense } from '@/modules/expense/hooks/use-expense';
 import { expenseService } from '@/modules/expense/services';
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
+import { Breadcrumbs } from '@/shared/components/ui/breadcrumbs';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { Skeleton } from '@/shared/components/ui/skeleton';
@@ -62,6 +63,13 @@ export default function ExpenseDetailPage() {
 
   return (
     <main className="flex flex-col gap-5">
+      <Breadcrumbs
+        items={[
+          { label: 'Kế hoạch', href: '/plans' },
+          { label: currentPlan.name, href: `/plans/${planId}` },
+          { label: currentExpense.title },
+        ]}
+      />
       {planError || categoryError || expenseError ? (
         <AuthFormMessage
           message={planError || categoryError || expenseError || 'Hiện chưa thể tải màn hình khoản chi này.'}

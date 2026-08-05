@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { notFound, useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { notFound, useParams, usePathname } from 'next/navigation';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
@@ -29,6 +29,7 @@ import { useSettlements } from '@/modules/settlement/hooks/use-settlements';
 import { settlementService } from '@/modules/settlement/services';
 import type { SettlementDocument, SettlementSuggestion } from '@/modules/settlement/types/settlement';
 import { Badge } from '@/shared/components/ui/badge';
+import { Breadcrumbs } from '@/shared/components/ui/breadcrumbs';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
@@ -41,10 +42,11 @@ const tabs = ['Dòng thời gian', 'Thống kê', 'Thành viên', 'Thiết lập
 
 export default function PlanDetailPage() {
   const params = useParams<{ planId: string }>();
+  const pathname = usePathname();
   const planId = Array.isArray(params.planId) ? params.planId[0] : params.planId;
   const { user } = useAuthSession();
   const { plan, isLoading, errorMessage: planError } = usePlan(planId);
-  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('Timeline');
+  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('Dòng thời gian');
   const { members, currentMember, permissions, errorMessage: memberError } = usePlanMembers(planId);
   const { invitations, errorMessage: invitationError } = usePlanInvitations(planId);
   const { categories, errorMessage: categoryError } = useExpenseCategories(planId);
@@ -59,6 +61,12 @@ export default function PlanDetailPage() {
   const [isSettlementSubmitting, setIsSettlementSubmitting] = useState(false);
   const [closingError, setClosingError] = useState<string | null>(null);
   const [isClosingPlan, setIsClosingPlan] = useState(false);
+
+  useEffect(() => {
+    if (pathname === `/plans/${planId}`) {
+      setActiveTab('Dòng thời gian');
+    }
+  }, [pathname, planId]);
 
   if (!planId) {
     notFound();
@@ -201,6 +209,12 @@ export default function PlanDetailPage() {
 
   return (
     <main className="flex flex-col gap-5">
+      <Breadcrumbs
+        items={[
+          { label: 'Kế hoạch', href: '/plans' },
+          { label: currentPlan.name },
+        ]}
+      />
       {planError || memberError || invitationError || categoryError || expenseError || incomeError || settlementWatchError ? (
         <AuthFormMessage
           message={
@@ -271,11 +285,20 @@ export default function PlanDetailPage() {
         </div>
         {activeTab === 'Dòng thời gian' ? (
           <>
-            <SectionHeading
-              eyebrow="Dòng thời gian"
-              title="Dòng thời gian chi tiêu"
-              description="Đây là khu vực làm việc chính của ứng dụng. Khoản chi mới sẽ xuất hiện realtime và được nhóm theo ngày."
-            />
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <SectionHeading
+                eyebrow="Dòng thời gian"
+                title="Dòng thời gian chi tiêu"
+                description="Đây là khu vực làm việc chính của ứng dụng. Khoản chi mới sẽ xuất hiện realtime và được nhóm theo ngày."
+              />
+              <div className="flex justify-end">
+                {plan.status === 'closed' ? (
+                  <Button disabled>Thêm khoản chi</Button>
+                ) : (
+                  <Button href={`/plans/${planId}/expenses/new`}>Thêm khoản chi</Button>
+                )}
+              </div>
+            </div>
             {plan.status === 'closed' ? (
               <AuthFormMessage
                 message="Kế hoạch này đã đóng. Bạn vẫn xem được dữ liệu, nhưng không thể thêm hoặc sửa khoản chi mới."
@@ -290,13 +313,6 @@ export default function PlanDetailPage() {
               Múi giờ: {plan.timezone}
             </div>
             <TimelineList categories={categories} expenses={expenses} members={members} planId={planId} />
-            <div className="flex justify-end">
-              {plan.status === 'closed' ? (
-                <Button disabled>Thêm khoản chi</Button>
-              ) : (
-                <Button href={`/plans/${planId}/expenses/new`}>Thêm khoản chi</Button>
-              )}
-            </div>
           </>
         ) : null}
         {activeTab === 'Thống kê' ? (

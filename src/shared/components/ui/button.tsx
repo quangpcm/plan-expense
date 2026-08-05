@@ -4,7 +4,8 @@ import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'reac
 import { cn } from '@/shared/utils/cn';
 
 const buttonVariants = {
-  primary: 'bg-slate-950 text-white hover:bg-slate-800',
+  primary:
+    'bg-slate-950 text-white shadow-[0_10px_24px_rgba(15,23,42,0.18)] hover:bg-slate-800 visited:text-white active:text-white focus:text-white',
   secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200',
   ghost: 'bg-transparent text-slate-700 hover:bg-slate-100',
 } as const;

@@ -4,6 +4,8 @@ import { useParams } from 'next/navigation';
 
 import { ExpenseForm } from '@/modules/expense/components/expense-form';
 import { useExpense } from '@/modules/expense/hooks/use-expense';
+import { usePlan } from '@/modules/plan/hooks/use-plan';
+import { Breadcrumbs } from '@/shared/components/ui/breadcrumbs';
 import { Card } from '@/shared/components/ui/card';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 import { Skeleton } from '@/shared/components/ui/skeleton';
@@ -12,6 +14,7 @@ export default function EditExpensePage() {
   const params = useParams<{ planId: string; expenseId: string }>();
   const planId = Array.isArray(params.planId) ? params.planId[0] : params.planId;
   const expenseId = Array.isArray(params.expenseId) ? params.expenseId[0] : params.expenseId;
+  const { plan } = usePlan(planId);
   const { expense, isLoading } = useExpense(planId, expenseId);
 
   if (isLoading) {
@@ -28,6 +31,14 @@ export default function EditExpensePage() {
 
   return (
     <main className="flex flex-col gap-5">
+      <Breadcrumbs
+        items={[
+          { label: 'Kế hoạch', href: '/plans' },
+          { label: plan?.name || 'Chi tiết kế hoạch', href: `/plans/${planId}` },
+          { label: expense.title, href: `/plans/${planId}/expenses/${expenseId}` },
+          { label: 'Chỉnh sửa' },
+        ]}
+      />
       <Card>
         <SectionHeading
           eyebrow="Sửa khoản chi"

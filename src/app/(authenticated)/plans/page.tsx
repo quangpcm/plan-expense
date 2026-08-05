@@ -7,6 +7,7 @@ import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { useUserPlans } from '@/modules/plan/hooks/use-user-plans';
 import { PlanCard } from '@/modules/plan/components/plan-card';
 import { Avatar } from '@/shared/components/ui/avatar';
+import { Breadcrumbs } from '@/shared/components/ui/breadcrumbs';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { Input } from '@/shared/components/ui/input';
@@ -20,6 +21,7 @@ export default function PlansPage() {
 
   return (
     <main className="flex flex-col gap-5">
+      <Breadcrumbs items={[{ label: 'Kế hoạch' }]} />
       <Card className="overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.16),_transparent_70%)]" />
         <div className="relative flex items-start justify-between gap-4">
