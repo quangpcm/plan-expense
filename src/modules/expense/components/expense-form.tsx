@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { startTransition, useMemo, useState } from 'react';
+import { startTransition, useEffect, useMemo, useState } from 'react';
 import { PlusCircle, Save } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
 import { ZodError } from 'zod';
@@ -63,6 +63,20 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
     name: 'participantMemberIds',
   }) ?? [];
 
+  useEffect(() => {
+    if (!form.getValues('paidByMemberId') && defaultPaidByMemberId) {
+      form.setValue('paidByMemberId', defaultPaidByMemberId, { shouldValidate: true });
+    }
+
+    if (form.getValues('participantMemberIds').length === 0 && defaultParticipantIds.length > 0) {
+      form.setValue('participantMemberIds', defaultParticipantIds, { shouldValidate: true });
+    }
+
+    if (!form.getValues('categoryId') && defaultCategoryId) {
+      form.setValue('categoryId', defaultCategoryId, { shouldValidate: true });
+    }
+  }, [defaultCategoryId, defaultPaidByMemberId, defaultParticipantIds, form]);
+
   const handleSubmit = form.handleSubmit(async (values) => {
     if (!plan || !user) {
       return;
@@ -111,7 +125,10 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
       }
     } catch (error) {
       if (error instanceof ZodError) {
-        setErrorMessage(error.issues[0]?.message || 'Please review your expense input.');
+        setErrorMessage(
+          error.issues.map((issue) => issue.message).filter(Boolean).join(' | ') ||
+            'Please review your expense input.',
+        );
       } else if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {

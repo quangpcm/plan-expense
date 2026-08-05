@@ -7,6 +7,7 @@ import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
 import { InvitationList } from '@/modules/invitation/components/invitation-list';
 import { usePlanInvitations } from '@/modules/invitation/hooks/use-plan-invitations';
+import { useIncomes } from '@/modules/income/hooks/use-incomes';
 import { useExpenseCategories } from '@/modules/category/hooks/use-expense-categories';
 import { TimelineList } from '@/modules/expense/components/timeline-list';
 import { useExpenses } from '@/modules/expense/hooks/use-expenses';
@@ -16,6 +17,11 @@ import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
 import { memberService } from '@/modules/member/services';
 import type { PlanMemberDocument, PlanRole } from '@/modules/member/types/member';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
+import { CategoryBreakdown } from '@/modules/statistic/components/category-breakdown';
+import { ExpenseTimelineChart } from '@/modules/statistic/components/expense-timeline-chart';
+import { MemberBalanceTable } from '@/modules/statistic/components/member-balance-table';
+import { StatisticOverview } from '@/modules/statistic/components/statistic-overview';
+import { statisticService } from '@/modules/statistic/services';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
@@ -37,6 +43,7 @@ export default function PlanDetailPage() {
   const { invitations } = usePlanInvitations(planId);
   const { categories } = useExpenseCategories(planId);
   const { expenses } = useExpenses(planId);
+  const { incomes } = useIncomes(planId);
   const [memberActionError, setMemberActionError] = useState<string | null>(null);
   const [memberActionMessage, setMemberActionMessage] = useState<string | null>(null);
   const [isMemberActionSubmitting, setIsMemberActionSubmitting] = useState(false);
@@ -62,6 +69,12 @@ export default function PlanDetailPage() {
   const updatedAt = timestampToDate(plan.updatedAt);
   const startDate = timestampToDate(plan.startDate);
   const endDate = timestampToDate(plan.endDate);
+  const statistic = statisticService.calculate({
+    members,
+    expenses,
+    incomes,
+    categories,
+  });
   const activeMembers = members.filter((member) => member.status === 'active');
 
   async function handleUpdateRole(
@@ -191,16 +204,29 @@ export default function PlanDetailPage() {
           </>
         ) : null}
         {activeTab === 'Statistic' ? (
-          <>
+          <div className="space-y-5">
             <SectionHeading
               eyebrow="Statistic"
-              title="Statistic will expand in Phase 5."
-              description="The plan shell is ready. Runtime calculation and balance views will be connected after expense and income flows are implemented."
+              title="Runtime plan statistics"
+              description="These values are calculated directly from active members, expenses, incomes, and categories every time you open this section."
             />
-            <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
-              Statistics will use active expenses, incomes, and settlements as the source of truth.
-            </div>
-          </>
+            <StatisticOverview statistic={statistic} />
+            <MemberBalanceTable statistic={statistic} />
+            <CategoryBreakdown statistic={statistic} />
+            <ExpenseTimelineChart statistic={statistic} />
+            <Card>
+              <SectionHeading
+                eyebrow="Income"
+                title="Record incoming fund contributions"
+                description="Income is tracked separately from expense balance so the cashflow model stays explicit."
+              />
+              <div className="mt-4">
+                <Button href={`/plans/${planId}/incomes/new`} variant="secondary">
+                  Add Income
+                </Button>
+              </div>
+            </Card>
+          </div>
         ) : null}
         {activeTab === 'Members' ? (
           <div className="space-y-5">

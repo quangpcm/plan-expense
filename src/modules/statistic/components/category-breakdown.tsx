@@ -1,0 +1,27 @@
+import { Card } from '@/shared/components/ui/card';
+import { formatCurrency } from '@/shared/utils/currency';
+import type { StatisticResult } from '@/modules/statistic/types/statistic';
+
+type CategoryBreakdownProps = {
+  statistic: StatisticResult;
+};
+
+export function CategoryBreakdown({ statistic }: CategoryBreakdownProps) {
+  return (
+    <Card>
+      <h3 className="text-lg font-semibold text-slate-950">Category breakdown</h3>
+      <div className="grid gap-3">
+        {statistic.categoryBreakdown.map((row) => (
+          <div
+            key={row.categoryId || 'none'}
+            className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
+          >
+            <span className="font-medium text-slate-900">{row.categoryName}</span>
+            <span className="text-slate-600">{formatCurrency(row.totalAmount)}</span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
