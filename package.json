@@ -10,7 +10,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "next typegen --webpack && tsc --noEmit",
+    "typecheck": "next build --webpack --experimental-build-mode compile",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

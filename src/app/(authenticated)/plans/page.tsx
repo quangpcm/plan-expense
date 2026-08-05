@@ -1,23 +1,21 @@
 'use client';
 
-import { useMemo } from 'react';
 import { BellDot, Plus, Search } from 'lucide-react';
 
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
+import { useUserPlans } from '@/modules/plan/hooks/use-user-plans';
+import { PlanCard } from '@/modules/plan/components/plan-card';
 import { Avatar } from '@/shared/components/ui/avatar';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { Input } from '@/shared/components/ui/input';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 
 export default function PlansPage() {
   const { user } = useAuthSession();
-
-  const greeting = useMemo(() => {
-    const name = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
-
-    return `Hi, ${name}`;
-  }, [user]);
+  const { plans, isLoading } = useUserPlans();
+  const greeting = `Hi, ${user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'there'}`;
 
   return (
     <main className="flex flex-col gap-5">
@@ -31,7 +29,8 @@ export default function PlansPage() {
             <div className="space-y-1">
               <h1 className="text-3xl font-semibold text-slate-950">{greeting}</h1>
               <p className="text-sm leading-6 text-slate-600">
-                Authentication is live. Phase 2 will turn this shell into the full plan dashboard.
+                Create and browse shared plans here. This dashboard is now connected to your
+                realtime `userPlans` index.
               </p>
             </div>
           </div>
@@ -50,23 +49,30 @@ export default function PlansPage() {
           </Button>
         </div>
         <SectionHeading
-          eyebrow="Phase 2 Preview"
-          title="Plan list will land here next."
-          description="The authenticated shell is ready, and the next implementation phase will connect plan data, create-plan flow, and dashboard cards."
+          eyebrow="Plans"
+          title="Your shared plans"
+          description="Search, create, and open plans. Each card reads from the dashboard index optimized for the current user."
         />
-        <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
-          Upcoming in Phase 2:
-          <br />
-          create plan
-          <br />
-          user plan index
-          <br />
-          plan cards
-          <br />
-          plan detail base
-        </div>
+        {isLoading ? (
+          <div className="grid gap-4">
+            <Skeleton className="h-44 rounded-[28px]" />
+            <Skeleton className="h-44 rounded-[28px]" />
+          </div>
+        ) : plans.length > 0 ? (
+          <div className="grid gap-4">
+            {plans.map((plan) => (
+              <PlanCard key={plan.id} plan={plan} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
+            No plans yet.
+            <br />
+            Create your first shared plan to start tracking members and expenses together.
+          </div>
+        )}
         <div className="flex justify-end">
-          <Button disabled>
+          <Button href="/plans/new">
             <Plus className="size-4" />
             Create Plan
           </Button>
@@ -75,4 +81,3 @@ export default function PlansPage() {
     </main>
   );
 }
-
