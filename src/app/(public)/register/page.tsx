@@ -41,11 +41,11 @@ export default function RegisterPage() {
       });
     } catch (error) {
       if (error instanceof ZodError) {
-        setErrorMessage(error.issues[0]?.message || 'Please review your input.');
+        setErrorMessage(error.issues[0]?.message || 'Vui lòng kiểm tra lại thông tin đã nhập.');
       } else if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
-        setErrorMessage('Unable to create your account right now.');
+        setErrorMessage('Hiện chưa thể tạo tài khoản. Vui lòng thử lại.');
       }
     } finally {
       setIsSubmitting(false);
@@ -54,13 +54,13 @@ export default function RegisterPage() {
 
   return (
     <AuthShell
-      title="Create your account"
-      description="Start with a lightweight account, then move straight into plans and expense tracking."
+      title="Tạo tài khoản"
+      description="Bắt đầu với một tài khoản đơn giản để vào ngay các kế hoạch và theo dõi chi tiêu."
       footer={
         <>
-          Already have an account?{' '}
+          Đã có tài khoản?{' '}
           <Link className="font-semibold text-sky-700" href={appRoutes.login}>
-            Login
+            Đăng nhập
           </Link>
         </>
       }
@@ -68,40 +68,39 @@ export default function RegisterPage() {
       <form className="space-y-4" onSubmit={onSubmit}>
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="displayName">
-            Name
+            Tên hiển thị
           </label>
-          <Input id="displayName" placeholder="Your name" {...register('displayName')} />
+          <Input id="displayName" placeholder="Tên của bạn" {...register('displayName')} />
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="email">
             Email
           </label>
-          <Input id="email" placeholder="you@example.com" {...register('email')} />
+          <Input id="email" placeholder="ban@example.com" {...register('email')} />
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="password">
-            Password
+            Mật khẩu
           </label>
-          <Input id="password" type="password" placeholder="At least 6 characters" {...register('password')} />
+          <Input id="password" type="password" placeholder="Tối thiểu 6 ký tự" {...register('password')} />
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="confirmPassword">
-            Confirm password
+            Xác nhận mật khẩu
           </label>
           <Input
             id="confirmPassword"
             type="password"
-            placeholder="Repeat your password"
+            placeholder="Nhập lại mật khẩu"
             {...register('confirmPassword')}
           />
         </div>
         {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
         <Button className="w-full" disabled={isSubmitting} type="submit">
           <UserPlus className="size-4" />
-          {isSubmitting ? 'Creating account...' : 'Register'}
+          {isSubmitting ? 'Đang tạo tài khoản...' : 'Đăng ký'}
         </Button>
       </form>
     </AuthShell>
   );
 }
-

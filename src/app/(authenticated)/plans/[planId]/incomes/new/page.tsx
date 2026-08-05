@@ -13,9 +13,9 @@ export default async function CreateIncomePage({ params }: CreateIncomePageProps
     <main className="flex flex-col gap-5">
       <Card>
         <SectionHeading
-          eyebrow="Create Income"
-          title="Record a contribution or fund top-up"
-          description="Income tracks who added money into the plan and is shown separately from expense balance."
+          eyebrow="Tạo khoản thu"
+          title="Ghi nhận đóng góp hoặc nạp thêm vào quỹ"
+          description="Khoản thu giúp theo dõi ai đã thêm tiền vào kế hoạch và được hiển thị riêng với số dư chi tiêu."
         />
       </Card>
       <Card>
@@ -24,4 +24,3 @@ export default async function CreateIncomePage({ params }: CreateIncomePageProps
     </main>
   );
 }
-

@@ -127,12 +127,12 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
       if (error instanceof ZodError) {
         setErrorMessage(
           error.issues.map((issue) => issue.message).filter(Boolean).join(' | ') ||
-            'Please review your expense input.',
+            'Vui lòng kiểm tra lại thông tin khoản chi.',
         );
       } else if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
-        setErrorMessage('Unable to save this expense right now.');
+        setErrorMessage('Hiện chưa thể lưu khoản chi này.');
       }
     } finally {
       setIsSubmitting(false);
@@ -143,21 +143,21 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
     <form className="space-y-5" onSubmit={handleSubmit}>
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700" htmlFor="title">
-          Title
+          Tên khoản chi
         </label>
-        <Input id="title" placeholder="Breakfast, hotel, ticket..." {...form.register('title')} />
+        <Input id="title" placeholder="Ăn sáng, khách sạn, vé..." {...form.register('title')} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="amount">
-            Amount
+            Số tiền
           </label>
           <Input id="amount" inputMode="numeric" placeholder="150000" {...form.register('amount')} />
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="paidByMemberId">
-            Paid by
+            Người trả
           </label>
           <select
             className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
@@ -175,14 +175,14 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700" htmlFor="categoryId">
-          Category
+          Danh mục
         </label>
         <select
           className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
           id="categoryId"
           {...form.register('categoryId')}
         >
-          <option value="">No category</option>
+          <option value="">Không chọn danh mục</option>
           {categories.map((category) => (
             <option key={category.id} value={category.id}>
               {category.name}
@@ -194,7 +194,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
       {mode === 'create' ? (
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="attachments">
-            Attachments
+            Ảnh đính kèm
           </label>
           <Input
             id="attachments"
@@ -207,15 +207,15 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
               });
             }}
           />
-          <p className="text-xs text-slate-500">Up to 5 images. Expense is only created after uploads succeed.</p>
+          <p className="text-xs text-slate-500">Tối đa 5 ảnh. Khoản chi chỉ được tạo sau khi tải ảnh lên thành công.</p>
         </div>
       ) : null}
 
       <details className="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
-        <summary className="cursor-pointer text-sm font-semibold text-slate-800">Advanced settings</summary>
+        <summary className="cursor-pointer text-sm font-semibold text-slate-800">Thiết lập nâng cao</summary>
         <div className="mt-4 space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Participants</label>
+            <label className="text-sm font-medium text-slate-700">Người tham gia</label>
             <div className="grid gap-2">
               {activeMembers.map((member) => {
                 const checked = selectedMembers.includes(member.id);
@@ -244,28 +244,28 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700" htmlFor="merchantName">
-                Merchant
+                Cửa hàng / đơn vị
               </label>
-              <Input id="merchantName" placeholder="Store or service name" {...form.register('merchantName')} />
+              <Input id="merchantName" placeholder="Tên cửa hàng hoặc dịch vụ" {...form.register('merchantName')} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700" htmlFor="locationName">
-                Location
+                Địa điểm
               </label>
-              <Input id="locationName" placeholder="Where it happened" {...form.register('locationName')} />
+              <Input id="locationName" placeholder="Nơi phát sinh khoản chi" {...form.register('locationName')} />
             </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700" htmlFor="spentAt">
-              Spent time
+              Thời gian chi
             </label>
             <Input id="spentAt" type="datetime-local" {...form.register('spentAt')} />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700" htmlFor="note">
-              Note
+              Ghi chú
             </label>
-            <Textarea id="note" placeholder="Optional note" {...form.register('note')} />
+            <Textarea id="note" placeholder="Ghi chú thêm (không bắt buộc)" {...form.register('note')} />
           </div>
         </div>
       </details>
@@ -274,20 +274,20 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
 
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
         <Button href={`/plans/${planId}`} variant="secondary">
-          Cancel
+          Hủy
         </Button>
         <Button disabled={isSubmitting} type="submit">
           {isSubmitting ? (
-            mode === 'create' ? 'Creating expense...' : 'Saving expense...'
+            mode === 'create' ? 'Đang tạo khoản chi...' : 'Đang lưu khoản chi...'
           ) : mode === 'create' ? (
             <>
               <PlusCircle className="size-4" />
-              Save expense
+              Lưu khoản chi
             </>
           ) : (
             <>
               <Save className="size-4" />
-              Save changes
+              Lưu thay đổi
             </>
           )}
         </Button>

@@ -37,7 +37,7 @@ import { formatCurrency } from '@/shared/utils/currency';
 import { formatDate } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 
-const tabs = ['Timeline', 'Statistic', 'Members', 'Setting'];
+const tabs = ['Dòng thời gian', 'Thống kê', 'Thành viên', 'Thiết lập'];
 
 export default function PlanDetailPage() {
   const params = useParams<{ planId: string }>();
@@ -116,9 +116,9 @@ export default function PlanDetailPage() {
         user,
         currentMember,
       );
-      setMemberActionMessage('Member role updated.');
+      setMemberActionMessage('Đã cập nhật vai trò thành viên.');
     } catch (error) {
-      setMemberActionError(error instanceof Error ? error.message : 'Unable to update the member role.');
+      setMemberActionError(error instanceof Error ? error.message : 'Hiện chưa thể cập nhật vai trò thành viên.');
     } finally {
       setIsMemberActionSubmitting(false);
     }
@@ -135,9 +135,9 @@ export default function PlanDetailPage() {
 
     try {
       await memberService.removeMember(planId, member, user, currentMember);
-      setMemberActionMessage('Member removed from the active list.');
+      setMemberActionMessage('Đã xóa thành viên khỏi danh sách hoạt động.');
     } catch (error) {
-      setMemberActionError(error instanceof Error ? error.message : 'Unable to remove the member.');
+      setMemberActionError(error instanceof Error ? error.message : 'Hiện chưa thể xóa thành viên.');
     } finally {
       setIsMemberActionSubmitting(false);
     }
@@ -159,9 +159,9 @@ export default function PlanDetailPage() {
         currentMember,
         currentUser: user,
       });
-      setSettlementMessage('Settlement saved as completed.');
+      setSettlementMessage('Đã lưu đối soát thành công.');
     } catch (error) {
-      setSettlementError(error instanceof Error ? error.message : 'Unable to save this settlement.');
+      setSettlementError(error instanceof Error ? error.message : 'Hiện chưa thể lưu đối soát này.');
     } finally {
       setIsSettlementSubmitting(false);
     }
@@ -178,9 +178,9 @@ export default function PlanDetailPage() {
 
     try {
       await settlementService.cancel(currentPlan, settlement, user, currentMember);
-      setSettlementMessage('Settlement cancelled.');
+      setSettlementMessage('Đã hủy đối soát.');
     } catch (error) {
-      setSettlementError(error instanceof Error ? error.message : 'Unable to cancel this settlement.');
+      setSettlementError(error instanceof Error ? error.message : 'Hiện chưa thể hủy đối soát này.');
     } finally {
       setIsSettlementSubmitting(false);
     }
@@ -193,7 +193,7 @@ export default function PlanDetailPage() {
     try {
       await planService.closePlan(currentPlan, currentMember);
     } catch (error) {
-      setClosingError(error instanceof Error ? error.message : 'Unable to close this plan right now.');
+      setClosingError(error instanceof Error ? error.message : 'Hiện chưa thể đóng kế hoạch này.');
     } finally {
       setIsClosingPlan(false);
     }
@@ -211,7 +211,7 @@ export default function PlanDetailPage() {
             expenseError ||
             incomeError ||
             settlementWatchError ||
-            'Unable to sync the latest plan data.'
+            'Hiện chưa thể đồng bộ dữ liệu kế hoạch mới nhất.'
           }
           type="error"
         />
@@ -223,7 +223,7 @@ export default function PlanDetailPage() {
             <div className="space-y-2">
               <h1 className="text-3xl font-semibold text-slate-950">{plan.name}</h1>
               <p className="text-sm leading-6 text-slate-600">
-                {plan.description || 'No description yet. Members, timeline, and statistics will build on this plan next.'}
+                {plan.description || 'Chưa có mô tả. Thành viên, dòng thời gian và thống kê sẽ tiếp tục được xây dựng trên kế hoạch này.'}
               </p>
             </div>
           </div>
@@ -232,21 +232,21 @@ export default function PlanDetailPage() {
 
         <div className="grid grid-cols-2 gap-3 rounded-[24px] bg-slate-50 p-4 sm:grid-cols-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Members</p>
+            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Thành viên</p>
             <p className="mt-1 text-lg font-semibold text-slate-900">{plan.memberCount}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Expenses</p>
+            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Khoản chi</p>
             <p className="mt-1 text-lg font-semibold text-slate-900">{plan.expenseCount}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Total expense</p>
+            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Tổng chi</p>
             <p className="mt-1 text-lg font-semibold text-slate-900">{formatCurrency(plan.totalExpense)}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Updated</p>
+            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Cập nhật</p>
             <p className="mt-1 text-lg font-semibold text-slate-900">
-              {updatedAt ? formatDate(updatedAt) : 'Syncing...'}
+              {updatedAt ? formatDate(updatedAt) : 'Đang đồng bộ...'}
             </p>
           </div>
         </div>
@@ -269,50 +269,50 @@ export default function PlanDetailPage() {
             </button>
           ))}
         </div>
-        {activeTab === 'Timeline' ? (
+        {activeTab === 'Dòng thời gian' ? (
           <>
             <SectionHeading
-              eyebrow="Timeline"
-              title="Live expense timeline"
-              description="This is the primary working surface of the app. New expenses appear here in realtime and are grouped by day."
+              eyebrow="Dòng thời gian"
+              title="Dòng thời gian chi tiêu"
+              description="Đây là khu vực làm việc chính của ứng dụng. Khoản chi mới sẽ xuất hiện realtime và được nhóm theo ngày."
             />
             {plan.status === 'closed' ? (
               <AuthFormMessage
-                message="This plan is closed. Timeline remains visible, but new expense changes are locked."
+                message="Kế hoạch này đã đóng. Bạn vẫn xem được dữ liệu, nhưng không thể thêm hoặc sửa khoản chi mới."
                 type="success"
               />
             ) : null}
             <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
-              Start date: {startDate ? formatDate(startDate) : 'Not set'}
+              Ngày bắt đầu: {startDate ? formatDate(startDate) : 'Chưa đặt'}
               <br />
-              End date: {endDate ? formatDate(endDate) : 'Not set'}
+              Ngày kết thúc: {endDate ? formatDate(endDate) : 'Chưa đặt'}
               <br />
-              Timezone: {plan.timezone}
+              Múi giờ: {plan.timezone}
             </div>
             <TimelineList categories={categories} expenses={expenses} members={members} planId={planId} />
             <div className="flex justify-end">
               {plan.status === 'closed' ? (
-                <Button disabled>Add Expense</Button>
+                <Button disabled>Thêm khoản chi</Button>
               ) : (
-                <Button href={`/plans/${planId}/expenses/new`}>Add Expense</Button>
+                <Button href={`/plans/${planId}/expenses/new`}>Thêm khoản chi</Button>
               )}
             </div>
           </>
         ) : null}
-        {activeTab === 'Statistic' ? (
+        {activeTab === 'Thống kê' ? (
           <div className="space-y-5">
             <SectionHeading
-              eyebrow="Statistic"
-              title="Runtime plan statistics"
-              description="These values are calculated directly from active members, expenses, incomes, and categories every time you open this section."
+              eyebrow="Thống kê"
+              title="Thống kê kế hoạch"
+              description="Các số liệu này được tính trực tiếp từ thành viên, khoản chi, khoản thu và danh mục mỗi khi bạn mở mục này."
             />
             <StatisticOverview statistic={statistic} />
             <MemberBalanceTable statistic={statistic} />
             <Card>
               <SectionHeading
-                eyebrow="Settlement Suggestion"
-                title="Suggested transfers to settle balances"
-                description="Suggestions use adjusted balance, so completed settlements are not proposed again."
+                eyebrow="Gợi ý đối soát"
+                title="Gợi ý chuyển khoản để cân bằng"
+                description="Các gợi ý dùng số dư thực, nên những khoản đã đối soát sẽ không bị đề xuất lại."
               />
               {settlementError ? <AuthFormMessage message={settlementError} type="error" /> : null}
               {settlementMessage ? <AuthFormMessage message={settlementMessage} type="success" /> : null}
@@ -331,7 +331,7 @@ export default function PlanDetailPage() {
                 ) : (
                   <Card className="border-slate-200 bg-slate-50 shadow-none">
                     <p className="text-sm leading-6 text-slate-600">
-                      No settlement suggestion is needed right now. Adjusted balances are already aligned.
+                      Hiện chưa cần gợi ý đối soát nào. Số dư thực của các thành viên đã cân bằng.
                     </p>
                   </Card>
                 )}
@@ -341,9 +341,9 @@ export default function PlanDetailPage() {
             <ExpenseTimelineChart statistic={statistic} />
             <div className="space-y-3">
               <SectionHeading
-                eyebrow="Settlements"
-                title="Completed and cancelled records"
-                description="These are the real transfers that have been confirmed by the owner."
+                eyebrow="Đối soát"
+                title="Lịch sử đã hoàn tất và đã hủy"
+                description="Đây là các khoản chuyển tiền thực tế đã được chủ kế hoạch xác nhận."
               />
               <SettlementList
                 canCancel={permissions.canManageSettlements && plan.status !== 'closed'}
@@ -355,44 +355,44 @@ export default function PlanDetailPage() {
             </div>
             <Card>
               <SectionHeading
-                eyebrow="Income"
-                title="Record incoming fund contributions"
-                description="Income is tracked separately from expense balance so the cashflow model stays explicit."
+                eyebrow="Khoản thu"
+                title="Ghi nhận tiền vào quỹ"
+                description="Khoản thu được theo dõi riêng với số dư chi tiêu để dòng tiền luôn rõ ràng."
               />
               <div className="mt-4">
                 {plan.status === 'closed' ? (
                   <Button disabled variant="secondary">
-                    Add Income
+                    Thêm khoản thu
                   </Button>
                 ) : (
                   <Button href={`/plans/${planId}/incomes/new`} variant="secondary">
-                    Add Income
+                    Thêm khoản thu
                   </Button>
                 )}
               </div>
             </Card>
           </div>
         ) : null}
-        {activeTab === 'Members' ? (
+        {activeTab === 'Thành viên' ? (
           <div className="space-y-5">
             <SectionHeading
-              eyebrow="Members"
-              title="Manage plan members"
-              description="Owner permissions are now active for guest creation and invitation records."
+              eyebrow="Thành viên"
+              title="Quản lý thành viên"
+              description="Chủ kế hoạch hiện có thể thêm khách và quản lý các bản ghi lời mời."
             />
             {permissions.canManageMembers ? (
               <MemberManagementPanel currentMember={currentMember} planId={planId} />
             ) : (
               <Card>
                 <p className="text-sm leading-6 text-slate-600">
-                  You can view members, but only the owner can manage guest and invitation records.
+                  Bạn có thể xem danh sách thành viên, nhưng chỉ chủ kế hoạch mới được quản lý khách và lời mời.
                 </p>
               </Card>
             )}
             <SectionHeading
-              eyebrow="Member List"
-              title={`Current members (${activeMembers.length})`}
-              description="Removed members stay in Firestore history but should not be used for new transaction entry."
+              eyebrow="Danh sách thành viên"
+              title={`Thành viên hiện tại (${activeMembers.length})`}
+              description="Thành viên đã xóa vẫn còn trong lịch sử Firestore nhưng không nên dùng cho giao dịch mới."
             />
             {memberActionError ? <AuthFormMessage message={memberActionError} type="error" /> : null}
             {memberActionMessage ? (
@@ -406,38 +406,38 @@ export default function PlanDetailPage() {
               onUpdateRole={handleUpdateRole}
             />
             <SectionHeading
-              eyebrow="Invitations"
-              title="Pending invite records"
-              description="Invitation acceptance flow will be expanded in a later phase, but the data records are now live."
+              eyebrow="Lời mời"
+              title="Các lời mời đang chờ"
+              description="Luồng chấp nhận lời mời sẽ được mở rộng ở phase sau, nhưng dữ liệu lời mời hiện đã hoạt động."
             />
             <InvitationList invitations={invitations} />
           </div>
         ) : null}
-        {activeTab === 'Setting' ? (
+        {activeTab === 'Thiết lập' ? (
           <>
             <SectionHeading
-              eyebrow="Setting"
-              title="Plan status and safeguards"
-              description="Owner can close the plan to lock new writes while keeping timeline and statistic readable."
+              eyebrow="Thiết lập"
+              title="Trạng thái và khóa bảo vệ kế hoạch"
+              description="Chủ kế hoạch có thể đóng kế hoạch để khóa thao tác mới nhưng vẫn giữ khả năng xem timeline và thống kê."
             />
             {closingError ? <AuthFormMessage message={closingError} type="error" /> : null}
             <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
-              Current timezone: {plan.timezone}
+              Múi giờ hiện tại: {plan.timezone}
               <br />
-              Owner member: {plan.ownerMemberId}
+              Thành viên chủ kế hoạch: {plan.ownerMemberId}
               <br />
-              Plan status: {plan.status}
+              Trạng thái kế hoạch: {plan.status}
               <br />
-              Closed at: {plan.closedAt ? formatDate(timestampToDate(plan.closedAt) ?? new Date()) : 'Not closed'}
+              Thời điểm đóng: {plan.closedAt ? formatDate(timestampToDate(plan.closedAt) ?? new Date()) : 'Chưa đóng'}
             </div>
             {permissions.canManagePlan ? (
               <div className="flex justify-end">
                 <Button disabled={isClosingPlan || plan.status === 'closed'} onClick={handleClosePlan} variant="ghost">
                   {plan.status === 'closed'
-                    ? 'Plan Closed'
+                    ? 'Đã đóng kế hoạch'
                     : isClosingPlan
-                      ? 'Closing plan...'
-                      : 'Close Plan'}
+                      ? 'Đang đóng kế hoạch...'
+                      : 'Đóng kế hoạch'}
                 </Button>
               </div>
             ) : null}

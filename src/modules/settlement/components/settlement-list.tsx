@@ -25,7 +25,7 @@ export function SettlementList({
   if (settlements.length === 0) {
     return (
       <Card>
-        <p className="text-sm leading-6 text-slate-600">No settlement records yet.</p>
+        <p className="text-sm leading-6 text-slate-600">Chưa có bản ghi đối soát nào.</p>
       </Card>
     );
   }
@@ -52,13 +52,13 @@ export function SettlementList({
                   {toMember?.nickname || settlement.toMemberId}
                 </p>
                 <p className="text-sm text-slate-600">
-                  Settled at: {settledAt ? formatDateTime(settledAt) : 'Unknown'}
+                  Thời gian đối soát: {settledAt ? formatDateTime(settledAt) : 'Không rõ'}
                 </p>
-                {settlement.note ? <p className="text-sm text-slate-600">Note: {settlement.note}</p> : null}
+                {settlement.note ? <p className="text-sm text-slate-600">Ghi chú: {settlement.note}</p> : null}
               </div>
               {canCancel && settlement.status === 'completed' ? (
                 <Button disabled={isSubmitting} onClick={() => onCancel(settlement)} variant="ghost">
-                  {isSubmitting ? 'Updating...' : 'Cancel settlement'}
+                  {isSubmitting ? 'Đang cập nhật...' : 'Hủy đối soát'}
                 </Button>
               ) : null}
             </div>

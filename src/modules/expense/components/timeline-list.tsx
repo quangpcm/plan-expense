@@ -20,14 +20,14 @@ export function TimelineList({ planId, expenses, members, categories }: Timeline
   if (expenses.length === 0) {
     return (
       <Card>
-        <p className="text-sm leading-6 text-slate-600">No expenses yet. Add the first one in a few seconds.</p>
+        <p className="text-sm leading-6 text-slate-600">Chưa có khoản chi nào. Hãy thêm khoản đầu tiên chỉ trong vài giây.</p>
       </Card>
     );
   }
 
   const grouped = expenses.reduce<Record<string, ExpenseDocument[]>>((accumulator, expense) => {
     const spentAt = timestampToDate(expense.spentAt);
-    const dayKey = spentAt ? formatDate(spentAt) : 'Unknown day';
+    const dayKey = spentAt ? formatDate(spentAt) : 'Không rõ ngày';
     accumulator[dayKey] ??= [];
     accumulator[dayKey].push(expense);
     return accumulator;
@@ -50,16 +50,16 @@ export function TimelineList({ planId, expenses, members, categories }: Timeline
                     <div className="flex items-start justify-between gap-4">
                       <div className="space-y-1">
                         <h3 className="text-lg font-semibold text-slate-950">{expense.title}</h3>
-                        <p className="text-sm text-slate-600">{paidBy?.nickname || 'Unknown'} paid</p>
+                        <p className="text-sm text-slate-600">{paidBy?.nickname || 'Không rõ'} đã thanh toán</p>
                       </div>
                       <p className="text-lg font-semibold text-slate-950">{formatCurrency(expense.amount)}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Badge variant="info">{category?.name || 'No category'}</Badge>
-                      <Badge>{expense.participants.length} participants</Badge>
-                      <Badge>{expense.attachments.length} attachments</Badge>
+                      <Badge variant="info">{category?.name || 'Không có danh mục'}</Badge>
+                      <Badge>{expense.participants.length} người tham gia</Badge>
+                      <Badge>{expense.attachments.length} tệp đính kèm</Badge>
                     </div>
-                    <p className="text-sm text-slate-500">{spentAt ? formatDateTime(spentAt) : 'Unknown time'}</p>
+                    <p className="text-sm text-slate-500">{spentAt ? formatDateTime(spentAt) : 'Không rõ thời gian'}</p>
                   </Card>
                 </Link>
               );
@@ -70,4 +70,3 @@ export function TimelineList({ planId, expenses, members, categories }: Timeline
     </div>
   );
 }
-

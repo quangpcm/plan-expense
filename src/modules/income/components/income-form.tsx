@@ -63,11 +63,11 @@ export function IncomeForm({ planId }: IncomeFormProps) {
       });
     } catch (error) {
       if (error instanceof ZodError) {
-        setErrorMessage(error.issues[0]?.message || 'Please review your income input.');
+        setErrorMessage(error.issues[0]?.message || 'Vui lòng kiểm tra lại thông tin khoản thu.');
       } else if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
-        setErrorMessage('Unable to save this income right now.');
+        setErrorMessage('Hiện chưa thể lưu khoản thu này.');
       }
     } finally {
       setIsSubmitting(false);
@@ -76,7 +76,7 @@ export function IncomeForm({ planId }: IncomeFormProps) {
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
-      <Input placeholder="Fund contribution, deposit..." {...form.register('title')} />
+      <Input placeholder="Đóng quỹ, nạp thêm..." {...form.register('title')} />
       <Input inputMode="numeric" placeholder="2000000" {...form.register('amount')} />
       <select
         className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
@@ -89,18 +89,17 @@ export function IncomeForm({ planId }: IncomeFormProps) {
         ))}
       </select>
       <Input type="datetime-local" {...form.register('receivedAt')} />
-      <Textarea placeholder="Optional note" {...form.register('note')} />
+      <Textarea placeholder="Ghi chú thêm (không bắt buộc)" {...form.register('note')} />
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
         <Button href={`/plans/${planId}`} variant="secondary">
-          Cancel
+          Hủy
         </Button>
         <Button disabled={isSubmitting} type="submit">
           <Landmark className="size-4" />
-          {isSubmitting ? 'Saving income...' : 'Save income'}
+          {isSubmitting ? 'Đang lưu khoản thu...' : 'Lưu khoản thu'}
         </Button>
       </div>
     </form>
   );
 }
-

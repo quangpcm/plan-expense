@@ -31,14 +31,14 @@ export function SettlementSuggestionCard({
           <p className="text-base font-semibold text-slate-950">
             {fromMember?.nickname || suggestion.fromMemberId} {'->'} {toMember?.nickname || suggestion.toMemberId}
           </p>
-          <p className="text-sm text-slate-600">Suggested transfer to settle the current adjusted balance.</p>
+          <p className="text-sm text-slate-600">Gợi ý chuyển khoản để cân bằng số dư hiện tại.</p>
         </div>
         <p className="text-xl font-semibold text-slate-950">{formatCurrency(suggestion.amount)}</p>
       </div>
       {canConfirm ? (
         <div className="flex justify-end">
           <Button disabled={isSubmitting} onClick={onConfirm}>
-            {isSubmitting ? 'Saving settlement...' : 'Da Thanh Toan'}
+            {isSubmitting ? 'Đang lưu đối soát...' : 'Đã thanh toán'}
           </Button>
         </div>
       ) : null}

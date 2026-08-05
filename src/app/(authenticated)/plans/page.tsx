@@ -16,7 +16,7 @@ import { Skeleton } from '@/shared/components/ui/skeleton';
 export default function PlansPage() {
   const { user } = useAuthSession();
   const { plans, isLoading, errorMessage } = useUserPlans();
-  const greeting = `Hi, ${user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'there'}`;
+  const greeting = `Chào ${user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'bạn'}`;
 
   return (
     <main className="flex flex-col gap-5">
@@ -25,13 +25,13 @@ export default function PlansPage() {
         <div className="relative flex items-start justify-between gap-4">
           <div className="space-y-2">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-700">
-              Dashboard
+              Tổng quan
             </p>
             <div className="space-y-1">
               <h1 className="text-3xl font-semibold text-slate-950">{greeting}</h1>
               <p className="text-sm leading-6 text-slate-600">
-                Create and browse shared plans here. This dashboard is now connected to your
-                realtime `userPlans` index.
+                Tạo và xem các kế hoạch dùng chung tại đây. Màn hình này đang đồng bộ realtime từ
+                `userPlans` của bạn.
               </p>
             </div>
           </div>
@@ -43,16 +43,16 @@ export default function PlansPage() {
         <div className="flex items-center gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-            <Input className="pl-10" placeholder="Search plans" />
+            <Input className="pl-10" placeholder="Tìm kiếm kế hoạch" />
           </div>
           <Button className="shrink-0" variant="secondary">
             <BellDot className="size-4" />
           </Button>
         </div>
         <SectionHeading
-          eyebrow="Plans"
-          title="Your shared plans"
-          description="Search, create, and open plans. Each card reads from the dashboard index optimized for the current user."
+          eyebrow="Kế hoạch"
+          title="Danh sách kế hoạch của bạn"
+          description="Tìm kiếm, tạo mới và mở các kế hoạch. Mỗi thẻ được lấy từ dashboard index tối ưu cho người dùng hiện tại."
         />
         {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
         {isLoading ? (
@@ -68,15 +68,15 @@ export default function PlansPage() {
           </div>
         ) : (
           <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
-            No plans yet.
+            Chưa có kế hoạch nào.
             <br />
-            Create your first shared plan to start tracking members and expenses together.
+            Hãy tạo kế hoạch đầu tiên để bắt đầu quản lý thành viên và chi tiêu chung.
           </div>
         )}
         <div className="flex justify-end">
           <Button href="/plans/new">
             <Plus className="size-4" />
-            Create Plan
+            Tạo kế hoạch
           </Button>
         </div>
       </Card>

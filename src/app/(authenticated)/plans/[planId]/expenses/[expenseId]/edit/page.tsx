@@ -30,9 +30,9 @@ export default function EditExpensePage() {
     <main className="flex flex-col gap-5">
       <Card>
         <SectionHeading
-          eyebrow="Edit Expense"
-          title="Update expense details"
-          description="Edit the amount, payer, participants, and notes while keeping the existing attachments."
+          eyebrow="Sửa khoản chi"
+          title="Cập nhật chi tiết khoản chi"
+          description="Chỉnh sửa số tiền, người trả, người tham gia và ghi chú mà vẫn giữ nguyên các tệp đính kèm hiện có."
         />
       </Card>
       <Card>
@@ -41,4 +41,3 @@ export default function EditExpensePage() {
     </main>
   );
 }
-

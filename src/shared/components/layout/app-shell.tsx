@@ -9,10 +9,10 @@ import { appRoutes } from '@/shared/constants';
 import { cn } from '@/shared/utils/cn';
 
 const navigationItems = [
-  { href: appRoutes.home, label: 'Home', icon: Home },
-  { href: appRoutes.plans, label: 'Plans', icon: FolderKanban },
-  { href: appRoutes.plans, label: 'Statistic', icon: BarChart3 },
-  { href: appRoutes.profile, label: 'Profile', icon: UserCircle2 },
+  { href: appRoutes.home, label: 'Trang chủ', icon: Home },
+  { href: appRoutes.plans, label: 'Kế hoạch', icon: FolderKanban },
+  { href: appRoutes.plans, label: 'Thống kê', icon: BarChart3 },
+  { href: appRoutes.profile, label: 'Cá nhân', icon: UserCircle2 },
 ];
 
 type AppShellProps = {

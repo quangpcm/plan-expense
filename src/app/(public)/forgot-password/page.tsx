@@ -36,15 +36,15 @@ export default function ForgotPasswordPage() {
     try {
       const parsed = forgotPasswordSchema.parse(values);
       await sendPasswordReset(parsed);
-      setSuccessMessage('Password reset email sent.');
+      setSuccessMessage('Đã gửi email đặt lại mật khẩu.');
       reset();
     } catch (error) {
       if (error instanceof ZodError) {
-        setErrorMessage(error.issues[0]?.message || 'Please review your input.');
+        setErrorMessage(error.issues[0]?.message || 'Vui lòng kiểm tra lại thông tin đã nhập.');
       } else if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
-        setErrorMessage('Unable to send the reset email right now.');
+        setErrorMessage('Hiện chưa thể gửi email đặt lại mật khẩu.');
       }
     } finally {
       setIsSubmitting(false);
@@ -53,13 +53,13 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthShell
-      title="Reset your password"
-      description="We will send you a reset link so you can regain access to your account."
+      title="Đặt lại mật khẩu"
+      description="Chúng tôi sẽ gửi cho bạn một liên kết để lấy lại quyền truy cập tài khoản."
       footer={
         <>
-          Remembered it?{' '}
+          Đã nhớ mật khẩu?{' '}
           <Link className="font-semibold text-sky-700" href={appRoutes.login}>
-            Back to login
+            Quay lại đăng nhập
           </Link>
         </>
       }
@@ -69,16 +69,15 @@ export default function ForgotPasswordPage() {
           <label className="text-sm font-medium text-slate-700" htmlFor="email">
             Email
           </label>
-          <Input id="email" placeholder="you@example.com" {...register('email')} />
+          <Input id="email" placeholder="ban@example.com" {...register('email')} />
         </div>
         {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
         {successMessage ? <AuthFormMessage message={successMessage} type="success" /> : null}
         <Button className="w-full" disabled={isSubmitting} type="submit">
           <Mail className="size-4" />
-          {isSubmitting ? 'Sending...' : 'Send reset link'}
+          {isSubmitting ? 'Đang gửi...' : 'Gửi liên kết đặt lại'}
         </Button>
       </form>
     </AuthShell>
   );
 }
-

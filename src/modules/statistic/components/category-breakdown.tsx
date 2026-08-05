@@ -9,7 +9,7 @@ type CategoryBreakdownProps = {
 export function CategoryBreakdown({ statistic }: CategoryBreakdownProps) {
   return (
     <Card>
-      <h3 className="text-lg font-semibold text-slate-950">Category breakdown</h3>
+      <h3 className="text-lg font-semibold text-slate-950">Phân bổ theo danh mục</h3>
       <div className="grid gap-3">
         {statistic.categoryBreakdown.map((row) => (
           <div
@@ -24,4 +24,3 @@ export function CategoryBreakdown({ statistic }: CategoryBreakdownProps) {
     </Card>
   );
 }
-

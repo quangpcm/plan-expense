@@ -45,15 +45,15 @@ export default function LoginPage() {
     try {
       const parsed = loginSchema.parse(values);
       await login(parsed);
-      setSuccessMessage('Signed in successfully.');
+      setSuccessMessage('Đăng nhập thành công.');
       navigateAfterAuth();
     } catch (error) {
       if (error instanceof ZodError) {
-        setErrorMessage(error.issues[0]?.message || 'Please review your input.');
+        setErrorMessage(error.issues[0]?.message || 'Vui lòng kiểm tra lại thông tin đã nhập.');
       } else if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
-        setErrorMessage('Unable to sign in right now.');
+        setErrorMessage('Hiện chưa thể đăng nhập. Vui lòng thử lại.');
       }
     } finally {
       setIsSubmitting(false);
@@ -71,7 +71,7 @@ export default function LoginPage() {
       if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
-        setErrorMessage('Unable to continue with Google right now.');
+        setErrorMessage('Hiện chưa thể tiếp tục với Google.');
       }
     } finally {
       setIsGoogleLoading(false);
@@ -80,13 +80,13 @@ export default function LoginPage() {
 
   return (
     <AuthShell
-      title="Welcome back"
-      description="Log in to continue managing your plans, members, and shared expenses."
+      title="Chào mừng bạn quay lại"
+      description="Đăng nhập để tiếp tục quản lý kế hoạch, thành viên và các khoản chi chung."
       footer={
         <>
-          New here?{' '}
+          Chưa có tài khoản?{' '}
           <Link className="font-semibold text-sky-700" href={appRoutes.register}>
-            Create an account
+            Tạo tài khoản
           </Link>
         </>
       }
@@ -96,20 +96,20 @@ export default function LoginPage() {
           <label className="text-sm font-medium text-slate-700" htmlFor="email">
             Email
           </label>
-          <Input id="email" placeholder="you@example.com" {...register('email')} />
+          <Input id="email" placeholder="ban@example.com" {...register('email')} />
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="password">
-            Password
+            Mật khẩu
           </label>
-          <Input id="password" type="password" placeholder="At least 6 characters" {...register('password')} />
+          <Input id="password" type="password" placeholder="Tối thiểu 6 ký tự" {...register('password')} />
         </div>
         {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
         {successMessage ? <AuthFormMessage message={successMessage} type="success" /> : null}
         <div className="space-y-3">
           <Button className="w-full" disabled={isSubmitting} type="submit">
             <LogIn className="size-4" />
-            {isSubmitting ? 'Signing in...' : 'Login'}
+            {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </Button>
           <Button
             className="w-full"
@@ -118,16 +118,15 @@ export default function LoginPage() {
             type="button"
             variant="secondary"
           >
-            {isGoogleLoading ? 'Connecting...' : 'Continue with Google'}
+            {isGoogleLoading ? 'Đang kết nối...' : 'Tiếp tục với Google'}
           </Button>
         </div>
       </form>
       <div className="flex justify-end">
         <Link className="text-sm font-medium text-sky-700" href={appRoutes.forgotPassword}>
-          Forgot password?
+          Quên mật khẩu?
         </Link>
       </div>
     </AuthShell>
   );
 }
-

@@ -10,7 +10,7 @@ export function mapFirebaseError(
 
     if (firebaseCode === 'permission-denied') {
       return new AppError(
-        'Access was denied by Firebase rules. Please verify your role or project rules.',
+        'Bạn không có quyền truy cập. Vui lòng kiểm tra vai trò hoặc Firebase Rules.',
         'FIREBASE_PERMISSION_DENIED',
         403,
       );
@@ -18,7 +18,7 @@ export function mapFirebaseError(
 
     if (firebaseCode === 'unavailable') {
       return new AppError(
-        'Firebase is temporarily unavailable. Please check your connection and try again.',
+        'Firebase đang tạm thời không khả dụng. Vui lòng kiểm tra kết nối và thử lại.',
         'FIREBASE_UNAVAILABLE',
         503,
       );
@@ -26,7 +26,7 @@ export function mapFirebaseError(
 
     if (firebaseCode === 'failed-precondition') {
       return new AppError(
-        'Firebase is not ready for this operation yet. Please check the database or index setup.',
+        'Firebase chưa sẵn sàng cho thao tác này. Vui lòng kiểm tra database hoặc cấu hình index.',
         'FIREBASE_FAILED_PRECONDITION',
         400,
       );

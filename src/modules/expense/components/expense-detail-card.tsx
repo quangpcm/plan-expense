@@ -27,7 +27,7 @@ export function ExpenseDetailCard({ expense, members, categories }: ExpenseDetai
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold text-slate-950">{expense.title}</h1>
           <div className="flex flex-wrap gap-2">
-            <Badge variant="info">{category?.name || 'No category'}</Badge>
+            <Badge variant="info">{category?.name || 'Không có danh mục'}</Badge>
             <Badge>{expense.splitMethod}</Badge>
           </div>
         </div>
@@ -35,24 +35,24 @@ export function ExpenseDetailCard({ expense, members, categories }: ExpenseDetai
       </div>
       <div className="grid gap-4 rounded-[24px] bg-slate-50 p-4 sm:grid-cols-2">
         <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Paid by</p>
-          <p className="mt-1 font-medium text-slate-900">{paidBy?.nickname || 'Unknown'}</p>
+          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Người trả</p>
+          <p className="mt-1 font-medium text-slate-900">{paidBy?.nickname || 'Không rõ'}</p>
         </div>
         <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Spent at</p>
-          <p className="mt-1 font-medium text-slate-900">{spentAt ? formatDateTime(spentAt) : 'Unknown'}</p>
+          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Thời gian chi</p>
+          <p className="mt-1 font-medium text-slate-900">{spentAt ? formatDateTime(spentAt) : 'Không rõ'}</p>
         </div>
         <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Created by</p>
-          <p className="mt-1 font-medium text-slate-900">{createdBy?.nickname || 'Unknown'}</p>
+          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Người tạo</p>
+          <p className="mt-1 font-medium text-slate-900">{createdBy?.nickname || 'Không rõ'}</p>
         </div>
         <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Updated</p>
-          <p className="mt-1 font-medium text-slate-900">{updatedAt ? formatDateTime(updatedAt) : 'Unknown'}</p>
+          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Cập nhật</p>
+          <p className="mt-1 font-medium text-slate-900">{updatedAt ? formatDateTime(updatedAt) : 'Không rõ'}</p>
         </div>
       </div>
       <div className="space-y-3">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Participants</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Người tham gia</p>
         <div className="grid gap-3">
           {expense.participants.map((participant) => {
             const member = members.find((item) => item.id === participant.memberId);
@@ -71,13 +71,13 @@ export function ExpenseDetailCard({ expense, members, categories }: ExpenseDetai
       </div>
       {expense.merchantName || expense.locationName || expense.note ? (
         <div className="space-y-2 rounded-[24px] bg-slate-50 p-4 text-sm leading-7 text-slate-700">
-          {expense.merchantName ? <div>Merchant: {expense.merchantName}</div> : null}
-          {expense.locationName ? <div>Location: {expense.locationName}</div> : null}
-          {expense.note ? <div>Note: {expense.note}</div> : null}
+          {expense.merchantName ? <div>Cửa hàng / đơn vị: {expense.merchantName}</div> : null}
+          {expense.locationName ? <div>Địa điểm: {expense.locationName}</div> : null}
+          {expense.note ? <div>Ghi chú: {expense.note}</div> : null}
         </div>
       ) : null}
       <div className="space-y-2">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Attachments</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Ảnh đính kèm</p>
         {expense.attachments.length > 0 ? (
           <div className="grid gap-3">
             {expense.attachments.map((attachment) => (
@@ -90,13 +90,12 @@ export function ExpenseDetailCard({ expense, members, categories }: ExpenseDetai
             ))}
           </div>
         ) : (
-          <p className="text-sm text-slate-600">No attachments.</p>
+          <p className="text-sm text-slate-600">Chưa có ảnh đính kèm.</p>
         )}
       </div>
       <div className="text-xs text-slate-400">
-        Created: {createdAt ? formatDateTime(createdAt) : 'Unknown'}
+        Tạo lúc: {createdAt ? formatDateTime(createdAt) : 'Không rõ'}
       </div>
     </Card>
   );
 }
-

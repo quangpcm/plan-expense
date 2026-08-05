@@ -58,14 +58,14 @@ export function MemberManagementPanel({
       const parsed = addGuestSchema.parse(values);
       await memberService.addGuest(planId, parsed, user, currentMember);
       guestForm.reset({ nickname: '', role: 'editor' });
-      setGuestMessage('Guest member added.');
+      setGuestMessage('Đã thêm khách vào kế hoạch.');
     } catch (error) {
       if (error instanceof ZodError) {
-        setGuestError(error.issues[0]?.message || 'Please review the guest input.');
+        setGuestError(error.issues[0]?.message || 'Vui lòng kiểm tra lại thông tin khách.');
       } else if (error instanceof Error) {
         setGuestError(error.message);
       } else {
-        setGuestError('Unable to add the guest right now.');
+        setGuestError('Hiện chưa thể thêm khách.');
       }
     } finally {
       setIsGuestSubmitting(false);
@@ -85,14 +85,14 @@ export function MemberManagementPanel({
       const parsed = createInvitationSchema.parse(values);
       await invitationService.createInvitation(planId, parsed, user, currentMember);
       inviteForm.reset({ email: '', role: 'viewer' });
-      setInviteMessage('Invitation created.');
+      setInviteMessage('Đã tạo lời mời.');
     } catch (error) {
       if (error instanceof ZodError) {
-        setInviteError(error.issues[0]?.message || 'Please review the invitation input.');
+        setInviteError(error.issues[0]?.message || 'Vui lòng kiểm tra lại thông tin lời mời.');
       } else if (error instanceof Error) {
         setInviteError(error.message);
       } else {
-        setInviteError('Unable to create the invitation right now.');
+        setInviteError('Hiện chưa thể tạo lời mời.');
       }
     } finally {
       setIsInviteSubmitting(false);
@@ -103,31 +103,31 @@ export function MemberManagementPanel({
     <div className="grid gap-4 lg:grid-cols-2">
       <Card>
         <div className="space-y-1">
-          <h3 className="text-lg font-semibold text-slate-950">Add guest</h3>
-          <p className="text-sm text-slate-600">Guests only need a nickname and stay inside this plan.</p>
+          <h3 className="text-lg font-semibold text-slate-950">Thêm khách</h3>
+          <p className="text-sm text-slate-600">Khách chỉ cần biệt danh và chỉ tồn tại trong kế hoạch này.</p>
         </div>
         <form className="space-y-4" onSubmit={submitGuest}>
-          <Input placeholder="Guest nickname" {...guestForm.register('nickname')} />
+          <Input placeholder="Biệt danh của khách" {...guestForm.register('nickname')} />
           <select
             className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
             {...guestForm.register('role')}
           >
-            <option value="editor">Editor</option>
-            <option value="viewer">Viewer</option>
+            <option value="editor">Biên tập</option>
+            <option value="viewer">Chỉ xem</option>
           </select>
           {guestError ? <AuthFormMessage message={guestError} type="error" /> : null}
           {guestMessage ? <AuthFormMessage message={guestMessage} type="success" /> : null}
           <Button className="w-full" disabled={isGuestSubmitting} type="submit">
             <UserRoundPlus className="size-4" />
-            {isGuestSubmitting ? 'Adding guest...' : 'Add guest'}
+            {isGuestSubmitting ? 'Đang thêm khách...' : 'Thêm khách'}
           </Button>
         </form>
       </Card>
 
       <Card>
         <div className="space-y-1">
-          <h3 className="text-lg font-semibold text-slate-950">Invite by email</h3>
-          <p className="text-sm text-slate-600">Create a pending invitation record for a registered member.</p>
+          <h3 className="text-lg font-semibold text-slate-950">Mời bằng email</h3>
+          <p className="text-sm text-slate-600">Tạo bản ghi lời mời đang chờ cho người dùng đã đăng ký.</p>
         </div>
         <form className="space-y-4" onSubmit={submitInvitation}>
           <Input placeholder="member@example.com" {...inviteForm.register('email')} />
@@ -135,18 +135,17 @@ export function MemberManagementPanel({
             className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
             {...inviteForm.register('role')}
           >
-            <option value="viewer">Viewer</option>
-            <option value="editor">Editor</option>
+            <option value="viewer">Chỉ xem</option>
+            <option value="editor">Biên tập</option>
           </select>
           {inviteError ? <AuthFormMessage message={inviteError} type="error" /> : null}
           {inviteMessage ? <AuthFormMessage message={inviteMessage} type="success" /> : null}
           <Button className="w-full" disabled={isInviteSubmitting} type="submit" variant="secondary">
             <UserPlus2 className="size-4" />
-            {isInviteSubmitting ? 'Creating invitation...' : 'Invite by email'}
+            {isInviteSubmitting ? 'Đang tạo lời mời...' : 'Mời qua email'}
           </Button>
         </form>
       </Card>
     </div>
   );
 }
-

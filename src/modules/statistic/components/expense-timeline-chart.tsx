@@ -9,7 +9,7 @@ type ExpenseTimelineChartProps = {
 export function ExpenseTimelineChart({ statistic }: ExpenseTimelineChartProps) {
   return (
     <Card>
-      <h3 className="text-lg font-semibold text-slate-950">Expense timeline</h3>
+      <h3 className="text-lg font-semibold text-slate-950">Diễn biến chi tiêu</h3>
       <div className="grid gap-3">
         {statistic.expenseTimeline.map((row) => (
           <div
@@ -24,4 +24,3 @@ export function ExpenseTimelineChart({ statistic }: ExpenseTimelineChartProps) {
     </Card>
   );
 }
-

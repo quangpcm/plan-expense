@@ -39,11 +39,11 @@ export function CreatePlanForm() {
       });
     } catch (error) {
       if (error instanceof ZodError) {
-        setErrorMessage(error.issues[0]?.message || 'Please review your input.');
+        setErrorMessage(error.issues[0]?.message || 'Vui lòng kiểm tra lại thông tin đã nhập.');
       } else if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
-        setErrorMessage('Unable to create the plan right now.');
+        setErrorMessage('Hiện chưa thể tạo kế hoạch. Vui lòng thử lại.');
       }
     }
   });
@@ -52,14 +52,14 @@ export function CreatePlanForm() {
     <form className="space-y-5" onSubmit={onSubmit}>
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700" htmlFor="name">
-          Plan name
+          Tên kế hoạch
         </label>
-        <Input id="name" placeholder="Hue trip, wedding budget, room fund..." {...register('name')} />
+        <Input id="name" placeholder="Đi Huế, cưới hỏi, quỹ phòng..." {...register('name')} />
       </div>
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700" htmlFor="planType">
-          Plan type
+          Loại kế hoạch
         </label>
         <select
           className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
@@ -77,13 +77,13 @@ export function CreatePlanForm() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="startDate">
-            Start date
+            Ngày bắt đầu
           </label>
           <Input id="startDate" type="date" {...register('startDate')} />
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="endDate">
-            End date
+            Ngày kết thúc
           </label>
           <Input id="endDate" type="date" {...register('endDate')} />
         </div>
@@ -91,11 +91,11 @@ export function CreatePlanForm() {
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700" htmlFor="description">
-          Description
+          Mô tả
         </label>
         <Textarea
           id="description"
-          placeholder="Optional context for the plan, budget purpose, or trip details."
+          placeholder="Thông tin thêm về kế hoạch, mục đích ngân sách hoặc chi tiết chuyến đi."
           {...register('description')}
         />
       </div>
@@ -104,15 +104,15 @@ export function CreatePlanForm() {
 
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
         <Button href="/plans" variant="secondary">
-          Cancel
+          Hủy
         </Button>
         <Button disabled={isSubmitting} type="submit">
           {isSubmitting ? (
-            'Creating...'
+            'Đang tạo...'
           ) : (
             <>
               <FolderPlus className="size-4" />
-              Create plan
+              Tạo kế hoạch
             </>
           )}
         </Button>
@@ -121,13 +121,12 @@ export function CreatePlanForm() {
       <div className="rounded-[24px] bg-slate-50 p-4 text-sm leading-7 text-slate-600">
         <span className="inline-flex items-center gap-2 font-medium text-slate-800">
           <CalendarDays className="size-4" />
-          What happens next
+          Tiếp theo sẽ có gì
         </span>
         <br />
-        The app will create the plan, add you as the owner, generate default categories, and open
-        the new plan detail right away.
+        Ứng dụng sẽ tạo kế hoạch, thêm bạn làm chủ kế hoạch, sinh danh mục mặc định và mở ngay
+        màn hình chi tiết của kế hoạch mới.
       </div>
     </form>
   );
 }
-

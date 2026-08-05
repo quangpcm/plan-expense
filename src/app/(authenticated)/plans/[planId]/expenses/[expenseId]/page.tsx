@@ -54,7 +54,7 @@ export default function ExpenseDetailPage() {
       await expenseService.deleteExpense(currentPlan, currentExpense, currentUser, currentMember);
       router.replace(`/plans/${planId}`);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to delete this expense.');
+      setErrorMessage(error instanceof Error ? error.message : 'Hiện chưa thể xóa khoản chi này.');
     } finally {
       setIsDeleting(false);
     }
@@ -64,7 +64,7 @@ export default function ExpenseDetailPage() {
     <main className="flex flex-col gap-5">
       {planError || categoryError || expenseError ? (
         <AuthFormMessage
-          message={planError || categoryError || expenseError || 'Unable to load this expense screen.'}
+          message={planError || categoryError || expenseError || 'Hiện chưa thể tải màn hình khoản chi này.'}
           type="error"
         />
       ) : null}
@@ -72,12 +72,12 @@ export default function ExpenseDetailPage() {
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       <Card className="gap-3 sm:flex-row sm:justify-end">
         <Button href={`/plans/${planId}`} variant="secondary">
-          Back to plan
+          Quay lại kế hoạch
         </Button>
-        {canEdit ? <Button href={`/plans/${planId}/expenses/${currentExpense.id}/edit`}>Edit</Button> : null}
+        {canEdit ? <Button href={`/plans/${planId}/expenses/${currentExpense.id}/edit`}>Chỉnh sửa</Button> : null}
         {canDelete ? (
           <Button disabled={isDeleting} onClick={handleDelete} variant="ghost">
-            {isDeleting ? 'Deleting...' : 'Delete'}
+            {isDeleting ? 'Đang xóa...' : 'Xóa'}
           </Button>
         ) : null}
       </Card>

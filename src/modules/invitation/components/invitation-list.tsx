@@ -10,7 +10,7 @@ export function InvitationList({ invitations }: InvitationListProps) {
   if (invitations.length === 0) {
     return (
       <Card>
-        <p className="text-sm leading-6 text-slate-600">No invitations yet.</p>
+        <p className="text-sm leading-6 text-slate-600">Chưa có lời mời nào.</p>
       </Card>
     );
   }
@@ -21,8 +21,8 @@ export function InvitationList({ invitations }: InvitationListProps) {
         <Card key={invitation.id} className="gap-3">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="font-semibold text-slate-950">{invitation.email || 'Invite link'}</p>
-              <p className="text-sm text-slate-500">Role: {invitation.role}</p>
+              <p className="font-semibold text-slate-950">{invitation.email || 'Liên kết mời'}</p>
+              <p className="text-sm text-slate-500">Vai trò: {invitation.role}</p>
             </div>
             <Badge variant={invitation.status === 'pending' ? 'info' : 'neutral'}>
               {invitation.status}
@@ -33,4 +33,3 @@ export function InvitationList({ invitations }: InvitationListProps) {
     </div>
   );
 }
-

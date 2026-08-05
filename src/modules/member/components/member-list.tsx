@@ -45,13 +45,13 @@ function EditableMemberRow({
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold text-slate-950">{member.nickname}</p>
           <p className="text-sm text-slate-500">
-            {member.memberType === 'guest' ? 'Guest member' : member.email || 'Registered member'}
+            {member.memberType === 'guest' ? 'Khách trong kế hoạch' : member.email || 'Thành viên đã đăng ký'}
           </p>
         </div>
         <div className="flex flex-wrap justify-end gap-2">
           <Badge variant="info">{member.role}</Badge>
           <Badge variant={member.status === 'active' ? 'success' : 'neutral'}>{member.status}</Badge>
-          {member.permissions.canEditAllExpenses ? <Badge>edit all expenses</Badge> : null}
+          {member.permissions.canEditAllExpenses ? <Badge>được sửa mọi khoản chi</Badge> : null}
         </div>
       </div>
 
@@ -63,8 +63,8 @@ function EditableMemberRow({
               onChange={(event) => setRole(event.target.value as Exclude<PlanRole, 'owner'>)}
               value={role}
             >
-              <option value="editor">Editor</option>
-              <option value="viewer">Viewer</option>
+              <option value="editor">Biên tập</option>
+              <option value="viewer">Chỉ xem</option>
             </select>
             <label className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700">
               <input
@@ -72,7 +72,7 @@ function EditableMemberRow({
                 onChange={(event) => setCanEditAllExpenses(event.target.checked)}
                 type="checkbox"
               />
-              Edit all expenses
+              Sửa mọi khoản chi
             </label>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
@@ -81,14 +81,14 @@ function EditableMemberRow({
               onClick={() => onUpdateRole?.(member, role, canEditAllExpenses)}
               variant="secondary"
             >
-              Save role
+              Lưu vai trò
             </Button>
             <Button
               disabled={isSaving || member.status === 'removed' || !onRemove}
               onClick={() => onRemove?.(member)}
               variant="ghost"
             >
-              Remove member
+              Xóa thành viên
             </Button>
           </div>
         </div>

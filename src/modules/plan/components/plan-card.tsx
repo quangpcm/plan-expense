@@ -29,15 +29,15 @@ export function PlanCard({ plan }: PlanCardProps) {
         </div>
         <div className="grid grid-cols-2 gap-3 rounded-[24px] bg-slate-50 p-4 text-sm text-slate-600">
           <div>
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Last update</p>
+            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Cập nhật</p>
             <p className="mt-1 font-medium text-slate-800">
-              {lastActivityDate ? formatDate(lastActivityDate) : 'Syncing...'}
+              {lastActivityDate ? formatDate(lastActivityDate) : 'Đang đồng bộ...'}
             </p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Joined</p>
+            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Tham gia</p>
             <p className="mt-1 font-medium text-slate-800">
-              {joinedDate ? formatDate(joinedDate) : 'Just now'}
+              {joinedDate ? formatDate(joinedDate) : 'Vừa xong'}
             </p>
           </div>
         </div>
