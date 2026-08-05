@@ -6,10 +6,7 @@ import {
   doc,
   increment,
   onSnapshot,
-  orderBy,
-  query,
   runTransaction,
-  where,
 } from 'firebase/firestore';
 
 import { getFirebaseFirestore } from '@/config/firebase.config';
@@ -60,16 +57,15 @@ export class FirestoreIncomeRepository implements IncomeRepository {
   }
 
   watchIncomes(planId: string, callback: (incomes: IncomeDocument[]) => void, onError?: (error: Error) => void) {
-    const incomesQuery = query(
-      collection(getFirebaseFirestore(), 'plans', planId, 'incomes'),
-      where('status', '==', 'active'),
-      orderBy('receivedAt', 'desc'),
-    );
-
     return onSnapshot(
-      incomesQuery,
+      collection(getFirebaseFirestore(), 'plans', planId, 'incomes'),
       (snapshot) => {
-        callback(snapshot.docs.map((item) => item.data() as IncomeDocument));
+        const incomes = snapshot.docs
+          .map((item) => item.data() as IncomeDocument)
+          .filter((income) => income.status === 'active')
+          .sort((a, b) => b.receivedAt.toMillis() - a.receivedAt.toMillis());
+
+        callback(incomes);
       },
       (error) => {
         onError?.(mapFirebaseError(error, 'Unable to load incomes for this plan.', 'INCOME_WATCH_FAILED'));

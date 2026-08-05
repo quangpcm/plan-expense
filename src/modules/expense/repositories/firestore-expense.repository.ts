@@ -6,10 +6,7 @@ import {
   doc,
   increment,
   onSnapshot,
-  orderBy,
-  query,
   runTransaction,
-  where,
 } from 'firebase/firestore';
 
 import { getFirebaseFirestore } from '@/config/firebase.config';
@@ -137,16 +134,15 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
   }
 
   watchExpenses(planId: string, callback: (expenses: ExpenseDocument[]) => void, onError?: (error: Error) => void) {
-    const expensesQuery = query(
-      collection(getFirebaseFirestore(), 'plans', planId, 'expenses'),
-      where('status', '==', 'active'),
-      orderBy('spentAt', 'desc'),
-    );
-
     return onSnapshot(
-      expensesQuery,
+      collection(getFirebaseFirestore(), 'plans', planId, 'expenses'),
       (snapshot) => {
-        callback(snapshot.docs.map((item) => item.data() as ExpenseDocument));
+        const expenses = snapshot.docs
+          .map((item) => item.data() as ExpenseDocument)
+          .filter((expense) => expense.status === 'active')
+          .sort((a, b) => b.spentAt.toMillis() - a.spentAt.toMillis());
+
+        callback(expenses);
       },
       (error) => {
         onError?.(mapFirebaseError(error, 'Unable to load expenses for this plan.', 'EXPENSE_WATCH_FAILED'));
