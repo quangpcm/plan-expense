@@ -11,8 +11,8 @@ import { resolvePlanPermissions } from '@/modules/member/services/permission.ser
 export class InvitationService {
   constructor(private readonly invitationRepository: InvitationRepository) {}
 
-  watchInvitations(planId: string, callback: (items: InvitationDocument[]) => void) {
-    return this.invitationRepository.watchInvitations(planId, callback);
+  watchInvitations(planId: string, callback: (items: InvitationDocument[]) => void, onError?: (error: Error) => void) {
+    return this.invitationRepository.watchInvitations(planId, callback, onError);
   }
 
   async createInvitation(
@@ -32,4 +32,3 @@ export class InvitationService {
     await this.invitationRepository.createInvitation(planId, input, actor);
   }
 }
-

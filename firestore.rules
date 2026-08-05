@@ -1,0 +1,301 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function planDoc(planId) {
+      return get(/databases/$(database)/documents/plans/$(planId));
+    }
+
+    function userPlanDoc(userId, planId) {
+      return get(/databases/$(database)/documents/userPlans/$(userId)/plans/$(planId));
+    }
+
+    function currentUserPlanDoc(planId) {
+      return userPlanDoc(request.auth.uid, planId);
+    }
+
+    function memberDoc(planId, memberId) {
+      return get(/databases/$(database)/documents/plans/$(planId)/members/$(memberId));
+    }
+
+    function isPlanVisible(planId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/userPlans/$(request.auth.uid)/plans/$(planId)) &&
+        currentUserPlanDoc(planId).data.memberStatus == 'active';
+    }
+
+    function isPlanOwner(planId) {
+      return isPlanVisible(planId) &&
+        currentUserPlanDoc(planId).data.role == 'owner';
+    }
+
+    function canCreateExpense(planId) {
+      return isPlanVisible(planId) &&
+        currentUserPlanDoc(planId).data.role in ['owner', 'editor'];
+    }
+
+    function canCreateIncome(planId) {
+      return canCreateExpense(planId);
+    }
+
+    function canEditAnyExpense(planId) {
+      return isPlanVisible(planId) &&
+        (
+          currentUserPlanDoc(planId).data.role == 'owner' ||
+          memberDoc(planId, currentUserPlanDoc(planId).data.memberId).data.permissions.canEditAllExpenses == true
+        );
+    }
+
+    function isPlanActive(planId) {
+      return planDoc(planId).data.status == 'active';
+    }
+
+    function immutablePlanFieldsUnchanged() {
+      return request.resource.data.id == resource.data.id &&
+        request.resource.data.ownerUserId == resource.data.ownerUserId &&
+        request.resource.data.ownerMemberId == resource.data.ownerMemberId &&
+        request.resource.data.currency == resource.data.currency &&
+        request.resource.data.timezone == resource.data.timezone &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.archivedAt == resource.data.archivedAt &&
+        request.resource.data.planType == resource.data.planType &&
+        request.resource.data.name == resource.data.name &&
+        request.resource.data.description == resource.data.description &&
+        request.resource.data.startDate == resource.data.startDate &&
+        request.resource.data.endDate == resource.data.endDate &&
+        request.resource.data.coverImageUrl == resource.data.coverImageUrl &&
+        request.resource.data.coverImageStoragePath == resource.data.coverImageStoragePath;
+    }
+
+    function isAggregatePlanUpdate() {
+      return immutablePlanFieldsUnchanged() &&
+        request.resource.data.status == resource.data.status &&
+        request.resource.data.closedAt == resource.data.closedAt &&
+        request.resource.data.memberCount is int &&
+        request.resource.data.expenseCount is int &&
+        request.resource.data.incomeCount is int &&
+        request.resource.data.settlementCount is int &&
+        request.resource.data.totalExpense is int &&
+        request.resource.data.totalIncome is int;
+    }
+
+    function isClosePlanUpdate() {
+      return immutablePlanFieldsUnchanged() &&
+        request.resource.data.status == 'closed' &&
+        resource.data.status == 'active' &&
+        request.resource.data.closedAt != null &&
+        request.resource.data.memberCount == resource.data.memberCount &&
+        request.resource.data.expenseCount == resource.data.expenseCount &&
+        request.resource.data.incomeCount == resource.data.incomeCount &&
+        request.resource.data.settlementCount == resource.data.settlementCount &&
+        request.resource.data.totalExpense == resource.data.totalExpense &&
+        request.resource.data.totalIncome == resource.data.totalIncome;
+    }
+
+    function userPlanCreateValid(userId) {
+      return request.resource.data.id == request.resource.data.planId &&
+        request.resource.data.userId == userId;
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create, update: if isSignedIn() &&
+        request.auth.uid == userId &&
+        request.resource.data.id == userId &&
+        request.resource.data.email is string &&
+        request.resource.data.createdAt != null &&
+        request.resource.data.updatedAt != null;
+    }
+
+    match /plans/{planId} {
+      allow read: if isPlanVisible(planId);
+      allow create: if isSignedIn() &&
+        request.resource.data.id == planId &&
+        request.resource.data.ownerUserId == request.auth.uid &&
+        request.resource.data.ownerMemberId is string &&
+        request.resource.data.status == 'active' &&
+        request.resource.data.memberCount == 1 &&
+        request.resource.data.expenseCount == 0 &&
+        request.resource.data.incomeCount == 0 &&
+        request.resource.data.settlementCount == 0 &&
+        request.resource.data.totalExpense == 0 &&
+        request.resource.data.totalIncome == 0 &&
+        request.resource.data.closedAt == null &&
+        request.resource.data.archivedAt == null;
+      allow update: if (
+          isPlanVisible(planId) &&
+          isPlanActive(planId) &&
+          isAggregatePlanUpdate()
+        ) || (
+          isPlanOwner(planId) &&
+          isClosePlanUpdate()
+        );
+    }
+
+    match /plans/{planId}/members/{memberId} {
+      allow read: if isPlanVisible(planId);
+      allow create: if (
+          isSignedIn() &&
+          getAfter(/databases/$(database)/documents/plans/$(planId)).data.ownerUserId == request.auth.uid &&
+          request.resource.data.role == 'owner' &&
+          request.resource.data.userId == request.auth.uid &&
+          request.resource.data.status == 'active'
+        ) || (
+          isPlanOwner(planId) &&
+          isPlanActive(planId) &&
+          request.resource.data.role in ['editor', 'viewer'] &&
+          request.resource.data.status == 'active'
+        );
+      allow update: if isPlanOwner(planId) &&
+        (
+          request.resource.data.id == resource.data.id &&
+          request.resource.data.planId == resource.data.planId &&
+          request.resource.data.memberType == resource.data.memberType &&
+          request.resource.data.userId == resource.data.userId &&
+          request.resource.data.email == resource.data.email &&
+          request.resource.data.nickname == resource.data.nickname &&
+          request.resource.data.avatarUrl == resource.data.avatarUrl &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.createdByUserId == resource.data.createdByUserId &&
+          request.resource.data.invitedAt == resource.data.invitedAt &&
+          request.resource.data.joinedAt == resource.data.joinedAt &&
+          request.resource.data.removedAt == resource.data.removedAt &&
+          request.resource.data.status == resource.data.status &&
+          resource.data.role != 'owner' &&
+          request.resource.data.role in ['editor', 'viewer']
+        ) || (
+          request.resource.data.id == resource.data.id &&
+          request.resource.data.planId == resource.data.planId &&
+          request.resource.data.memberType == resource.data.memberType &&
+          request.resource.data.userId == resource.data.userId &&
+          request.resource.data.email == resource.data.email &&
+          request.resource.data.nickname == resource.data.nickname &&
+          request.resource.data.avatarUrl == resource.data.avatarUrl &&
+          request.resource.data.role == resource.data.role &&
+          request.resource.data.permissions == resource.data.permissions &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.createdByUserId == resource.data.createdByUserId &&
+          request.resource.data.invitedAt == resource.data.invitedAt &&
+          request.resource.data.joinedAt == resource.data.joinedAt &&
+          resource.data.role != 'owner' &&
+          request.resource.data.status == 'removed' &&
+          request.resource.data.removedAt != null
+        );
+    }
+
+    match /plans/{planId}/categories/{categoryId} {
+      allow read: if isPlanVisible(planId);
+      allow create: if (
+          isSignedIn() &&
+          getAfter(/databases/$(database)/documents/plans/$(planId)).data.ownerUserId == request.auth.uid
+        ) || isPlanOwner(planId);
+    }
+
+    match /plans/{planId}/expenses/{expenseId} {
+      allow read: if isPlanVisible(planId);
+      allow create: if canCreateExpense(planId) &&
+        isPlanActive(planId) &&
+        request.resource.data.planId == planId &&
+        request.resource.data.id == expenseId &&
+        request.resource.data.createdByUserId == request.auth.uid &&
+        request.resource.data.createdByMemberId == currentUserPlanDoc(planId).data.memberId &&
+        request.resource.data.status == 'active' &&
+        request.resource.data.amount is int &&
+        request.resource.data.amount > 0 &&
+        request.resource.data.paidByMemberId is string;
+      allow update: if isPlanActive(planId) &&
+        (
+          resource.data.createdByUserId == request.auth.uid ||
+          canEditAnyExpense(planId)
+        ) &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.planId == resource.data.planId &&
+        request.resource.data.createdByUserId == resource.data.createdByUserId &&
+        request.resource.data.createdByMemberId == resource.data.createdByMemberId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.amount is int &&
+        request.resource.data.amount > 0;
+    }
+
+    match /plans/{planId}/incomes/{incomeId} {
+      allow read: if isPlanVisible(planId);
+      allow create: if canCreateIncome(planId) &&
+        isPlanActive(planId) &&
+        request.resource.data.planId == planId &&
+        request.resource.data.id == incomeId &&
+        request.resource.data.createdByUserId == request.auth.uid &&
+        request.resource.data.createdByMemberId == currentUserPlanDoc(planId).data.memberId &&
+        request.resource.data.status == 'active' &&
+        request.resource.data.amount is int &&
+        request.resource.data.amount > 0;
+    }
+
+    match /plans/{planId}/settlements/{settlementId} {
+      allow read: if isPlanVisible(planId);
+      allow create: if isPlanOwner(planId) &&
+        isPlanActive(planId) &&
+        request.resource.data.planId == planId &&
+        request.resource.data.id == settlementId &&
+        request.resource.data.createdByUserId == request.auth.uid &&
+        request.resource.data.createdByMemberId == currentUserPlanDoc(planId).data.memberId &&
+        request.resource.data.status == 'completed' &&
+        request.resource.data.fromMemberId != request.resource.data.toMemberId &&
+        request.resource.data.amount is int &&
+        request.resource.data.amount > 0;
+      allow update: if isPlanOwner(planId) &&
+        isPlanActive(planId) &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.planId == resource.data.planId &&
+        request.resource.data.createdByUserId == resource.data.createdByUserId &&
+        request.resource.data.createdByMemberId == resource.data.createdByMemberId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.fromMemberId == resource.data.fromMemberId &&
+        request.resource.data.toMemberId == resource.data.toMemberId &&
+        request.resource.data.amount == resource.data.amount &&
+        request.resource.data.status == 'cancelled' &&
+        request.resource.data.cancelledByUserId == request.auth.uid &&
+        request.resource.data.cancelledAt != null;
+    }
+
+    match /plans/{planId}/invitations/{invitationId} {
+      allow read: if isPlanVisible(planId);
+      allow create: if isPlanOwner(planId) &&
+        isPlanActive(planId) &&
+        request.resource.data.planId == planId &&
+        request.resource.data.id == invitationId &&
+        request.resource.data.invitedByUserId == request.auth.uid &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.tokenHash is string;
+    }
+
+    match /userPlans/{userId}/plans/{planId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if (
+          isSignedIn() &&
+          request.auth.uid == userId &&
+          userPlanCreateValid(userId) &&
+          getAfter(/databases/$(database)/documents/plans/$(planId)).data.ownerUserId == request.auth.uid
+        ) || (
+          isSignedIn() &&
+          isPlanOwner(request.resource.data.planId) &&
+          userPlanCreateValid(userId)
+        );
+      allow update: if (
+          isSignedIn() &&
+          request.auth.uid == userId &&
+          request.resource.data.userId == userId &&
+          request.resource.data.planId == resource.data.planId
+        ) || (
+          isSignedIn() &&
+          isPlanOwner(resource.data.planId) &&
+          request.resource.data.userId == userId &&
+          request.resource.data.planId == resource.data.planId &&
+          request.resource.data.planStatus in ['active', 'closed', 'archived']
+        );
+    }
+  }
+}

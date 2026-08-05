@@ -36,8 +36,8 @@ export class PlanService {
     });
   }
 
-  watchUserPlans(userId: string, callback: (plans: PlanSummary[]) => void) {
-    return this.planRepository.watchUserPlans(userId, callback);
+  watchUserPlans(userId: string, callback: (plans: PlanSummary[]) => void, onError?: (error: Error) => void) {
+    return this.planRepository.watchUserPlans(userId, callback, onError);
   }
 
   async closePlan(plan: PlanDocument, currentMember: PlanMemberDocument | null) {
@@ -52,7 +52,11 @@ export class PlanService {
     await this.planRepository.closePlan(plan.id);
   }
 
-  watchPlan(planId: string, callback: Parameters<PlanRepository['watchPlan']>[1]) {
-    return this.planRepository.watchPlan(planId, callback);
+  watchPlan(
+    planId: string,
+    callback: Parameters<PlanRepository['watchPlan']>[1],
+    onError?: (error: Error) => void,
+  ) {
+    return this.planRepository.watchPlan(planId, callback, onError);
   }
 }

@@ -18,6 +18,7 @@ import type {
   SettlementRepository,
 } from '@/modules/settlement/repositories/settlement.repository';
 import type { SettlementDocument } from '@/modules/settlement/types/settlement';
+import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
 export class FirestoreSettlementRepository implements SettlementRepository {
   async createSettlement(input: CreateSettlementPersistenceInput) {
@@ -90,14 +91,24 @@ export class FirestoreSettlementRepository implements SettlementRepository {
     });
   }
 
-  watchSettlements(planId: string, callback: (settlements: SettlementDocument[]) => void) {
+  watchSettlements(
+    planId: string,
+    callback: (settlements: SettlementDocument[]) => void,
+    onError?: (error: Error) => void,
+  ) {
     const settlementsQuery = query(
       collection(getFirebaseFirestore(), 'plans', planId, 'settlements'),
       orderBy('settledAt', 'desc'),
     );
 
-    return onSnapshot(settlementsQuery, (snapshot) => {
-      callback(snapshot.docs.map((item) => item.data() as SettlementDocument));
-    });
+    return onSnapshot(
+      settlementsQuery,
+      (snapshot) => {
+        callback(snapshot.docs.map((item) => item.data() as SettlementDocument));
+      },
+      (error) => {
+        onError?.(mapFirebaseError(error, 'Unable to load settlements for this plan.', 'SETTLEMENT_WATCH_FAILED'));
+      },
+    );
   }
 }

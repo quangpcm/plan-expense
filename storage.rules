@@ -1,0 +1,60 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function currentMemberDoc(planId) {
+      return firestore.get(/databases/(default)/documents/plans/$(planId)/members/$(currentUserPlanDoc(planId).data.memberId));
+    }
+
+    function currentUserPlanDoc(planId) {
+      return firestore.get(/databases/(default)/documents/userPlans/$(request.auth.uid)/plans/$(planId));
+    }
+
+    function isPlanVisible(planId) {
+      return isSignedIn() &&
+        firestore.exists(/databases/(default)/documents/userPlans/$(request.auth.uid)/plans/$(planId)) &&
+        currentUserPlanDoc(planId).data.memberStatus == 'active';
+    }
+
+    function isPlanOwner(planId) {
+      return isPlanVisible(planId) && currentUserPlanDoc(planId).data.role == 'owner';
+    }
+
+    function canCreateExpense(planId) {
+      return isPlanVisible(planId) && currentUserPlanDoc(planId).data.role in ['owner', 'editor'];
+    }
+
+    function canManageSettlements(planId) {
+      return isPlanOwner(planId);
+    }
+
+    function isImageUpload() {
+      return request.resource != null &&
+        request.resource.size < 10 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*');
+    }
+
+    match /users/{userId}/avatar/{fileName} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId && isImageUpload();
+    }
+
+    match /plans/{planId}/cover/{fileName} {
+      allow read: if isPlanVisible(planId);
+      allow write: if isPlanOwner(planId) && isImageUpload();
+    }
+
+    match /plans/{planId}/expenses/{expenseId}/{fileName} {
+      allow read: if isPlanVisible(planId);
+      allow write: if canCreateExpense(planId) && isImageUpload();
+    }
+
+    match /plans/{planId}/settlements/{settlementId}/{fileName} {
+      allow read: if isPlanVisible(planId);
+      allow write: if canManageSettlements(planId) && isImageUpload();
+    }
+  }
+}

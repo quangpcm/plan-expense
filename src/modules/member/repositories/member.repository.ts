@@ -6,7 +6,11 @@ import type {
 } from '@/modules/member/types/member';
 
 export interface MemberRepository {
-  watchMembers(planId: string, callback: (members: PlanMemberDocument[]) => void): () => void;
+  watchMembers(
+    planId: string,
+    callback: (members: PlanMemberDocument[]) => void,
+    onError?: (error: Error) => void,
+  ): () => void;
   addGuest(planId: string, input: AddGuestInput, actor: AuthUser): Promise<void>;
   updateMemberRole(
     planId: string,
@@ -15,4 +19,3 @@ export interface MemberRepository {
   ): Promise<void>;
   removeMember(planId: string, memberId: string, actor: AuthUser): Promise<void>;
 }
-

@@ -117,11 +117,16 @@ export class ExpenseService {
     await this.expenseRepository.softDeleteExpense(plan.id, expense.id, currentUser);
   }
 
-  watchExpenses(planId: string, callback: (expenses: ExpenseDocument[]) => void) {
-    return this.expenseRepository.watchExpenses(planId, callback);
+  watchExpenses(planId: string, callback: (expenses: ExpenseDocument[]) => void, onError?: (error: Error) => void) {
+    return this.expenseRepository.watchExpenses(planId, callback, onError);
   }
 
-  watchExpense(planId: string, expenseId: string, callback: (expense: ExpenseDocument | null) => void) {
-    return this.expenseRepository.watchExpense(planId, expenseId, callback);
+  watchExpense(
+    planId: string,
+    expenseId: string,
+    callback: (expense: ExpenseDocument | null) => void,
+    onError?: (error: Error) => void,
+  ) {
+    return this.expenseRepository.watchExpense(planId, expenseId, callback, onError);
   }
 }

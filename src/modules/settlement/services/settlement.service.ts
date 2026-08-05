@@ -132,7 +132,11 @@ export class SettlementService {
     await this.settlementRepository.cancelSettlement(plan.id, settlement.id, currentUser);
   }
 
-  watchSettlements(planId: string, callback: (settlements: SettlementDocument[]) => void) {
-    return this.settlementRepository.watchSettlements(planId, callback);
+  watchSettlements(
+    planId: string,
+    callback: (settlements: SettlementDocument[]) => void,
+    onError?: (error: Error) => void,
+  ) {
+    return this.settlementRepository.watchSettlements(planId, callback, onError);
   }
 }

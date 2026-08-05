@@ -10,6 +10,7 @@ export function useUserPlans() {
   const { user, isAuthenticated } = useAuthSession();
   const [plans, setPlans] = useState<PlanSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const canWatchPlans = isAuthenticated && Boolean(user?.uid);
 
   useEffect(() => {
@@ -17,10 +18,19 @@ export function useUserPlans() {
       return undefined;
     }
 
-    const unsubscribe = planService.watchUserPlans(user.uid, (items) => {
-      setPlans(items);
-      setIsLoading(false);
-    });
+    const unsubscribe = planService.watchUserPlans(
+      user.uid,
+      (items) => {
+        setPlans(items);
+        setErrorMessage(null);
+        setIsLoading(false);
+      },
+      (error) => {
+        setPlans([]);
+        setErrorMessage(error.message);
+        setIsLoading(false);
+      },
+    );
 
     return () => {
       unsubscribe();
@@ -30,5 +40,6 @@ export function useUserPlans() {
   return {
     plans: canWatchPlans ? plans : [],
     isLoading: canWatchPlans ? isLoading : false,
+    errorMessage,
   };
 }

@@ -19,6 +19,7 @@ import type {
   ExpenseRepository,
 } from '@/modules/expense/repositories/expense.repository';
 import type { ExpenseDocument, ExpenseParticipant, UpdateExpenseInput } from '@/modules/expense/types/expense';
+import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
 export class FirestoreExpenseRepository implements ExpenseRepository {
   async createExpense(input: CreateExpensePersistenceInput) {
@@ -135,21 +136,38 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
     });
   }
 
-  watchExpenses(planId: string, callback: (expenses: ExpenseDocument[]) => void) {
+  watchExpenses(planId: string, callback: (expenses: ExpenseDocument[]) => void, onError?: (error: Error) => void) {
     const expensesQuery = query(
       collection(getFirebaseFirestore(), 'plans', planId, 'expenses'),
       where('status', '==', 'active'),
       orderBy('spentAt', 'desc'),
     );
 
-    return onSnapshot(expensesQuery, (snapshot) => {
-      callback(snapshot.docs.map((item) => item.data() as ExpenseDocument));
-    });
+    return onSnapshot(
+      expensesQuery,
+      (snapshot) => {
+        callback(snapshot.docs.map((item) => item.data() as ExpenseDocument));
+      },
+      (error) => {
+        onError?.(mapFirebaseError(error, 'Unable to load expenses for this plan.', 'EXPENSE_WATCH_FAILED'));
+      },
+    );
   }
 
-  watchExpense(planId: string, expenseId: string, callback: (expense: ExpenseDocument | null) => void) {
-    return onSnapshot(doc(getFirebaseFirestore(), 'plans', planId, 'expenses', expenseId), (snapshot) => {
-      callback(snapshot.exists() ? (snapshot.data() as ExpenseDocument) : null);
-    });
+  watchExpense(
+    planId: string,
+    expenseId: string,
+    callback: (expense: ExpenseDocument | null) => void,
+    onError?: (error: Error) => void,
+  ) {
+    return onSnapshot(
+      doc(getFirebaseFirestore(), 'plans', planId, 'expenses', expenseId),
+      (snapshot) => {
+        callback(snapshot.exists() ? (snapshot.data() as ExpenseDocument) : null);
+      },
+      (error) => {
+        onError?.(mapFirebaseError(error, 'Unable to load this expense.', 'EXPENSE_DETAIL_WATCH_FAILED'));
+      },
+    );
   }
 }

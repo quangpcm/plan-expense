@@ -11,16 +11,26 @@ export function usePlanMembers(planId: string) {
   const { user } = useAuthSession();
   const [members, setMembers] = useState<PlanMemberDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!planId) {
       return undefined;
     }
 
-    const unsubscribe = memberService.watchMembers(planId, (items) => {
-      setMembers(items);
-      setIsLoading(false);
-    });
+    const unsubscribe = memberService.watchMembers(
+      planId,
+      (items) => {
+        setMembers(items);
+        setErrorMessage(null);
+        setIsLoading(false);
+      },
+      (error) => {
+        setMembers([]);
+        setErrorMessage(error.message);
+        setIsLoading(false);
+      },
+    );
 
     return () => {
       unsubscribe();
@@ -36,8 +46,8 @@ export function usePlanMembers(planId: string) {
   return {
     members,
     isLoading,
+    errorMessage,
     currentMember,
     permissions: resolvePlanPermissions(currentMember),
   };
 }
-

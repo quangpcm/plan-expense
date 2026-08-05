@@ -18,6 +18,7 @@ import type {
   IncomeRepository,
 } from '@/modules/income/repositories/income.repository';
 import type { IncomeDocument } from '@/modules/income/types/income';
+import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
 export class FirestoreIncomeRepository implements IncomeRepository {
   async createIncome(input: CreateIncomePersistenceInput) {
@@ -58,16 +59,21 @@ export class FirestoreIncomeRepository implements IncomeRepository {
     return { incomeId: incomeRef.id };
   }
 
-  watchIncomes(planId: string, callback: (incomes: IncomeDocument[]) => void) {
+  watchIncomes(planId: string, callback: (incomes: IncomeDocument[]) => void, onError?: (error: Error) => void) {
     const incomesQuery = query(
       collection(getFirebaseFirestore(), 'plans', planId, 'incomes'),
       where('status', '==', 'active'),
       orderBy('receivedAt', 'desc'),
     );
 
-    return onSnapshot(incomesQuery, (snapshot) => {
-      callback(snapshot.docs.map((item) => item.data() as IncomeDocument));
-    });
+    return onSnapshot(
+      incomesQuery,
+      (snapshot) => {
+        callback(snapshot.docs.map((item) => item.data() as IncomeDocument));
+      },
+      (error) => {
+        onError?.(mapFirebaseError(error, 'Unable to load incomes for this plan.', 'INCOME_WATCH_FAILED'));
+      },
+    );
   }
 }
-

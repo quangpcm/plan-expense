@@ -15,6 +15,7 @@ import { getFirebaseFirestore } from '@/config/firebase.config';
 import type { CreatePlanPersistenceInput, PlanRepository } from '@/modules/plan/repositories/plan.repository';
 import type { PlanDocument, PlanSummary } from '@/modules/plan/types/plan';
 import { AppError } from '@/shared/errors/app-error';
+import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
 function mapPlanWriteError(error: unknown) {
   if (error && typeof error === 'object' && 'code' in error) {
@@ -183,24 +184,36 @@ export class FirestorePlanRepository implements PlanRepository {
     await batch.commit();
   }
 
-  watchUserPlans(userId: string, callback: (plans: PlanSummary[]) => void) {
+  watchUserPlans(userId: string, callback: (plans: PlanSummary[]) => void, onError?: (error: Error) => void) {
     const plansQuery = query(
       collection(getFirebaseFirestore(), 'userPlans', userId, 'plans'),
       orderBy('lastActivityAt', 'desc'),
     );
 
-    return onSnapshot(plansQuery, (snapshot) => {
-      const plans = snapshot.docs
-        .map((item) => item.data() as PlanSummary)
-        .filter((item) => item.memberStatus === 'active');
+    return onSnapshot(
+      plansQuery,
+      (snapshot) => {
+        const plans = snapshot.docs
+          .map((item) => item.data() as PlanSummary)
+          .filter((item) => item.memberStatus === 'active');
 
-      callback(plans);
-    });
+        callback(plans);
+      },
+      (error) => {
+        onError?.(mapFirebaseError(error, 'Unable to load your plans.', 'USER_PLANS_WATCH_FAILED'));
+      },
+    );
   }
 
-  watchPlan(planId: string, callback: (plan: PlanDocument | null) => void) {
-    return onSnapshot(doc(getFirebaseFirestore(), 'plans', planId), (snapshot) => {
-      callback(snapshot.exists() ? (snapshot.data() as PlanDocument) : null);
-    });
+  watchPlan(planId: string, callback: (plan: PlanDocument | null) => void, onError?: (error: Error) => void) {
+    return onSnapshot(
+      doc(getFirebaseFirestore(), 'plans', planId),
+      (snapshot) => {
+        callback(snapshot.exists() ? (snapshot.data() as PlanDocument) : null);
+      },
+      (error) => {
+        onError?.(mapFirebaseError(error, 'Unable to load this plan.', 'PLAN_WATCH_FAILED'));
+      },
+    );
   }
 }

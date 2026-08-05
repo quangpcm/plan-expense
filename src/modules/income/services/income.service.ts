@@ -56,7 +56,7 @@ export class IncomeService {
     });
   }
 
-  watchIncomes(planId: string, callback: (incomes: IncomeDocument[]) => void) {
-    return this.incomeRepository.watchIncomes(planId, callback);
+  watchIncomes(planId: string, callback: (incomes: IncomeDocument[]) => void, onError?: (error: Error) => void) {
+    return this.incomeRepository.watchIncomes(planId, callback, onError);
   }
 }

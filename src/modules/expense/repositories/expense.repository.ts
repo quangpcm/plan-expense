@@ -22,7 +22,15 @@ export interface ExpenseRepository {
   createExpense(input: CreateExpensePersistenceInput): Promise<{ expenseId: string }>;
   updateExpense(planId: string, input: UpdateExpenseInput, participants: ExpenseParticipant[]): Promise<void>;
   softDeleteExpense(planId: string, expenseId: string, actor: AuthUser): Promise<void>;
-  watchExpenses(planId: string, callback: (expenses: ExpenseDocument[]) => void): () => void;
-  watchExpense(planId: string, expenseId: string, callback: (expense: ExpenseDocument | null) => void): () => void;
+  watchExpenses(
+    planId: string,
+    callback: (expenses: ExpenseDocument[]) => void,
+    onError?: (error: Error) => void,
+  ): () => void;
+  watchExpense(
+    planId: string,
+    expenseId: string,
+    callback: (expense: ExpenseDocument | null) => void,
+    onError?: (error: Error) => void,
+  ): () => void;
 }
-

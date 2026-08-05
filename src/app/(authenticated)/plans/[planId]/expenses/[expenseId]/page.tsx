@@ -21,10 +21,10 @@ export default function ExpenseDetailPage() {
   const planId = Array.isArray(params.planId) ? params.planId[0] : params.planId;
   const expenseId = Array.isArray(params.expenseId) ? params.expenseId[0] : params.expenseId;
   const { user } = useAuthSession();
-  const { plan } = usePlan(planId);
+  const { plan, errorMessage: planError } = usePlan(planId);
   const { members, currentMember, permissions } = usePlanMembers(planId);
-  const { categories } = useExpenseCategories(planId);
-  const { expense, isLoading } = useExpense(planId, expenseId);
+  const { categories, errorMessage: categoryError } = useExpenseCategories(planId);
+  const { expense, isLoading, errorMessage: expenseError } = useExpense(planId, expenseId);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -62,6 +62,12 @@ export default function ExpenseDetailPage() {
 
   return (
     <main className="flex flex-col gap-5">
+      {planError || categoryError || expenseError ? (
+        <AuthFormMessage
+          message={planError || categoryError || expenseError || 'Unable to load this expense screen.'}
+          type="error"
+        />
+      ) : null}
       <ExpenseDetailCard categories={categories} expense={expense} members={members} />
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       <Card className="gap-3 sm:flex-row sm:justify-end">

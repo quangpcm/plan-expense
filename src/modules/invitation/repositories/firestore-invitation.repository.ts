@@ -9,6 +9,7 @@ import type {
   CreateInvitationInput,
   InvitationDocument,
 } from '@/modules/invitation/types/invitation';
+import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
 async function createTokenHash(email: string) {
   const token = `${email.toLowerCase()}-${Date.now()}-${crypto.randomUUID()}`;
@@ -19,15 +20,21 @@ async function createTokenHash(email: string) {
 }
 
 export class FirestoreInvitationRepository implements InvitationRepository {
-  watchInvitations(planId: string, callback: (items: InvitationDocument[]) => void) {
+  watchInvitations(planId: string, callback: (items: InvitationDocument[]) => void, onError?: (error: Error) => void) {
     const invitationsQuery = query(
       collection(getFirebaseFirestore(), 'plans', planId, 'invitations'),
       orderBy('createdAt', 'desc'),
     );
 
-    return onSnapshot(invitationsQuery, (snapshot) => {
-      callback(snapshot.docs.map((item) => item.data() as InvitationDocument));
-    });
+    return onSnapshot(
+      invitationsQuery,
+      (snapshot) => {
+        callback(snapshot.docs.map((item) => item.data() as InvitationDocument));
+      },
+      (error) => {
+        onError?.(mapFirebaseError(error, 'Unable to load invitations.', 'INVITATION_WATCH_FAILED'));
+      },
+    );
   }
 
   async createInvitation(planId: string, input: CreateInvitationInput, actor: AuthUser) {
@@ -57,4 +64,3 @@ export class FirestoreInvitationRepository implements InvitationRepository {
     await batch.commit();
   }
 }
-

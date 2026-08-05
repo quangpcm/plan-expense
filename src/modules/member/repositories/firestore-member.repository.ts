@@ -21,17 +21,24 @@ import type {
   PlanMemberDocument,
   UpdateMemberRoleInput,
 } from '@/modules/member/types/member';
+import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
 export class FirestoreMemberRepository implements MemberRepository {
-  watchMembers(planId: string, callback: (members: PlanMemberDocument[]) => void) {
+  watchMembers(planId: string, callback: (members: PlanMemberDocument[]) => void, onError?: (error: Error) => void) {
     const membersQuery = query(
       collection(getFirebaseFirestore(), 'plans', planId, 'members'),
       orderBy('createdAt', 'asc'),
     );
 
-    return onSnapshot(membersQuery, (snapshot) => {
-      callback(snapshot.docs.map((item) => item.data() as PlanMemberDocument));
-    });
+    return onSnapshot(
+      membersQuery,
+      (snapshot) => {
+        callback(snapshot.docs.map((item) => item.data() as PlanMemberDocument));
+      },
+      (error) => {
+        onError?.(mapFirebaseError(error, 'Unable to load plan members.', 'MEMBER_WATCH_FAILED'));
+      },
+    );
   }
 
   async addGuest(planId: string, input: AddGuestInput, actor: AuthUser) {

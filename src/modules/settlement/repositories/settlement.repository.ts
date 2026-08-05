@@ -15,5 +15,9 @@ export type CreateSettlementPersistenceInput = ConfirmSettlementInput & {
 export interface SettlementRepository {
   createSettlement(input: CreateSettlementPersistenceInput): Promise<{ settlementId: string }>;
   cancelSettlement(planId: string, settlementId: string, actor: AuthUser): Promise<void>;
-  watchSettlements(planId: string, callback: (settlements: SettlementDocument[]) => void): () => void;
+  watchSettlements(
+    planId: string,
+    callback: (settlements: SettlementDocument[]) => void,
+    onError?: (error: Error) => void,
+  ): () => void;
 }

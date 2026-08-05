@@ -3,6 +3,7 @@
 import { BellDot, Plus, Search } from 'lucide-react';
 
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
+import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { useUserPlans } from '@/modules/plan/hooks/use-user-plans';
 import { PlanCard } from '@/modules/plan/components/plan-card';
 import { Avatar } from '@/shared/components/ui/avatar';
@@ -14,7 +15,7 @@ import { Skeleton } from '@/shared/components/ui/skeleton';
 
 export default function PlansPage() {
   const { user } = useAuthSession();
-  const { plans, isLoading } = useUserPlans();
+  const { plans, isLoading, errorMessage } = useUserPlans();
   const greeting = `Hi, ${user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'there'}`;
 
   return (
@@ -53,6 +54,7 @@ export default function PlansPage() {
           title="Your shared plans"
           description="Search, create, and open plans. Each card reads from the dashboard index optimized for the current user."
         />
+        {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
         {isLoading ? (
           <div className="grid gap-4">
             <Skeleton className="h-44 rounded-[28px]" />

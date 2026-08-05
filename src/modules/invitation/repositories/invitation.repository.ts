@@ -5,7 +5,10 @@ import type {
 } from '@/modules/invitation/types/invitation';
 
 export interface InvitationRepository {
-  watchInvitations(planId: string, callback: (items: InvitationDocument[]) => void): () => void;
+  watchInvitations(
+    planId: string,
+    callback: (items: InvitationDocument[]) => void,
+    onError?: (error: Error) => void,
+  ): () => void;
   createInvitation(planId: string, input: CreateInvitationInput, actor: AuthUser): Promise<void>;
 }
-

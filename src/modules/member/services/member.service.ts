@@ -11,8 +11,8 @@ import { resolvePlanPermissions } from '@/modules/member/services/permission.ser
 export class MemberService {
   constructor(private readonly memberRepository: MemberRepository) {}
 
-  watchMembers(planId: string, callback: (members: PlanMemberDocument[]) => void) {
-    return this.memberRepository.watchMembers(planId, callback);
+  watchMembers(planId: string, callback: (members: PlanMemberDocument[]) => void, onError?: (error: Error) => void) {
+    return this.memberRepository.watchMembers(planId, callback, onError);
   }
 
   async addGuest(
@@ -58,4 +58,3 @@ export class MemberService {
     await this.memberRepository.removeMember(planId, member.id, actor);
   }
 }
-

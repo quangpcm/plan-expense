@@ -16,6 +16,9 @@ export type CreateIncomePersistenceInput = {
 
 export interface IncomeRepository {
   createIncome(input: CreateIncomePersistenceInput): Promise<{ incomeId: string }>;
-  watchIncomes(planId: string, callback: (incomes: IncomeDocument[]) => void): () => void;
+  watchIncomes(
+    planId: string,
+    callback: (incomes: IncomeDocument[]) => void,
+    onError?: (error: Error) => void,
+  ): () => void;
 }
-

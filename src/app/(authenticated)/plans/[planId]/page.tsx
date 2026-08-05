@@ -43,14 +43,14 @@ export default function PlanDetailPage() {
   const params = useParams<{ planId: string }>();
   const planId = Array.isArray(params.planId) ? params.planId[0] : params.planId;
   const { user } = useAuthSession();
-  const { plan, isLoading } = usePlan(planId);
+  const { plan, isLoading, errorMessage: planError } = usePlan(planId);
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('Timeline');
-  const { members, currentMember, permissions } = usePlanMembers(planId);
-  const { invitations } = usePlanInvitations(planId);
-  const { categories } = useExpenseCategories(planId);
-  const { expenses } = useExpenses(planId);
-  const { incomes } = useIncomes(planId);
-  const { settlements } = useSettlements(planId);
+  const { members, currentMember, permissions, errorMessage: memberError } = usePlanMembers(planId);
+  const { invitations, errorMessage: invitationError } = usePlanInvitations(planId);
+  const { categories, errorMessage: categoryError } = useExpenseCategories(planId);
+  const { expenses, errorMessage: expenseError } = useExpenses(planId);
+  const { incomes, errorMessage: incomeError } = useIncomes(planId);
+  const { settlements, errorMessage: settlementWatchError } = useSettlements(planId);
   const [memberActionError, setMemberActionError] = useState<string | null>(null);
   const [memberActionMessage, setMemberActionMessage] = useState<string | null>(null);
   const [isMemberActionSubmitting, setIsMemberActionSubmitting] = useState(false);
@@ -201,6 +201,21 @@ export default function PlanDetailPage() {
 
   return (
     <main className="flex flex-col gap-5">
+      {planError || memberError || invitationError || categoryError || expenseError || incomeError || settlementWatchError ? (
+        <AuthFormMessage
+          message={
+            planError ||
+            memberError ||
+            invitationError ||
+            categoryError ||
+            expenseError ||
+            incomeError ||
+            settlementWatchError ||
+            'Unable to sync the latest plan data.'
+          }
+          type="error"
+        />
+      ) : null}
       <Card className="gap-6">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-3">

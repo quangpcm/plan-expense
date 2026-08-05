@@ -16,6 +16,14 @@ export type CreatePlanPersistenceInput = {
 export interface PlanRepository {
   createPlanGraph(input: CreatePlanPersistenceInput): Promise<{ planId: string }>;
   closePlan(planId: string): Promise<void>;
-  watchUserPlans(userId: string, callback: (plans: PlanSummary[]) => void): () => void;
-  watchPlan(planId: string, callback: (plan: PlanDocument | null) => void): () => void;
+  watchUserPlans(
+    userId: string,
+    callback: (plans: PlanSummary[]) => void,
+    onError?: (error: Error) => void,
+  ): () => void;
+  watchPlan(
+    planId: string,
+    callback: (plan: PlanDocument | null) => void,
+    onError?: (error: Error) => void,
+  ): () => void;
 }
