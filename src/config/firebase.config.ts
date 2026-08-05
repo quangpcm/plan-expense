@@ -1,6 +1,9 @@
 import { getApps, initializeApp, type FirebaseApp } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 
-import { getEnv } from '@/config/env';
+import { getEnv, isFirebaseConfigured } from '@/config/env';
+import { AppError } from '@/shared/errors/app-error';
 
 export function getFirebaseWebConfig() {
   const env = getEnv();
@@ -16,6 +19,10 @@ export function getFirebaseWebConfig() {
 }
 
 export function initializeFirebaseApp(): FirebaseApp {
+  if (!isFirebaseConfigured()) {
+    throw new AppError('Firebase configuration is missing.', 'FIREBASE_NOT_CONFIGURED', 500);
+  }
+
   if (getApps().length > 0) {
     return getApps()[0]!;
   }
@@ -23,3 +30,10 @@ export function initializeFirebaseApp(): FirebaseApp {
   return initializeApp(getFirebaseWebConfig());
 }
 
+export function getFirebaseAuth(): Auth {
+  return getAuth(initializeFirebaseApp());
+}
+
+export function getFirebaseFirestore(): Firestore {
+  return getFirestore(initializeFirebaseApp());
+}

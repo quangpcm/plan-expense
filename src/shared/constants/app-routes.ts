@@ -7,4 +7,3 @@ export const appRoutes = {
   profile: '/profile',
   settings: '/settings',
 } as const;
-

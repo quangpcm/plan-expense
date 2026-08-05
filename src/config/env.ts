@@ -23,3 +23,13 @@ export function getEnv(): AppEnv {
   });
 }
 
+export function isFirebaseConfigured(env = getEnv()) {
+  return Boolean(
+    env.NEXT_PUBLIC_FIREBASE_API_KEY &&
+      env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN &&
+      env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
+      env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET &&
+      env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID &&
+      env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  );
+}

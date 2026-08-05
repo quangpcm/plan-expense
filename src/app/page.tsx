@@ -3,6 +3,7 @@ import { ArrowRight, ClipboardList, Layers3, Smartphone } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
+import { appRoutes } from '@/shared/constants';
 
 const foundationItems = [
   {
@@ -44,8 +45,8 @@ export default function HomePage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button>Start Phase 1</Button>
-            <Button variant="secondary">
+            <Button href={appRoutes.login}>Open Auth Flow</Button>
+            <Button href={appRoutes.plans} variant="secondary">
               Review Implementation Plan
               <ArrowRight className="size-4" />
             </Button>
@@ -104,4 +105,3 @@ export default function HomePage() {
     </main>
   );
 }
-
