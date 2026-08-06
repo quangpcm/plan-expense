@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { notFound, useParams, useSearchParams } from 'next/navigation';
+import { BarChart3, Clock, Settings, Users } from 'lucide-react';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
@@ -18,6 +19,7 @@ import { memberService } from '@/modules/member/services';
 import type { PlanMemberDocument, PlanRole } from '@/modules/member/types/member';
 import { buildLinkedMemberIdSet } from '@/modules/member/utils/member-linkage';
 import { EditPlanForm } from '@/modules/plan/components/edit-plan-form';
+import { planTypeGradients } from '@/modules/plan/constants/plan.constants';
 import { planService } from '@/modules/plan/services';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
 import { CategoryBreakdown } from '@/modules/statistic/components/category-breakdown';
@@ -39,8 +41,16 @@ import { Skeleton } from '@/shared/components/ui/skeleton';
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDate } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
+import { cn } from '@/shared/utils/cn';
 
 const tabs = ['Dòng thời gian', 'Thống kê', 'Thành viên', 'Thiết lập'] as const;
+
+const tabIcons = {
+  'Dòng thời gian': Clock,
+  'Thống kê': BarChart3,
+  'Thành viên': Users,
+  'Thiết lập': Settings,
+} as const;
 
 const TAB_BY_QUERY_PARAM: Record<string, (typeof tabs)[number]> = {
   timeline: 'Dòng thời gian',
@@ -284,21 +294,21 @@ export default function PlanDetailPage() {
           type="error"
         />
       ) : null}
-      <Card className="gap-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-3">
-            <Badge variant="info">{plan.planType.replace('_', ' ')}</Badge>
-            <div className="space-y-2">
-              <h1 className="text-3xl font-semibold text-slate-950">{plan.name}</h1>
-              <p className="text-sm leading-6 text-slate-600">
-                {plan.description || 'Chưa có mô tả. Thành viên, dòng thời gian và thống kê sẽ tiếp tục được xây dựng trên kế hoạch này.'}
-              </p>
+      <Card className={cn('gap-6', planTypeGradients[plan.planType])}>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="min-w-0 flex-1 truncate text-3xl font-semibold text-slate-950">{plan.name}</h1>
+            <div className="flex shrink-0 gap-2">
+              <Badge variant="info">{plan.planType.replace('_', ' ')}</Badge>
+              <Badge variant={plan.status === 'active' ? 'success' : 'neutral'}>{plan.status}</Badge>
             </div>
           </div>
-          <Badge variant={plan.status === 'active' ? 'success' : 'neutral'}>{plan.status}</Badge>
+          <p className="text-sm leading-6 text-slate-600">
+            {plan.description || 'Chưa có mô tả. Thành viên, dòng thời gian và thống kê sẽ tiếp tục được xây dựng trên kế hoạch này.'}
+          </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 rounded-[24px] bg-slate-50 p-4">
+        <div className="grid grid-cols-2 gap-3 rounded-[24px] bg-white/60 p-4">
           <div>
             <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Thành viên</p>
             <p className="mt-1 text-lg font-semibold text-slate-900">{plan.memberCount}</p>
@@ -311,21 +321,35 @@ export default function PlanDetailPage() {
       </Card>
 
       <Card className="gap-4">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              className={
-                activeTab === tab
-                  ? 'min-h-11 rounded-full bg-slate-950 px-4 text-sm font-medium text-white'
-                  : 'min-h-11 rounded-full bg-slate-100 px-4 text-sm font-medium text-slate-600'
-              }
-              onClick={() => setActiveTab(tab)}
-              type="button"
-            >
-              {tab}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          {tabs.map((tab) => {
+            const Icon = tabIcons[tab];
+            const isActive = activeTab === tab;
+
+            return (
+              <button
+                key={tab}
+                className={cn(
+                  'flex min-h-11 items-center justify-center gap-2 overflow-hidden rounded-full text-sm font-medium transition-[background-color,color,padding] duration-200',
+                  isActive
+                    ? 'flex-1 bg-slate-950 px-4 text-white'
+                    : 'bg-slate-100 px-3 text-slate-600 sm:flex-1 sm:px-4',
+                )}
+                onClick={() => setActiveTab(tab)}
+                type="button"
+              >
+                <Icon className="size-4 shrink-0" />
+                <span
+                  className={cn(
+                    'overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200',
+                    isActive ? 'max-w-[8rem] opacity-100' : 'max-w-0 opacity-0 sm:max-w-[8rem] sm:opacity-100',
+                  )}
+                >
+                  {tab}
+                </span>
+              </button>
+            );
+          })}
         </div>
         {activeTab === 'Dòng thời gian' ? (
           <>

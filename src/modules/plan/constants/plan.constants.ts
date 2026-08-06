@@ -22,3 +22,13 @@ export const planTypeIcons: Record<PlanType, LucideIcon> = {
   shared_living: Home,
   general: LayoutGrid,
 };
+
+export const planTypeGradients: Record<PlanType, string> = {
+  travel: 'bg-gradient-to-br from-sky-100 via-cyan-50 to-white',
+  wedding: 'bg-gradient-to-br from-rose-100 via-pink-50 to-white',
+  saving: 'bg-gradient-to-br from-emerald-100 via-green-50 to-white',
+  birthday: 'bg-gradient-to-br from-amber-100 via-yellow-50 to-white',
+  event: 'bg-gradient-to-br from-violet-100 via-purple-50 to-white',
+  shared_living: 'bg-gradient-to-br from-teal-100 via-emerald-50 to-white',
+  general: 'bg-gradient-to-br from-slate-100 via-slate-50 to-white',
+};
