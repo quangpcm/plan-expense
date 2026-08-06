@@ -1,10 +1,11 @@
 import Link from 'next/link';
+import { CalendarPlus } from 'lucide-react';
 
 import { planTypeIcons } from '@/modules/plan/constants/plan.constants';
 import type { PlanSummary } from '@/modules/plan/types/plan';
 import { Badge } from '@/shared/components/ui/badge';
 import { Card } from '@/shared/components/ui/card';
-import { formatRelativeTime } from '@/shared/utils/date';
+import { formatDate, formatRelativeTime } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 
 type PlanCardProps = {
@@ -13,6 +14,7 @@ type PlanCardProps = {
 
 export function PlanCard({ plan }: PlanCardProps) {
   const lastActivityDate = timestampToDate(plan.lastActivityAt);
+  const createdDate = timestampToDate(plan.createdAt);
   const PlanTypeIcon = planTypeIcons[plan.planType];
 
   return (
@@ -42,9 +44,20 @@ export function PlanCard({ plan }: PlanCardProps) {
           </div>
           <Badge variant={plan.planStatus === 'active' ? 'success' : 'neutral'}>{plan.planStatus}</Badge>
         </div>
-        <p className="text-sm text-slate-500">
-          Cập nhật {lastActivityDate ? formatRelativeTime(lastActivityDate) : 'vừa xong'}
-        </p>
+        <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
+          <span className="inline-flex items-center gap-1">
+            <CalendarPlus className="size-3.5 text-slate-400" />
+            <span className="font-medium text-slate-700">
+              {createdDate ? formatDate(createdDate) : 'Đang đồng bộ...'}
+            </span>
+          </span>
+          <span>
+            Cập nhật{' '}
+            <span className="font-medium text-slate-700">
+              {lastActivityDate ? formatRelativeTime(lastActivityDate) : 'vừa xong'}
+            </span>
+          </span>
+        </div>
       </Card>
     </Link>
   );

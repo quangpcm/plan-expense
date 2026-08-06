@@ -32,7 +32,10 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 pb-28 pt-5 sm:px-6 lg:px-8">
       <div className="flex-1">{children}</div>
-      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-20 mx-auto max-w-3xl p-4">
+      <nav
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-20 mx-auto max-w-3xl px-4 pt-4"
+        style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+      >
         <div className="pointer-events-auto grid grid-cols-3 rounded-[28px] border border-white/60 bg-slate-950/95 p-2 shadow-[0_18px_50px_rgba(15,23,42,0.3)] backdrop-blur">
           {navigationItems.map(({ href, label, icon: Icon, active }) => (
             <Link
