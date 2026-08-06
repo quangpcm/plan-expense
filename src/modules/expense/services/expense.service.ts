@@ -5,6 +5,8 @@ import { uploadExpenseAttachments } from '@/modules/expense/utils/attachment';
 import type {
   CreateExpenseInput,
   ExpenseDocument,
+  ExpenseParticipant,
+  SplitMethod,
   UpdateExpenseInput,
 } from '@/modules/expense/types/expense';
 import type { ExpenseRepository } from '@/modules/expense/repositories/expense.repository';
@@ -42,6 +44,33 @@ export class ExpenseService {
     return members.filter((member) => member.status === 'active');
   }
 
+  private buildParticipants(
+    input: { amount: number; splitMethod: SplitMethod; splitValues?: Record<string, number> | undefined },
+    participantIds: string[],
+  ): ExpenseParticipant[] {
+    const values = input.splitValues ?? {};
+
+    switch (input.splitMethod) {
+      case 'equal':
+        return this.splitService.equal(input.amount, participantIds);
+      case 'exact':
+        return this.splitService.exact(
+          input.amount,
+          participantIds.map((memberId) => ({ memberId, amount: values[memberId]! })),
+        );
+      case 'percentage':
+        return this.splitService.percentage(
+          input.amount,
+          participantIds.map((memberId) => ({ memberId, percentage: values[memberId]! })),
+        );
+      case 'shares':
+        return this.splitService.shares(
+          input.amount,
+          participantIds.map((memberId) => ({ memberId, shares: values[memberId]! })),
+        );
+    }
+  }
+
   async createExpense(input: CreateExpenseInput, context: ExpenseContext) {
     this.assertEditablePlan(context.plan);
     this.assertCreatePermission(context.currentMember);
@@ -61,7 +90,7 @@ export class ExpenseService {
       throw new AppError('Unable to resolve your plan membership.', 'MEMBER_NOT_FOUND', 400);
     }
 
-    const participants = this.splitService.equal(input.amount, participantIds);
+    const participants = this.buildParticipants(input, participantIds);
     const tempExpenseId = crypto.randomUUID();
     const attachments = await uploadExpenseAttachments(context.plan.id, tempExpenseId, input.attachments);
 
@@ -72,6 +101,7 @@ export class ExpenseService {
       amount: input.amount,
       paidByMemberId: input.paidByMemberId,
       participants,
+      splitMethod: input.splitMethod,
       merchantName: input.merchantName?.trim() || null,
       locationName: input.locationName?.trim() || null,
       note: input.note?.trim() || null,
@@ -95,7 +125,7 @@ export class ExpenseService {
     const participantIds = input.participantMemberIds.filter((memberId) =>
       activeMembers.some((member) => member.id === memberId),
     );
-    const participants = this.splitService.equal(input.amount, participantIds);
+    const participants = this.buildParticipants(input, participantIds);
 
     await this.expenseRepository.updateExpense(context.plan.id, input, participants);
   }

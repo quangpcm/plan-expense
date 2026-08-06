@@ -55,7 +55,8 @@ export type CreateExpenseInput = {
   categoryId?: string | undefined;
   paidByMemberId: string;
   participantMemberIds: string[];
-  splitMethod: 'equal';
+  splitMethod: SplitMethod;
+  splitValues?: Record<string, number> | undefined;
   merchantName?: string | undefined;
   locationName?: string | undefined;
   note?: string | undefined;
@@ -70,7 +71,8 @@ export type UpdateExpenseInput = {
   categoryId?: string | undefined;
   paidByMemberId: string;
   participantMemberIds: string[];
-  splitMethod: 'equal';
+  splitMethod: SplitMethod;
+  splitValues?: Record<string, number> | undefined;
   merchantName?: string | undefined;
   locationName?: string | undefined;
   note?: string | undefined;

@@ -1,6 +1,11 @@
 import type { AuthUser } from '@/modules/auth/types/auth';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
-import type { ExpenseDocument, ExpenseParticipant, UpdateExpenseInput } from '@/modules/expense/types/expense';
+import type {
+  ExpenseDocument,
+  ExpenseParticipant,
+  SplitMethod,
+  UpdateExpenseInput,
+} from '@/modules/expense/types/expense';
 
 export type CreateExpensePersistenceInput = {
   planId: string;
@@ -9,6 +14,7 @@ export type CreateExpensePersistenceInput = {
   amount: number;
   paidByMemberId: string;
   participants: ExpenseParticipant[];
+  splitMethod: SplitMethod;
   merchantName: string | null;
   locationName: string | null;
   note: string | null;

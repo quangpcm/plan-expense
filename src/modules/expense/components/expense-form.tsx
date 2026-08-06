@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { startTransition, useEffect, useMemo, useState } from 'react';
+import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { PlusCircle, Save } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
 import { ZodError } from 'zod';
@@ -18,6 +18,8 @@ import type { ExpenseDocument } from '@/modules/expense/types/expense';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
+import { splitMethods } from '@/shared/constants';
+import { formatCurrency } from '@/shared/utils/currency';
 
 type ExpenseFormProps = {
   planId: string;
@@ -43,6 +45,20 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
     expense?.participants.map((participant) => participant.memberId) ||
     activeMembers.map((member) => member.id);
   const defaultCategoryId = expense?.categoryId || categories[0]?.id || '';
+  const defaultSplitValues: Record<string, number> = {};
+
+  if (expense && expense.splitMethod !== 'equal') {
+    for (const participant of expense.participants) {
+      if (expense.splitMethod === 'exact') {
+        defaultSplitValues[participant.memberId] = participant.amount;
+      } else if (expense.splitMethod === 'percentage' && participant.percentage != null) {
+        defaultSplitValues[participant.memberId] = participant.percentage;
+      } else if (expense.splitMethod === 'shares' && participant.shares != null) {
+        defaultSplitValues[participant.memberId] = participant.shares;
+      }
+    }
+  }
+
   const form = useForm<CreateExpenseSchema>({
     defaultValues: {
       title: expense?.title || '',
@@ -50,7 +66,8 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
       categoryId: defaultCategoryId,
       paidByMemberId: defaultPaidByMemberId,
       participantMemberIds: defaultParticipantIds,
-      splitMethod: 'equal',
+      splitMethod: expense?.splitMethod || 'equal',
+      splitValues: defaultSplitValues,
       merchantName: expense?.merchantName || '',
       locationName: expense?.locationName || '',
       note: expense?.note || '',
@@ -62,6 +79,23 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
     control: form.control,
     name: 'participantMemberIds',
   }) ?? [];
+  const selectedSplitMethod = useWatch({ control: form.control, name: 'splitMethod' });
+  const splitValuesWatched = useWatch({ control: form.control, name: 'splitValues' }) ?? {};
+  const amountWatched = useWatch({ control: form.control, name: 'amount' });
+  const isFirstSplitMethodRender = useRef(true);
+  const totalSplitValue = selectedMembers.reduce(
+    (sum, memberId) => sum + (Number(splitValuesWatched[memberId]) || 0),
+    0,
+  );
+
+  useEffect(() => {
+    if (isFirstSplitMethodRender.current) {
+      isFirstSplitMethodRender.current = false;
+      return;
+    }
+
+    form.setValue('splitValues', {}, { shouldDirty: true });
+  }, [selectedSplitMethod, form]);
 
   useEffect(() => {
     if (!form.getValues('paidByMemberId') && defaultPaidByMemberId) {
@@ -241,6 +275,57 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
               })}
             </div>
           </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700" htmlFor="splitMethod">
+              Chia tiền
+            </label>
+            <select
+              className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+              id="splitMethod"
+              {...form.register('splitMethod')}
+            >
+              <option value={splitMethods.equal}>Chia đều</option>
+              <option value={splitMethods.exact}>Số tiền cụ thể</option>
+              <option value={splitMethods.percentage}>Theo phần trăm</option>
+              <option value={splitMethods.shares}>Theo số phần</option>
+            </select>
+          </div>
+          {selectedSplitMethod !== 'equal' ? (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">
+                {selectedSplitMethod === 'exact'
+                  ? 'Số tiền từng người'
+                  : selectedSplitMethod === 'percentage'
+                    ? 'Phần trăm từng người'
+                    : 'Số phần từng người'}
+              </label>
+              <div className="grid gap-2">
+                {activeMembers
+                  .filter((member) => selectedMembers.includes(member.id))
+                  .map((member) => (
+                    <div key={member.id} className="flex items-center gap-3">
+                      <span className="min-w-0 flex-1 truncate text-sm text-slate-700">{member.nickname}</span>
+                      <Input
+                        className="w-28 text-right"
+                        inputMode="numeric"
+                        type="number"
+                        {...form.register(`splitValues.${member.id}`)}
+                      />
+                      <span className="w-10 text-sm text-slate-500">
+                        {selectedSplitMethod === 'exact' ? 'đ' : selectedSplitMethod === 'percentage' ? '%' : 'phần'}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+              <p className="text-xs text-slate-500">
+                {selectedSplitMethod === 'exact'
+                  ? `Tổng: ${formatCurrency(totalSplitValue)} / ${formatCurrency(Number(amountWatched) || 0)}`
+                  : selectedSplitMethod === 'percentage'
+                    ? `Tổng: ${totalSplitValue}% / 100%`
+                    : `Tổng: ${totalSplitValue} phần`}
+              </p>
+            </div>
+          ) : null}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700" htmlFor="merchantName">

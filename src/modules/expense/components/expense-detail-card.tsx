@@ -70,7 +70,13 @@ export function ExpenseDetailCard({ expense, members, categories }: ExpenseDetai
                 className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
               >
                 <span className="font-medium text-slate-800">{member?.nickname || participant.memberId}</span>
-                <span className="text-slate-600">{formatCurrency(participant.amount)}</span>
+                <span className="text-slate-600">
+                  {formatCurrency(participant.amount)}
+                  {participant.percentage != null ? ` · ${participant.percentage}%` : null}
+                  {participant.shares != null && expense.splitMethod === 'shares'
+                    ? ` · ${participant.shares} phần`
+                    : null}
+                </span>
               </div>
             );
           })}
