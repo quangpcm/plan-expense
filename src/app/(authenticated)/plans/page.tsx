@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo, useState } from 'react';
+
 import { BellDot, Plus, Search } from 'lucide-react';
 
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
@@ -17,7 +19,16 @@ import { Skeleton } from '@/shared/components/ui/skeleton';
 export default function PlansPage() {
   const { user } = useAuthSession();
   const { plans, isLoading, errorMessage } = useUserPlans();
+  const [searchQuery, setSearchQuery] = useState('');
   const greeting = `Chào ${user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'bạn'}`;
+
+  const filteredPlans = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) {
+      return plans;
+    }
+    return plans.filter((plan) => plan.planName.toLowerCase().includes(query));
+  }, [plans, searchQuery]);
 
   return (
     <main className="flex flex-col gap-5">
@@ -45,28 +56,46 @@ export default function PlansPage() {
         <div className="flex items-center gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-            <Input className="pl-10" placeholder="Tìm kiếm kế hoạch" />
+            <Input
+              className="pl-10"
+              placeholder="Tìm kiếm kế hoạch"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+            />
           </div>
           <Button className="shrink-0" variant="secondary">
             <BellDot className="size-4" />
           </Button>
         </div>
-        <SectionHeading
-          eyebrow="Kế hoạch"
-          title="Danh sách kế hoạch của bạn"
-          description="Tìm kiếm, tạo mới và mở các kế hoạch. Mỗi thẻ được lấy từ dashboard index tối ưu cho người dùng hiện tại."
-        />
+        <div className="flex items-center justify-between gap-4">
+          <SectionHeading
+            eyebrow="Kế hoạch"
+            title="Danh sách kế hoạch của bạn"
+            description="Tìm kiếm, tạo mới và mở các kế hoạch. Mỗi thẻ được lấy từ dashboard index tối ưu cho người dùng hiện tại."
+          />
+          <Button
+            className="size-11 shrink-0 p-0"
+            href="/plans/new"
+            aria-label="Tạo kế hoạch"
+          >
+            <Plus className="size-5" />
+          </Button>
+        </div>
         {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
         {isLoading ? (
           <div className="grid gap-4">
             <Skeleton className="h-44 rounded-[28px]" />
             <Skeleton className="h-44 rounded-[28px]" />
           </div>
-        ) : plans.length > 0 ? (
+        ) : filteredPlans.length > 0 ? (
           <div className="grid gap-4">
-            {plans.map((plan) => (
+            {filteredPlans.map((plan) => (
               <PlanCard key={plan.id} plan={plan} />
             ))}
+          </div>
+        ) : plans.length > 0 ? (
+          <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
+            Không tìm thấy kế hoạch phù hợp với &ldquo;{searchQuery.trim()}&rdquo;.
           </div>
         ) : (
           <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
@@ -75,12 +104,6 @@ export default function PlansPage() {
             Hãy tạo kế hoạch đầu tiên để bắt đầu quản lý thành viên và chi tiêu chung.
           </div>
         )}
-        <div className="flex justify-end">
-          <Button href="/plans/new">
-            <Plus className="size-4" />
-            Tạo kế hoạch
-          </Button>
-        </div>
       </Card>
     </main>
   );

@@ -1,3 +1,5 @@
+import { History, User, UserRoundPlus } from 'lucide-react';
+
 import { Badge } from '@/shared/components/ui/badge';
 import { Card } from '@/shared/components/ui/card';
 import { formatCurrency } from '@/shared/utils/currency';
@@ -20,6 +22,7 @@ export function ExpenseDetailCard({ expense, members, categories }: ExpenseDetai
   const spentAt = timestampToDate(expense.spentAt);
   const createdAt = timestampToDate(expense.createdAt);
   const updatedAt = timestampToDate(expense.updatedAt);
+  const isEdited = Boolean(createdAt && updatedAt && updatedAt.getTime() !== createdAt.getTime());
 
   return (
     <Card className="gap-5">
@@ -33,23 +36,27 @@ export function ExpenseDetailCard({ expense, members, categories }: ExpenseDetai
         </div>
         <p className="text-2xl font-semibold text-slate-950">{formatCurrency(expense.amount)}</p>
       </div>
-      <div className="grid gap-4 rounded-[24px] bg-slate-50 p-4 sm:grid-cols-2">
-        <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Người trả</p>
-          <p className="mt-1 font-medium text-slate-900">{paidBy?.nickname || 'Không rõ'}</p>
+      <div className="space-y-2 rounded-[24px] bg-slate-50 p-4 text-sm">
+        <div className="flex items-center gap-2 text-slate-800">
+          <User className="size-4 shrink-0 text-slate-400" />
+          <span>
+            <span className="font-medium">{paidBy?.nickname || 'Không rõ'}</span> đã trả ·{' '}
+            {spentAt ? formatDateTime(spentAt) : 'Không rõ'}
+          </span>
         </div>
-        <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Thời gian chi</p>
-          <p className="mt-1 font-medium text-slate-900">{spentAt ? formatDateTime(spentAt) : 'Không rõ'}</p>
+        <div className="flex items-center gap-2 text-slate-500">
+          <UserRoundPlus className="size-4 shrink-0 text-slate-400" />
+          <span>
+            Tạo bởi {createdBy?.nickname || 'Không rõ'} ·{' '}
+            {createdAt ? formatDateTime(createdAt) : 'Không rõ'}
+          </span>
         </div>
-        <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Người tạo</p>
-          <p className="mt-1 font-medium text-slate-900">{createdBy?.nickname || 'Không rõ'}</p>
-        </div>
-        <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Cập nhật</p>
-          <p className="mt-1 font-medium text-slate-900">{updatedAt ? formatDateTime(updatedAt) : 'Không rõ'}</p>
-        </div>
+        {isEdited && updatedAt ? (
+          <div className="flex items-center gap-2 text-slate-500">
+            <History className="size-4 shrink-0 text-slate-400" />
+            <span>Cập nhật lần cuối · {formatDateTime(updatedAt)}</span>
+          </div>
+        ) : null}
       </div>
       <div className="space-y-3">
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Người tham gia</p>
@@ -92,9 +99,6 @@ export function ExpenseDetailCard({ expense, members, categories }: ExpenseDetai
         ) : (
           <p className="text-sm text-slate-600">Chưa có ảnh đính kèm.</p>
         )}
-      </div>
-      <div className="text-xs text-slate-400">
-        Tạo lúc: {createdAt ? formatDateTime(createdAt) : 'Không rõ'}
       </div>
     </Card>
   );

@@ -4,7 +4,7 @@ import { categoryPresetsByPlanType } from '@/modules/category/constants/category
 import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanRepository } from '@/modules/plan/repositories/plan.repository';
-import type { CreatePlanInput, PlanDocument, PlanSummary } from '@/modules/plan/types/plan';
+import type { CreatePlanInput, PlanDocument, PlanSummary, UpdatePlanInput } from '@/modules/plan/types/plan';
 import { AppError } from '@/shared/errors/app-error';
 
 export class PlanService {
@@ -38,6 +38,35 @@ export class PlanService {
 
   watchUserPlans(userId: string, callback: (plans: PlanSummary[]) => void, onError?: (error: Error) => void) {
     return this.planRepository.watchUserPlans(userId, callback, onError);
+  }
+
+  async updatePlan(
+    plan: PlanDocument,
+    input: UpdatePlanInput,
+    currentMember: PlanMemberDocument | null,
+  ) {
+    if (!resolvePlanPermissions(currentMember).canManagePlan) {
+      throw new AppError('Only the owner can edit this plan.', 'PLAN_UPDATE_PERMISSION_DENIED', 403);
+    }
+
+    const normalizedName = input.name.trim();
+
+    if (!normalizedName) {
+      throw new AppError('Plan name is required.', 'PLAN_NAME_REQUIRED', 400);
+    }
+
+    const startDate = input.startDate ? new Date(input.startDate) : null;
+    const endDate = input.endDate ? new Date(input.endDate) : null;
+
+    if (startDate && endDate && startDate.getTime() > endDate.getTime()) {
+      throw new AppError('End date must be on or after the start date.', 'PLAN_DATE_RANGE_INVALID', 400);
+    }
+
+    await this.planRepository.updatePlan(plan.id, {
+      name: normalizedName,
+      startDate,
+      endDate,
+    });
   }
 
   async closePlan(plan: PlanDocument, currentMember: PlanMemberDocument | null) {

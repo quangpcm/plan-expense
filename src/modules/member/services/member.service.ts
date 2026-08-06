@@ -4,7 +4,7 @@ import type { MemberRepository } from '@/modules/member/repositories/member.repo
 import type {
   AddGuestInput,
   PlanMemberDocument,
-  UpdateMemberRoleInput,
+  UpdateMemberInput,
 } from '@/modules/member/types/member';
 import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
 
@@ -28,9 +28,9 @@ export class MemberService {
     await this.memberRepository.addGuest(planId, input, actor);
   }
 
-  async updateMemberRole(
+  async updateMember(
     planId: string,
-    input: UpdateMemberRoleInput,
+    input: UpdateMemberInput,
     actor: AuthUser,
     currentMember: PlanMemberDocument | null,
   ) {
@@ -38,7 +38,7 @@ export class MemberService {
       throw new AppError('You do not have permission to edit members.', 'MEMBER_PERMISSION_DENIED', 403);
     }
 
-    await this.memberRepository.updateMemberRole(planId, input, actor);
+    await this.memberRepository.updateMember(planId, input, actor);
   }
 
   async removeMember(
@@ -56,5 +56,44 @@ export class MemberService {
     }
 
     await this.memberRepository.removeMember(planId, member.id, actor);
+  }
+
+  async reactivateMember(
+    planId: string,
+    member: PlanMemberDocument,
+    actor: AuthUser,
+    currentMember: PlanMemberDocument | null,
+  ) {
+    if (!resolvePlanPermissions(currentMember).canManageMembers) {
+      throw new AppError('You do not have permission to reactivate members.', 'MEMBER_PERMISSION_DENIED', 403);
+    }
+
+    await this.memberRepository.reactivateMember(planId, member.id, actor);
+  }
+
+  async deleteMember(
+    planId: string,
+    member: PlanMemberDocument,
+    actor: AuthUser,
+    currentMember: PlanMemberDocument | null,
+    options: { hasLinkedRecords: boolean },
+  ) {
+    if (!resolvePlanPermissions(currentMember).canManageMembers) {
+      throw new AppError('You do not have permission to delete members.', 'MEMBER_PERMISSION_DENIED', 403);
+    }
+
+    if (member.role === 'owner') {
+      throw new AppError('Owner cannot be deleted.', 'OWNER_DELETE_BLOCKED', 400);
+    }
+
+    if (options.hasLinkedRecords) {
+      throw new AppError(
+        'This member already has related expense, income, or settlement records. Deactivate instead of deleting to keep history intact.',
+        'MEMBER_HAS_LINKED_RECORDS',
+        400,
+      );
+    }
+
+    await this.memberRepository.deleteMember(planId, member.id, actor);
   }
 }

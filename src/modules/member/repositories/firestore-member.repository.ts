@@ -19,7 +19,7 @@ import type { MemberRepository } from '@/modules/member/repositories/member.repo
 import type {
   AddGuestInput,
   PlanMemberDocument,
-  UpdateMemberRoleInput,
+  UpdateMemberInput,
 } from '@/modules/member/types/member';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
@@ -77,8 +77,9 @@ export class FirestoreMemberRepository implements MemberRepository {
     await batch.commit();
   }
 
-  async updateMemberRole(planId: string, input: UpdateMemberRoleInput) {
+  async updateMember(planId: string, input: UpdateMemberInput) {
     await updateDoc(doc(getFirebaseFirestore(), 'plans', planId, 'members', input.memberId), {
+      nickname: input.nickname,
       role: input.role,
       permissions: {
         canEditAllExpenses: input.canEditAllExpenses,
@@ -117,6 +118,67 @@ export class FirestoreMemberRepository implements MemberRepository {
         memberCount: increment(-1),
         updatedAt: now,
       });
+    });
+  }
+
+  async reactivateMember(planId: string, memberId: string) {
+    const db = getFirebaseFirestore();
+    const memberRef = doc(db, 'plans', planId, 'members', memberId);
+    const planRef = doc(db, 'plans', planId);
+
+    await runTransaction(db, async (transaction) => {
+      const memberSnapshot = await transaction.get(memberRef);
+
+      if (!memberSnapshot.exists()) {
+        return;
+      }
+
+      const member = memberSnapshot.data() as PlanMemberDocument;
+
+      if (member.status !== 'removed') {
+        return;
+      }
+
+      const now = Timestamp.now();
+
+      transaction.update(memberRef, {
+        status: 'active',
+        removedAt: null,
+        updatedAt: now,
+      });
+
+      transaction.update(planRef, {
+        memberCount: increment(1),
+        updatedAt: now,
+      });
+    });
+  }
+
+  async deleteMember(planId: string, memberId: string) {
+    const db = getFirebaseFirestore();
+    const memberRef = doc(db, 'plans', planId, 'members', memberId);
+    const planRef = doc(db, 'plans', planId);
+
+    await runTransaction(db, async (transaction) => {
+      const memberSnapshot = await transaction.get(memberRef);
+
+      if (!memberSnapshot.exists()) {
+        return;
+      }
+
+      const member = memberSnapshot.data() as PlanMemberDocument;
+      const now = Timestamp.now();
+
+      transaction.delete(memberRef);
+
+      transaction.update(planRef, {
+        ...(member.status === 'active' ? { memberCount: increment(-1) } : {}),
+        updatedAt: now,
+      });
+
+      if (member.memberType === 'registered' && member.userId) {
+        transaction.delete(doc(db, 'userPlans', member.userId, 'plans', planId));
+      }
     });
   }
 }

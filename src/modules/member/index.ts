@@ -1,5 +1,6 @@
 export { memberService } from './services';
 export { usePlanMembers } from './hooks/use-plan-members';
+export { buildLinkedMemberIdSet } from './utils/member-linkage';
 export type {
   AddGuestInput,
   PlanMemberDocument,
@@ -7,5 +8,5 @@ export type {
   PlanPermissions,
   PlanRole,
   ResolvedPlanPermissions,
-  UpdateMemberRoleInput,
+  UpdateMemberInput,
 } from './types/member';

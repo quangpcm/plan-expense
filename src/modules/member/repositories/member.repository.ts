@@ -2,7 +2,7 @@ import type { AuthUser } from '@/modules/auth/types/auth';
 import type {
   AddGuestInput,
   PlanMemberDocument,
-  UpdateMemberRoleInput,
+  UpdateMemberInput,
 } from '@/modules/member/types/member';
 
 export interface MemberRepository {
@@ -12,10 +12,8 @@ export interface MemberRepository {
     onError?: (error: Error) => void,
   ): () => void;
   addGuest(planId: string, input: AddGuestInput, actor: AuthUser): Promise<void>;
-  updateMemberRole(
-    planId: string,
-    input: UpdateMemberRoleInput,
-    actor: AuthUser,
-  ): Promise<void>;
+  updateMember(planId: string, input: UpdateMemberInput, actor: AuthUser): Promise<void>;
   removeMember(planId: string, memberId: string, actor: AuthUser): Promise<void>;
+  reactivateMember(planId: string, memberId: string, actor: AuthUser): Promise<void>;
+  deleteMember(planId: string, memberId: string, actor: AuthUser): Promise<void>;
 }

@@ -49,8 +49,9 @@ export type AddGuestInput = {
   role: Exclude<PlanRole, 'owner'>;
 };
 
-export type UpdateMemberRoleInput = {
+export type UpdateMemberInput = {
   memberId: string;
+  nickname: string;
   role: Exclude<PlanRole, 'owner'>;
   canEditAllExpenses: boolean;
 };

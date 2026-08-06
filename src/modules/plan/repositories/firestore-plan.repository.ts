@@ -12,7 +12,11 @@ import {
 } from 'firebase/firestore';
 
 import { getFirebaseFirestore } from '@/config/firebase.config';
-import type { CreatePlanPersistenceInput, PlanRepository } from '@/modules/plan/repositories/plan.repository';
+import type {
+  CreatePlanPersistenceInput,
+  PlanRepository,
+  UpdatePlanPersistenceInput,
+} from '@/modules/plan/repositories/plan.repository';
 import type { PlanDocument, PlanSummary } from '@/modules/plan/types/plan';
 import { AppError } from '@/shared/errors/app-error';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
@@ -153,6 +157,41 @@ export class FirestorePlanRepository implements PlanRepository {
     }
 
     return { planId: planRef.id };
+  }
+
+  async updatePlan(planId: string, input: UpdatePlanPersistenceInput) {
+    const db = getFirebaseFirestore();
+    const batch = writeBatch(db);
+    const now = Timestamp.now();
+    const planRef = doc(db, 'plans', planId);
+    const membersSnapshot = await getDocs(collection(db, 'plans', planId, 'members'));
+
+    batch.update(planRef, {
+      name: input.name,
+      startDate: input.startDate ? Timestamp.fromDate(input.startDate) : null,
+      endDate: input.endDate ? Timestamp.fromDate(input.endDate) : null,
+      updatedAt: now,
+    });
+
+    membersSnapshot.docs.forEach((memberSnapshot) => {
+      const member = memberSnapshot.data() as { userId: string | null };
+
+      if (!member.userId) {
+        return;
+      }
+
+      batch.update(doc(db, 'userPlans', member.userId, 'plans', planId), {
+        planName: input.name,
+        updatedAt: now,
+      });
+    });
+
+    try {
+      await batch.commit();
+    } catch (error) {
+      console.error('updatePlan failed', error);
+      throw mapPlanWriteError(error);
+    }
   }
 
   async closePlan(planId: string) {

@@ -14,6 +14,7 @@ import type { PlanMemberDocument } from '@/modules/member/types/member';
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
+import { Collapsible } from '@/shared/components/ui/collapsible';
 import { Input } from '@/shared/components/ui/input';
 
 type MemberManagementPanelProps = {
@@ -102,49 +103,53 @@ export function MemberManagementPanel({
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Card>
-        <div className="space-y-1">
-          <h3 className="text-lg font-semibold text-slate-950">Thêm khách</h3>
-          <p className="text-sm text-slate-600">Khách chỉ cần biệt danh và chỉ tồn tại trong kế hoạch này.</p>
-        </div>
-        <form className="space-y-4" onSubmit={submitGuest}>
-          <Input placeholder="Biệt danh của khách" {...guestForm.register('nickname')} />
-          <select
-            className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-            {...guestForm.register('role')}
-          >
-            <option value="editor">Biên tập</option>
-            <option value="viewer">Chỉ xem</option>
-          </select>
-          {guestError ? <AuthFormMessage message={guestError} type="error" /> : null}
-          {guestMessage ? <AuthFormMessage message={guestMessage} type="success" /> : null}
-          <Button className="w-full" disabled={isGuestSubmitting} type="submit">
-            <UserRoundPlus className="size-4" />
-            {isGuestSubmitting ? 'Đang thêm khách...' : 'Thêm khách'}
-          </Button>
-        </form>
+        <Collapsible
+          title="Thêm khách"
+          description="Khách chỉ cần biệt danh và chỉ tồn tại trong kế hoạch này."
+          icon={<UserRoundPlus className="size-5" />}
+        >
+          <form className="space-y-4" onSubmit={submitGuest}>
+            <Input placeholder="Biệt danh của khách" {...guestForm.register('nickname')} />
+            <select
+              className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+              {...guestForm.register('role')}
+            >
+              <option value="editor">Biên tập</option>
+              <option value="viewer">Chỉ xem</option>
+            </select>
+            {guestError ? <AuthFormMessage message={guestError} type="error" /> : null}
+            {guestMessage ? <AuthFormMessage message={guestMessage} type="success" /> : null}
+            <Button className="w-full" disabled={isGuestSubmitting} type="submit">
+              <UserRoundPlus className="size-4" />
+              {isGuestSubmitting ? 'Đang thêm khách...' : 'Thêm khách'}
+            </Button>
+          </form>
+        </Collapsible>
       </Card>
 
       <Card>
-        <div className="space-y-1">
-          <h3 className="text-lg font-semibold text-slate-950">Mời bằng email</h3>
-          <p className="text-sm text-slate-600">Tạo bản ghi lời mời đang chờ cho người dùng đã đăng ký.</p>
-        </div>
-        <form className="space-y-4" onSubmit={submitInvitation}>
-          <Input placeholder="member@example.com" {...inviteForm.register('email')} />
-          <select
-            className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-            {...inviteForm.register('role')}
-          >
-            <option value="viewer">Chỉ xem</option>
-            <option value="editor">Biên tập</option>
-          </select>
-          {inviteError ? <AuthFormMessage message={inviteError} type="error" /> : null}
-          {inviteMessage ? <AuthFormMessage message={inviteMessage} type="success" /> : null}
-          <Button className="w-full" disabled={isInviteSubmitting} type="submit" variant="secondary">
-            <UserPlus2 className="size-4" />
-            {isInviteSubmitting ? 'Đang tạo lời mời...' : 'Mời qua email'}
-          </Button>
-        </form>
+        <Collapsible
+          title="Mời bằng email"
+          description="Tạo bản ghi lời mời đang chờ cho người dùng đã đăng ký."
+          icon={<UserPlus2 className="size-5" />}
+        >
+          <form className="space-y-4" onSubmit={submitInvitation}>
+            <Input placeholder="member@example.com" {...inviteForm.register('email')} />
+            <select
+              className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+              {...inviteForm.register('role')}
+            >
+              <option value="viewer">Chỉ xem</option>
+              <option value="editor">Biên tập</option>
+            </select>
+            {inviteError ? <AuthFormMessage message={inviteError} type="error" /> : null}
+            {inviteMessage ? <AuthFormMessage message={inviteMessage} type="success" /> : null}
+            <Button className="w-full" disabled={isInviteSubmitting} type="submit" variant="secondary">
+              <UserPlus2 className="size-4" />
+              {isInviteSubmitting ? 'Đang tạo lời mời...' : 'Mời qua email'}
+            </Button>
+          </form>
+        </Collapsible>
       </Card>
     </div>
   );

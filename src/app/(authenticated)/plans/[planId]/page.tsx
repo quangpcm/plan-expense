@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { notFound, useParams, usePathname } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { notFound, useParams, useSearchParams } from 'next/navigation';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
@@ -16,6 +16,8 @@ import { MemberManagementPanel } from '@/modules/member/components/member-manage
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
 import { memberService } from '@/modules/member/services';
 import type { PlanMemberDocument, PlanRole } from '@/modules/member/types/member';
+import { buildLinkedMemberIdSet } from '@/modules/member/utils/member-linkage';
+import { EditPlanForm } from '@/modules/plan/components/edit-plan-form';
 import { planService } from '@/modules/plan/services';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
 import { CategoryBreakdown } from '@/modules/statistic/components/category-breakdown';
@@ -38,11 +40,18 @@ import { formatCurrency } from '@/shared/utils/currency';
 import { formatDate } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 
-const tabs = ['Dòng thời gian', 'Thống kê', 'Thành viên', 'Thiết lập'];
+const tabs = ['Dòng thời gian', 'Thống kê', 'Thành viên', 'Thiết lập'] as const;
+
+const TAB_BY_QUERY_PARAM: Record<string, (typeof tabs)[number]> = {
+  timeline: 'Dòng thời gian',
+  statistic: 'Thống kê',
+  members: 'Thành viên',
+  settings: 'Thiết lập',
+};
 
 export default function PlanDetailPage() {
   const params = useParams<{ planId: string }>();
-  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const planId = Array.isArray(params.planId) ? params.planId[0] : params.planId;
   const { user } = useAuthSession();
   const { plan, isLoading, errorMessage: planError } = usePlan(planId);
@@ -61,12 +70,19 @@ export default function PlanDetailPage() {
   const [isSettlementSubmitting, setIsSettlementSubmitting] = useState(false);
   const [closingError, setClosingError] = useState<string | null>(null);
   const [isClosingPlan, setIsClosingPlan] = useState(false);
+  const previousPlanIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
-    if (pathname === `/plans/${planId}`) {
+    const tabParam = searchParams.get('tab');
+    const isNewPlan = previousPlanIdRef.current !== undefined && previousPlanIdRef.current !== planId;
+    previousPlanIdRef.current = planId;
+
+    if (tabParam && TAB_BY_QUERY_PARAM[tabParam]) {
+      setActiveTab(TAB_BY_QUERY_PARAM[tabParam]);
+    } else if (isNewPlan) {
       setActiveTab('Dòng thời gian');
     }
-  }, [pathname, planId]);
+  }, [planId, searchParams]);
 
   if (!planId) {
     notFound();
@@ -87,9 +103,6 @@ export default function PlanDetailPage() {
   }
 
   const currentPlan = plan;
-  const updatedAt = timestampToDate(plan.updatedAt);
-  const startDate = timestampToDate(plan.startDate);
-  const endDate = timestampToDate(plan.endDate);
   const statistic = statisticService.calculate({
     members,
     expenses,
@@ -99,11 +112,11 @@ export default function PlanDetailPage() {
   });
   const suggestions = settlementService.suggest(statistic.memberBalances);
   const activeMembers = members.filter((member) => member.status === 'active');
+  const linkedMemberIds = buildLinkedMemberIdSet({ expenses, incomes, settlements });
 
-  async function handleUpdateRole(
+  async function handleUpdateMember(
     member: PlanMemberDocument,
-    role: Exclude<PlanRole, 'owner'>,
-    canEditAllExpenses: boolean,
+    values: { nickname: string; role: Exclude<PlanRole, 'owner'>; canEditAllExpenses: boolean },
   ) {
     if (!user) {
       return;
@@ -114,19 +127,20 @@ export default function PlanDetailPage() {
     setMemberActionMessage(null);
 
     try {
-      await memberService.updateMemberRole(
+      await memberService.updateMember(
         planId,
         {
           memberId: member.id,
-          role,
-          canEditAllExpenses,
+          nickname: values.nickname,
+          role: values.role,
+          canEditAllExpenses: values.canEditAllExpenses,
         },
         user,
         currentMember,
       );
-      setMemberActionMessage('Đã cập nhật vai trò thành viên.');
+      setMemberActionMessage('Đã cập nhật thành viên.');
     } catch (error) {
-      setMemberActionError(error instanceof Error ? error.message : 'Hiện chưa thể cập nhật vai trò thành viên.');
+      setMemberActionError(error instanceof Error ? error.message : 'Hiện chưa thể cập nhật thành viên.');
     } finally {
       setIsMemberActionSubmitting(false);
     }
@@ -143,7 +157,47 @@ export default function PlanDetailPage() {
 
     try {
       await memberService.removeMember(planId, member, user, currentMember);
-      setMemberActionMessage('Đã xóa thành viên khỏi danh sách hoạt động.');
+      setMemberActionMessage('Đã ngừng hoạt động thành viên.');
+    } catch (error) {
+      setMemberActionError(error instanceof Error ? error.message : 'Hiện chưa thể ngừng hoạt động thành viên.');
+    } finally {
+      setIsMemberActionSubmitting(false);
+    }
+  }
+
+  async function handleReactivateMember(member: PlanMemberDocument) {
+    if (!user) {
+      return;
+    }
+
+    setIsMemberActionSubmitting(true);
+    setMemberActionError(null);
+    setMemberActionMessage(null);
+
+    try {
+      await memberService.reactivateMember(planId, member, user, currentMember);
+      setMemberActionMessage('Đã kích hoạt lại thành viên.');
+    } catch (error) {
+      setMemberActionError(error instanceof Error ? error.message : 'Hiện chưa thể kích hoạt lại thành viên.');
+    } finally {
+      setIsMemberActionSubmitting(false);
+    }
+  }
+
+  async function handleDeleteMember(member: PlanMemberDocument) {
+    if (!user) {
+      return;
+    }
+
+    setIsMemberActionSubmitting(true);
+    setMemberActionError(null);
+    setMemberActionMessage(null);
+
+    try {
+      await memberService.deleteMember(planId, member, user, currentMember, {
+        hasLinkedRecords: linkedMemberIds.has(member.id),
+      });
+      setMemberActionMessage('Đã xóa thành viên.');
     } catch (error) {
       setMemberActionError(error instanceof Error ? error.message : 'Hiện chưa thể xóa thành viên.');
     } finally {
@@ -244,24 +298,14 @@ export default function PlanDetailPage() {
           <Badge variant={plan.status === 'active' ? 'success' : 'neutral'}>{plan.status}</Badge>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 rounded-[24px] bg-slate-50 p-4 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 rounded-[24px] bg-slate-50 p-4">
           <div>
             <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Thành viên</p>
             <p className="mt-1 text-lg font-semibold text-slate-900">{plan.memberCount}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Khoản chi</p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">{plan.expenseCount}</p>
-          </div>
-          <div>
             <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Tổng chi</p>
             <p className="mt-1 text-lg font-semibold text-slate-900">{formatCurrency(plan.totalExpense)}</p>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Cập nhật</p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">
-              {updatedAt ? formatDate(updatedAt) : 'Đang đồng bộ...'}
-            </p>
           </div>
         </div>
       </Card>
@@ -305,13 +349,6 @@ export default function PlanDetailPage() {
                 type="success"
               />
             ) : null}
-            <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
-              Ngày bắt đầu: {startDate ? formatDate(startDate) : 'Chưa đặt'}
-              <br />
-              Ngày kết thúc: {endDate ? formatDate(endDate) : 'Chưa đặt'}
-              <br />
-              Múi giờ: {plan.timezone}
-            </div>
             <TimelineList categories={categories} expenses={expenses} members={members} planId={planId} />
           </>
         ) : null}
@@ -417,9 +454,12 @@ export default function PlanDetailPage() {
             <MemberList
               canManageMembers={permissions.canManageMembers}
               isSaving={isMemberActionSubmitting}
+              linkedMemberIds={linkedMemberIds}
               members={members}
+              onDelete={handleDeleteMember}
+              onReactivate={handleReactivateMember}
               onRemove={handleRemoveMember}
-              onUpdateRole={handleUpdateRole}
+              onUpdateMember={handleUpdateMember}
             />
             <SectionHeading
               eyebrow="Lời mời"
@@ -431,6 +471,16 @@ export default function PlanDetailPage() {
         ) : null}
         {activeTab === 'Thiết lập' ? (
           <>
+            {permissions.canManagePlan ? (
+              <>
+                <SectionHeading
+                  eyebrow="Thiết lập"
+                  title="Thông tin kế hoạch"
+                  description="Chỉ chủ kế hoạch có thể sửa tên và thời gian diễn ra kế hoạch."
+                />
+                <EditPlanForm currentMember={currentMember} plan={currentPlan} />
+              </>
+            ) : null}
             <SectionHeading
               eyebrow="Thiết lập"
               title="Trạng thái và khóa bảo vệ kế hoạch"
