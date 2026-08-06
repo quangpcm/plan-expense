@@ -1,9 +1,10 @@
 import Link from 'next/link';
+import { Users } from 'lucide-react';
 
 import { Badge } from '@/shared/components/ui/badge';
 import { Card } from '@/shared/components/ui/card';
 import { formatCurrency } from '@/shared/utils/currency';
-import { formatDate, formatDateTime } from '@/shared/utils/date';
+import { formatDate, formatTime } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 import type { CategoryDocument } from '@/modules/category/types/category';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
@@ -48,18 +49,26 @@ export function TimelineList({ planId, expenses, members, categories }: Timeline
                 <Link key={expense.id} className="block" href={`/plans/${planId}/expenses/${expense.id}`}>
                   <Card className="gap-3 transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(15,23,42,0.08)]">
                     <div className="flex items-start justify-between gap-4">
-                      <div className="space-y-1">
-                        <h3 className="text-lg font-semibold text-slate-950">{expense.title}</h3>
-                        <p className="text-sm text-slate-600">{paidBy?.nickname || 'Không rõ'} đã thanh toán</p>
-                      </div>
+                      <h3 className="text-lg font-semibold text-slate-950">{expense.title}</h3>
                       <p className="text-lg font-semibold text-slate-950">{formatCurrency(expense.amount)}</p>
                     </div>
+                    <p className="text-sm text-slate-600">
+                      <span className="font-semibold text-slate-800">{paidBy?.nickname || 'Không rõ'}</span> đã thanh
+                      toán lúc{' '}
+                      <span className="font-semibold text-slate-800">
+                        {spentAt ? formatTime(spentAt) : '--:--'}
+                      </span>
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       <Badge variant="info">{category?.name || 'Không có danh mục'}</Badge>
-                      <Badge>{expense.participants.length} người tham gia</Badge>
-                      <Badge>{expense.attachments.length} tệp đính kèm</Badge>
+                      <Badge className="gap-1">
+                        <Users className="size-3" />
+                        {expense.participants.length}
+                      </Badge>
+                      {expense.attachments.length > 0 ? (
+                        <Badge>{expense.attachments.length} tệp đính kèm</Badge>
+                      ) : null}
                     </div>
-                    <p className="text-sm text-slate-500">{spentAt ? formatDateTime(spentAt) : 'Không rõ thời gian'}</p>
                   </Card>
                 </Link>
               );

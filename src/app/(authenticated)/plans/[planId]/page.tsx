@@ -294,7 +294,7 @@ export default function PlanDetailPage() {
           type="error"
         />
       ) : null}
-      <Card className={cn('gap-6', planTypeGradients[plan.planType])}>
+      <Card className={cn('gap-6')}>
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-3">
             <h1 className="min-w-0 flex-1 truncate text-3xl font-semibold text-slate-950">{plan.name}</h1>
