@@ -6,8 +6,6 @@ import { ExpenseForm } from '@/modules/expense/components/expense-form';
 import { useExpense } from '@/modules/expense/hooks/use-expense';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
 import { Breadcrumbs } from '@/shared/components/ui/breadcrumbs';
-import { Card } from '@/shared/components/ui/card';
-import { SectionHeading } from '@/shared/components/ui/section-heading';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 
 export default function EditExpensePage() {
@@ -39,16 +37,7 @@ export default function EditExpensePage() {
           { label: 'Chỉnh sửa' },
         ]}
       />
-      <Card>
-        <SectionHeading
-          eyebrow="Sửa khoản chi"
-          title="Cập nhật chi tiết khoản chi"
-          description="Chỉnh sửa số tiền, người trả, người tham gia và ghi chú mà vẫn giữ nguyên các tệp đính kèm hiện có."
-        />
-      </Card>
-      <Card>
-        <ExpenseForm expense={expense} mode="edit" planId={planId} />
-      </Card>
+      <ExpenseForm expense={expense} mode="edit" planId={planId} />
     </main>
   );
 }

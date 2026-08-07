@@ -2,12 +2,13 @@
 
 import { useRouter } from 'next/navigation';
 import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
-import { PlusCircle, Save } from 'lucide-react';
+import { Camera, Check, CheckCircle2, ChevronRight, User } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
 import { ZodError } from 'zod';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
+import { getCategoryIcon } from '@/modules/category/utils/category-icon';
 import { useExpenseCategories } from '@/modules/category/hooks/use-expense-categories';
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
@@ -15,11 +16,13 @@ import { createExpenseSchema, type CreateExpenseSchema } from '@/modules/expense
 import { updateExpenseSchema, type UpdateExpenseSchema } from '@/modules/expense/schemas/update-expense.schema';
 import { expenseService } from '@/modules/expense/services';
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
+import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { splitMethods } from '@/shared/constants';
 import { formatCurrency } from '@/shared/utils/currency';
+import { cn } from '@/shared/utils/cn';
 
 type ExpenseFormProps = {
   planId: string;
@@ -35,6 +38,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
   const { categories } = useExpenseCategories(planId);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPaidByOpen, setIsPaidByOpen] = useState(false);
   const activeMembers = useMemo(
     () => members.filter((member) => member.status === 'active'),
     [members],
@@ -82,11 +86,18 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
   const selectedSplitMethod = useWatch({ control: form.control, name: 'splitMethod' });
   const splitValuesWatched = useWatch({ control: form.control, name: 'splitValues' }) ?? {};
   const amountWatched = useWatch({ control: form.control, name: 'amount' });
+  const categoryIdWatched = useWatch({ control: form.control, name: 'categoryId' });
+  const paidByMemberIdWatched = useWatch({ control: form.control, name: 'paidByMemberId' });
   const isFirstSplitMethodRender = useRef(true);
   const totalSplitValue = selectedMembers.reduce(
     (sum, memberId) => sum + (Number(splitValuesWatched[memberId]) || 0),
     0,
   );
+  const paidByMember = activeMembers.find((member) => member.id === paidByMemberIdWatched);
+  const paidByLabel =
+    paidByMemberIdWatched && paidByMemberIdWatched === currentMember?.id
+      ? 'Bạn (Mặc định)'
+      : paidByMember?.nickname || 'Chọn người chi trả';
 
   useEffect(() => {
     if (isFirstSplitMethodRender.current) {
@@ -173,8 +184,23 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
     }
   });
 
+  const attachmentFiles = useWatch({ control: form.control, name: 'attachments' }) ?? [];
+
   return (
-    <form className="space-y-5" onSubmit={handleSubmit}>
+    <form className="space-y-5 pb-28" onSubmit={handleSubmit}>
+      <div className="space-y-1 text-center">
+        <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#727687]" htmlFor="amount">
+          Số tiền (VND)
+        </label>
+        <input
+          className="w-full border-0 border-b-2 border-[#c2c6d8] bg-transparent text-center text-4xl font-bold text-[#191c1e] outline-none placeholder:text-[#c2c6d8] focus:border-[#0050cb]"
+          id="amount"
+          inputMode="numeric"
+          placeholder="0"
+          {...form.register('amount')}
+        />
+      </div>
+
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700" htmlFor="title">
           Tên khoản chi
@@ -182,68 +208,84 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
         <Input id="title" placeholder="Ăn sáng, khách sạn, vé..." {...form.register('title')} />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="amount">
-            Số tiền
-          </label>
-          <Input id="amount" inputMode="numeric" placeholder="150000" {...form.register('amount')} />
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="paidByMemberId">
-            Người trả
-          </label>
-          <select
-            className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-            id="paidByMemberId"
-            {...form.register('paidByMemberId')}
-          >
-            {activeMembers.map((member) => (
-              <option key={member.id} value={member.id}>
-                {member.nickname}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700" htmlFor="categoryId">
-          Danh mục
-        </label>
-        <select
-          className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-          id="categoryId"
-          {...form.register('categoryId')}
-        >
-          <option value="">Không chọn danh mục</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+        <p className="text-sm font-medium text-slate-700">Danh mục</p>
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+          {categories.map((category) => {
+            const CategoryIcon = getCategoryIcon(category.name);
+            const isSelected = categoryIdWatched === category.id;
+
+            return (
+              <button
+                key={category.id}
+                className={cn(
+                  'flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-medium transition',
+                  isSelected
+                    ? 'border-[#0050cb] bg-[#0050cb] text-white'
+                    : 'border-[#c2c6d8] bg-white text-[#424656]',
+                )}
+                onClick={() =>
+                  form.setValue('categoryId', category.id, { shouldValidate: true, shouldDirty: true })
+                }
+                type="button"
+              >
+                <CategoryIcon className="size-4" />
+                {category.name}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {mode === 'create' ? (
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="attachments">
-            Ảnh đính kèm
-          </label>
-          <Input
-            id="attachments"
-            accept="image/*"
-            multiple
-            type="file"
-            onChange={(event) => {
-              form.setValue('attachments', Array.from(event.target.files || []), {
-                shouldDirty: true,
-              });
-            }}
-          />
-          <p className="text-xs text-slate-500">Tối đa 5 ảnh. Khoản chi chỉ được tạo sau khi tải ảnh lên thành công.</p>
+      <button
+        className="flex w-full items-center justify-between rounded-2xl border border-[#c2c6d8] bg-white px-4 py-3 text-left"
+        onClick={() => setIsPaidByOpen(true)}
+        type="button"
+      >
+        <span className="flex items-center gap-3">
+          <span className="flex size-9 items-center justify-center rounded-full bg-[#0050cb]/10 text-[#0050cb]">
+            <User className="size-4" />
+          </span>
+          <span>
+            <span className="block text-xs text-[#727687]">Người chi trả</span>
+            <span className="block text-sm font-medium text-[#191c1e]">{paidByLabel}</span>
+          </span>
+        </span>
+        <ChevronRight className="size-4 text-[#727687]" />
+      </button>
+
+      <BottomSheet
+        onClose={() => setIsPaidByOpen(false)}
+        open={isPaidByOpen}
+        title="Chọn người chi trả"
+      >
+        <div className="grid gap-2">
+          {activeMembers.map((member) => {
+            const isSelected = member.id === paidByMemberIdWatched;
+
+            return (
+              <button
+                key={member.id}
+                className={cn(
+                  'flex min-h-11 items-center justify-between rounded-2xl border px-4 py-2 text-sm',
+                  isSelected ? 'border-[#0050cb] bg-[#0050cb]/10' : 'border-[#c2c6d8] bg-white',
+                )}
+                onClick={() => {
+                  form.setValue('paidByMemberId', member.id, { shouldValidate: true, shouldDirty: true });
+                  setIsPaidByOpen(false);
+                }}
+                type="button"
+              >
+                <span className="text-[#191c1e]">
+                  {member.nickname}
+                  {member.id === currentMember?.id ? ' (Mặc định)' : ''}
+                </span>
+                {isSelected ? <Check className="size-4 text-[#0050cb]" /> : null}
+              </button>
+            );
+          })}
         </div>
-      ) : null}
+      </BottomSheet>
 
       <details className="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
         <summary className="cursor-pointer text-sm font-semibold text-slate-800">Thiết lập nâng cao</summary>
@@ -355,24 +397,43 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
         </div>
       </details>
 
+      {mode === 'create' ? (
+        <div className="space-y-2">
+          <label
+            className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#c2c6d8] bg-[#f7f9fb] py-8 text-center"
+            htmlFor="attachments"
+          >
+            <Camera className="size-6 text-[#727687]" />
+            <span className="text-sm text-[#727687]">
+              {attachmentFiles.length > 0 ? `${attachmentFiles.length} ảnh đã chọn` : 'Thêm ảnh hóa đơn'}
+            </span>
+            <input
+              className="hidden"
+              id="attachments"
+              accept="image/*"
+              multiple
+              type="file"
+              onChange={(event) => {
+                form.setValue('attachments', Array.from(event.target.files || []), {
+                  shouldDirty: true,
+                });
+              }}
+            />
+          </label>
+          <p className="text-xs text-slate-500">Tối đa 5 ảnh. Khoản chi chỉ được tạo sau khi tải ảnh lên thành công.</p>
+        </div>
+      ) : null}
+
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-        <Button href={`/plans/${planId}`} variant="secondary">
-          Hủy
-        </Button>
-        <Button disabled={isSubmitting} type="submit">
+      <div className="fixed inset-x-0 bottom-24 z-10 mx-auto max-w-3xl px-4">
+        <Button className="w-full justify-center rounded-full" disabled={isSubmitting} type="submit">
           {isSubmitting ? (
             mode === 'create' ? 'Đang tạo khoản chi...' : 'Đang lưu khoản chi...'
-          ) : mode === 'create' ? (
-            <>
-              <PlusCircle className="size-4" />
-              Lưu khoản chi
-            </>
           ) : (
             <>
-              <Save className="size-4" />
-              Lưu thay đổi
+              <CheckCircle2 className="size-4" />
+              {mode === 'create' ? 'Lưu khoản chi' : 'Lưu thay đổi'}
             </>
           )}
         </Button>
