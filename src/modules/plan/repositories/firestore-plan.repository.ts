@@ -4,10 +4,10 @@ import {
   Timestamp,
   collection,
   doc,
-  getDocs,
   onSnapshot,
   orderBy,
   query,
+  updateDoc,
   writeBatch,
 } from 'firebase/firestore';
 
@@ -19,6 +19,7 @@ import type {
 } from '@/modules/plan/repositories/plan.repository';
 import type { PlanDocument, PlanSummary } from '@/modules/plan/types/plan';
 import { AppError } from '@/shared/errors/app-error';
+import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
 function mapPlanWriteError(error: unknown) {
@@ -125,6 +126,8 @@ export class FirestorePlanRepository implements PlanRepository {
       memberStatus: 'active',
       planStatus: 'active',
       coverImageUrl: null,
+      totalExpense: 0,
+      memberCount: 1,
       joinedAt: now,
       lastActivityAt: now,
       createdAt: now,
@@ -161,33 +164,17 @@ export class FirestorePlanRepository implements PlanRepository {
 
   async updatePlan(planId: string, input: UpdatePlanPersistenceInput) {
     const db = getFirebaseFirestore();
-    const batch = writeBatch(db);
     const now = Timestamp.now();
     const planRef = doc(db, 'plans', planId);
-    const membersSnapshot = await getDocs(collection(db, 'plans', planId, 'members'));
-
-    batch.update(planRef, {
-      name: input.name,
-      startDate: input.startDate ? Timestamp.fromDate(input.startDate) : null,
-      endDate: input.endDate ? Timestamp.fromDate(input.endDate) : null,
-      updatedAt: now,
-    });
-
-    membersSnapshot.docs.forEach((memberSnapshot) => {
-      const member = memberSnapshot.data() as { userId: string | null };
-
-      if (!member.userId) {
-        return;
-      }
-
-      batch.update(doc(db, 'userPlans', member.userId, 'plans', planId), {
-        planName: input.name,
-        updatedAt: now,
-      });
-    });
 
     try {
-      await batch.commit();
+      await updateDoc(planRef, {
+        name: input.name,
+        startDate: input.startDate ? Timestamp.fromDate(input.startDate) : null,
+        endDate: input.endDate ? Timestamp.fromDate(input.endDate) : null,
+        updatedAt: now,
+      });
+      await syncUserPlansAggregate(planId, { planName: input.name, updatedAt: now });
     } catch (error) {
       console.error('updatePlan failed', error);
       throw mapPlanWriteError(error);
@@ -196,31 +183,15 @@ export class FirestorePlanRepository implements PlanRepository {
 
   async closePlan(planId: string) {
     const db = getFirebaseFirestore();
-    const batch = writeBatch(db);
     const now = Timestamp.now();
     const planRef = doc(db, 'plans', planId);
-    const membersSnapshot = await getDocs(collection(db, 'plans', planId, 'members'));
 
-    batch.update(planRef, {
+    await updateDoc(planRef, {
       status: 'closed',
       closedAt: now,
       updatedAt: now,
     });
-
-    membersSnapshot.docs.forEach((memberSnapshot) => {
-      const member = memberSnapshot.data() as { userId: string | null };
-
-      if (!member.userId) {
-        return;
-      }
-
-      batch.update(doc(db, 'userPlans', member.userId, 'plans', planId), {
-        planStatus: 'closed',
-        updatedAt: now,
-      });
-    });
-
-    await batch.commit();
+    await syncUserPlansAggregate(planId, { planStatus: 'closed', updatedAt: now });
   }
 
   watchUserPlans(userId: string, callback: (plans: PlanSummary[]) => void, onError?: (error: Error) => void) {

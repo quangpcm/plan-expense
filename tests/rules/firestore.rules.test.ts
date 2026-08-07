@@ -113,6 +113,8 @@ async function seedBasePlan() {
       memberStatus: 'active',
       planStatus: 'active',
       coverImageUrl: null,
+      totalExpense: 500,
+      memberCount: 3,
       joinedAt: now,
       lastActivityAt: now,
       createdAt: now,
@@ -130,6 +132,8 @@ async function seedBasePlan() {
       memberStatus: 'active',
       planStatus: 'active',
       coverImageUrl: null,
+      totalExpense: 500,
+      memberCount: 3,
       joinedAt: now,
       lastActivityAt: now,
       createdAt: now,
@@ -147,6 +151,8 @@ async function seedBasePlan() {
       memberStatus: 'active',
       planStatus: 'active',
       coverImageUrl: null,
+      totalExpense: 500,
+      memberCount: 3,
       joinedAt: now,
       lastActivityAt: now,
       createdAt: now,
@@ -396,6 +402,39 @@ describe('firestore rules', () => {
         deletedAt: null,
         deletedByUserId: null,
         version: 1,
+      }),
+    );
+  });
+
+  it('allows a non-owner plan member to sync totalExpense/memberCount into another member userPlans doc', async () => {
+    const db = testEnv.authenticatedContext('editor-user').firestore();
+    await assertSucceeds(
+      updateDoc(doc(db, 'userPlans', 'owner-user', 'plans', 'plan-1'), {
+        totalExpense: 700,
+        memberCount: 3,
+        updatedAt: now,
+      }),
+    );
+  });
+
+  it('blocks a non-owner plan member from sneaking other field changes into a userPlans aggregate sync', async () => {
+    const db = testEnv.authenticatedContext('editor-user').firestore();
+    await assertFails(
+      updateDoc(doc(db, 'userPlans', 'owner-user', 'plans', 'plan-1'), {
+        totalExpense: 700,
+        role: 'editor',
+        updatedAt: now,
+      }),
+    );
+  });
+
+  it('blocks a user outside the plan from writing to a userPlans aggregate sync', async () => {
+    const db = testEnv.authenticatedContext('outsider-user').firestore();
+    await assertFails(
+      updateDoc(doc(db, 'userPlans', 'owner-user', 'plans', 'plan-1'), {
+        totalExpense: 700,
+        memberCount: 3,
+        updatedAt: now,
       }),
     );
   });

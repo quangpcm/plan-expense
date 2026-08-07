@@ -32,3 +32,13 @@ export const planTypeGradients: Record<PlanType, string> = {
   shared_living: 'bg-gradient-to-br from-teal-100 via-emerald-50 to-white',
   general: 'bg-gradient-to-br from-slate-100 via-slate-50 to-white',
 };
+
+export const planTypeBadgeColors: Record<PlanType, string> = {
+  travel: 'bg-[#0050cb]',
+  saving: 'bg-[#0050cb]',
+  wedding: 'bg-[#52606d]',
+  shared_living: 'bg-[#52606d]',
+  birthday: 'bg-[#5a5959]',
+  event: 'bg-[#5a5959]',
+  general: 'bg-[#5a5959]',
+};

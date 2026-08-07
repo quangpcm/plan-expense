@@ -21,6 +21,7 @@ import type {
   PlanMemberDocument,
   UpdateMemberInput,
 } from '@/modules/member/types/member';
+import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
 export class FirestoreMemberRepository implements MemberRepository {
@@ -75,6 +76,7 @@ export class FirestoreMemberRepository implements MemberRepository {
     });
 
     await batch.commit();
+    await syncUserPlansAggregate(planId, { memberCount: increment(1) });
   }
 
   async updateMember(planId: string, input: UpdateMemberInput) {
@@ -93,17 +95,17 @@ export class FirestoreMemberRepository implements MemberRepository {
     const memberRef = doc(db, 'plans', planId, 'members', memberId);
     const planRef = doc(db, 'plans', planId);
 
-    await runTransaction(db, async (transaction) => {
+    const didRemove = await runTransaction(db, async (transaction) => {
       const memberSnapshot = await transaction.get(memberRef);
 
       if (!memberSnapshot.exists()) {
-        return;
+        return false;
       }
 
       const member = memberSnapshot.data() as PlanMemberDocument;
 
       if (member.status === 'removed') {
-        return;
+        return false;
       }
 
       const now = Timestamp.now();
@@ -118,7 +120,13 @@ export class FirestoreMemberRepository implements MemberRepository {
         memberCount: increment(-1),
         updatedAt: now,
       });
+
+      return true;
     });
+
+    if (didRemove) {
+      await syncUserPlansAggregate(planId, { memberCount: increment(-1) });
+    }
   }
 
   async reactivateMember(planId: string, memberId: string) {
@@ -126,17 +134,17 @@ export class FirestoreMemberRepository implements MemberRepository {
     const memberRef = doc(db, 'plans', planId, 'members', memberId);
     const planRef = doc(db, 'plans', planId);
 
-    await runTransaction(db, async (transaction) => {
+    const didReactivate = await runTransaction(db, async (transaction) => {
       const memberSnapshot = await transaction.get(memberRef);
 
       if (!memberSnapshot.exists()) {
-        return;
+        return false;
       }
 
       const member = memberSnapshot.data() as PlanMemberDocument;
 
       if (member.status !== 'removed') {
-        return;
+        return false;
       }
 
       const now = Timestamp.now();
@@ -151,7 +159,13 @@ export class FirestoreMemberRepository implements MemberRepository {
         memberCount: increment(1),
         updatedAt: now,
       });
+
+      return true;
     });
+
+    if (didReactivate) {
+      await syncUserPlansAggregate(planId, { memberCount: increment(1) });
+    }
   }
 
   async deleteMember(planId: string, memberId: string) {
@@ -159,11 +173,11 @@ export class FirestoreMemberRepository implements MemberRepository {
     const memberRef = doc(db, 'plans', planId, 'members', memberId);
     const planRef = doc(db, 'plans', planId);
 
-    await runTransaction(db, async (transaction) => {
+    const wasActive = await runTransaction(db, async (transaction) => {
       const memberSnapshot = await transaction.get(memberRef);
 
       if (!memberSnapshot.exists()) {
-        return;
+        return false;
       }
 
       const member = memberSnapshot.data() as PlanMemberDocument;
@@ -179,6 +193,12 @@ export class FirestoreMemberRepository implements MemberRepository {
       if (member.memberType === 'registered' && member.userId) {
         transaction.delete(doc(db, 'userPlans', member.userId, 'plans', planId));
       }
+
+      return member.status === 'active';
     });
+
+    if (wasActive) {
+      await syncUserPlansAggregate(planId, { memberCount: increment(-1) });
+    }
   }
 }

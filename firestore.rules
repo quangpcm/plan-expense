@@ -295,6 +295,27 @@ service cloud.firestore {
           request.resource.data.userId == userId &&
           request.resource.data.planId == resource.data.planId &&
           request.resource.data.planStatus in ['active', 'closed', 'archived']
+        ) || (
+          // Any active member of the same plan may push a totalExpense/memberCount
+          // aggregate refresh into every member's dashboard index entry (e.g. an
+          // editor creating an expense must be able to update the owner's copy too).
+          // Every other field must stay unchanged.
+          isSignedIn() &&
+          isPlanVisible(resource.data.planId) &&
+          request.resource.data.userId == resource.data.userId &&
+          request.resource.data.planId == resource.data.planId &&
+          request.resource.data.planName == resource.data.planName &&
+          request.resource.data.planType == resource.data.planType &&
+          request.resource.data.role == resource.data.role &&
+          request.resource.data.memberId == resource.data.memberId &&
+          request.resource.data.memberStatus == resource.data.memberStatus &&
+          request.resource.data.planStatus == resource.data.planStatus &&
+          request.resource.data.coverImageUrl == resource.data.coverImageUrl &&
+          request.resource.data.joinedAt == resource.data.joinedAt &&
+          request.resource.data.lastActivityAt == resource.data.lastActivityAt &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.totalExpense is int &&
+          request.resource.data.memberCount is int
         );
     }
   }
