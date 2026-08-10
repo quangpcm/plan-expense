@@ -8,6 +8,7 @@ export interface AuthRepository {
   signInWithGoogle(): Promise<AuthUser>;
   sendPasswordResetEmail(email: string): Promise<void>;
   signOut(): Promise<void>;
+  updateDisplayName(displayName: string): Promise<AuthUser>;
   watchAuthState(callback: AuthStateCallback): () => void;
 }
 

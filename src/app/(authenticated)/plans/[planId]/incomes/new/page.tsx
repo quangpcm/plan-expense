@@ -19,7 +19,7 @@ export default async function CreateIncomePage({ params }: CreateIncomePageProps
         />
       </Card>
       <Card>
-        <IncomeForm planId={planId} />
+        <IncomeForm mode="create" planId={planId} />
       </Card>
     </main>
   );

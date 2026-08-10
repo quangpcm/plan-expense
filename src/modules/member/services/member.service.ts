@@ -96,4 +96,8 @@ export class MemberService {
 
     await this.memberRepository.deleteMember(planId, member.id, actor);
   }
+
+  async cascadeNicknameUpdate(userId: string, nickname: string) {
+    await this.memberRepository.cascadeNicknameUpdate(userId, nickname);
+  }
 }

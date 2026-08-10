@@ -16,11 +16,17 @@ export function StatisticOverview({ statistic }: StatisticOverviewProps) {
         </p>
       </div>
       <div>
+        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Tổng thu</p>
+        <p className="mt-1 text-lg font-semibold text-emerald-700">
+          {formatCurrency(statistic.overview.totalIncome)}
+        </p>
+      </div>
+      {/* <div>
         <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Chi trung bình</p>
         <p className="mt-1 text-lg font-semibold text-slate-950">
           {formatCurrency(statistic.overview.averageExpense)}
         </p>
-      </div>
+      </div> */}
       <div>
         <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Số thành viên</p>
         <p className="mt-1 text-lg font-semibold text-slate-950">{statistic.overview.memberCount}</p>

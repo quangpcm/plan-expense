@@ -150,41 +150,69 @@ service cloud.firestore {
           request.resource.data.role in ['editor', 'viewer'] &&
           request.resource.data.status == 'active'
         );
-      allow update: if isPlanOwner(planId) &&
+      allow update: if (
+        isPlanOwner(planId) &&
         (
-          request.resource.data.id == resource.data.id &&
-          request.resource.data.planId == resource.data.planId &&
-          request.resource.data.memberType == resource.data.memberType &&
-          request.resource.data.userId == resource.data.userId &&
-          request.resource.data.email == resource.data.email &&
-          request.resource.data.nickname == resource.data.nickname &&
-          request.resource.data.avatarUrl == resource.data.avatarUrl &&
-          request.resource.data.createdAt == resource.data.createdAt &&
-          request.resource.data.createdByUserId == resource.data.createdByUserId &&
-          request.resource.data.invitedAt == resource.data.invitedAt &&
-          request.resource.data.joinedAt == resource.data.joinedAt &&
-          request.resource.data.removedAt == resource.data.removedAt &&
-          request.resource.data.status == resource.data.status &&
-          resource.data.role != 'owner' &&
-          request.resource.data.role in ['editor', 'viewer']
-        ) || (
-          request.resource.data.id == resource.data.id &&
-          request.resource.data.planId == resource.data.planId &&
-          request.resource.data.memberType == resource.data.memberType &&
-          request.resource.data.userId == resource.data.userId &&
-          request.resource.data.email == resource.data.email &&
-          request.resource.data.nickname == resource.data.nickname &&
-          request.resource.data.avatarUrl == resource.data.avatarUrl &&
-          request.resource.data.role == resource.data.role &&
-          request.resource.data.permissions == resource.data.permissions &&
-          request.resource.data.createdAt == resource.data.createdAt &&
-          request.resource.data.createdByUserId == resource.data.createdByUserId &&
-          request.resource.data.invitedAt == resource.data.invitedAt &&
-          request.resource.data.joinedAt == resource.data.joinedAt &&
-          resource.data.role != 'owner' &&
-          request.resource.data.status == 'removed' &&
-          request.resource.data.removedAt != null
-        );
+          (
+            request.resource.data.id == resource.data.id &&
+            request.resource.data.planId == resource.data.planId &&
+            request.resource.data.memberType == resource.data.memberType &&
+            request.resource.data.userId == resource.data.userId &&
+            request.resource.data.email == resource.data.email &&
+            request.resource.data.avatarUrl == resource.data.avatarUrl &&
+            request.resource.data.createdAt == resource.data.createdAt &&
+            request.resource.data.createdByUserId == resource.data.createdByUserId &&
+            request.resource.data.invitedAt == resource.data.invitedAt &&
+            request.resource.data.joinedAt == resource.data.joinedAt &&
+            request.resource.data.removedAt == resource.data.removedAt &&
+            request.resource.data.status == resource.data.status &&
+            resource.data.role != 'owner' &&
+            request.resource.data.role in ['editor', 'viewer'] &&
+            request.resource.data.nicknameIsCustom == true
+          ) || (
+            request.resource.data.id == resource.data.id &&
+            request.resource.data.planId == resource.data.planId &&
+            request.resource.data.memberType == resource.data.memberType &&
+            request.resource.data.userId == resource.data.userId &&
+            request.resource.data.email == resource.data.email &&
+            request.resource.data.nickname == resource.data.nickname &&
+            request.resource.data.avatarUrl == resource.data.avatarUrl &&
+            request.resource.data.role == resource.data.role &&
+            request.resource.data.permissions == resource.data.permissions &&
+            request.resource.data.createdAt == resource.data.createdAt &&
+            request.resource.data.createdByUserId == resource.data.createdByUserId &&
+            request.resource.data.invitedAt == resource.data.invitedAt &&
+            request.resource.data.joinedAt == resource.data.joinedAt &&
+            resource.data.role != 'owner' &&
+            request.resource.data.status == 'removed' &&
+            request.resource.data.removedAt != null
+          )
+        )
+      ) || (
+        // Self-service: a member may refresh their own nickname from their global
+        // display name across every plan they belong to, as long as it hasn't been
+        // customized within this specific plan. Every other field must stay unchanged.
+        // `!= true` (not `== false`) tolerates nicknameIsCustom being absent on
+        // member docs created before this field existed.
+        isSignedIn() &&
+        resource.data.userId == request.auth.uid &&
+        resource.data.nicknameIsCustom != true &&
+        request.resource.data.nicknameIsCustom != true &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.planId == resource.data.planId &&
+        request.resource.data.memberType == resource.data.memberType &&
+        request.resource.data.userId == resource.data.userId &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.avatarUrl == resource.data.avatarUrl &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.permissions == resource.data.permissions &&
+        request.resource.data.status == resource.data.status &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.createdByUserId == resource.data.createdByUserId &&
+        request.resource.data.invitedAt == resource.data.invitedAt &&
+        request.resource.data.joinedAt == resource.data.joinedAt &&
+        request.resource.data.removedAt == resource.data.removedAt
+      );
     }
 
     match /plans/{planId}/categories/{categoryId} {
@@ -230,6 +258,15 @@ service cloud.firestore {
         request.resource.data.createdByUserId == request.auth.uid &&
         request.resource.data.createdByMemberId == currentUserPlanDoc(planId).data.memberId &&
         request.resource.data.status == 'active' &&
+        request.resource.data.amount is int &&
+        request.resource.data.amount > 0;
+      allow update: if isPlanActive(planId) &&
+        resource.data.createdByUserId == request.auth.uid &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.planId == resource.data.planId &&
+        request.resource.data.createdByUserId == resource.data.createdByUserId &&
+        request.resource.data.createdByMemberId == resource.data.createdByMemberId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
         request.resource.data.amount is int &&
         request.resource.data.amount > 0;
     }

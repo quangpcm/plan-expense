@@ -6,4 +6,9 @@ export interface CategoryRepository {
     callback: (categories: CategoryDocument[]) => void,
     onError?: (error: Error) => void,
   ): () => void;
+  watchIncomeCategories(
+    planId: string,
+    callback: (categories: CategoryDocument[]) => void,
+    onError?: (error: Error) => void,
+  ): () => void;
 }

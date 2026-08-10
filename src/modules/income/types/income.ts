@@ -35,3 +35,13 @@ export type CreateIncomeInput = {
   receivedAt?: string | undefined;
 };
 
+export type UpdateIncomeInput = {
+  incomeId: string;
+  title: string;
+  amount: number;
+  categoryId?: string | undefined;
+  contributedByMemberId: string;
+  note?: string | undefined;
+  receivedAt?: string | undefined;
+};
+

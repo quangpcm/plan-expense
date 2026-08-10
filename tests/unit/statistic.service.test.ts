@@ -16,6 +16,7 @@ function makeMember(id: string, nickname: string): PlanMemberDocument {
     userId: `${id}-user`,
     email: `${id}@example.com`,
     nickname,
+    nicknameIsCustom: false,
     avatarUrl: null,
     role: 'editor',
     permissions: {
@@ -147,11 +148,11 @@ describe('StatisticService', () => {
         memberId: 'member-a',
         paid: 300,
         owed: 150,
-        balance: 150,
+        balance: 650,
         totalIncome: 500,
         settlementPaid: 0,
         settlementReceived: 50,
-        adjustedBalance: 100,
+        adjustedBalance: 600,
       }),
       expect.objectContaining({
         memberId: 'member-b',

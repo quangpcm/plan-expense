@@ -14,6 +14,7 @@ import {
 import { getFirebaseAuth } from '@/config/firebase.config';
 import type { AuthRepository, AuthStateCallback } from '@/modules/auth/repositories/auth.repository';
 import type { AuthUser, LoginInput } from '@/modules/auth/types/auth';
+import { AppError } from '@/shared/errors/app-error';
 
 function mapAuthUser(user: {
   uid: string;
@@ -69,6 +70,18 @@ export class FirebaseAuthRepository implements AuthRepository {
 
   async signOut() {
     await signOut(getFirebaseAuth());
+  }
+
+  async updateDisplayName(displayName: string) {
+    const currentUser = getFirebaseAuth().currentUser;
+
+    if (!currentUser) {
+      throw new AppError('You must be signed in to update your display name.', 'AUTH_NOT_SIGNED_IN', 401);
+    }
+
+    await updateProfile(currentUser, { displayName });
+
+    return mapAuthUser({ ...currentUser, displayName });
   }
 
   watchAuthState(callback: AuthStateCallback) {

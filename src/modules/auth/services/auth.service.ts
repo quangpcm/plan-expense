@@ -49,6 +49,12 @@ export class AuthService {
     await this.authRepository.signOut();
   }
 
+  async updateDisplayName(displayName: string) {
+    const user = await this.authRepository.updateDisplayName(displayName);
+    await this.userService.syncAuthUser(user);
+    return user;
+  }
+
   watchAuthState(callback: (user: AuthUser | null) => void | Promise<void>) {
     return this.authRepository.watchAuthState(callback);
   }

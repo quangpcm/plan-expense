@@ -30,4 +30,27 @@ export class FirestoreCategoryRepository implements CategoryRepository {
       },
     );
   }
+
+  watchIncomeCategories(
+    planId: string,
+    callback: (categories: CategoryDocument[]) => void,
+    onError?: (error: Error) => void,
+  ) {
+    return onSnapshot(
+      collection(getFirebaseFirestore(), 'plans', planId, 'categories'),
+      (snapshot) => {
+        const categories = snapshot.docs
+          .map((item) => item.data() as CategoryDocument)
+          .filter((category) => category.categoryType === 'income' && category.isActive)
+          .sort((a, b) => a.sortOrder - b.sortOrder);
+
+        callback(categories);
+      },
+      (error) => {
+        console.error('watchIncomeCategories failed', error);
+        callback([]);
+        onError?.(mapFirebaseError(error, 'Unable to load categories for this plan.', 'CATEGORY_WATCH_FAILED'));
+      },
+    );
+  }
 }

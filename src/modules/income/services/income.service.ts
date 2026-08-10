@@ -4,7 +4,7 @@ import type { CategoryDocument } from '@/modules/category/types/category';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
 import type { PlanDocument } from '@/modules/plan/types/plan';
-import type { CreateIncomeInput, IncomeDocument } from '@/modules/income/types/income';
+import type { CreateIncomeInput, IncomeDocument, UpdateIncomeInput } from '@/modules/income/types/income';
 import type { IncomeRepository } from '@/modules/income/repositories/income.repository';
 
 type IncomeContext = {
@@ -56,7 +56,51 @@ export class IncomeService {
     });
   }
 
+  async updateIncome(input: UpdateIncomeInput, context: IncomeContext, income: IncomeDocument) {
+    this.assertEditablePlan(context.plan);
+    const permissions = resolvePlanPermissions(context.currentMember);
+    const canEdit = permissions.canEditOwnIncome && income.createdByMemberId === context.currentMember?.id;
+
+    if (!canEdit) {
+      throw new AppError('You do not have permission to edit this income.', 'INCOME_EDIT_DENIED', 403);
+    }
+
+    const activeMembers = context.members.filter((member) => member.status === 'active');
+
+    if (!activeMembers.some((member) => member.id === input.contributedByMemberId)) {
+      throw new AppError('Contributor must be active in this plan.', 'INCOME_INVALID_CONTRIBUTOR', 400);
+    }
+
+    await this.incomeRepository.updateIncome(context.plan.id, input);
+  }
+
+  async deleteIncome(
+    plan: PlanDocument,
+    income: IncomeDocument,
+    currentUser: AuthUser,
+    currentMember: PlanMemberDocument | null,
+  ) {
+    this.assertEditablePlan(plan);
+    const permissions = resolvePlanPermissions(currentMember);
+    const canDelete = permissions.canDeleteOwnIncome && income.createdByMemberId === currentMember?.id;
+
+    if (!canDelete) {
+      throw new AppError('You do not have permission to delete this income.', 'INCOME_DELETE_DENIED', 403);
+    }
+
+    await this.incomeRepository.softDeleteIncome(plan.id, income.id, currentUser);
+  }
+
   watchIncomes(planId: string, callback: (incomes: IncomeDocument[]) => void, onError?: (error: Error) => void) {
     return this.incomeRepository.watchIncomes(planId, callback, onError);
+  }
+
+  watchIncome(
+    planId: string,
+    incomeId: string,
+    callback: (income: IncomeDocument | null) => void,
+    onError?: (error: Error) => void,
+  ) {
+    return this.incomeRepository.watchIncome(planId, incomeId, callback, onError);
   }
 }

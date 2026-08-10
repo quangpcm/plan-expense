@@ -17,6 +17,7 @@ export type PlanMemberDocument = {
   userId: string | null;
   email: string | null;
   nickname: string;
+  nicknameIsCustom: boolean;
   avatarUrl: string | null;
   role: PlanRole;
   permissions: PlanPermissions;

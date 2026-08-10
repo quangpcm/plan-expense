@@ -10,6 +10,7 @@ import { InvitationList } from '@/modules/invitation/components/invitation-list'
 import { usePlanInvitations } from '@/modules/invitation/hooks/use-plan-invitations';
 import { useIncomes } from '@/modules/income/hooks/use-incomes';
 import { useExpenseCategories } from '@/modules/category/hooks/use-expense-categories';
+import { useIncomeCategories } from '@/modules/category/hooks/use-income-categories';
 import { TimelineList } from '@/modules/expense/components/timeline-list';
 import { useExpenses } from '@/modules/expense/hooks/use-expenses';
 import { MemberList } from '@/modules/member/components/member-list';
@@ -69,6 +70,7 @@ export default function PlanDetailPage() {
   const { members, currentMember, permissions, errorMessage: memberError } = usePlanMembers(planId);
   const { invitations, errorMessage: invitationError } = usePlanInvitations(planId);
   const { categories, errorMessage: categoryError } = useExpenseCategories(planId);
+  const { categories: incomeCategories, errorMessage: incomeCategoryError } = useIncomeCategories(planId);
   const { expenses, errorMessage: expenseError } = useExpenses(planId);
   const { incomes, errorMessage: incomeError } = useIncomes(planId);
   const { settlements, errorMessage: settlementWatchError } = useSettlements(planId);
@@ -279,13 +281,21 @@ export default function PlanDetailPage() {
           { label: currentPlan.name },
         ]}
       />
-      {planError || memberError || invitationError || categoryError || expenseError || incomeError || settlementWatchError ? (
+      {planError ||
+      memberError ||
+      invitationError ||
+      categoryError ||
+      incomeCategoryError ||
+      expenseError ||
+      incomeError ||
+      settlementWatchError ? (
         <AuthFormMessage
           message={
             planError ||
             memberError ||
             invitationError ||
             categoryError ||
+            incomeCategoryError ||
             expenseError ||
             incomeError ||
             settlementWatchError ||
@@ -359,7 +369,16 @@ export default function PlanDetailPage() {
                 title="Dòng thời gian chi tiêu"
                 description="Đây là khu vực làm việc chính của ứng dụng. Khoản chi mới sẽ xuất hiện realtime và được nhóm theo ngày."
               />
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
+                {plan.status === 'closed' ? (
+                  <Button disabled variant="secondary">
+                    Thêm khoản thu
+                  </Button>
+                ) : (
+                  <Button href={`/plans/${planId}/incomes/new`} variant="secondary">
+                    Thêm khoản thu
+                  </Button>
+                )}
                 {plan.status === 'closed' ? (
                   <Button disabled>Thêm khoản chi</Button>
                 ) : (
@@ -373,7 +392,13 @@ export default function PlanDetailPage() {
                 type="success"
               />
             ) : null}
-            <TimelineList categories={categories} expenses={expenses} members={members} planId={planId} />
+            <TimelineList
+              categories={[...categories, ...incomeCategories]}
+              expenses={expenses}
+              incomes={incomes}
+              members={members}
+              planId={planId}
+            />
           </>
         ) : null}
         {activeTab === 'Thống kê' ? (
@@ -430,24 +455,6 @@ export default function PlanDetailPage() {
                 settlements={settlements}
               />
             </div>
-            <Card>
-              <SectionHeading
-                eyebrow="Khoản thu"
-                title="Ghi nhận tiền vào quỹ"
-                description="Khoản thu được theo dõi riêng với số dư chi tiêu để dòng tiền luôn rõ ràng."
-              />
-              <div className="mt-4">
-                {plan.status === 'closed' ? (
-                  <Button disabled variant="secondary">
-                    Thêm khoản thu
-                  </Button>
-                ) : (
-                  <Button href={`/plans/${planId}/incomes/new`} variant="secondary">
-                    Thêm khoản thu
-                  </Button>
-                )}
-              </div>
-            </Card>
           </div>
         ) : null}
         {activeTab === 'Thành viên' ? (

@@ -3,43 +3,50 @@
 import { useRouter } from 'next/navigation';
 import { startTransition, useState } from 'react';
 import { Landmark } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { ZodError } from 'zod';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
-import { useExpenseCategories } from '@/modules/category/hooks/use-expense-categories';
+import { getCategoryIcon } from '@/modules/category/utils/category-icon';
+import { useIncomeCategories } from '@/modules/category/hooks/use-income-categories';
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
 import { createIncomeSchema, type CreateIncomeSchema } from '@/modules/income/schemas/create-income.schema';
+import { updateIncomeSchema, type UpdateIncomeSchema } from '@/modules/income/schemas/update-income.schema';
 import { incomeService } from '@/modules/income/services';
+import type { IncomeDocument } from '@/modules/income/types/income';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
+import { cn } from '@/shared/utils/cn';
 
 type IncomeFormProps = {
   planId: string;
+  mode: 'create' | 'edit';
+  income?: IncomeDocument;
 };
 
-export function IncomeForm({ planId }: IncomeFormProps) {
+export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
   const router = useRouter();
   const { user } = useAuthSession();
   const { plan } = usePlan(planId);
   const { members, currentMember } = usePlanMembers(planId);
-  const { categories } = useExpenseCategories(planId);
+  const { categories } = useIncomeCategories(planId);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const activeMembers = members.filter((member) => member.status === 'active');
   const form = useForm<CreateIncomeSchema>({
     defaultValues: {
-      title: '',
-      amount: 0,
-      categoryId: '',
-      contributedByMemberId: currentMember?.id || activeMembers[0]?.id || '',
-      note: '',
-      receivedAt: '',
+      title: income?.title || '',
+      amount: income?.amount || 0,
+      categoryId: income?.categoryId || '',
+      contributedByMemberId: income?.contributedByMemberId || currentMember?.id || activeMembers[0]?.id || '',
+      note: income?.note || '',
+      receivedAt: income ? new Date(income.receivedAt.toDate()).toISOString().slice(0, 16) : '',
     },
   });
+  const categoryIdWatched = useWatch({ control: form.control, name: 'categoryId' });
 
   const handleSubmit = form.handleSubmit(async (values) => {
     if (!plan || !user) {
@@ -50,17 +57,38 @@ export function IncomeForm({ planId }: IncomeFormProps) {
     setErrorMessage(null);
 
     try {
-      const parsed = createIncomeSchema.parse(values);
-      await incomeService.createIncome(parsed, {
-        plan,
-        members,
-        currentMember,
-        currentUser: user,
-        categories,
-      });
-      startTransition(() => {
-        router.replace(`/plans/${planId}`);
-      });
+      if (mode === 'create') {
+        const parsed = createIncomeSchema.parse(values);
+        const result = await incomeService.createIncome(parsed, {
+          plan,
+          members,
+          currentMember,
+          currentUser: user,
+          categories,
+        });
+        startTransition(() => {
+          router.replace(`/plans/${planId}/incomes/${result.incomeId}`);
+        });
+      } else if (income) {
+        const parsed = updateIncomeSchema.parse({
+          ...values,
+          incomeId: income.id,
+        } satisfies UpdateIncomeSchema);
+        await incomeService.updateIncome(
+          parsed,
+          {
+            plan,
+            members,
+            currentMember,
+            currentUser: user,
+            categories,
+          },
+          income,
+        );
+        startTransition(() => {
+          router.replace(`/plans/${planId}/incomes/${income.id}`);
+        });
+      }
     } catch (error) {
       if (error instanceof ZodError) {
         setErrorMessage(error.issues[0]?.message || 'Vui lòng kiểm tra lại thông tin khoản thu.');
@@ -78,6 +106,36 @@ export function IncomeForm({ planId }: IncomeFormProps) {
     <form className="space-y-5" onSubmit={handleSubmit}>
       <Input placeholder="Đóng quỹ, nạp thêm..." {...form.register('title')} />
       <Input inputMode="numeric" placeholder="2000000" {...form.register('amount')} />
+
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-slate-700">Danh mục</p>
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+          {categories.map((category) => {
+            const CategoryIcon = getCategoryIcon(category.name);
+            const isSelected = categoryIdWatched === category.id;
+
+            return (
+              <button
+                key={category.id}
+                className={cn(
+                  'flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-medium transition',
+                  isSelected
+                    ? 'border-[#0050cb] bg-[#0050cb] text-white'
+                    : 'border-[#c2c6d8] bg-white text-[#424656]',
+                )}
+                onClick={() =>
+                  form.setValue('categoryId', category.id, { shouldValidate: true, shouldDirty: true })
+                }
+                type="button"
+              >
+                <CategoryIcon className="size-4" />
+                {category.name}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <select
         className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
         {...form.register('contributedByMemberId')}
@@ -92,12 +150,19 @@ export function IncomeForm({ planId }: IncomeFormProps) {
       <Textarea placeholder="Ghi chú thêm (không bắt buộc)" {...form.register('note')} />
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-        <Button href={`/plans/${planId}`} variant="secondary">
+        <Button
+          href={income ? `/plans/${planId}/incomes/${income.id}` : `/plans/${planId}`}
+          variant="secondary"
+        >
           Hủy
         </Button>
         <Button disabled={isSubmitting} type="submit">
           <Landmark className="size-4" />
-          {isSubmitting ? 'Đang lưu khoản thu...' : 'Lưu khoản thu'}
+          {isSubmitting
+            ? 'Đang lưu khoản thu...'
+            : mode === 'create'
+              ? 'Lưu khoản thu'
+              : 'Lưu thay đổi'}
         </Button>
       </div>
     </form>

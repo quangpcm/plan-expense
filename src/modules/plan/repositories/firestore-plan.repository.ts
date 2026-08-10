@@ -101,6 +101,7 @@ export class FirestorePlanRepository implements PlanRepository {
       userId: input.owner.uid,
       email: input.owner.email,
       nickname: input.owner.displayName?.trim() || input.owner.email?.split('@')[0] || 'Owner',
+      nicknameIsCustom: false,
       avatarUrl: input.owner.photoURL,
       role: 'owner',
       permissions: {
@@ -197,7 +198,7 @@ export class FirestorePlanRepository implements PlanRepository {
   watchUserPlans(userId: string, callback: (plans: PlanSummary[]) => void, onError?: (error: Error) => void) {
     const plansQuery = query(
       collection(getFirebaseFirestore(), 'userPlans', userId, 'plans'),
-      orderBy('lastActivityAt', 'desc'),
+      orderBy('updatedAt', 'desc'),
     );
 
     return onSnapshot(

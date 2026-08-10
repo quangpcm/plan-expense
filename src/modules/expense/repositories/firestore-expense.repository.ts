@@ -26,7 +26,11 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
     const planRef = doc(db, 'plans', input.planId);
     const now = Timestamp.now();
 
-    await runTransaction(db, async (transaction) => {
+    const nextTotalExpense = await runTransaction(db, async (transaction) => {
+      const planSnapshot = await transaction.get(planRef);
+      const currentTotalExpense = (planSnapshot.data()?.totalExpense as number | undefined) ?? 0;
+      const updatedTotalExpense = currentTotalExpense + input.amount;
+
       transaction.set(expenseRef, {
         id: expenseRef.id,
         planId: input.planId,
@@ -54,12 +58,14 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
 
       transaction.update(planRef, {
         expenseCount: increment(1),
-        totalExpense: increment(input.amount),
+        totalExpense: updatedTotalExpense,
         updatedAt: now,
       });
+
+      return updatedTotalExpense;
     });
 
-    await syncUserPlansAggregate(input.planId, { totalExpense: increment(input.amount) });
+    await syncUserPlansAggregate(input.planId, { totalExpense: nextTotalExpense, updatedAt: now });
 
     return { expenseId: expenseRef.id };
   }
@@ -70,15 +76,18 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
     const planRef = doc(db, 'plans', planId);
     const now = Timestamp.now();
 
-    const amountDelta = await runTransaction(db, async (transaction) => {
+    const nextTotalExpense = await runTransaction(db, async (transaction) => {
       const expenseSnapshot = await transaction.get(expenseRef);
+      const planSnapshot = await transaction.get(planRef);
 
       if (!expenseSnapshot.exists()) {
-        return 0;
+        return null;
       }
 
       const previousExpense = expenseSnapshot.data() as ExpenseDocument;
       const delta = input.amount - previousExpense.amount;
+      const currentTotalExpense = (planSnapshot.data()?.totalExpense as number | undefined) ?? 0;
+      const updatedTotalExpense = currentTotalExpense + delta;
 
       transaction.update(expenseRef, {
         title: input.title,
@@ -96,15 +105,15 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
       });
 
       transaction.update(planRef, {
-        totalExpense: increment(delta),
+        totalExpense: updatedTotalExpense,
         updatedAt: now,
       });
 
-      return delta;
+      return updatedTotalExpense;
     });
 
-    if (amountDelta !== 0) {
-      await syncUserPlansAggregate(planId, { totalExpense: increment(amountDelta) });
+    if (nextTotalExpense !== null) {
+      await syncUserPlansAggregate(planId, { totalExpense: nextTotalExpense, updatedAt: now });
     }
   }
 
@@ -114,18 +123,22 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
     const planRef = doc(db, 'plans', planId);
     const now = Timestamp.now();
 
-    const deletedAmount = await runTransaction(db, async (transaction) => {
+    const nextTotalExpense = await runTransaction(db, async (transaction) => {
       const expenseSnapshot = await transaction.get(expenseRef);
+      const planSnapshot = await transaction.get(planRef);
 
       if (!expenseSnapshot.exists()) {
-        return 0;
+        return null;
       }
 
       const expense = expenseSnapshot.data() as ExpenseDocument;
 
       if (expense.status === 'deleted') {
-        return 0;
+        return null;
       }
+
+      const currentTotalExpense = (planSnapshot.data()?.totalExpense as number | undefined) ?? 0;
+      const updatedTotalExpense = currentTotalExpense - expense.amount;
 
       transaction.update(expenseRef, {
         status: 'deleted',
@@ -137,15 +150,15 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
 
       transaction.update(planRef, {
         expenseCount: increment(-1),
-        totalExpense: increment(-expense.amount),
+        totalExpense: updatedTotalExpense,
         updatedAt: now,
       });
 
-      return expense.amount;
+      return updatedTotalExpense;
     });
 
-    if (deletedAmount !== 0) {
-      await syncUserPlansAggregate(planId, { totalExpense: increment(-deletedAmount) });
+    if (nextTotalExpense !== null) {
+      await syncUserPlansAggregate(planId, { totalExpense: nextTotalExpense, updatedAt: now });
     }
   }
 

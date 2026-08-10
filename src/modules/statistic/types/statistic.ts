@@ -29,6 +29,7 @@ export type TimelineStatisticRow = {
 
 export type StatisticSummary = {
   totalExpense: number;
+  totalIncome: number;
   memberCount: number;
   expenseCount: number;
   averageExpense: number;

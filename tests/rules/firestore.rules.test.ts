@@ -52,6 +52,7 @@ async function seedBasePlan() {
       userId: 'owner-user',
       email: 'owner@example.com',
       nickname: 'Owner',
+      nicknameIsCustom: false,
       avatarUrl: null,
       role: 'owner',
       permissions: { canEditAllExpenses: true },
@@ -71,6 +72,7 @@ async function seedBasePlan() {
       userId: 'editor-user',
       email: 'editor@example.com',
       nickname: 'Editor',
+      nicknameIsCustom: false,
       avatarUrl: null,
       role: 'editor',
       permissions: { canEditAllExpenses: false },
@@ -90,6 +92,7 @@ async function seedBasePlan() {
       userId: 'viewer-user',
       email: 'viewer@example.com',
       nickname: 'Viewer',
+      nicknameIsCustom: false,
       avatarUrl: null,
       role: 'viewer',
       permissions: { canEditAllExpenses: false },
@@ -199,6 +202,48 @@ async function seedBasePlan() {
       note: null,
       attachments: [],
       spentAt: now,
+      createdByUserId: 'editor-user',
+      createdByMemberId: 'member-editor',
+      createdAt: now,
+      updatedAt: now,
+      status: 'active',
+      deletedAt: null,
+      deletedByUserId: null,
+      version: 1,
+    });
+
+    await setDoc(doc(db, 'plans', 'plan-1', 'incomes', 'income-owner'), {
+      id: 'income-owner',
+      planId: 'plan-1',
+      title: 'Nap quy',
+      categoryId: null,
+      amount: 500,
+      currency: 'VND',
+      contributedByMemberId: 'member-owner',
+      note: null,
+      attachments: [],
+      receivedAt: now,
+      createdByUserId: 'owner-user',
+      createdByMemberId: 'member-owner',
+      createdAt: now,
+      updatedAt: now,
+      status: 'active',
+      deletedAt: null,
+      deletedByUserId: null,
+      version: 1,
+    });
+
+    await setDoc(doc(db, 'plans', 'plan-1', 'incomes', 'income-editor'), {
+      id: 'income-editor',
+      planId: 'plan-1',
+      title: 'Hoan tien',
+      categoryId: null,
+      amount: 150,
+      currency: 'VND',
+      contributedByMemberId: 'member-editor',
+      note: null,
+      attachments: [],
+      receivedAt: now,
       createdByUserId: 'editor-user',
       createdByMemberId: 'member-editor',
       createdAt: now,
@@ -332,6 +377,54 @@ describe('firestore rules', () => {
     );
   });
 
+  it('allows a member to refresh their own non-custom nickname', async () => {
+    const db = testEnv.authenticatedContext('editor-user').firestore();
+    await assertSucceeds(
+      updateDoc(doc(db, 'plans', 'plan-1', 'members', 'member-editor'), {
+        nickname: 'Renamed Editor',
+        updatedAt: now,
+      }),
+    );
+  });
+
+  it('blocks a member from refreshing their nickname once it has been customized', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), 'plans', 'plan-1', 'members', 'member-editor'), {
+        nicknameIsCustom: true,
+      });
+    });
+
+    const db = testEnv.authenticatedContext('editor-user').firestore();
+    await assertFails(
+      updateDoc(doc(db, 'plans', 'plan-1', 'members', 'member-editor'), {
+        nickname: 'Should not apply',
+        updatedAt: now,
+      }),
+    );
+  });
+
+  it('blocks a user from refreshing another member nickname via the self-service branch', async () => {
+    const db = testEnv.authenticatedContext('viewer-user').firestore();
+    await assertFails(
+      updateDoc(doc(db, 'plans', 'plan-1', 'members', 'member-editor'), {
+        nickname: 'Hijacked',
+        updatedAt: now,
+      }),
+    );
+  });
+
+  it('allows owner to customize an editor nickname via the Member panel', async () => {
+    const db = testEnv.authenticatedContext('owner-user').firestore();
+    await assertSucceeds(
+      updateDoc(doc(db, 'plans', 'plan-1', 'members', 'member-editor'), {
+        nickname: 'Custom Nickname',
+        nicknameIsCustom: true,
+        role: 'editor',
+        updatedAt: now,
+      }),
+    );
+  });
+
   it('prevents user from promoting themselves to owner', async () => {
     const db = testEnv.authenticatedContext('editor-user').firestore();
     await assertFails(
@@ -402,6 +495,45 @@ describe('firestore rules', () => {
         deletedAt: null,
         deletedByUserId: null,
         version: 1,
+      }),
+    );
+  });
+
+  it('allows editor to edit their own income but not someone else income', async () => {
+    const db = testEnv.authenticatedContext('editor-user').firestore();
+    await assertSucceeds(
+      updateDoc(doc(db, 'plans', 'plan-1', 'incomes', 'income-editor'), {
+        title: 'Updated Hoan tien',
+        updatedAt: now,
+        version: 2,
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(db, 'plans', 'plan-1', 'incomes', 'income-owner'), {
+        title: 'Illegal edit',
+        updatedAt: now,
+        version: 2,
+      }),
+    );
+  });
+
+  it('blocks income update when plan is closed', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), 'plans', 'plan-1'), {
+        status: 'closed',
+        closedAt: now,
+      });
+      await updateDoc(doc(context.firestore(), 'userPlans', 'editor-user', 'plans', 'plan-1'), {
+        planStatus: 'closed',
+      });
+    });
+
+    const db = testEnv.authenticatedContext('editor-user').firestore();
+    await assertFails(
+      updateDoc(doc(db, 'plans', 'plan-1', 'incomes', 'income-editor'), {
+        title: 'Late edit',
+        updatedAt: now,
+        version: 2,
       }),
     );
   });

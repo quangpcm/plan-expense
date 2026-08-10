@@ -12,6 +12,7 @@ function makeMember(overrides: Partial<PlanMemberDocument>): PlanMemberDocument 
     userId: 'user-1',
     email: 'user@example.com',
     nickname: 'Member',
+    nicknameIsCustom: false,
     avatarUrl: null,
     role: 'viewer',
     permissions: {

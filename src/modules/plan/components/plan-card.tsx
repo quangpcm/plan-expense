@@ -14,7 +14,7 @@ type PlanCardProps = {
 };
 
 export function PlanCard({ plan }: PlanCardProps) {
-  const lastActivityDate = timestampToDate(plan.lastActivityAt);
+  const lastActivityDate = timestampToDate(plan.updatedAt);
   const createdDate = timestampToDate(plan.createdAt);
   const PlanTypeIcon = planTypeIcons[plan.planType];
 

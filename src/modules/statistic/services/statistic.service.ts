@@ -13,6 +13,7 @@ export class StatisticService {
     const activeAndRemovedMembers = input.members.filter((member) => member.status !== 'invited');
     const overview = {
       totalExpense: input.expenses.reduce((sum, expense) => sum + expense.amount, 0),
+      totalIncome: input.incomes.reduce((sum, income) => sum + income.amount, 0),
       memberCount: activeAndRemovedMembers.length,
       expenseCount: input.expenses.length,
       averageExpense:
@@ -51,7 +52,7 @@ export class StatisticService {
         const settlementReceived = input.settlements
           .filter((settlement) => settlement.status === 'completed' && settlement.toMemberId === member.id)
           .reduce((sum, settlement) => sum + settlement.amount, 0);
-        const balance = paid - owed;
+        const balance = paid + totalIncome - owed;
 
         return {
           memberId: member.id,
