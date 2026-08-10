@@ -58,14 +58,24 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/plans/$(planId)/invitations/$(invitationId));
     }
 
-    function isValidPendingInvitation(planId, invitationId, role) {
+    function invitationMatchesRequester(planId, invitationId) {
       return invitationDoc(planId, invitationId).data.status == 'pending' &&
         invitationDoc(planId, invitationId).data.expiresAt > request.time &&
-        invitationDoc(planId, invitationId).data.role == role &&
         (
           invitationDoc(planId, invitationId).data.email == null ||
           invitationDoc(planId, invitationId).data.email == request.auth.token.email.lower()
         );
+    }
+
+    function isValidPendingInvitation(planId, invitationId, role) {
+      return invitationMatchesRequester(planId, invitationId) &&
+        invitationDoc(planId, invitationId).data.targetMemberId == null &&
+        invitationDoc(planId, invitationId).data.role == role;
+    }
+
+    function isValidPendingClaimInvitation(planId, invitationId, memberId) {
+      return invitationMatchesRequester(planId, invitationId) &&
+        invitationDoc(planId, invitationId).data.targetMemberId == memberId;
     }
 
     function immutablePlanFieldsUnchanged() {
@@ -241,7 +251,9 @@ service cloud.firestore {
       ) || (
         // Unlink account: owner detaches an already-accepted member's account
         // from this row, without touching their expense/income history. The row
-        // becomes guest-shaped again (no re-link/claim support — that's deferred).
+        // becomes guest-shaped again — re-linking a (possibly different)
+        // account afterward goes through the claim branch below, same as any
+        // other guest.
         isPlanOwner(planId) &&
         resource.data.memberType == 'registered' &&
         resource.data.userId != null &&
@@ -254,6 +266,34 @@ service cloud.firestore {
         request.resource.data.nickname == resource.data.nickname &&
         request.resource.data.nicknameIsCustom == resource.data.nicknameIsCustom &&
         request.resource.data.invitationId == resource.data.invitationId &&
+        request.resource.data.avatarUrl == resource.data.avatarUrl &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.permissions == resource.data.permissions &&
+        request.resource.data.status == resource.data.status &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.createdByUserId == resource.data.createdByUserId &&
+        request.resource.data.invitedAt == resource.data.invitedAt &&
+        request.resource.data.joinedAt == resource.data.joinedAt &&
+        request.resource.data.removedAt == resource.data.removedAt
+      ) || (
+        // Guest-claim: a signed-in user links their account to an EXISTING
+        // guest member row via a matching pending claim-invitation
+        // (targetMemberId == this memberId). memberId/history never change —
+        // only identity fields (userId/memberType/email) move from
+        // unset/guest to this account/registered.
+        isSignedIn() &&
+        resource.data.memberType == 'guest' &&
+        resource.data.userId == null &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.memberType == 'registered' &&
+        request.resource.data.email == request.auth.token.email &&
+        request.resource.data.invitationId != null &&
+        isPlanActive(planId) &&
+        isValidPendingClaimInvitation(planId, request.resource.data.invitationId, memberId) &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.planId == resource.data.planId &&
+        request.resource.data.nickname == resource.data.nickname &&
+        request.resource.data.nicknameIsCustom == resource.data.nicknameIsCustom &&
         request.resource.data.avatarUrl == resource.data.avatarUrl &&
         request.resource.data.role == resource.data.role &&
         request.resource.data.permissions == resource.data.permissions &&
@@ -364,7 +404,11 @@ service cloud.firestore {
         request.resource.data.id == invitationId &&
         request.resource.data.invitedByUserId == request.auth.uid &&
         request.resource.data.status == 'pending' &&
-        request.resource.data.planName is string;
+        request.resource.data.planName is string &&
+        (
+          request.resource.data.targetMemberId == null ||
+          memberDoc(planId, request.resource.data.targetMemberId).data.memberType == 'guest'
+        );
       allow update: if (
           isSignedIn() &&
           resource.data.status == 'pending' &&

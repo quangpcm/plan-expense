@@ -113,21 +113,27 @@ export default function AcceptInvitationPage() {
   );
   const returnPath = `/invite/${planId}/${invitationId}`;
 
+  const isClaim = Boolean(invitation.targetMemberId);
+
   return (
     <AuthShell
       description={
-        invitation.email
-          ? `Chỉ tài khoản ${invitation.email} mới có thể chấp nhận lời mời này.`
-          : 'Ai có link này đều có thể tham gia với vai trò được mời.'
+        isClaim
+          ? `Lịch sử chi tiêu/thu đã ghi cho ${invitation.targetNickname} sẽ được giữ nguyên, chỉ gắn thêm tài khoản của bạn vào đó.`
+          : invitation.email
+            ? `Chỉ tài khoản ${invitation.email} mới có thể chấp nhận lời mời này.`
+            : 'Ai có link này đều có thể tham gia với vai trò được mời.'
       }
       footer={null}
-      title="Bạn được mời tham gia kế hoạch"
+      title={isClaim ? 'Bạn được mời liên kết tài khoản' : 'Bạn được mời tham gia kế hoạch'}
     >
       <div className="flex items-center gap-3 rounded-[24px] bg-slate-50 p-4">
         <PlanIcon className="size-6 text-slate-600" />
         <div>
           <p className="font-semibold text-slate-950">{invitation.planName}</p>
-          <p className="text-sm text-slate-600">Vai trò: {ROLE_LABEL[invitation.role]}</p>
+          <p className="text-sm text-slate-600">
+            {isClaim ? `Liên kết với: ${invitation.targetNickname}` : `Vai trò: ${ROLE_LABEL[invitation.role]}`}
+          </p>
         </div>
       </div>
 
@@ -159,11 +165,11 @@ export default function AcceptInvitationPage() {
           {acceptError ? <AuthFormMessage message={acceptError} type="error" /> : null}
           <Button className="w-full" disabled={isAccepting} onClick={handleAccept}>
             {isAccepting ? (
-              'Đang tham gia...'
+              isClaim ? 'Đang liên kết...' : 'Đang tham gia...'
             ) : (
               <>
                 <CheckCircle2 className="size-4" />
-                Tham gia kế hoạch
+                {isClaim ? 'Liên kết tài khoản' : 'Tham gia kế hoạch'}
               </>
             )}
           </Button>

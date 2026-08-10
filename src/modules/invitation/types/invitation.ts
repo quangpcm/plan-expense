@@ -12,6 +12,8 @@ export type InvitationDocument = {
   planName: string;
   planType: PlanType;
   coverImageUrl: string | null;
+  targetMemberId: string | null;
+  targetNickname: string | null;
   email: string | null;
   role: InviteRole;
   status: InvitationStatus;

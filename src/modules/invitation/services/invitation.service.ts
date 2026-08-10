@@ -47,6 +47,44 @@ export class InvitationService {
     );
   }
 
+  async createClaimInvitation(
+    plan: PlanDocument,
+    targetMember: PlanMemberDocument,
+    email: string | null,
+    actor: AuthUser,
+    currentMember: PlanMemberDocument | null,
+  ) {
+    if (!resolvePlanPermissions(currentMember).canManageMembers) {
+      throw new AppError(
+        'You do not have permission to send invitations.',
+        'INVITATION_PERMISSION_DENIED',
+        403,
+      );
+    }
+
+    if (targetMember.memberType !== 'guest' || targetMember.status !== 'active' || targetMember.role === 'owner') {
+      throw new AppError(
+        'Only an active guest can be linked to an account.',
+        'INVITATION_INVALID_TARGET',
+        400,
+      );
+    }
+
+    return this.invitationRepository.createInvitation(
+      {
+        planId: plan.id,
+        planName: plan.name,
+        planType: plan.planType,
+        coverImageUrl: plan.coverImageUrl,
+        email: email ? email.trim() : null,
+        role: targetMember.role,
+        targetMemberId: targetMember.id,
+        targetNickname: targetMember.nickname,
+      },
+      actor,
+    );
+  }
+
   async acceptInvitation(planId: string, invitationId: string, actor: AuthUser) {
     const invitation = await this.invitationRepository.getInvitation(planId, invitationId);
 

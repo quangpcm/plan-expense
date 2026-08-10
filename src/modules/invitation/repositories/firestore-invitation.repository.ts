@@ -59,6 +59,8 @@ export class FirestoreInvitationRepository implements InvitationRepository {
         planName: input.planName,
         planType: input.planType,
         coverImageUrl: input.coverImageUrl,
+        targetMemberId: input.targetMemberId ?? null,
+        targetNickname: input.targetNickname ?? null,
         email: input.email ? input.email.toLowerCase() : null,
         role: input.role,
         status: 'pending',
@@ -86,31 +88,46 @@ export class FirestoreInvitationRepository implements InvitationRepository {
     }
 
     const invitation = invitationSnapshot.data() as InvitationDocument;
-    const memberRef = doc(collection(db, 'plans', planId, 'members'));
+    const memberRef = invitation.targetMemberId
+      ? doc(db, 'plans', planId, 'members', invitation.targetMemberId)
+      : doc(collection(db, 'plans', planId, 'members'));
     const userPlanRef = doc(db, 'userPlans', actor.uid, 'plans', planId);
     const now = Timestamp.now();
     const batch = writeBatch(db);
 
-    batch.set(memberRef, {
-      id: memberRef.id,
-      planId,
-      memberType: 'registered',
-      userId: actor.uid,
-      email: actor.email,
-      nickname: actor.displayName?.trim() || actor.email?.split('@')[0] || 'Member',
-      nicknameIsCustom: false,
-      invitationId,
-      avatarUrl: actor.photoURL,
-      role: invitation.role,
-      permissions: { canEditAllExpenses: false },
-      status: 'active',
-      invitedAt: null,
-      joinedAt: now,
-      removedAt: null,
-      createdByUserId: actor.uid,
-      createdAt: now,
-      updatedAt: now,
-    });
+    if (invitation.targetMemberId) {
+      // Guest-claim: link this account to the EXISTING guest row — memberId,
+      // nickname, role, and every past expense/income reference to it stay
+      // untouched. See firestore.rules' claim branch for the matching rule.
+      batch.update(memberRef, {
+        memberType: 'registered',
+        userId: actor.uid,
+        email: actor.email,
+        invitationId,
+        updatedAt: now,
+      });
+    } else {
+      batch.set(memberRef, {
+        id: memberRef.id,
+        planId,
+        memberType: 'registered',
+        userId: actor.uid,
+        email: actor.email,
+        nickname: actor.displayName?.trim() || actor.email?.split('@')[0] || 'Member',
+        nicknameIsCustom: false,
+        invitationId,
+        avatarUrl: actor.photoURL,
+        role: invitation.role,
+        permissions: { canEditAllExpenses: false },
+        status: 'active',
+        invitedAt: null,
+        joinedAt: now,
+        removedAt: null,
+        createdByUserId: actor.uid,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
 
     batch.set(userPlanRef, {
       id: planId,
@@ -152,15 +169,23 @@ export class FirestoreInvitationRepository implements InvitationRepository {
       if (planSnapshot.exists()) {
         const plan = planSnapshot.data() as { totalExpense: number; memberCount: number };
 
+        // A claim links an account to an EXISTING member — no new member was
+        // added, so plan.memberCount must not change. Only a brand-new join
+        // (targetMemberId null) actually grows the plan's member count.
+        const nextMemberCount = invitation.targetMemberId ? plan.memberCount : plan.memberCount + 1;
+
         await updateDoc(userPlanRef, {
           totalExpense: plan.totalExpense,
-          memberCount: plan.memberCount + 1,
+          memberCount: nextMemberCount,
           updatedAt: Timestamp.now(),
         });
-        await updateDoc(doc(db, 'plans', planId), {
-          memberCount: increment(1),
-          updatedAt: Timestamp.now(),
-        });
+
+        if (!invitation.targetMemberId) {
+          await updateDoc(doc(db, 'plans', planId), {
+            memberCount: increment(1),
+            updatedAt: Timestamp.now(),
+          });
+        }
       }
     } catch {
       // Non-critical — the next expense/member mutation on this plan will

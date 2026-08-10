@@ -234,6 +234,14 @@ export default function PlanDetailPage() {
     }
   }
 
+  async function handleCreateClaimInvitation(member: PlanMemberDocument, email: string | null) {
+    if (!user) {
+      throw new Error('Hiện chưa thể tạo link liên kết.');
+    }
+
+    return invitationService.createClaimInvitation(currentPlan, member, email, user, currentMember);
+  }
+
   async function handleRevokeInvitation(invitation: InvitationDocument) {
     if (!user) {
       return;
@@ -523,11 +531,13 @@ export default function PlanDetailPage() {
               isSaving={isMemberActionSubmitting}
               linkedMemberIds={linkedMemberIds}
               members={members}
+              onCreateClaimInvitation={handleCreateClaimInvitation}
               onDelete={handleDeleteMember}
               onReactivate={handleReactivateMember}
               onRemove={handleRemoveMember}
               onUnlinkAccount={handleUnlinkAccount}
               onUpdateMember={handleUpdateMember}
+              planId={planId}
             />
             <SectionHeading
               eyebrow="Lời mời"

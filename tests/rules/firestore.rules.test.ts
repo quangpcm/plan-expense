@@ -266,6 +266,8 @@ async function seedBasePlan() {
       planName: 'Trip',
       planType: 'travel',
       coverImageUrl: null,
+      targetMemberId: null,
+      targetNickname: null,
       email: 'newuser@example.com',
       role: 'editor',
       status: 'pending',
@@ -285,6 +287,8 @@ async function seedBasePlan() {
       planName: 'Trip',
       planType: 'travel',
       coverImageUrl: null,
+      targetMemberId: null,
+      targetNickname: null,
       email: null,
       role: 'viewer',
       status: 'pending',
@@ -304,11 +308,76 @@ async function seedBasePlan() {
       planName: 'Trip',
       planType: 'travel',
       coverImageUrl: null,
+      targetMemberId: null,
+      targetNickname: null,
       email: null,
       role: 'viewer',
       status: 'pending',
       invitedByUserId: 'owner-user',
       expiresAt: past,
+      acceptedAt: null,
+      acceptedByUserId: null,
+      revokedAt: null,
+      revokedByUserId: null,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await setDoc(doc(db, 'plans', 'plan-1', 'members', 'member-guest'), {
+      id: 'member-guest',
+      planId: 'plan-1',
+      memberType: 'guest',
+      userId: null,
+      email: null,
+      nickname: 'LA',
+      nicknameIsCustom: true,
+      invitationId: null,
+      avatarUrl: null,
+      role: 'viewer',
+      permissions: { canEditAllExpenses: false },
+      status: 'active',
+      invitedAt: null,
+      joinedAt: now,
+      removedAt: null,
+      createdByUserId: 'owner-user',
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await setDoc(doc(db, 'plans', 'plan-1', 'members', 'member-guest-2'), {
+      id: 'member-guest-2',
+      planId: 'plan-1',
+      memberType: 'guest',
+      userId: null,
+      email: null,
+      nickname: 'Other Guest',
+      nicknameIsCustom: true,
+      invitationId: null,
+      avatarUrl: null,
+      role: 'viewer',
+      permissions: { canEditAllExpenses: false },
+      status: 'active',
+      invitedAt: null,
+      joinedAt: now,
+      removedAt: null,
+      createdByUserId: 'owner-user',
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await setDoc(doc(db, 'plans', 'plan-1', 'invitations', 'invite-claim'), {
+      id: 'invite-claim',
+      planId: 'plan-1',
+      planName: 'Trip',
+      planType: 'travel',
+      coverImageUrl: null,
+      targetMemberId: 'member-guest',
+      targetNickname: 'LA',
+      email: null,
+      role: 'viewer',
+      status: 'pending',
+      invitedByUserId: 'owner-user',
+      expiresAt: future,
       acceptedAt: null,
       acceptedByUserId: null,
       revokedAt: null,
@@ -823,5 +892,106 @@ describe('firestore rules', () => {
       }),
     );
     await assertSucceeds(deleteDoc(doc(ownerDb, 'userPlans', 'viewer-user', 'plans', 'plan-1')));
+  });
+
+  it('allows claiming an existing guest via a matching claim-invitation, preserving memberId', async () => {
+    const db = testEnv.authenticatedContext('claimer-user', { email: 'claimer@example.com' }).firestore();
+    const memberRef = doc(db, 'plans', 'plan-1', 'members', 'member-guest');
+    const batch = writeBatch(db);
+
+    batch.update(memberRef, {
+      memberType: 'registered',
+      userId: 'claimer-user',
+      email: 'claimer@example.com',
+      invitationId: 'invite-claim',
+      updatedAt: now,
+    });
+    batch.set(doc(db, 'userPlans', 'claimer-user', 'plans', 'plan-1'), {
+      id: 'plan-1',
+      planId: 'plan-1',
+      userId: 'claimer-user',
+      planName: 'Trip',
+      planType: 'travel',
+      role: 'viewer',
+      memberId: 'member-guest',
+      memberStatus: 'active',
+      planStatus: 'active',
+      coverImageUrl: null,
+      totalExpense: 0,
+      memberCount: 1,
+      joinedAt: now,
+      lastActivityAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+    batch.update(doc(db, 'plans', 'plan-1', 'invitations', 'invite-claim'), {
+      status: 'accepted',
+      acceptedAt: now,
+      acceptedByUserId: 'claimer-user',
+      updatedAt: now,
+    });
+
+    await assertSucceeds(batch.commit());
+  });
+
+  it('blocks replaying a claim-invitation through the plain new-member create branch', async () => {
+    const db = testEnv.authenticatedContext('hijacker-user', { email: 'hijacker@example.com' }).firestore();
+    const memberRef = doc(collection(db, 'plans', 'plan-1', 'members'));
+
+    await assertFails(
+      setDoc(memberRef, {
+        id: memberRef.id,
+        planId: 'plan-1',
+        memberType: 'registered',
+        userId: 'hijacker-user',
+        email: 'hijacker@example.com',
+        nickname: 'Hijacker',
+        nicknameIsCustom: false,
+        invitationId: 'invite-claim',
+        avatarUrl: null,
+        role: 'viewer',
+        permissions: { canEditAllExpenses: false },
+        status: 'active',
+        invitedAt: null,
+        joinedAt: now,
+        removedAt: null,
+        createdByUserId: 'hijacker-user',
+        createdAt: now,
+        updatedAt: now,
+      }),
+    );
+  });
+
+  it('blocks claiming a guest that has already been linked to an account', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), 'plans', 'plan-1', 'members', 'member-guest'), {
+        memberType: 'registered',
+        userId: 'already-linked-user',
+      });
+    });
+
+    const db = testEnv.authenticatedContext('claimer2-user', { email: 'claimer2@example.com' }).firestore();
+    await assertFails(
+      updateDoc(doc(db, 'plans', 'plan-1', 'members', 'member-guest'), {
+        memberType: 'registered',
+        userId: 'claimer2-user',
+        email: 'claimer2@example.com',
+        invitationId: 'invite-claim',
+        updatedAt: now,
+      }),
+    );
+  });
+
+  it("blocks claiming a guest whose id doesn't match the invitation's targetMemberId", async () => {
+    const db = testEnv.authenticatedContext('claimer3-user', { email: 'claimer3@example.com' }).firestore();
+    await assertFails(
+      updateDoc(doc(db, 'plans', 'plan-1', 'members', 'member-guest-2'), {
+        memberType: 'registered',
+        userId: 'claimer3-user',
+        email: 'claimer3@example.com',
+        invitationId: 'invite-claim',
+        updatedAt: now,
+      }),
+    );
   });
 });

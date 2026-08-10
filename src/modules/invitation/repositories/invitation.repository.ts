@@ -7,6 +7,8 @@ export type CreateInvitationPersistenceInput = CreateInvitationInput & {
   planName: string;
   planType: PlanType;
   coverImageUrl: string | null;
+  targetMemberId?: string | null;
+  targetNickname?: string | null;
 };
 
 export interface InvitationRepository {

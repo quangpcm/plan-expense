@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Trash2, Unlink } from 'lucide-react';
+import { Check, Copy, Link2, Trash2, Unlink } from 'lucide-react';
 
 import { Avatar } from '@/shared/components/ui/avatar';
 import { Badge } from '@/shared/components/ui/badge';
@@ -19,6 +19,7 @@ type UpdateMemberValues = {
 };
 
 type MemberListProps = {
+  planId: string;
   members: PlanMemberDocument[];
   canManageMembers?: boolean;
   isSaving?: boolean;
@@ -28,9 +29,14 @@ type MemberListProps = {
   onReactivate?: (member: PlanMemberDocument) => Promise<void>;
   onDelete?: (member: PlanMemberDocument) => Promise<void>;
   onUnlinkAccount?: (member: PlanMemberDocument) => Promise<void>;
+  onCreateClaimInvitation?: (
+    member: PlanMemberDocument,
+    email: string | null,
+  ) => Promise<{ invitationId: string }>;
 };
 
 function EditableMemberRow({
+  planId,
   member,
   canManageMembers = false,
   isSaving = false,
@@ -40,7 +46,9 @@ function EditableMemberRow({
   onReactivate,
   onDelete,
   onUnlinkAccount,
+  onCreateClaimInvitation,
 }: {
+  planId: string;
   member: PlanMemberDocument;
   canManageMembers?: boolean;
   isSaving?: boolean;
@@ -50,6 +58,7 @@ function EditableMemberRow({
   onReactivate?: MemberListProps['onReactivate'];
   onDelete?: MemberListProps['onDelete'];
   onUnlinkAccount?: MemberListProps['onUnlinkAccount'];
+  onCreateClaimInvitation?: MemberListProps['onCreateClaimInvitation'];
 }) {
   const [nickname, setNickname] = useState(member.nickname);
   const [role, setRole] = useState<Exclude<PlanRole, 'owner'>>(
@@ -58,7 +67,50 @@ function EditableMemberRow({
   const [canEditAllExpenses, setCanEditAllExpenses] = useState(member.permissions.canEditAllExpenses);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [isConfirmUnlinkOpen, setIsConfirmUnlinkOpen] = useState(false);
+  const [isClaimSheetOpen, setIsClaimSheetOpen] = useState(false);
+  const [claimEmail, setClaimEmail] = useState('');
+  const [claimLink, setClaimLink] = useState<string | null>(null);
+  const [claimError, setClaimError] = useState<string | null>(null);
+  const [isClaimSubmitting, setIsClaimSubmitting] = useState(false);
+  const [isClaimLinkCopied, setIsClaimLinkCopied] = useState(false);
   const canUnlink = member.memberType === 'registered' && Boolean(member.userId);
+  const isClaimable = member.memberType === 'guest' && member.status === 'active';
+
+  async function handleCreateClaimLink() {
+    if (!onCreateClaimInvitation) {
+      return;
+    }
+
+    setIsClaimSubmitting(true);
+    setClaimError(null);
+
+    try {
+      const result = await onCreateClaimInvitation(member, claimEmail.trim() || null);
+      setClaimLink(`${window.location.origin}/invite/${planId}/${result.invitationId}`);
+      setIsClaimLinkCopied(false);
+    } catch (error) {
+      setClaimError(error instanceof Error ? error.message : 'Hiện chưa thể tạo link liên kết.');
+    } finally {
+      setIsClaimSubmitting(false);
+    }
+  }
+
+  async function handleCopyClaimLink() {
+    if (!claimLink) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(claimLink);
+    setIsClaimLinkCopied(true);
+  }
+
+  function closeClaimSheet() {
+    setIsClaimSheetOpen(false);
+    setClaimEmail('');
+    setClaimLink(null);
+    setClaimError(null);
+    setIsClaimLinkCopied(false);
+  }
 
   const trimmedNickname = nickname.trim();
   const hasChanges =
@@ -139,6 +191,17 @@ function EditableMemberRow({
             <Unlink className="size-4" />
           </Button>
         ) : null}
+        {isClaimable ? (
+          <Button
+            aria-label="Mời liên kết tài khoản"
+            className="size-11 shrink-0 p-0"
+            disabled={isSaving || !onCreateClaimInvitation}
+            onClick={() => setIsClaimSheetOpen(true)}
+            variant="ghost"
+          >
+            <Link2 className="size-4" />
+          </Button>
+        ) : null}
         <Button
           aria-label="Xóa thành viên"
           className="size-11 shrink-0 p-0 text-red-600 hover:bg-red-50"
@@ -208,11 +271,44 @@ function EditableMemberRow({
           </Button>
         </div>
       </BottomSheet>
+      <BottomSheet
+        description={`Người nhận link sẽ liên kết tài khoản của họ với ${member.nickname} — giữ nguyên lịch sử chi tiêu/thu đã có, không tạo thành viên mới.`}
+        onClose={closeClaimSheet}
+        open={isClaimSheetOpen}
+        title="Mời liên kết tài khoản"
+      >
+        <div className="space-y-3">
+          <Input
+            onChange={(event) => setClaimEmail(event.target.value)}
+            placeholder="Email (tùy chọn, để giới hạn ai được nhận)"
+            value={claimEmail}
+          />
+          {claimError ? <p className="text-sm text-red-600">{claimError}</p> : null}
+          {claimLink ? (
+            <div className="flex gap-2">
+              <Input className="flex-1" readOnly value={claimLink} />
+              <Button onClick={handleCopyClaimLink} type="button" variant="secondary">
+                {isClaimLinkCopied ? <Check className="size-4" /> : <Copy className="size-4" />}
+              </Button>
+            </div>
+          ) : (
+            <Button
+              className="w-full"
+              disabled={isClaimSubmitting || !onCreateClaimInvitation}
+              onClick={handleCreateClaimLink}
+              type="button"
+            >
+              {isClaimSubmitting ? 'Đang tạo link...' : 'Tạo link'}
+            </Button>
+          )}
+        </div>
+      </BottomSheet>
     </Card>
   );
 }
 
 export function MemberList({
+  planId,
   members,
   canManageMembers = false,
   isSaving = false,
@@ -222,6 +318,7 @@ export function MemberList({
   onReactivate,
   onDelete,
   onUnlinkAccount,
+  onCreateClaimInvitation,
 }: MemberListProps) {
   return (
     <div className="grid gap-3">
@@ -232,11 +329,13 @@ export function MemberList({
           isLinked={linkedMemberIds?.has(member.id) ?? false}
           isSaving={isSaving}
           member={member}
+          onCreateClaimInvitation={onCreateClaimInvitation}
           onDelete={onDelete}
           onReactivate={onReactivate}
           onRemove={onRemove}
           onUnlinkAccount={onUnlinkAccount}
           onUpdateMember={onUpdateMember}
+          planId={planId}
         />
       ))}
     </div>
