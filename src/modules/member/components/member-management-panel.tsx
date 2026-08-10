@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { UserPlus2, UserRoundPlus } from 'lucide-react';
+import { Check, Copy, UserPlus2, UserRoundPlus } from 'lucide-react';
 import { ZodError } from 'zod';
 
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
@@ -11,6 +11,7 @@ import { createInvitationSchema, type CreateInvitationSchema } from '@/modules/i
 import { memberService } from '@/modules/member/services';
 import { addGuestSchema, type AddGuestSchema } from '@/modules/member/schemas/add-guest.schema';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
+import type { PlanDocument } from '@/modules/plan/types/plan';
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
@@ -18,19 +19,20 @@ import { Collapsible } from '@/shared/components/ui/collapsible';
 import { Input } from '@/shared/components/ui/input';
 
 type MemberManagementPanelProps = {
-  planId: string;
+  plan: PlanDocument;
   currentMember: PlanMemberDocument | null;
 };
 
 export function MemberManagementPanel({
-  planId,
+  plan,
   currentMember,
 }: MemberManagementPanelProps) {
   const { user } = useAuthSession();
   const [guestMessage, setGuestMessage] = useState<string | null>(null);
-  const [inviteMessage, setInviteMessage] = useState<string | null>(null);
-  const [guestError, setGuestError] = useState<string | null>(null);
   const [inviteError, setInviteError] = useState<string | null>(null);
+  const [guestError, setGuestError] = useState<string | null>(null);
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [isLinkCopied, setIsLinkCopied] = useState(false);
   const [isGuestSubmitting, setIsGuestSubmitting] = useState(false);
   const [isInviteSubmitting, setIsInviteSubmitting] = useState(false);
   const guestForm = useForm<AddGuestSchema>({
@@ -57,7 +59,7 @@ export function MemberManagementPanel({
 
     try {
       const parsed = addGuestSchema.parse(values);
-      await memberService.addGuest(planId, parsed, user, currentMember);
+      await memberService.addGuest(plan.id, parsed, user, currentMember);
       guestForm.reset({ nickname: '', role: 'editor' });
       setGuestMessage('Đã thêm khách vào kế hoạch.');
     } catch (error) {
@@ -79,14 +81,20 @@ export function MemberManagementPanel({
     }
 
     setInviteError(null);
-    setInviteMessage(null);
+    setInviteLink(null);
+    setIsLinkCopied(false);
     setIsInviteSubmitting(true);
 
     try {
       const parsed = createInvitationSchema.parse(values);
-      await invitationService.createInvitation(planId, parsed, user, currentMember);
+      const result = await invitationService.createInvitation(
+        plan,
+        { email: parsed.email || null, role: parsed.role },
+        user,
+        currentMember,
+      );
       inviteForm.reset({ email: '', role: 'viewer' });
-      setInviteMessage('Đã tạo lời mời.');
+      setInviteLink(`${window.location.origin}/invite/${plan.id}/${result.invitationId}`);
     } catch (error) {
       if (error instanceof ZodError) {
         setInviteError(error.issues[0]?.message || 'Vui lòng kiểm tra lại thông tin lời mời.');
@@ -99,6 +107,15 @@ export function MemberManagementPanel({
       setIsInviteSubmitting(false);
     }
   });
+
+  async function handleCopyLink() {
+    if (!inviteLink) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(inviteLink);
+    setIsLinkCopied(true);
+  }
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
@@ -129,12 +146,12 @@ export function MemberManagementPanel({
 
       <Card>
         <Collapsible
-          title="Mời bằng email"
-          description="Tạo bản ghi lời mời đang chờ cho người dùng đã đăng ký."
+          title="Mời thành viên"
+          description="Bỏ trống email để tạo link mời dùng chung, hoặc nhập email để chỉ tài khoản đó mới nhận được."
           icon={<UserPlus2 className="size-5" />}
         >
           <form className="space-y-4" onSubmit={submitInvitation}>
-            <Input placeholder="member@example.com" {...inviteForm.register('email')} />
+            <Input placeholder="member@example.com (tùy chọn)" {...inviteForm.register('email')} />
             <select
               className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
               {...inviteForm.register('role')}
@@ -143,10 +160,20 @@ export function MemberManagementPanel({
               <option value="editor">Biên tập</option>
             </select>
             {inviteError ? <AuthFormMessage message={inviteError} type="error" /> : null}
-            {inviteMessage ? <AuthFormMessage message={inviteMessage} type="success" /> : null}
+            {inviteLink ? (
+              <div className="space-y-2">
+                <AuthFormMessage message="Đã tạo lời mời. Gửi link này cho người bạn muốn mời." type="success" />
+                <div className="flex gap-2">
+                  <Input className="flex-1" readOnly value={inviteLink} />
+                  <Button onClick={handleCopyLink} type="button" variant="secondary">
+                    {isLinkCopied ? <Check className="size-4" /> : <Copy className="size-4" />}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
             <Button className="w-full" disabled={isInviteSubmitting} type="submit" variant="secondary">
               <UserPlus2 className="size-4" />
-              {isInviteSubmitting ? 'Đang tạo lời mời...' : 'Mời qua email'}
+              {isInviteSubmitting ? 'Đang tạo lời mời...' : 'Tạo lời mời'}
             </Button>
           </form>
         </Collapsible>

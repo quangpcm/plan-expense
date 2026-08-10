@@ -13,6 +13,7 @@ function makeMember(overrides: Partial<PlanMemberDocument>): PlanMemberDocument 
     email: 'user@example.com',
     nickname: 'Member',
     nicknameIsCustom: false,
+    invitationId: null,
     avatarUrl: null,
     role: 'viewer',
     permissions: {

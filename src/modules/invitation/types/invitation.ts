@@ -1,5 +1,7 @@
 import type { Timestamp } from 'firebase/firestore';
 
+import type { PlanType } from '@/modules/plan/types/plan';
+
 export type InviteRole = 'editor' | 'viewer';
 
 export type InvitationStatus = 'pending' | 'accepted' | 'expired' | 'revoked';
@@ -7,8 +9,10 @@ export type InvitationStatus = 'pending' | 'accepted' | 'expired' | 'revoked';
 export type InvitationDocument = {
   id: string;
   planId: string;
+  planName: string;
+  planType: PlanType;
+  coverImageUrl: string | null;
   email: string | null;
-  tokenHash: string;
   role: InviteRole;
   status: InvitationStatus;
   invitedByUserId: string;
@@ -22,7 +26,6 @@ export type InvitationDocument = {
 };
 
 export type CreateInvitationInput = {
-  email: string;
+  email: string | null;
   role: InviteRole;
 };
-

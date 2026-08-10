@@ -59,6 +59,7 @@ export class FirestoreMemberRepository implements MemberRepository {
       email: null,
       nickname: input.nickname,
       nicknameIsCustom: true,
+      invitationId: null,
       avatarUrl: null,
       role: input.role,
       permissions: {
@@ -118,6 +119,34 @@ export class FirestoreMemberRepository implements MemberRepository {
         await updateDoc(memberRef, { nickname, updatedAt: now });
       }),
     );
+  }
+
+  async unlinkMemberAccount(planId: string, memberId: string) {
+    const db = getFirebaseFirestore();
+    const memberRef = doc(db, 'plans', planId, 'members', memberId);
+
+    await runTransaction(db, async (transaction) => {
+      const memberSnapshot = await transaction.get(memberRef);
+
+      if (!memberSnapshot.exists()) {
+        return;
+      }
+
+      const member = memberSnapshot.data() as PlanMemberDocument;
+
+      if (member.memberType !== 'registered' || !member.userId) {
+        return;
+      }
+
+      transaction.update(memberRef, {
+        userId: null,
+        memberType: 'guest',
+        email: null,
+        updatedAt: Timestamp.now(),
+      });
+
+      transaction.delete(doc(db, 'userPlans', member.userId, 'plans', planId));
+    });
   }
 
   async removeMember(planId: string, memberId: string) {

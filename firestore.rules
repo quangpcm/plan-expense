@@ -54,6 +54,20 @@ service cloud.firestore {
       return planDoc(planId).data.status == 'active';
     }
 
+    function invitationDoc(planId, invitationId) {
+      return get(/databases/$(database)/documents/plans/$(planId)/invitations/$(invitationId));
+    }
+
+    function isValidPendingInvitation(planId, invitationId, role) {
+      return invitationDoc(planId, invitationId).data.status == 'pending' &&
+        invitationDoc(planId, invitationId).data.expiresAt > request.time &&
+        invitationDoc(planId, invitationId).data.role == role &&
+        (
+          invitationDoc(planId, invitationId).data.email == null ||
+          invitationDoc(planId, invitationId).data.email == request.auth.token.email.lower()
+        );
+    }
+
     function immutablePlanFieldsUnchanged() {
       return request.resource.data.id == resource.data.id &&
         request.resource.data.ownerUserId == resource.data.ownerUserId &&
@@ -149,6 +163,18 @@ service cloud.firestore {
           isPlanActive(planId) &&
           request.resource.data.role in ['editor', 'viewer'] &&
           request.resource.data.status == 'active'
+        ) || (
+          // Accept-invitation self-service: a signed-in user may create their own
+          // member row when a matching pending, non-expired invitation exists for
+          // this plan/role (and email, if the invitation is email-restricted).
+          isSignedIn() &&
+          request.resource.data.userId == request.auth.uid &&
+          request.resource.data.memberType == 'registered' &&
+          request.resource.data.status == 'active' &&
+          request.resource.data.role in ['editor', 'viewer'] &&
+          request.resource.data.invitationId != null &&
+          isPlanActive(planId) &&
+          isValidPendingInvitation(planId, request.resource.data.invitationId, request.resource.data.role)
         );
       allow update: if (
         isPlanOwner(planId) &&
@@ -203,6 +229,31 @@ service cloud.firestore {
         request.resource.data.memberType == resource.data.memberType &&
         request.resource.data.userId == resource.data.userId &&
         request.resource.data.email == resource.data.email &&
+        request.resource.data.avatarUrl == resource.data.avatarUrl &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.permissions == resource.data.permissions &&
+        request.resource.data.status == resource.data.status &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.createdByUserId == resource.data.createdByUserId &&
+        request.resource.data.invitedAt == resource.data.invitedAt &&
+        request.resource.data.joinedAt == resource.data.joinedAt &&
+        request.resource.data.removedAt == resource.data.removedAt
+      ) || (
+        // Unlink account: owner detaches an already-accepted member's account
+        // from this row, without touching their expense/income history. The row
+        // becomes guest-shaped again (no re-link/claim support — that's deferred).
+        isPlanOwner(planId) &&
+        resource.data.memberType == 'registered' &&
+        resource.data.userId != null &&
+        resource.data.role != 'owner' &&
+        request.resource.data.userId == null &&
+        request.resource.data.memberType == 'guest' &&
+        request.resource.data.email == null &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.planId == resource.data.planId &&
+        request.resource.data.nickname == resource.data.nickname &&
+        request.resource.data.nicknameIsCustom == resource.data.nicknameIsCustom &&
+        request.resource.data.invitationId == resource.data.invitationId &&
         request.resource.data.avatarUrl == resource.data.avatarUrl &&
         request.resource.data.role == resource.data.role &&
         request.resource.data.permissions == resource.data.permissions &&
@@ -299,14 +350,42 @@ service cloud.firestore {
     }
 
     match /plans/{planId}/invitations/{invitationId} {
-      allow read: if isPlanVisible(planId);
+      // `get` (fetching one exact doc by planId+invitationId, i.e. having the
+      // invite link) is allowed for a still-pending, non-expired invitation even
+      // by someone who isn't a plan member yet — that's the whole point of the
+      // link. `list`/collectionGroup queries stay restricted to plan members, so
+      // invitations can never be enumerated.
+      allow get: if isPlanVisible(planId) ||
+        (resource.data.status == 'pending' && resource.data.expiresAt > request.time);
+      allow list: if isPlanVisible(planId);
       allow create: if isPlanOwner(planId) &&
         isPlanActive(planId) &&
         request.resource.data.planId == planId &&
         request.resource.data.id == invitationId &&
         request.resource.data.invitedByUserId == request.auth.uid &&
         request.resource.data.status == 'pending' &&
-        request.resource.data.tokenHash is string;
+        request.resource.data.planName is string;
+      allow update: if (
+          isSignedIn() &&
+          resource.data.status == 'pending' &&
+          resource.data.expiresAt > request.time &&
+          (resource.data.email == null || resource.data.email == request.auth.token.email.lower()) &&
+          request.resource.data.status == 'accepted' &&
+          request.resource.data.acceptedByUserId == request.auth.uid &&
+          request.resource.data.acceptedAt != null &&
+          request.resource.data.revokedAt == resource.data.revokedAt &&
+          request.resource.data.email == resource.data.email &&
+          request.resource.data.role == resource.data.role
+        ) || (
+          isPlanOwner(planId) &&
+          resource.data.status == 'pending' &&
+          request.resource.data.status == 'revoked' &&
+          request.resource.data.revokedByUserId == request.auth.uid &&
+          request.resource.data.revokedAt != null &&
+          request.resource.data.acceptedAt == resource.data.acceptedAt &&
+          request.resource.data.email == resource.data.email &&
+          request.resource.data.role == resource.data.role
+        );
     }
 
     match /userPlans/{userId}/plans/{planId} {
@@ -320,6 +399,15 @@ service cloud.firestore {
           isSignedIn() &&
           isPlanOwner(request.resource.data.planId) &&
           userPlanCreateValid(userId)
+        ) || (
+          // Accept-invitation self-service: rides along in the same writeBatch as
+          // the member-create write, which already fully validated the invitation.
+          // Only needs to confirm it's attached to that same, just-created row.
+          isSignedIn() &&
+          userId == request.auth.uid &&
+          userPlanCreateValid(userId) &&
+          getAfter(/databases/$(database)/documents/plans/$(planId)/members/$(request.resource.data.memberId)).data.userId == userId &&
+          getAfter(/databases/$(database)/documents/plans/$(planId)/members/$(request.resource.data.memberId)).data.invitationId != null
         );
       allow update: if (
           isSignedIn() &&
@@ -354,6 +442,7 @@ service cloud.firestore {
           request.resource.data.totalExpense is int &&
           request.resource.data.memberCount is int
         );
+      allow delete: if isSignedIn() && isPlanOwner(planId);
     }
   }
 }

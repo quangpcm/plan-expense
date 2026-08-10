@@ -1,12 +1,16 @@
 import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import type { InvitationDocument } from '@/modules/invitation/types/invitation';
 
 type InvitationListProps = {
   invitations: InvitationDocument[];
+  canRevoke: boolean;
+  isSubmitting: boolean;
+  onRevoke: (invitation: InvitationDocument) => void;
 };
 
-export function InvitationList({ invitations }: InvitationListProps) {
+export function InvitationList({ invitations, canRevoke, isSubmitting, onRevoke }: InvitationListProps) {
   if (invitations.length === 0) {
     return (
       <Card>
@@ -28,6 +32,13 @@ export function InvitationList({ invitations }: InvitationListProps) {
               {invitation.status}
             </Badge>
           </div>
+          {canRevoke && invitation.status === 'pending' ? (
+            <div className="flex justify-end">
+              <Button disabled={isSubmitting} onClick={() => onRevoke(invitation)} variant="ghost">
+                Hủy lời mời
+              </Button>
+            </div>
+          ) : null}
         </Card>
       ))}
     </div>

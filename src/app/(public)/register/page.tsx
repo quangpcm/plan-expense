@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { startTransition, useState } from 'react';
 import { UserPlus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -17,6 +17,7 @@ import { appRoutes } from '@/shared/constants';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { register: registerAccount } = useAuthActions();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,8 +37,9 @@ export default function RegisterPage() {
     try {
       const parsed = registerSchema.parse(values);
       await registerAccount(parsed);
+      const next = searchParams.get('next') || appRoutes.plans;
       startTransition(() => {
-        router.replace(appRoutes.plans);
+        router.replace(next);
       });
     } catch (error) {
       if (error instanceof ZodError) {

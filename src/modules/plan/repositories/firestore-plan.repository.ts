@@ -102,6 +102,7 @@ export class FirestorePlanRepository implements PlanRepository {
       email: input.owner.email,
       nickname: input.owner.displayName?.trim() || input.owner.email?.split('@')[0] || 'Owner',
       nicknameIsCustom: false,
+      invitationId: null,
       avatarUrl: input.owner.photoURL,
       role: 'owner',
       permissions: {

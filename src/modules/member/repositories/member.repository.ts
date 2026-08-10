@@ -17,4 +17,5 @@ export interface MemberRepository {
   reactivateMember(planId: string, memberId: string, actor: AuthUser): Promise<void>;
   deleteMember(planId: string, memberId: string, actor: AuthUser): Promise<void>;
   cascadeNicknameUpdate(userId: string, nickname: string): Promise<void>;
+  unlinkMemberAccount(planId: string, memberId: string): Promise<void>;
 }

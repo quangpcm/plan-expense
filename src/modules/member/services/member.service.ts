@@ -100,4 +100,20 @@ export class MemberService {
   async cascadeNicknameUpdate(userId: string, nickname: string) {
     await this.memberRepository.cascadeNicknameUpdate(userId, nickname);
   }
+
+  async unlinkMemberAccount(
+    planId: string,
+    member: PlanMemberDocument,
+    currentMember: PlanMemberDocument | null,
+  ) {
+    if (!resolvePlanPermissions(currentMember).canManageMembers) {
+      throw new AppError('You do not have permission to unlink member accounts.', 'MEMBER_PERMISSION_DENIED', 403);
+    }
+
+    if (member.role === 'owner') {
+      throw new AppError('Owner account cannot be unlinked.', 'OWNER_UNLINK_BLOCKED', 400);
+    }
+
+    await this.memberRepository.unlinkMemberAccount(planId, member.id);
+  }
 }

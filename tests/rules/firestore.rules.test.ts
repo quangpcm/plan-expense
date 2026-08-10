@@ -7,7 +7,7 @@ import {
   type RulesTestEnvironment,
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 
 const projectId = 'demo-plan-expense';
@@ -53,6 +53,7 @@ async function seedBasePlan() {
       email: 'owner@example.com',
       nickname: 'Owner',
       nicknameIsCustom: false,
+      invitationId: null,
       avatarUrl: null,
       role: 'owner',
       permissions: { canEditAllExpenses: true },
@@ -73,6 +74,7 @@ async function seedBasePlan() {
       email: 'editor@example.com',
       nickname: 'Editor',
       nicknameIsCustom: false,
+      invitationId: null,
       avatarUrl: null,
       role: 'editor',
       permissions: { canEditAllExpenses: false },
@@ -93,6 +95,7 @@ async function seedBasePlan() {
       email: 'viewer@example.com',
       nickname: 'Viewer',
       nicknameIsCustom: false,
+      invitationId: null,
       avatarUrl: null,
       role: 'viewer',
       permissions: { canEditAllExpenses: false },
@@ -252,6 +255,66 @@ async function seedBasePlan() {
       deletedAt: null,
       deletedByUserId: null,
       version: 1,
+    });
+
+    const future = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const past = new Date(now.getTime() - 60 * 60 * 1000);
+
+    await setDoc(doc(db, 'plans', 'plan-1', 'invitations', 'invite-email'), {
+      id: 'invite-email',
+      planId: 'plan-1',
+      planName: 'Trip',
+      planType: 'travel',
+      coverImageUrl: null,
+      email: 'newuser@example.com',
+      role: 'editor',
+      status: 'pending',
+      invitedByUserId: 'owner-user',
+      expiresAt: future,
+      acceptedAt: null,
+      acceptedByUserId: null,
+      revokedAt: null,
+      revokedByUserId: null,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await setDoc(doc(db, 'plans', 'plan-1', 'invitations', 'invite-link'), {
+      id: 'invite-link',
+      planId: 'plan-1',
+      planName: 'Trip',
+      planType: 'travel',
+      coverImageUrl: null,
+      email: null,
+      role: 'viewer',
+      status: 'pending',
+      invitedByUserId: 'owner-user',
+      expiresAt: future,
+      acceptedAt: null,
+      acceptedByUserId: null,
+      revokedAt: null,
+      revokedByUserId: null,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await setDoc(doc(db, 'plans', 'plan-1', 'invitations', 'invite-expired'), {
+      id: 'invite-expired',
+      planId: 'plan-1',
+      planName: 'Trip',
+      planType: 'travel',
+      coverImageUrl: null,
+      email: null,
+      role: 'viewer',
+      status: 'pending',
+      invitedByUserId: 'owner-user',
+      expiresAt: past,
+      acceptedAt: null,
+      acceptedByUserId: null,
+      revokedAt: null,
+      revokedByUserId: null,
+      createdAt: now,
+      updatedAt: now,
     });
   });
 }
@@ -569,5 +632,196 @@ describe('firestore rules', () => {
         updatedAt: now,
       }),
     );
+  });
+
+  it('allows anyone with the link to get a single pending invitation but not list all invitations', async () => {
+    const db = testEnv.authenticatedContext('outsider-user').firestore();
+    await assertSucceeds(getDoc(doc(db, 'plans', 'plan-1', 'invitations', 'invite-link')));
+    await assertFails(getDocs(collection(db, 'plans', 'plan-1', 'invitations')));
+  });
+
+  it('allows a signed-in user to accept an open invite link, creating their own member + userPlans atomically', async () => {
+    const db = testEnv.authenticatedContext('newcomer-user', { email: 'newcomer@example.com' }).firestore();
+    const memberRef = doc(collection(db, 'plans', 'plan-1', 'members'));
+    const batch = writeBatch(db);
+
+    batch.set(memberRef, {
+      id: memberRef.id,
+      planId: 'plan-1',
+      memberType: 'registered',
+      userId: 'newcomer-user',
+      email: 'newcomer@example.com',
+      nickname: 'Newcomer',
+      nicknameIsCustom: false,
+      invitationId: 'invite-link',
+      avatarUrl: null,
+      role: 'viewer',
+      permissions: { canEditAllExpenses: false },
+      status: 'active',
+      invitedAt: null,
+      joinedAt: now,
+      removedAt: null,
+      createdByUserId: 'newcomer-user',
+      createdAt: now,
+      updatedAt: now,
+    });
+    batch.set(doc(db, 'userPlans', 'newcomer-user', 'plans', 'plan-1'), {
+      id: 'plan-1',
+      planId: 'plan-1',
+      userId: 'newcomer-user',
+      planName: 'Trip',
+      planType: 'travel',
+      role: 'viewer',
+      memberId: memberRef.id,
+      memberStatus: 'active',
+      planStatus: 'active',
+      coverImageUrl: null,
+      totalExpense: 0,
+      memberCount: 1,
+      joinedAt: now,
+      lastActivityAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+    batch.update(doc(db, 'plans', 'plan-1', 'invitations', 'invite-link'), {
+      status: 'accepted',
+      acceptedAt: now,
+      acceptedByUserId: 'newcomer-user',
+      updatedAt: now,
+    });
+
+    await assertSucceeds(batch.commit());
+  });
+
+  it('blocks accepting an invitation with a role that does not match the invitation', async () => {
+    const db = testEnv.authenticatedContext('newcomer2-user', { email: 'newcomer2@example.com' }).firestore();
+    const memberRef = doc(collection(db, 'plans', 'plan-1', 'members'));
+
+    await assertFails(
+      setDoc(memberRef, {
+        id: memberRef.id,
+        planId: 'plan-1',
+        memberType: 'registered',
+        userId: 'newcomer2-user',
+        email: 'newcomer2@example.com',
+        nickname: 'Newcomer2',
+        nicknameIsCustom: false,
+        invitationId: 'invite-link',
+        avatarUrl: null,
+        role: 'editor',
+        permissions: { canEditAllExpenses: false },
+        status: 'active',
+        invitedAt: null,
+        joinedAt: now,
+        removedAt: null,
+        createdByUserId: 'newcomer2-user',
+        createdAt: now,
+        updatedAt: now,
+      }),
+    );
+  });
+
+  it('blocks accepting an expired invitation', async () => {
+    const db = testEnv.authenticatedContext('newcomer3-user', { email: 'newcomer3@example.com' }).firestore();
+    const memberRef = doc(collection(db, 'plans', 'plan-1', 'members'));
+
+    await assertFails(
+      setDoc(memberRef, {
+        id: memberRef.id,
+        planId: 'plan-1',
+        memberType: 'registered',
+        userId: 'newcomer3-user',
+        email: 'newcomer3@example.com',
+        nickname: 'Newcomer3',
+        nicknameIsCustom: false,
+        invitationId: 'invite-expired',
+        avatarUrl: null,
+        role: 'viewer',
+        permissions: { canEditAllExpenses: false },
+        status: 'active',
+        invitedAt: null,
+        joinedAt: now,
+        removedAt: null,
+        createdByUserId: 'newcomer3-user',
+        createdAt: now,
+        updatedAt: now,
+      }),
+    );
+  });
+
+  it('blocks accepting an email-restricted invitation with a mismatched account email', async () => {
+    const db = testEnv.authenticatedContext('wronguser', { email: 'wrong@example.com' }).firestore();
+    const memberRef = doc(collection(db, 'plans', 'plan-1', 'members'));
+
+    await assertFails(
+      setDoc(memberRef, {
+        id: memberRef.id,
+        planId: 'plan-1',
+        memberType: 'registered',
+        userId: 'wronguser',
+        email: 'wrong@example.com',
+        nickname: 'Wrong',
+        nicknameIsCustom: false,
+        invitationId: 'invite-email',
+        avatarUrl: null,
+        role: 'editor',
+        permissions: { canEditAllExpenses: false },
+        status: 'active',
+        invitedAt: null,
+        joinedAt: now,
+        removedAt: null,
+        createdByUserId: 'wronguser',
+        createdAt: now,
+        updatedAt: now,
+      }),
+    );
+  });
+
+  it('allows owner to revoke a pending invitation but blocks a non-owner from doing so', async () => {
+    const ownerDb = testEnv.authenticatedContext('owner-user').firestore();
+    await assertSucceeds(
+      updateDoc(doc(ownerDb, 'plans', 'plan-1', 'invitations', 'invite-email'), {
+        status: 'revoked',
+        revokedAt: now,
+        revokedByUserId: 'owner-user',
+        updatedAt: now,
+      }),
+    );
+
+    const editorDb = testEnv.authenticatedContext('editor-user').firestore();
+    await assertFails(
+      updateDoc(doc(editorDb, 'plans', 'plan-1', 'invitations', 'invite-link'), {
+        status: 'revoked',
+        revokedAt: now,
+        revokedByUserId: 'editor-user',
+        updatedAt: now,
+      }),
+    );
+  });
+
+  it('allows owner to unlink an accepted member account, but blocks a non-owner', async () => {
+    const editorDb = testEnv.authenticatedContext('editor-user').firestore();
+    await assertFails(
+      Promise.all([
+        updateDoc(doc(editorDb, 'plans', 'plan-1', 'members', 'member-viewer'), {
+          userId: null,
+          memberType: 'guest',
+          email: null,
+          updatedAt: now,
+        }),
+        deleteDoc(doc(editorDb, 'userPlans', 'viewer-user', 'plans', 'plan-1')),
+      ]),
+    );
+
+    const ownerDb = testEnv.authenticatedContext('owner-user').firestore();
+    await assertSucceeds(
+      updateDoc(doc(ownerDb, 'plans', 'plan-1', 'members', 'member-viewer'), {
+        userId: null,
+        memberType: 'guest',
+        email: null,
+        updatedAt: now,
+      }),
+    );
+    await assertSucceeds(deleteDoc(doc(ownerDb, 'userPlans', 'viewer-user', 'plans', 'plan-1')));
   });
 });

@@ -17,6 +17,7 @@ function makeMember(id: string, nickname: string): PlanMemberDocument {
     email: `${id}@example.com`,
     nickname,
     nicknameIsCustom: false,
+    invitationId: null,
     avatarUrl: null,
     role: 'editor',
     permissions: {

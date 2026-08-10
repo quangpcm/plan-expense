@@ -8,6 +8,8 @@ import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
 import { InvitationList } from '@/modules/invitation/components/invitation-list';
 import { usePlanInvitations } from '@/modules/invitation/hooks/use-plan-invitations';
+import { invitationService } from '@/modules/invitation/services';
+import type { InvitationDocument } from '@/modules/invitation/types/invitation';
 import { useIncomes } from '@/modules/income/hooks/use-incomes';
 import { useExpenseCategories } from '@/modules/category/hooks/use-expense-categories';
 import { useIncomeCategories } from '@/modules/category/hooks/use-income-categories';
@@ -212,6 +214,40 @@ export default function PlanDetailPage() {
       setMemberActionMessage('Đã xóa thành viên.');
     } catch (error) {
       setMemberActionError(error instanceof Error ? error.message : 'Hiện chưa thể xóa thành viên.');
+    } finally {
+      setIsMemberActionSubmitting(false);
+    }
+  }
+
+  async function handleUnlinkAccount(member: PlanMemberDocument) {
+    setIsMemberActionSubmitting(true);
+    setMemberActionError(null);
+    setMemberActionMessage(null);
+
+    try {
+      await memberService.unlinkMemberAccount(planId, member, currentMember);
+      setMemberActionMessage('Đã gỡ liên kết tài khoản.');
+    } catch (error) {
+      setMemberActionError(error instanceof Error ? error.message : 'Hiện chưa thể gỡ liên kết tài khoản này.');
+    } finally {
+      setIsMemberActionSubmitting(false);
+    }
+  }
+
+  async function handleRevokeInvitation(invitation: InvitationDocument) {
+    if (!user) {
+      return;
+    }
+
+    setIsMemberActionSubmitting(true);
+    setMemberActionError(null);
+    setMemberActionMessage(null);
+
+    try {
+      await invitationService.revokeInvitation(planId, invitation.id, user, currentMember);
+      setMemberActionMessage('Đã hủy lời mời.');
+    } catch (error) {
+      setMemberActionError(error instanceof Error ? error.message : 'Hiện chưa thể hủy lời mời này.');
     } finally {
       setIsMemberActionSubmitting(false);
     }
@@ -465,7 +501,7 @@ export default function PlanDetailPage() {
               description="Chủ kế hoạch hiện có thể thêm khách và quản lý các bản ghi lời mời."
             />
             {permissions.canManageMembers ? (
-              <MemberManagementPanel currentMember={currentMember} planId={planId} />
+              <MemberManagementPanel currentMember={currentMember} plan={currentPlan} />
             ) : (
               <Card>
                 <p className="text-sm leading-6 text-slate-600">
@@ -490,6 +526,7 @@ export default function PlanDetailPage() {
               onDelete={handleDeleteMember}
               onReactivate={handleReactivateMember}
               onRemove={handleRemoveMember}
+              onUnlinkAccount={handleUnlinkAccount}
               onUpdateMember={handleUpdateMember}
             />
             <SectionHeading
@@ -497,7 +534,12 @@ export default function PlanDetailPage() {
               title="Các lời mời đang chờ"
               description="Luồng chấp nhận lời mời sẽ được mở rộng ở phase sau, nhưng dữ liệu lời mời hiện đã hoạt động."
             />
-            <InvitationList invitations={invitations} />
+            <InvitationList
+              canRevoke={permissions.canManageMembers}
+              invitations={invitations}
+              isSubmitting={isMemberActionSubmitting}
+              onRevoke={handleRevokeInvitation}
+            />
           </div>
         ) : null}
         {activeTab === 'Thiết lập' ? (

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Unlink } from 'lucide-react';
 
 import { Avatar } from '@/shared/components/ui/avatar';
 import { Badge } from '@/shared/components/ui/badge';
@@ -27,6 +27,7 @@ type MemberListProps = {
   onRemove?: (member: PlanMemberDocument) => Promise<void>;
   onReactivate?: (member: PlanMemberDocument) => Promise<void>;
   onDelete?: (member: PlanMemberDocument) => Promise<void>;
+  onUnlinkAccount?: (member: PlanMemberDocument) => Promise<void>;
 };
 
 function EditableMemberRow({
@@ -38,6 +39,7 @@ function EditableMemberRow({
   onRemove,
   onReactivate,
   onDelete,
+  onUnlinkAccount,
 }: {
   member: PlanMemberDocument;
   canManageMembers?: boolean;
@@ -47,6 +49,7 @@ function EditableMemberRow({
   onRemove?: MemberListProps['onRemove'];
   onReactivate?: MemberListProps['onReactivate'];
   onDelete?: MemberListProps['onDelete'];
+  onUnlinkAccount?: MemberListProps['onUnlinkAccount'];
 }) {
   const [nickname, setNickname] = useState(member.nickname);
   const [role, setRole] = useState<Exclude<PlanRole, 'owner'>>(
@@ -54,6 +57,8 @@ function EditableMemberRow({
   );
   const [canEditAllExpenses, setCanEditAllExpenses] = useState(member.permissions.canEditAllExpenses);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const [isConfirmUnlinkOpen, setIsConfirmUnlinkOpen] = useState(false);
+  const canUnlink = member.memberType === 'registered' && Boolean(member.userId);
 
   const trimmedNickname = nickname.trim();
   const hasChanges =
@@ -123,6 +128,17 @@ function EditableMemberRow({
         >
           {isRemoved ? 'Active' : 'Deactive'}
         </Button>
+        {canUnlink ? (
+          <Button
+            aria-label="Gỡ liên kết tài khoản"
+            className="size-11 shrink-0 p-0"
+            disabled={isSaving || !onUnlinkAccount}
+            onClick={() => setIsConfirmUnlinkOpen(true)}
+            variant="ghost"
+          >
+            <Unlink className="size-4" />
+          </Button>
+        ) : null}
         <Button
           aria-label="Xóa thành viên"
           className="size-11 shrink-0 p-0 text-red-600 hover:bg-red-50"
@@ -171,6 +187,27 @@ function EditableMemberRow({
           )}
         </div>
       </BottomSheet>
+      <BottomSheet
+        description={`Tài khoản hiện tại sẽ không còn xem được kế hoạch này nữa, nhưng ${member.nickname} vẫn giữ nguyên trong danh sách thành viên cùng lịch sử chi tiêu/thu cũ, giờ ở dạng khách.`}
+        onClose={() => setIsConfirmUnlinkOpen(false)}
+        open={isConfirmUnlinkOpen}
+        title="Gỡ liên kết tài khoản?"
+      >
+        <div className="flex justify-end gap-2">
+          <Button onClick={() => setIsConfirmUnlinkOpen(false)} variant="secondary">
+            Hủy
+          </Button>
+          <Button
+            disabled={isSaving || !onUnlinkAccount}
+            onClick={async () => {
+              await onUnlinkAccount?.(member);
+              setIsConfirmUnlinkOpen(false);
+            }}
+          >
+            Gỡ liên kết
+          </Button>
+        </div>
+      </BottomSheet>
     </Card>
   );
 }
@@ -184,6 +221,7 @@ export function MemberList({
   onRemove,
   onReactivate,
   onDelete,
+  onUnlinkAccount,
 }: MemberListProps) {
   return (
     <div className="grid gap-3">
@@ -197,6 +235,7 @@ export function MemberList({
           onDelete={onDelete}
           onReactivate={onReactivate}
           onRemove={onRemove}
+          onUnlinkAccount={onUnlinkAccount}
           onUpdateMember={onUpdateMember}
         />
       ))}
