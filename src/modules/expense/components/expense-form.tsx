@@ -16,6 +16,7 @@ import { createExpenseSchema, type CreateExpenseSchema } from '@/modules/expense
 import { updateExpenseSchema, type UpdateExpenseSchema } from '@/modules/expense/schemas/update-expense.schema';
 import { expenseService } from '@/modules/expense/services';
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
+import { AmountInput } from '@/shared/components/ui/amount-input';
 import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
@@ -133,7 +134,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
     try {
       if (mode === 'create') {
         const parsed = createExpenseSchema.parse(values);
-        const result = await expenseService.createExpense(
+        await expenseService.createExpense(
           {
             ...parsed,
             attachments: parsed.attachments,
@@ -150,7 +151,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
           localStorage.setItem(`last-expense-category:${planId}`, parsed.categoryId);
         }
         startTransition(() => {
-          router.replace(`/plans/${planId}/expenses/${result.expenseId}`);
+          router.replace(`/plans/${planId}?tab=timeline`);
         });
       } else if (expense) {
         const parsed = updateExpenseSchema.parse({
@@ -192,12 +193,10 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
         <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#727687]" htmlFor="amount">
           Số tiền (VND)
         </label>
-        <input
-          className="w-full border-0 border-b-2 border-[#c2c6d8] bg-transparent text-center text-4xl font-bold text-[#191c1e] outline-none placeholder:text-[#c2c6d8] focus:border-[#0050cb]"
+        <AmountInput
           id="amount"
-          inputMode="numeric"
-          placeholder="0"
-          {...form.register('amount')}
+          onChange={(value) => form.setValue('amount', value, { shouldValidate: true, shouldDirty: true })}
+          value={Number(amountWatched) || 0}
         />
       </div>
 

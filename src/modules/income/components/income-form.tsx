@@ -16,6 +16,7 @@ import { createIncomeSchema, type CreateIncomeSchema } from '@/modules/income/sc
 import { updateIncomeSchema, type UpdateIncomeSchema } from '@/modules/income/schemas/update-income.schema';
 import { incomeService } from '@/modules/income/services';
 import type { IncomeDocument } from '@/modules/income/types/income';
+import { AmountInput } from '@/shared/components/ui/amount-input';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
@@ -47,6 +48,7 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
     },
   });
   const categoryIdWatched = useWatch({ control: form.control, name: 'categoryId' });
+  const amountWatched = useWatch({ control: form.control, name: 'amount' });
 
   const handleSubmit = form.handleSubmit(async (values) => {
     if (!plan || !user) {
@@ -59,7 +61,7 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
     try {
       if (mode === 'create') {
         const parsed = createIncomeSchema.parse(values);
-        const result = await incomeService.createIncome(parsed, {
+        await incomeService.createIncome(parsed, {
           plan,
           members,
           currentMember,
@@ -67,7 +69,7 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
           categories,
         });
         startTransition(() => {
-          router.replace(`/plans/${planId}/incomes/${result.incomeId}`);
+          router.replace(`/plans/${planId}?tab=timeline`);
         });
       } else if (income) {
         const parsed = updateIncomeSchema.parse({
@@ -104,8 +106,17 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
+      <div className="space-y-1 text-center">
+        <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#727687]" htmlFor="amount">
+          Số tiền (VND)
+        </label>
+        <AmountInput
+          id="amount"
+          onChange={(value) => form.setValue('amount', value, { shouldValidate: true, shouldDirty: true })}
+          value={Number(amountWatched) || 0}
+        />
+      </div>
       <Input placeholder="Đóng quỹ, nạp thêm..." {...form.register('title')} />
-      <Input inputMode="numeric" placeholder="2000000" {...form.register('amount')} />
 
       <div className="space-y-2">
         <p className="text-sm font-medium text-slate-700">Danh mục</p>
