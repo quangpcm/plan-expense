@@ -1,8 +1,10 @@
 export { milestoneService } from './services';
 export { useMilestones } from './hooks/use-milestones';
 export { MilestoneDetailCard } from './components/milestone-detail-card';
+export { MilestoneExpensePanel } from './components/milestone-expense-panel';
 export { MilestoneForm } from './components/milestone-form';
 export { MilestoneList } from './components/milestone-list';
+export { MilestoneTimelineBoard } from './components/milestone-timeline-board';
 export type {
   CreateMilestoneInput,
   MilestoneDocument,

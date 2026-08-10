@@ -28,10 +28,14 @@ export class FirestoreMilestoneRepository implements MilestoneRepository {
     const now = Timestamp.now();
 
     await runTransaction(db, async (transaction) => {
-      const milestonesQuery = query(collection(db, 'plans', input.planId, 'milestones'), orderBy('orderIndex', 'desc'));
-      const milestoneSnapshots = await transaction.get(milestonesQuery);
-      const highestOrderIndex = milestoneSnapshots.docs[0]?.data().orderIndex as number | undefined;
-      const nextOrderIndex = highestOrderIndex != null ? highestOrderIndex + 1 : 0;
+      const planSnapshot = await transaction.get(planRef);
+      const storedMilestoneCount = planSnapshot.data()?.milestoneCount;
+      const nextOrderIndex =
+        typeof storedMilestoneCount === 'number'
+          ? storedMilestoneCount
+          : Number.isFinite(input.orderIndex)
+            ? input.orderIndex
+            : 0;
 
       transaction.set(milestoneRef, {
         id: milestoneRef.id,

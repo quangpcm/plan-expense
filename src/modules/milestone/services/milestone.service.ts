@@ -45,6 +45,7 @@ export class MilestoneService {
 
     return this.milestoneRepository.createMilestone({
       planId: plan.id,
+      orderIndex: Number.isFinite(plan.milestoneCount) ? plan.milestoneCount : 0,
       title,
       description: input.description?.trim() || null,
       iconId: input.iconId?.trim() || null,

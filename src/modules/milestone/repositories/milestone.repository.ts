@@ -2,6 +2,7 @@ import type { MilestoneDocument, ReorderMilestoneInput, UpdateMilestoneInput } f
 
 export type CreateMilestonePersistenceInput = {
   planId: string;
+  orderIndex: number;
   title: string;
   description: string | null;
   iconId: string | null;
