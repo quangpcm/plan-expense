@@ -6,6 +6,7 @@ import type { CategoryDocument } from '@/modules/category/types/category';
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
 import type { IncomeDocument } from '@/modules/income/types/income';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
+import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import type { SettlementDocument } from '@/modules/settlement/types/settlement';
 
 function makeMember(id: string, nickname: string): PlanMemberDocument {
@@ -37,6 +38,7 @@ function makeExpense(overrides: Partial<ExpenseDocument> = {}): ExpenseDocument 
   return {
     id: 'expense-1',
     planId: 'plan-1',
+    milestoneId: 'milestone-1',
     title: 'Dinner',
     categoryId: 'cat-food',
     amount: 300,
@@ -60,6 +62,30 @@ function makeExpense(overrides: Partial<ExpenseDocument> = {}): ExpenseDocument 
     deletedAt: null,
     deletedByUserId: null,
     version: 1,
+    ...overrides,
+  };
+}
+
+function makeMilestone(overrides: Partial<MilestoneDocument> = {}): MilestoneDocument {
+  return {
+    id: 'milestone-1',
+    planId: 'plan-1',
+    title: 'Booking',
+    description: null,
+    iconId: null,
+    startDate: null,
+    endDate: null,
+    status: 'in_progress',
+    orderIndex: 0,
+    budgetAmount: 1000,
+    totalExpense: 300,
+    todoCount: 2,
+    completedTodoCount: 1,
+    createdByUserId: 'user-a',
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+    completedAt: null,
+    cancelledAt: null,
     ...overrides,
   };
 }
@@ -134,6 +160,7 @@ describe('StatisticService', () => {
       members: [makeMember('member-a', 'Alice'), makeMember('member-b', 'Bob')],
       expenses: [makeExpense()],
       incomes: [makeIncome()],
+      milestones: [makeMilestone()],
       categories,
       settlements: [makeSettlement()],
     });
@@ -173,6 +200,73 @@ describe('StatisticService', () => {
         totalAmount: 300,
       },
     ]);
+    expect(statistic.milestoneBreakdown).toEqual([
+      {
+        milestoneId: 'milestone-1',
+        milestoneTitle: 'Booking',
+        status: 'in_progress',
+        totalAmount: 300,
+        budgetAmount: 1000,
+        expenseCount: 1,
+        todoCount: 2,
+        completedTodoCount: 1,
+        progress: 50,
+      },
+    ]);
     expect(statistic.expenseTimeline).toEqual([{ date: '05/08/2026', totalAmount: 300 }]);
+  });
+
+  it('keeps milestone-first breakdown stable when some milestones have no expense', () => {
+    const statistic = service.calculate({
+      members: [makeMember('member-a', 'Alice'), makeMember('member-b', 'Bob')],
+      expenses: [
+        makeExpense(),
+        makeExpense({
+          id: 'expense-2',
+          milestoneId: 'milestone-2',
+          amount: 200,
+          participants: [
+            { memberId: 'member-a', amount: 100, percentage: null, shares: 1 },
+            { memberId: 'member-b', amount: 100, percentage: null, shares: 1 },
+          ],
+        }),
+      ],
+      incomes: [makeIncome()],
+      milestones: [
+        makeMilestone(),
+        makeMilestone({
+          id: 'milestone-2',
+          title: 'Ceremony',
+          totalExpense: 200,
+          todoCount: 0,
+          completedTodoCount: 0,
+          budgetAmount: null,
+          status: 'upcoming',
+        }),
+        makeMilestone({
+          id: 'milestone-3',
+          title: 'After Party',
+          totalExpense: 0,
+          todoCount: 1,
+          completedTodoCount: 0,
+          budgetAmount: 500,
+          status: 'upcoming',
+        }),
+      ],
+      categories,
+      settlements: [makeSettlement()],
+    });
+
+    expect(statistic.overview.totalExpense).toBe(500);
+    expect(statistic.milestoneBreakdown.map((row) => [row.milestoneId, row.totalAmount])).toEqual([
+      ['milestone-1', 300],
+      ['milestone-2', 200],
+      ['milestone-3', 0],
+    ]);
+    expect(statistic.milestoneBreakdown[2]).toMatchObject({
+      milestoneId: 'milestone-3',
+      expenseCount: 0,
+      progress: 0,
+    });
   });
 });

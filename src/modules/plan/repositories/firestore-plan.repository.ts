@@ -83,6 +83,8 @@ export class FirestorePlanRepository implements PlanRepository {
       endDate: input.endDate ? Timestamp.fromDate(input.endDate) : null,
       status: 'active',
       memberCount: 1,
+      milestoneCount: 0,
+      todoCount: 0,
       expenseCount: 0,
       incomeCount: 0,
       settlementCount: 0,

@@ -24,6 +24,7 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
     const db = getFirebaseFirestore();
     const expenseRef = doc(collection(db, 'plans', input.planId, 'expenses'));
     const planRef = doc(db, 'plans', input.planId);
+    const milestoneRef = doc(db, 'plans', input.planId, 'milestones', input.milestoneId);
     const now = Timestamp.now();
 
     const nextTotalExpense = await runTransaction(db, async (transaction) => {
@@ -31,9 +32,18 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
       const currentTotalExpense = (planSnapshot.data()?.totalExpense as number | undefined) ?? 0;
       const updatedTotalExpense = currentTotalExpense + input.amount;
 
+      const milestoneSnapshot = await transaction.get(milestoneRef);
+
+      if (!milestoneSnapshot.exists()) {
+        throw new Error('Milestone not found.');
+      }
+
+      const currentMilestoneTotal = (milestoneSnapshot.data()?.totalExpense as number | undefined) ?? 0;
+
       transaction.set(expenseRef, {
         id: expenseRef.id,
         planId: input.planId,
+        milestoneId: input.milestoneId,
         title: input.title,
         categoryId: input.categoryId,
         amount: input.amount,
@@ -62,6 +72,11 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
         updatedAt: now,
       });
 
+      transaction.update(milestoneRef, {
+        totalExpense: currentMilestoneTotal + input.amount,
+        updatedAt: now,
+      });
+
       return updatedTotalExpense;
     });
 
@@ -85,12 +100,24 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
       }
 
       const previousExpense = expenseSnapshot.data() as ExpenseDocument;
+      const previousMilestoneRef = doc(db, 'plans', planId, 'milestones', previousExpense.milestoneId);
+      const nextMilestoneRef = doc(db, 'plans', planId, 'milestones', input.milestoneId);
+      const previousMilestoneSnapshot = await transaction.get(previousMilestoneRef);
+      const nextMilestoneSnapshot = await transaction.get(nextMilestoneRef);
+
+      if (!previousMilestoneSnapshot.exists() || !nextMilestoneSnapshot.exists()) {
+        throw new Error('Milestone not found.');
+      }
+
       const delta = input.amount - previousExpense.amount;
       const currentTotalExpense = (planSnapshot.data()?.totalExpense as number | undefined) ?? 0;
       const updatedTotalExpense = currentTotalExpense + delta;
+      const previousMilestoneTotal = (previousMilestoneSnapshot.data()?.totalExpense as number | undefined) ?? 0;
+      const nextMilestoneTotal = (nextMilestoneSnapshot.data()?.totalExpense as number | undefined) ?? 0;
 
       transaction.update(expenseRef, {
         title: input.title,
+        milestoneId: input.milestoneId,
         categoryId: input.categoryId || null,
         amount: input.amount,
         paidByMemberId: input.paidByMemberId,
@@ -108,6 +135,22 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
         totalExpense: updatedTotalExpense,
         updatedAt: now,
       });
+
+      if (previousExpense.milestoneId === input.milestoneId) {
+        transaction.update(nextMilestoneRef, {
+          totalExpense: nextMilestoneTotal + delta,
+          updatedAt: now,
+        });
+      } else {
+        transaction.update(previousMilestoneRef, {
+          totalExpense: previousMilestoneTotal - previousExpense.amount,
+          updatedAt: now,
+        });
+        transaction.update(nextMilestoneRef, {
+          totalExpense: nextMilestoneTotal + input.amount,
+          updatedAt: now,
+        });
+      }
 
       return updatedTotalExpense;
     });
@@ -132,13 +175,20 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
       }
 
       const expense = expenseSnapshot.data() as ExpenseDocument;
+      const milestoneRef = doc(db, 'plans', planId, 'milestones', expense.milestoneId);
+      const milestoneSnapshot = await transaction.get(milestoneRef);
 
       if (expense.status === 'deleted') {
         return null;
       }
 
+      if (!milestoneSnapshot.exists()) {
+        throw new Error('Milestone not found.');
+      }
+
       const currentTotalExpense = (planSnapshot.data()?.totalExpense as number | undefined) ?? 0;
       const updatedTotalExpense = currentTotalExpense - expense.amount;
+      const currentMilestoneTotal = (milestoneSnapshot.data()?.totalExpense as number | undefined) ?? 0;
 
       transaction.update(expenseRef, {
         status: 'deleted',
@@ -151,6 +201,11 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
       transaction.update(planRef, {
         expenseCount: increment(-1),
         totalExpense: updatedTotalExpense,
+        updatedAt: now,
+      });
+
+      transaction.update(milestoneRef, {
+        totalExpense: currentMilestoneTotal - expense.amount,
         updatedAt: now,
       });
 

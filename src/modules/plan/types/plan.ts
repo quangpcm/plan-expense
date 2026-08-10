@@ -30,6 +30,8 @@ export type PlanDocument = {
   endDate: Timestamp | null;
   status: PlanStatus;
   memberCount: number;
+  milestoneCount: number;
+  todoCount: number;
   expenseCount: number;
   incomeCount: number;
   settlementCount: number;

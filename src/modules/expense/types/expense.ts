@@ -27,6 +27,7 @@ export type ExpenseParticipant = {
 export type ExpenseDocument = {
   id: string;
   planId: string;
+  milestoneId: string;
   title: string;
   categoryId: string | null;
   amount: number;
@@ -52,6 +53,7 @@ export type ExpenseDocument = {
 export type CreateExpenseInput = {
   title: string;
   amount: number;
+  milestoneId: string;
   categoryId?: string | undefined;
   paidByMemberId: string;
   participantMemberIds: string[];
@@ -68,6 +70,7 @@ export type UpdateExpenseInput = {
   expenseId: string;
   title: string;
   amount: number;
+  milestoneId: string;
   categoryId?: string | undefined;
   paidByMemberId: string;
   participantMemberIds: string[];
@@ -78,4 +81,3 @@ export type UpdateExpenseInput = {
   note?: string | undefined;
   spentAt?: string | undefined;
 };
-

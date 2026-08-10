@@ -6,6 +6,7 @@ export const createExpenseSchema = z
   .object({
     title: z.string().trim().min(1).max(120),
     amount: z.coerce.number().int().positive(),
+    milestoneId: z.string().min(1),
     categoryId: z.string().optional().or(z.literal('')),
     paidByMemberId: z.string().min(1),
     participantMemberIds: z.array(z.string().min(1)).min(1),

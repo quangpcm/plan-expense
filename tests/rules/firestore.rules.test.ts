@@ -34,6 +34,8 @@ async function seedBasePlan() {
       endDate: null,
       status: 'active',
       memberCount: 3,
+      milestoneCount: 1,
+      todoCount: 1,
       expenseCount: 1,
       incomeCount: 0,
       settlementCount: 0,
@@ -168,6 +170,7 @@ async function seedBasePlan() {
     await setDoc(doc(db, 'plans', 'plan-1', 'expenses', 'expense-owner'), {
       id: 'expense-owner',
       planId: 'plan-1',
+      milestoneId: 'milestone-1',
       title: 'Hotel',
       categoryId: null,
       amount: 300,
@@ -193,6 +196,7 @@ async function seedBasePlan() {
     await setDoc(doc(db, 'plans', 'plan-1', 'expenses', 'expense-editor'), {
       id: 'expense-editor',
       planId: 'plan-1',
+      milestoneId: 'milestone-1',
       title: 'Dinner',
       categoryId: null,
       amount: 200,
@@ -385,6 +389,44 @@ async function seedBasePlan() {
       createdAt: now,
       updatedAt: now,
     });
+
+    await setDoc(doc(db, 'plans', 'plan-1', 'milestones', 'milestone-1'), {
+      id: 'milestone-1',
+      planId: 'plan-1',
+      title: 'Book hotel',
+      description: null,
+      iconId: null,
+      startDate: null,
+      endDate: null,
+      status: 'in_progress',
+      orderIndex: 0,
+      budgetAmount: 1000,
+      totalExpense: 500,
+      todoCount: 1,
+      completedTodoCount: 0,
+      createdByUserId: 'owner-user',
+      createdAt: now,
+      updatedAt: now,
+      completedAt: null,
+      cancelledAt: null,
+    });
+
+    await setDoc(doc(db, 'plans', 'plan-1', 'todos', 'todo-1'), {
+      id: 'todo-1',
+      planId: 'plan-1',
+      milestoneId: 'milestone-1',
+      title: 'Confirm booking',
+      description: null,
+      assigneeMemberId: 'member-owner',
+      dueDate: null,
+      priority: 'high',
+      status: 'todo',
+      createdByUserId: 'owner-user',
+      createdAt: now,
+      updatedAt: now,
+      completedAt: null,
+      cancelledAt: null,
+    });
   });
 }
 
@@ -420,6 +462,7 @@ describe('firestore rules', () => {
       setDoc(doc(db, 'plans', 'plan-1', 'expenses', 'expense-viewer'), {
         id: 'expense-viewer',
         planId: 'plan-1',
+        milestoneId: 'milestone-1',
         title: 'Snack',
         categoryId: null,
         amount: 100,
@@ -450,6 +493,7 @@ describe('firestore rules', () => {
       setDoc(doc(db, 'plans', 'plan-1', 'expenses', 'expense-new'), {
         id: 'expense-new',
         planId: 'plan-1',
+        milestoneId: 'milestone-1',
         title: 'Taxi',
         categoryId: null,
         amount: 100,
@@ -505,6 +549,128 @@ describe('firestore rules', () => {
         title: 'Delegated edit',
         updatedAt: now,
         version: 2,
+      }),
+    );
+  });
+
+  it('blocks expense writes that reference a milestone outside the plan', async () => {
+    const db = testEnv.authenticatedContext('editor-user').firestore();
+    await assertFails(
+      setDoc(doc(db, 'plans', 'plan-1', 'expenses', 'expense-invalid-milestone'), {
+        id: 'expense-invalid-milestone',
+        planId: 'plan-1',
+        milestoneId: 'milestone-missing',
+        title: 'Taxi',
+        categoryId: null,
+        amount: 100,
+        currency: 'VND',
+        paidByMemberId: 'member-editor',
+        participants: [],
+        splitMethod: 'equal',
+        merchantName: null,
+        locationName: null,
+        note: null,
+        attachments: [],
+        spentAt: now,
+        createdByUserId: 'editor-user',
+        createdByMemberId: 'member-editor',
+        createdAt: now,
+        updatedAt: now,
+        status: 'active',
+        deletedAt: null,
+        deletedByUserId: null,
+        version: 1,
+      }),
+    );
+  });
+
+  it('allows owner to create a milestone and blocks editor from doing so', async () => {
+    const ownerDb = testEnv.authenticatedContext('owner-user').firestore();
+    await assertSucceeds(
+      setDoc(doc(ownerDb, 'plans', 'plan-1', 'milestones', 'milestone-2'), {
+        id: 'milestone-2',
+        planId: 'plan-1',
+        title: 'Prepare transport',
+        description: null,
+        iconId: null,
+        startDate: null,
+        endDate: null,
+        status: 'upcoming',
+        orderIndex: 1,
+        budgetAmount: null,
+        totalExpense: 0,
+        todoCount: 0,
+        completedTodoCount: 0,
+        createdByUserId: 'owner-user',
+        createdAt: now,
+        updatedAt: now,
+        completedAt: null,
+        cancelledAt: null,
+      }),
+    );
+
+    const editorDb = testEnv.authenticatedContext('editor-user').firestore();
+    await assertFails(
+      setDoc(doc(editorDb, 'plans', 'plan-1', 'milestones', 'milestone-3'), {
+        id: 'milestone-3',
+        planId: 'plan-1',
+        title: 'Illegal milestone',
+        description: null,
+        iconId: null,
+        startDate: null,
+        endDate: null,
+        status: 'upcoming',
+        orderIndex: 2,
+        budgetAmount: null,
+        totalExpense: 0,
+        todoCount: 0,
+        completedTodoCount: 0,
+        createdByUserId: 'editor-user',
+        createdAt: now,
+        updatedAt: now,
+        completedAt: null,
+        cancelledAt: null,
+      }),
+    );
+  });
+
+  it('allows owner to create todo for an existing milestone and blocks invalid milestone relation', async () => {
+    const db = testEnv.authenticatedContext('owner-user').firestore();
+    await assertSucceeds(
+      setDoc(doc(db, 'plans', 'plan-1', 'todos', 'todo-2'), {
+        id: 'todo-2',
+        planId: 'plan-1',
+        milestoneId: 'milestone-1',
+        title: 'Call supplier',
+        description: null,
+        assigneeMemberId: 'member-owner',
+        dueDate: null,
+        priority: 'medium',
+        status: 'todo',
+        createdByUserId: 'owner-user',
+        createdAt: now,
+        updatedAt: now,
+        completedAt: null,
+        cancelledAt: null,
+      }),
+    );
+
+    await assertFails(
+      setDoc(doc(db, 'plans', 'plan-1', 'todos', 'todo-invalid'), {
+        id: 'todo-invalid',
+        planId: 'plan-1',
+        milestoneId: 'milestone-missing',
+        title: 'Broken relation',
+        description: null,
+        assigneeMemberId: 'member-owner',
+        dueDate: null,
+        priority: 'medium',
+        status: 'todo',
+        createdByUserId: 'owner-user',
+        createdAt: now,
+        updatedAt: now,
+        completedAt: null,
+        cancelledAt: null,
       }),
     );
   });

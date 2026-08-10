@@ -1,2 +1,9 @@
 export { appRoutes } from './app-routes';
-export { planRoles, planStatuses, splitMethods } from './plan.constants';
+export {
+  milestoneStatuses,
+  planRoles,
+  planStatuses,
+  splitMethods,
+  todoPriorities,
+  todoStatuses,
+} from './plan.constants';

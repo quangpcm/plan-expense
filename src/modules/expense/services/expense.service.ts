@@ -11,6 +11,7 @@ import type {
 } from '@/modules/expense/types/expense';
 import type { ExpenseRepository } from '@/modules/expense/repositories/expense.repository';
 import type { CategoryDocument } from '@/modules/category/types/category';
+import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
@@ -18,6 +19,7 @@ import type { PlanDocument } from '@/modules/plan/types/plan';
 type ExpenseContext = {
   plan: PlanDocument;
   members: PlanMemberDocument[];
+  milestones: MilestoneDocument[];
   currentMember: PlanMemberDocument | null;
   currentUser: AuthUser;
   categories: CategoryDocument[];
@@ -42,6 +44,20 @@ export class ExpenseService {
 
   private resolveActiveMembers(members: PlanMemberDocument[]) {
     return members.filter((member) => member.status === 'active');
+  }
+
+  private assertValidMilestone(planId: string, milestoneId: string, milestones: MilestoneDocument[]) {
+    if (!milestoneId.trim()) {
+      throw new AppError('Milestone is required for every expense.', 'EXPENSE_MILESTONE_REQUIRED', 400);
+    }
+
+    const milestone = milestones.find((item) => item.id === milestoneId);
+
+    if (!milestone || milestone.planId !== planId) {
+      throw new AppError('Selected milestone is not valid for this plan.', 'EXPENSE_INVALID_MILESTONE', 400);
+    }
+
+    return milestone;
   }
 
   private buildParticipants(
@@ -76,6 +92,7 @@ export class ExpenseService {
     this.assertCreatePermission(context.currentMember);
 
     const activeMembers = this.resolveActiveMembers(context.members);
+    const milestone = this.assertValidMilestone(context.plan.id, input.milestoneId, context.milestones);
     const participantIds = input.participantMemberIds.filter((memberId) =>
       activeMembers.some((member) => member.id === memberId),
     );
@@ -96,6 +113,7 @@ export class ExpenseService {
 
     return this.expenseRepository.createExpense({
       planId: context.plan.id,
+      milestoneId: milestone.id,
       title: input.title.trim(),
       categoryId: input.categoryId || context.categories[0]?.id || null,
       amount: input.amount,
@@ -122,12 +140,13 @@ export class ExpenseService {
     }
 
     const activeMembers = this.resolveActiveMembers(context.members);
+    const milestone = this.assertValidMilestone(context.plan.id, input.milestoneId, context.milestones);
     const participantIds = input.participantMemberIds.filter((memberId) =>
       activeMembers.some((member) => member.id === memberId),
     );
     const participants = this.buildParticipants(input, participantIds);
 
-    await this.expenseRepository.updateExpense(context.plan.id, input, participants);
+    await this.expenseRepository.updateExpense(context.plan.id, { ...input, milestoneId: milestone.id }, participants);
   }
 
   async deleteExpense(

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { Camera, Check, CheckCircle2, ChevronRight, User } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -11,6 +11,7 @@ import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
 import { getCategoryIcon } from '@/modules/category/utils/category-icon';
 import { useExpenseCategories } from '@/modules/category/hooks/use-expense-categories';
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
+import { useMilestones } from '@/modules/milestone';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
 import { createExpenseSchema, type CreateExpenseSchema } from '@/modules/expense/schemas/create-expense.schema';
 import { updateExpenseSchema, type UpdateExpenseSchema } from '@/modules/expense/schemas/update-expense.schema';
@@ -33,8 +34,10 @@ type ExpenseFormProps = {
 
 export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuthSession();
   const { plan } = usePlan(planId);
+  const { milestones } = useMilestones(planId);
   const { members, currentMember } = usePlanMembers(planId);
   const { categories } = useExpenseCategories(planId);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -50,6 +53,8 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
     expense?.participants.map((participant) => participant.memberId) ||
     activeMembers.map((member) => member.id);
   const defaultCategoryId = expense?.categoryId || categories[0]?.id || '';
+  const milestoneIdFromQuery = searchParams.get('milestoneId') || '';
+  const defaultMilestoneId = expense?.milestoneId || milestoneIdFromQuery || milestones[0]?.id || '';
   const defaultSplitValues: Record<string, number> = {};
 
   if (expense && expense.splitMethod !== 'equal') {
@@ -68,6 +73,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
     defaultValues: {
       title: expense?.title || '',
       amount: expense?.amount || 0,
+      milestoneId: defaultMilestoneId,
       categoryId: defaultCategoryId,
       paidByMemberId: defaultPaidByMemberId,
       participantMemberIds: defaultParticipantIds,
@@ -121,7 +127,11 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
     if (!form.getValues('categoryId') && defaultCategoryId) {
       form.setValue('categoryId', defaultCategoryId, { shouldValidate: true });
     }
-  }, [defaultCategoryId, defaultPaidByMemberId, defaultParticipantIds, form]);
+
+    if (!form.getValues('milestoneId') && defaultMilestoneId) {
+      form.setValue('milestoneId', defaultMilestoneId, { shouldValidate: true });
+    }
+  }, [defaultCategoryId, defaultMilestoneId, defaultPaidByMemberId, defaultParticipantIds, form]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     if (!plan || !user) {
@@ -144,6 +154,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
             members,
             currentMember,
             currentUser: user,
+            milestones,
             categories,
           },
         );
@@ -151,7 +162,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
           localStorage.setItem(`last-expense-category:${planId}`, parsed.categoryId);
         }
         startTransition(() => {
-          router.replace(`/plans/${planId}?tab=timeline`);
+          router.replace(`/plans/${planId}?tab=timeline&milestoneId=${parsed.milestoneId}`);
         });
       } else if (expense) {
         const parsed = updateExpenseSchema.parse({
@@ -163,6 +174,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
           members,
           currentMember,
           currentUser: user,
+          milestones,
           categories,
         }, expense);
         startTransition(() => {
@@ -205,6 +217,24 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
           Tên khoản chi
         </label>
         <Input id="title" placeholder="Ăn sáng, khách sạn, vé..." {...form.register('title')} />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700" htmlFor="milestoneId">
+          Mốc kế hoạch
+        </label>
+        <select
+          className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+          id="milestoneId"
+          {...form.register('milestoneId')}
+        >
+          <option value="">Chọn mốc kế hoạch</option>
+          {milestones.map((milestone) => (
+            <option key={milestone.id} value={milestone.id}>
+              {milestone.title}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="space-y-2">

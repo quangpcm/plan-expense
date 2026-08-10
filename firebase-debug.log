@@ -1,0 +1,28 @@
+[debug] [2026-08-10T11:11:48.373Z] ----------------------------------------------------------------------
+[debug] [2026-08-10T11:11:48.374Z] Command:       /Users/doanhhd2/.nvm/versions/node/v23.9.0/bin/node /Users/doanhhd2/src/plan-expense/node_modules/.bin/firebase emulators:exec --project demo-plan-expense --only firestore,storage vitest run tests/rules
+[debug] [2026-08-10T11:11:48.374Z] CLI Version:   15.25.1
+[debug] [2026-08-10T11:11:48.375Z] Platform:      darwin
+[debug] [2026-08-10T11:11:48.375Z] Node Version:  v23.9.0
+[debug] [2026-08-10T11:11:48.375Z] Detected Agent: codex_cli
+[debug] [2026-08-10T11:11:48.375Z] Time:          Mon Aug 10 2026 20:11:48 GMT+0900 (Japan Standard Time)
+[debug] [2026-08-10T11:11:48.375Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-08-10T11:11:48.380Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2026-08-10T11:11:48.970Z] *** [apiv2] error from fetch(https://firebase-public.firebaseio.com/cli.json, {"headers":{},"method":"GET"}): Error: getaddrinfo ENOTFOUND firebase-public.firebaseio.com
+[warn] ⚠  Unable to fetch the CLI MOTD and remote config. This is not a fatal error, but may indicate an issue with your network connection. 
+[debug] [2026-08-10T11:11:48.970Z] Failed to fetch MOTD FirebaseError: Failed to make request to https://firebase-public.firebaseio.com/cli.json
+[debug] [2026-08-10T11:11:49.081Z] The operation couldn’t be completed. Unable to locate a Java Runtime.
+Please visit http://www.java.com for information on installing Java.
+
+
+[debug] [2026-08-10T11:11:49.083Z] Could not find VSCode notification endpoint: TypeError: fetch failed. If you are not running the Firebase SQL Connect VSCode extension, this is expected and not an issue.
+[info] i  emulators: Shutting down emulators. {"metadata":{"emulator":{"name":"hub"},"message":"Shutting down emulators."}}
+[debug] [2026-08-10T11:11:49.084Z] Could not find VSCode notification endpoint: TypeError: fetch failed. If you are not running the Firebase SQL Connect VSCode extension, this is expected and not an issue.
+[error] 
+[error] Error: Process `java -version` has exited with code 1. Please make sure Java is installed and on your system PATH.
+-----Original stdout-----
+-----Original stderr-----
+The operation couldn’t be completed. Unable to locate a Java Runtime.
+Please visit http://www.java.com for information on installing Java.
+
+

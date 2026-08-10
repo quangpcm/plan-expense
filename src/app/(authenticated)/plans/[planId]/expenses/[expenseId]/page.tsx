@@ -10,6 +10,7 @@ import { ExpenseDetailCard } from '@/modules/expense/components/expense-detail-c
 import { useExpense } from '@/modules/expense/hooks/use-expense';
 import { expenseService } from '@/modules/expense/services';
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
+import { useMilestones } from '@/modules/milestone';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
 import { Breadcrumbs } from '@/shared/components/ui/breadcrumbs';
 import { Button } from '@/shared/components/ui/button';
@@ -23,6 +24,7 @@ export default function ExpenseDetailPage() {
   const expenseId = Array.isArray(params.expenseId) ? params.expenseId[0] : params.expenseId;
   const { user } = useAuthSession();
   const { plan, errorMessage: planError } = usePlan(planId);
+  const { milestones, errorMessage: milestoneError } = useMilestones(planId);
   const { members, currentMember, permissions } = usePlanMembers(planId);
   const { categories, errorMessage: categoryError } = useExpenseCategories(planId);
   const { expense, isLoading, errorMessage: expenseError } = useExpense(planId, expenseId);
@@ -70,13 +72,13 @@ export default function ExpenseDetailPage() {
           { label: currentExpense.title },
         ]}
       />
-      {planError || categoryError || expenseError ? (
+      {planError || categoryError || expenseError || milestoneError ? (
         <AuthFormMessage
-          message={planError || categoryError || expenseError || 'Hiện chưa thể tải màn hình khoản chi này.'}
+          message={planError || categoryError || expenseError || milestoneError || 'Hiện chưa thể tải màn hình khoản chi này.'}
           type="error"
         />
       ) : null}
-      <ExpenseDetailCard categories={categories} expense={expense} members={members} />
+      <ExpenseDetailCard categories={categories} expense={expense} members={members} milestones={milestones} />
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       <Card className="gap-3 sm:flex-row sm:justify-end">
         <Button href={`/plans/${planId}`} variant="secondary">

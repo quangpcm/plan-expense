@@ -7,16 +7,19 @@ import { formatDateTime } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 import type { CategoryDocument } from '@/modules/category/types/category';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
+import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
 
 type ExpenseDetailCardProps = {
   expense: ExpenseDocument;
   members: PlanMemberDocument[];
   categories: CategoryDocument[];
+  milestones: MilestoneDocument[];
 };
 
-export function ExpenseDetailCard({ expense, members, categories }: ExpenseDetailCardProps) {
+export function ExpenseDetailCard({ expense, members, categories, milestones }: ExpenseDetailCardProps) {
   const category = categories.find((item) => item.id === expense.categoryId);
+  const milestone = milestones.find((item) => item.id === expense.milestoneId);
   const paidBy = members.find((member) => member.id === expense.paidByMemberId);
   const createdBy = members.find((member) => member.id === expense.createdByMemberId);
   const spentAt = timestampToDate(expense.spentAt);
@@ -30,6 +33,7 @@ export function ExpenseDetailCard({ expense, members, categories }: ExpenseDetai
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold text-slate-950">{expense.title}</h1>
           <div className="flex flex-wrap gap-2">
+            <Badge variant="neutral">{milestone?.title || 'Không rõ mốc'}</Badge>
             <Badge variant="info">{category?.name || 'Không có danh mục'}</Badge>
             <Badge>{expense.splitMethod}</Badge>
           </div>

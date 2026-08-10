@@ -9,6 +9,7 @@ import type {
 
 export type CreateExpensePersistenceInput = {
   planId: string;
+  milestoneId: string;
   title: string;
   categoryId: string | null;
   amount: number;

@@ -22,6 +22,10 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/plans/$(planId)/members/$(memberId));
     }
 
+    function milestoneDoc(planId, milestoneId) {
+      return get(/databases/$(database)/documents/plans/$(planId)/milestones/$(milestoneId));
+    }
+
     function isPlanVisible(planId) {
       return isSignedIn() &&
         exists(/databases/$(database)/documents/userPlans/$(request.auth.uid)/plans/$(planId)) &&
@@ -100,6 +104,8 @@ service cloud.firestore {
         request.resource.data.status == resource.data.status &&
         request.resource.data.closedAt == resource.data.closedAt &&
         request.resource.data.memberCount is int &&
+        request.resource.data.milestoneCount is int &&
+        request.resource.data.todoCount is int &&
         request.resource.data.expenseCount is int &&
         request.resource.data.incomeCount is int &&
         request.resource.data.settlementCount is int &&
@@ -113,6 +119,8 @@ service cloud.firestore {
         resource.data.status == 'active' &&
         request.resource.data.closedAt != null &&
         request.resource.data.memberCount == resource.data.memberCount &&
+        request.resource.data.milestoneCount == resource.data.milestoneCount &&
+        request.resource.data.todoCount == resource.data.todoCount &&
         request.resource.data.expenseCount == resource.data.expenseCount &&
         request.resource.data.incomeCount == resource.data.incomeCount &&
         request.resource.data.settlementCount == resource.data.settlementCount &&
@@ -143,6 +151,8 @@ service cloud.firestore {
         request.resource.data.ownerMemberId is string &&
         request.resource.data.status == 'active' &&
         request.resource.data.memberCount == 1 &&
+        request.resource.data.milestoneCount == 0 &&
+        request.resource.data.todoCount == 0 &&
         request.resource.data.expenseCount == 0 &&
         request.resource.data.incomeCount == 0 &&
         request.resource.data.settlementCount == 0 &&
@@ -314,6 +324,57 @@ service cloud.firestore {
         ) || isPlanOwner(planId);
     }
 
+    match /plans/{planId}/milestones/{milestoneId} {
+      allow read: if isPlanVisible(planId);
+      allow create: if isPlanOwner(planId) &&
+        isPlanActive(planId) &&
+        request.resource.data.id == milestoneId &&
+        request.resource.data.planId == planId &&
+        request.resource.data.createdByUserId == request.auth.uid &&
+        request.resource.data.title is string &&
+        request.resource.data.status in ['upcoming', 'in_progress', 'completed', 'cancelled'] &&
+        request.resource.data.orderIndex is int &&
+        request.resource.data.totalExpense is int &&
+        request.resource.data.todoCount is int &&
+        request.resource.data.completedTodoCount is int;
+      allow update: if isPlanOwner(planId) &&
+        isPlanActive(planId) &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.planId == resource.data.planId &&
+        request.resource.data.createdByUserId == resource.data.createdByUserId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.totalExpense is int &&
+        request.resource.data.todoCount is int &&
+        request.resource.data.completedTodoCount is int &&
+        request.resource.data.orderIndex is int &&
+        request.resource.data.status in ['upcoming', 'in_progress', 'completed', 'cancelled'];
+    }
+
+    match /plans/{planId}/todos/{todoId} {
+      allow read: if isPlanVisible(planId);
+      allow create: if isPlanOwner(planId) &&
+        isPlanActive(planId) &&
+        request.resource.data.id == todoId &&
+        request.resource.data.planId == planId &&
+        request.resource.data.createdByUserId == request.auth.uid &&
+        request.resource.data.milestoneId is string &&
+        milestoneDoc(planId, request.resource.data.milestoneId).data.planId == planId &&
+        request.resource.data.title is string &&
+        request.resource.data.priority in ['low', 'medium', 'high'] &&
+        request.resource.data.status in ['todo', 'in_progress', 'done', 'cancelled'];
+      allow update: if isPlanOwner(planId) &&
+        isPlanActive(planId) &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.planId == resource.data.planId &&
+        request.resource.data.createdByUserId == resource.data.createdByUserId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.milestoneId == resource.data.milestoneId &&
+        milestoneDoc(planId, request.resource.data.milestoneId).data.planId == planId &&
+        request.resource.data.title is string &&
+        request.resource.data.priority in ['low', 'medium', 'high'] &&
+        request.resource.data.status in ['todo', 'in_progress', 'done', 'cancelled'];
+    }
+
     match /plans/{planId}/expenses/{expenseId} {
       allow read: if isPlanVisible(planId);
       allow create: if canCreateExpense(planId) &&
@@ -325,6 +386,8 @@ service cloud.firestore {
         request.resource.data.status == 'active' &&
         request.resource.data.amount is int &&
         request.resource.data.amount > 0 &&
+        request.resource.data.milestoneId is string &&
+        milestoneDoc(planId, request.resource.data.milestoneId).data.planId == planId &&
         request.resource.data.paidByMemberId is string;
       allow update: if isPlanActive(planId) &&
         (
@@ -336,6 +399,8 @@ service cloud.firestore {
         request.resource.data.createdByUserId == resource.data.createdByUserId &&
         request.resource.data.createdByMemberId == resource.data.createdByMemberId &&
         request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.milestoneId is string &&
+        milestoneDoc(planId, request.resource.data.milestoneId).data.planId == planId &&
         request.resource.data.amount is int &&
         request.resource.data.amount > 0;
     }

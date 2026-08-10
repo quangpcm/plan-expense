@@ -3,6 +3,7 @@ import { timestampToDate } from '@/shared/utils/firebase';
 import type {
   CategoryStatisticRow,
   MemberBalanceRow,
+  MilestoneStatisticRow,
   StatisticInput,
   StatisticResult,
   TimelineStatisticRow,
@@ -27,6 +28,7 @@ export class StatisticService {
     return {
       overview,
       memberBalances: this.calculateMemberBalance(input),
+      milestoneBreakdown: this.calculateMilestones(input),
       categoryBreakdown: this.calculateCategory(input),
       expenseTimeline: this.calculateTimeline(input),
     };
@@ -86,6 +88,31 @@ export class StatisticService {
       .sort((a, b) => b.totalAmount - a.totalAmount);
   }
 
+  calculateMilestones(input: StatisticInput): MilestoneStatisticRow[] {
+    return input.milestones
+      .map((milestone) => {
+        const milestoneExpenses = input.expenses.filter((expense) => expense.milestoneId === milestone.id);
+        const totalAmount = milestoneExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+        const progress =
+          milestone.todoCount > 0
+            ? Math.round((milestone.completedTodoCount / milestone.todoCount) * 100)
+            : 0;
+
+        return {
+          milestoneId: milestone.id,
+          milestoneTitle: milestone.title,
+          status: milestone.status,
+          totalAmount,
+          budgetAmount: milestone.budgetAmount,
+          expenseCount: milestoneExpenses.length,
+          todoCount: milestone.todoCount,
+          completedTodoCount: milestone.completedTodoCount,
+          progress,
+        };
+      })
+      .sort((a, b) => b.totalAmount - a.totalAmount);
+  }
+
   calculateTimeline(input: StatisticInput): TimelineStatisticRow[] {
     const totals = new Map<string, number>();
 
@@ -95,9 +122,11 @@ export class StatisticService {
       totals.set(key, (totals.get(key) || 0) + expense.amount);
     });
 
-    return Array.from(totals.entries()).map(([date, totalAmount]) => ({
-      date,
-      totalAmount,
-    }));
+    return Array.from(totals.entries())
+      .map(([date, totalAmount]) => ({
+        date,
+        totalAmount,
+      }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }
 }
