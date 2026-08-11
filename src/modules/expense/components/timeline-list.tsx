@@ -22,6 +22,7 @@ type TimelineListProps = {
   milestones: MilestoneDocument[];
   selectedMilestoneId?: string | null;
   onSelectedMilestoneChange?: (milestoneId: string | null) => void;
+  hideMilestoneFilter?: boolean;
 };
 
 type TimelineEntry =
@@ -37,6 +38,7 @@ export function TimelineList({
   milestones,
   selectedMilestoneId: selectedMilestoneIdProp,
   onSelectedMilestoneChange,
+  hideMilestoneFilter = false,
 }: TimelineListProps) {
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string>(selectedMilestoneIdProp || 'all');
 
@@ -68,13 +70,13 @@ export function TimelineList({
     ...filteredExpenses.map((expense): TimelineEntry => ({
       kind: 'expense',
       id: expense.id,
-      timestamp: timestampToDate(expense.createdAt) ?? new Date(0),
+      timestamp: timestampToDate(expense.spentAt) ?? new Date(0),
       data: expense,
     })),
     ...filteredIncomes.map((income): TimelineEntry => ({
       kind: 'income',
       id: income.id,
-      timestamp: timestampToDate(income.createdAt) ?? new Date(0),
+      timestamp: timestampToDate(income.receivedAt) ?? new Date(0),
       data: income,
     })),
   ];
@@ -82,20 +84,22 @@ export function TimelineList({
   if (entries.length === 0) {
     return (
       <div className="space-y-4">
-        <div className="flex flex-col gap-2 sm:max-w-xs">
-          <label className="text-sm font-medium text-slate-700" htmlFor="timeline-milestone-filter">
-            Mốc kế hoạch
-          </label>
-          <DropdownSelect
-            id="timeline-milestone-filter"
-            onValueChange={handleChangeMilestone}
-            options={[
-              { value: 'all', label: 'Tất cả các mốc' },
-              ...milestones.map((milestone) => ({ value: milestone.id, label: milestone.title })),
-            ]}
-            value={selectedMilestoneId}
-          />
-        </div>
+        {!hideMilestoneFilter ? (
+          <div className="flex flex-col gap-2 sm:max-w-xs">
+            <label className="text-sm font-medium text-slate-700" htmlFor="timeline-milestone-filter">
+              Mốc kế hoạch
+            </label>
+            <DropdownSelect
+              id="timeline-milestone-filter"
+              onValueChange={handleChangeMilestone}
+              options={[
+                { value: 'all', label: 'Tất cả các mốc' },
+                ...milestones.map((milestone) => ({ value: milestone.id, label: milestone.title })),
+              ]}
+              value={selectedMilestoneId}
+            />
+          </div>
+        ) : null}
         <Card>
           <p className="text-sm leading-6 text-[var(--color-muted)]">
             Chưa có khoản chi hoặc khoản thu nào
@@ -119,20 +123,22 @@ export function TimelineList({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-2 sm:max-w-xs">
-        <label className="text-sm font-medium text-slate-700" htmlFor="timeline-milestone-filter">
-          Mốc kế hoạch
-        </label>
-        <DropdownSelect
-          id="timeline-milestone-filter"
-          onValueChange={handleChangeMilestone}
-          options={[
-            { value: 'all', label: 'Tất cả các mốc' },
-            ...milestones.map((milestone) => ({ value: milestone.id, label: milestone.title })),
-          ]}
-          value={selectedMilestoneId}
-        />
-      </div>
+      {!hideMilestoneFilter ? (
+        <div className="flex flex-col gap-2 sm:max-w-xs">
+          <label className="text-sm font-medium text-slate-700" htmlFor="timeline-milestone-filter">
+            Mốc kế hoạch
+          </label>
+          <DropdownSelect
+            id="timeline-milestone-filter"
+            onValueChange={handleChangeMilestone}
+            options={[
+              { value: 'all', label: 'Tất cả các mốc' },
+              ...milestones.map((milestone) => ({ value: milestone.id, label: milestone.title })),
+            ]}
+            value={selectedMilestoneId}
+          />
+        </div>
+      ) : null}
       <div className="space-y-8">
         {Object.entries(grouped).map(([day, dayEntries]) => (
           <div key={day} className="relative">

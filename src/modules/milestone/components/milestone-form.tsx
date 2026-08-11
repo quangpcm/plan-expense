@@ -12,7 +12,7 @@ import type { PlanDocument } from '@/modules/plan/types/plan';
 import type { AuthUser } from '@/modules/auth/types/auth';
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { Button } from '@/shared/components/ui/button';
-import { CurrencyField } from '@/shared/components/ui/currency-field';
+import { DateField } from '@/shared/components/ui/date-field';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
@@ -23,9 +23,10 @@ type MilestoneFormProps = {
   currentUser: AuthUser | null;
   milestone?: MilestoneDocument;
   onSuccess?: () => void;
+  onClose?: () => void;
 };
 
-export function MilestoneForm({ plan, currentMember, currentUser, milestone, onSuccess }: MilestoneFormProps) {
+export function MilestoneForm({ plan, currentMember, currentUser, milestone, onSuccess, onClose }: MilestoneFormProps) {
   const [title, setTitle] = useState(milestone?.title ?? '');
   const [description, setDescription] = useState(milestone?.description ?? '');
   const [startDate, setStartDate] = useState(
@@ -34,7 +35,6 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
   const [endDate, setEndDate] = useState(
     milestone?.endDate ? new Date(milestone.endDate.toDate()).toISOString().slice(0, 10) : '',
   );
-  const [budgetAmount, setBudgetAmount] = useState(milestone?.budgetAmount ?? 0);
   const [status, setStatus] = useState<MilestoneDocument['status']>(milestone?.status ?? 'upcoming');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -60,7 +60,6 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
           description,
           startDate,
           endDate,
-          budgetAmount: budgetAmount > 0 ? budgetAmount : undefined,
           status,
           iconId: milestone.iconId ?? '',
         });
@@ -73,7 +72,6 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
           description,
           startDate,
           endDate,
-          budgetAmount: budgetAmount > 0 ? budgetAmount : undefined,
           iconId: '',
         });
 
@@ -83,7 +81,6 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
         setDescription('');
         setStartDate('');
         setEndDate('');
-        setBudgetAmount(0);
       }
 
       onSuccess?.();
@@ -126,16 +123,14 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
           value={description}
         />
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor={`milestone-start-${milestone?.id ?? 'new'}`}>
             Ngày bắt đầu
           </label>
-          <Input
-            className="min-h-11"
+          <DateField
             id={`milestone-start-${milestone?.id ?? 'new'}`}
             onChange={(event) => setStartDate(event.target.value)}
-            type="date"
             value={startDate}
           />
         </div>
@@ -143,27 +138,14 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
           <label className="text-sm font-medium text-slate-700" htmlFor={`milestone-end-${milestone?.id ?? 'new'}`}>
             Ngày kết thúc
           </label>
-          <Input
-            className="min-h-11"
+          <DateField
             id={`milestone-end-${milestone?.id ?? 'new'}`}
             onChange={(event) => setEndDate(event.target.value)}
-            type="date"
             value={endDate}
           />
         </div>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor={`milestone-budget-${milestone?.id ?? 'new'}`}>
-            Ngân sách dự kiến
-          </label>
-          <CurrencyField
-            id={`milestone-budget-${milestone?.id ?? 'new'}`}
-            onChange={setBudgetAmount}
-            placeholder="0"
-            value={budgetAmount}
-          />
-        </div>
         {milestone ? (
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700" htmlFor={`milestone-status-${milestone.id}`}>
@@ -183,7 +165,12 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
           </div>
         ) : null}
       </div>
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-3">
+        {onClose ? (
+          <Button onClick={onClose} type="button" variant="ghost">
+            Đóng form
+          </Button>
+        ) : null}
         <Button disabled={isSubmitting} type="submit">
           {isSubmitting ? 'Đang lưu...' : milestone ? 'Lưu thay đổi' : 'Tạo mốc kế hoạch'}
         </Button>

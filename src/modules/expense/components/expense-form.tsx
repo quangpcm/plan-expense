@@ -25,6 +25,7 @@ import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { splitMethods } from '@/shared/constants';
 import { formatCurrency } from '@/shared/utils/currency';
+import { formatDateTimeLocalInput } from '@/shared/utils/date';
 import { cn } from '@/shared/utils/cn';
 
 type ExpenseFormProps = {
@@ -84,7 +85,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
       merchantName: expense?.merchantName || '',
       locationName: expense?.locationName || '',
       note: expense?.note || '',
-      spentAt: expense ? new Date(expense.spentAt.toDate()).toISOString().slice(0, 16) : '',
+      spentAt: expense ? formatDateTimeLocalInput(expense.spentAt.toDate()) : '',
       attachments: [],
     },
   });

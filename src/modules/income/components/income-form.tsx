@@ -22,6 +22,7 @@ import { Button } from '@/shared/components/ui/button';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
+import { formatDateTimeLocalInput } from '@/shared/utils/date';
 import { cn } from '@/shared/utils/cn';
 
 type IncomeFormProps = {
@@ -52,7 +53,7 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
       categoryId: income?.categoryId || '',
       contributedByMemberId: income?.contributedByMemberId || currentMember?.id || activeMembers[0]?.id || '',
       note: income?.note || '',
-      receivedAt: income ? new Date(income.receivedAt.toDate()).toISOString().slice(0, 16) : '',
+      receivedAt: income ? formatDateTimeLocalInput(income.receivedAt.toDate()) : '',
     },
   });
   const categoryIdWatched = useWatch({ control: form.control, name: 'categoryId' });

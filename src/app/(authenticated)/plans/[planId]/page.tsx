@@ -1004,17 +1004,21 @@ export default function PlanDetailPage() {
                   </div>
                 )}
                 <BottomSheet
-                  description="Danh sách khoản chi thuộc milestone đang chọn trên mobile."
+                  description="Các khoản chi của milestone này được hiển thị theo dạng dòng thời gian."
                   onClose={() => setExpenseSheetMilestoneId(null)}
                   open={Boolean(expenseSheetMilestone)}
                   title={expenseSheetMilestone ? `Khoản chi · ${expenseSheetMilestone.title}` : 'Khoản chi milestone'}
                 >
                   {expenseSheetMilestone ? (
-                    <MilestoneExpensePanel
-                      canCreateExpense={plan.status !== 'closed'}
+                    <TimelineList
+                      categories={[...categories, ...incomeCategories]}
                       expenses={expenseSheetMilestoneExpenses}
-                      milestone={expenseSheetMilestone}
+                      hideMilestoneFilter
+                      incomes={[]}
+                      members={members}
+                      milestones={[expenseSheetMilestone]}
                       planId={planId}
+                      selectedMilestoneId={expenseSheetMilestone.id}
                     />
                   ) : null}
                 </BottomSheet>
@@ -1076,6 +1080,10 @@ export default function PlanDetailPage() {
                     <MilestoneForm
                       currentMember={currentMember}
                       currentUser={user}
+                      onClose={() => {
+                        setShowMilestoneForm(false);
+                        setEditingMilestone(null);
+                      }}
                       onSuccess={() => {
                         setShowMilestoneForm(false);
                         setEditingMilestone(null);
@@ -1083,17 +1091,6 @@ export default function PlanDetailPage() {
                       plan={ensuredPlan}
                       {...(editingMilestone ? { milestone: editingMilestone } : {})}
                     />
-                    <div className="mt-4 flex justify-end">
-                      <Button
-                        onClick={() => {
-                          setShowMilestoneForm(false);
-                          setEditingMilestone(null);
-                        }}
-                        variant="ghost"
-                      >
-                        Đóng form
-                      </Button>
-                    </div>
                   </Dialog>
                 </div>
                 <div className="md:hidden">
@@ -1109,6 +1106,10 @@ export default function PlanDetailPage() {
                     <MilestoneForm
                       currentMember={currentMember}
                       currentUser={user}
+                      onClose={() => {
+                        setShowMilestoneForm(false);
+                        setEditingMilestone(null);
+                      }}
                       onSuccess={() => {
                         setShowMilestoneForm(false);
                         setEditingMilestone(null);
@@ -1116,17 +1117,6 @@ export default function PlanDetailPage() {
                       plan={ensuredPlan}
                       {...(editingMilestone ? { milestone: editingMilestone } : {})}
                     />
-                    <div className="mt-4 flex justify-end">
-                      <Button
-                        onClick={() => {
-                          setShowMilestoneForm(false);
-                          setEditingMilestone(null);
-                        }}
-                        variant="ghost"
-                      >
-                        Đóng form
-                      </Button>
-                    </div>
                   </BottomSheet>
                 </div>
               </>
