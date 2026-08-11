@@ -2,18 +2,34 @@
 
 @theme {
   --font-sans: 'Inter', 'Segoe UI', sans-serif;
-  --color-background: #f8fafc;
-  --color-foreground: #0f172a;
+  --color-background: #f6f8fc;
+  --color-foreground: #172033;
   --color-surface: #ffffff;
-  --color-muted: #64748b;
-  --color-border: rgba(148, 163, 184, 0.28);
-  --color-primary: #0f172a;
-  --color-primary-foreground: #f8fafc;
-  --color-secondary: #e2e8f0;
-  --color-secondary-foreground: #0f172a;
-  --color-accent: #0ea5e9;
+  --color-surface-soft: #f1f5fb;
+  --color-muted: #68738a;
+  --color-subtle: #94a0b5;
+  --color-border: #dfe5ef;
+  --color-border-strong: #cbd5e1;
+  --color-primary: #243b6b;
+  --color-primary-hover: #1d315b;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #edf2f8;
+  --color-secondary-foreground: #334155;
+  --color-accent: #3b82f6;
+  --color-accent-soft: #e8f1ff;
+  --color-success: #059669;
+  --color-success-soft: #dff7ec;
+  --color-warning: #d97706;
+  --color-warning-soft: #fff4d8;
   --color-danger: #dc2626;
-  --radius-card: 1.75rem;
+  --color-danger-soft: #feecec;
+  --color-income: #059669;
+  --color-income-soft: #e2f7ef;
+  --color-expense: #dc5a4c;
+  --color-expense-soft: #fcebe8;
+  --color-info: #2563eb;
+  --color-info-soft: #e8f0ff;
+  --radius-card: 1.5rem;
 }
 
 @layer base {
@@ -28,9 +44,7 @@
   body {
     margin: 0;
     min-width: 320px;
-    background:
-      radial-gradient(circle at top, rgba(14, 165, 233, 0.08), transparent 35%),
-      linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+    background: linear-gradient(180deg, #f8faff 0%, #f4f7fb 45%, #f6f8fc 100%);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     text-rendering: optimizeLegibility;
@@ -49,7 +63,6 @@
   }
 
   ::selection {
-    background: rgba(14, 165, 233, 0.18);
+    background: color-mix(in srgb, var(--color-accent) 18%, white);
   }
 }
-

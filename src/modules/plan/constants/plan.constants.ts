@@ -34,11 +34,11 @@ export const planTypeGradients: Record<PlanType, string> = {
 };
 
 export const planTypeBadgeColors: Record<PlanType, string> = {
-  travel: 'bg-[#0050cb]',
-  saving: 'bg-[#0050cb]',
-  wedding: 'bg-[#52606d]',
-  shared_living: 'bg-[#52606d]',
-  birthday: 'bg-[#5a5959]',
-  event: 'bg-[#5a5959]',
-  general: 'bg-[#5a5959]',
+  travel: 'bg-[var(--color-primary)]',
+  saving: 'bg-[var(--color-primary)]',
+  wedding: 'bg-[#4f5f7f]',
+  shared_living: 'bg-[#4f5f7f]',
+  birthday: 'bg-[#7c5d3b]',
+  event: 'bg-[#5b6aa0]',
+  general: 'bg-[#5c677d]',
 };

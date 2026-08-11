@@ -6,11 +6,10 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
   return (
     <input
       className={cn(
-        'min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100',
+        'min-h-11 w-full rounded-2xl border border-[var(--color-border)] bg-[color:var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-foreground)] outline-none transition placeholder:text-[var(--color-subtle)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent-soft)]',
         className,
       )}
       {...props}
     />
   );
 }
-

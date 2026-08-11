@@ -3,9 +3,9 @@ import type { HTMLAttributes } from 'react';
 import { cn } from '@/shared/utils/cn';
 
 const toastVariants = {
-  info: 'bg-slate-950 text-white',
-  success: 'bg-emerald-600 text-white',
-  danger: 'bg-rose-600 text-white',
+  info: 'bg-[var(--color-primary)] text-[var(--color-primary-foreground)]',
+  success: 'bg-[var(--color-success)] text-white',
+  danger: 'bg-[var(--color-danger)] text-white',
 } as const;
 
 type ToastProps = HTMLAttributes<HTMLDivElement> & {
@@ -24,4 +24,3 @@ export function Toast({ className, variant = 'info', ...props }: ToastProps) {
     />
   );
 }
-

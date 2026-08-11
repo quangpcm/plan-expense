@@ -32,31 +32,31 @@ export default function PlansPage() {
   }, [plans, searchQuery, sortBy]);
 
   return (
-    <main className="relative flex flex-col gap-4 bg-[#f7f9fb]">
+    <main className="relative flex flex-col gap-4 bg-[var(--color-background)]">
       <Breadcrumbs items={[{ label: 'Kế hoạch' }]} />
 
-      <Card className="gap-1 border-[#e0e3e5] bg-white">
-        <h1 className="text-2xl font-bold text-[#191c1e]">{greeting}</h1>
-        <p className="text-sm leading-6 text-[#424656]">
+      <Card className="gap-1">
+        <h1 className="text-2xl font-bold text-[var(--color-foreground)]">{greeting}</h1>
+        <p className="text-sm leading-6 text-[var(--color-muted)]">
           Quản lý và theo dõi các kế hoạch tài chính của bạn.
         </p>
       </Card>
 
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#727687]" />
+          <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[var(--color-subtle)]" />
           <Input
-            className="border-[#c2c6d8] pl-10 text-[#191c1e] placeholder:text-[#727687]"
+            className="pl-10"
             placeholder="Tìm kiếm kế hoạch..."
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
           />
         </div>
         <div className="relative shrink-0">
-          <ArrowUpDown className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#727687]" />
+          <ArrowUpDown className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-subtle)]" />
           <select
             aria-label="Sắp xếp kế hoạch"
-            className="h-11 rounded-2xl border border-[#c2c6d8] bg-white pl-9 pr-3 text-sm text-[#191c1e] outline-none focus:border-[#0050cb]"
+            className="h-11 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] pl-9 pr-3 text-sm text-[var(--color-foreground)] outline-none transition focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent-soft)]"
             value={sortBy}
             onChange={(event) => setSortBy(event.target.value as SortOption)}
           >
@@ -81,7 +81,7 @@ export default function PlansPage() {
           <CreatePlanCard />
         </div>
       ) : plans.length > 0 ? (
-        <div className="rounded-[24px] border border-dashed border-[#c2c6d8] bg-white p-5 text-sm leading-7 text-[#424656]">
+        <div className="rounded-[24px] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface)] p-5 text-sm leading-7 text-[var(--color-muted)]">
           Không tìm thấy kế hoạch phù hợp với &ldquo;{searchQuery.trim()}&rdquo;.
         </div>
       ) : (
@@ -92,7 +92,7 @@ export default function PlansPage() {
 
       <Link
         aria-label="Tạo kế hoạch"
-        className="fixed right-4 bottom-24 z-20 flex size-14 items-center justify-center rounded-full bg-[#0050cb] text-white shadow-[0_12px_30px_rgba(0,80,203,0.4)] transition hover:bg-[#003fa4]"
+        className="fixed right-4 bottom-24 z-20 flex size-14 items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-[0_14px_34px_rgba(36,59,107,0.32)] transition hover:bg-[var(--color-primary-hover)]"
         href="/plans/new"
       >
         <Plus className="size-6" />

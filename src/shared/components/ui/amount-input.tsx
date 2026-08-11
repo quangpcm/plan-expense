@@ -30,9 +30,9 @@ export function AmountInput({ id, value, onChange, placeholder = '0' }: AmountIn
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className="flex items-baseline justify-center gap-1 border-b-2 border-[#c2c6d8] pb-1 focus-within:border-[#0050cb]">
+      <div className="flex items-baseline justify-center gap-1 border-b-2 border-[var(--color-border-strong)] pb-1 focus-within:border-[var(--color-primary)]">
         <input
-          className="border-0 bg-transparent text-right text-4xl font-bold text-[#0050cb] outline-none placeholder:text-[#c2c6d8]"
+          className="border-0 bg-transparent text-right text-4xl font-bold text-[var(--color-primary)] outline-none placeholder:text-[var(--color-border-strong)]"
           id={id}
           inputMode="numeric"
           onBlur={() => setIsFocused(false)}
@@ -45,13 +45,13 @@ export function AmountInput({ id, value, onChange, placeholder = '0' }: AmountIn
           style={{ width: `${inputWidth}ch` }}
           value={displayValue}
         />
-        <span className="text-2xl font-semibold text-[#727687]">đ</span>
+        <span className="text-2xl font-semibold text-[var(--color-muted)]">đ</span>
       </div>
       {showSuggestions ? (
         <div className="flex flex-wrap items-center justify-center gap-2">
           {suggestions.map((suggestion) => (
             <button
-              className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700 transition hover:bg-slate-200"
+              className="rounded-full bg-[var(--color-secondary)] px-3 py-1 text-sm font-medium text-[var(--color-secondary-foreground)] transition hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-info)]"
               key={suggestion}
               onClick={() => {
                 setSuggestionsHidden(true);

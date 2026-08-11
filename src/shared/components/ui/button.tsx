@@ -5,9 +5,10 @@ import { cn } from '@/shared/utils/cn';
 
 const buttonVariants = {
   primary:
-    'bg-slate-950 text-white shadow-[0_10px_24px_rgba(15,23,42,0.18)] hover:bg-slate-800 visited:text-white active:text-white focus:text-white',
-  secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200',
-  ghost: 'bg-transparent text-slate-700 hover:bg-slate-100',
+    'bg-[var(--color-primary)] text-[var(--color-primary-foreground)] shadow-[0_12px_28px_rgba(36,59,107,0.2)] hover:bg-[var(--color-primary-hover)] visited:text-[var(--color-primary-foreground)] active:text-[var(--color-primary-foreground)] focus:text-[var(--color-primary-foreground)]',
+  secondary:
+    'bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)] hover:bg-[color-mix(in_srgb,var(--color-secondary)_78%,white)]',
+  ghost: 'bg-transparent text-[var(--color-secondary-foreground)] hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-info)]',
 } as const;
 
 type SharedButtonProps = {
@@ -33,7 +34,7 @@ export function Button({
   ...props
 }: NativeButtonProps | LinkButtonProps) {
   const classes = cn(
-    'inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60',
+    'inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60',
     buttonVariants[variant],
     className,
   );

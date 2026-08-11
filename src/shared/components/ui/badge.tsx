@@ -3,10 +3,10 @@ import type { HTMLAttributes } from 'react';
 import { cn } from '@/shared/utils/cn';
 
 const badgeVariants = {
-  neutral: 'bg-slate-100 text-slate-700',
-  info: 'bg-sky-100 text-sky-700',
-  success: 'bg-emerald-100 text-emerald-700',
-  danger: 'bg-rose-100 text-rose-700',
+  neutral: 'bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)]',
+  info: 'bg-[var(--color-info-soft)] text-[var(--color-info)]',
+  success: 'bg-[var(--color-success-soft)] text-[var(--color-success)]',
+  danger: 'bg-[var(--color-danger-soft)] text-[color:var(--color-danger)]',
 } as const;
 
 type BadgeProps = HTMLAttributes<HTMLSpanElement> & {
@@ -25,4 +25,3 @@ export function Badge({ className, variant = 'neutral', ...props }: BadgeProps) 
     />
   );
 }
-

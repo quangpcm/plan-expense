@@ -26,10 +26,10 @@ export function MilestoneExpensePanel({
   onShowTimeline,
 }: MilestoneExpensePanelProps) {
   return (
-    <Card className="gap-5 border-slate-200 bg-white shadow-none">
+    <Card className="gap-5 shadow-none">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-          <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#0050cb]">
+          <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-primary)]">
             <CircleDollarSign className="size-3.5" />
             Khoản chi milestone
           </p>
@@ -53,25 +53,25 @@ export function MilestoneExpensePanel({
         <div className="grid gap-3">
           {expenses.map((expense) => (
             <Link
-              className="rounded-[24px] border border-slate-200 bg-slate-50 px-4 py-4 transition hover:border-slate-300 hover:bg-white"
+              className="rounded-[24px] border border-[var(--color-border)] bg-[var(--color-surface-soft)] px-4 py-4 transition hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface)]"
               href={`/plans/${planId}/expenses/${expense.id}`}
               key={expense.id}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 space-y-1">
                   <p className="truncate text-sm font-semibold text-slate-950">{expense.title}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-[var(--color-subtle)]">
                     {formatDate(timestampToDate(expense.spentAt) ?? new Date())}
                   </p>
                 </div>
-                <p className="shrink-0 text-sm font-semibold text-[#0050cb]">{formatCurrency(expense.amount)}</p>
+                <p className="shrink-0 text-sm font-semibold text-[var(--color-expense)]">{formatCurrency(expense.amount)}</p>
               </div>
             </Link>
           ))}
         </div>
       ) : (
-        <Card className="border-slate-200 bg-slate-50 shadow-none">
-          <p className="text-sm leading-6 text-slate-600">
+        <Card className="bg-[var(--color-surface-soft)] shadow-none">
+          <p className="text-sm leading-6 text-[var(--color-muted)]">
             Milestone này chưa có khoản chi nào. Bạn có thể thêm khoản chi mới để gắn dòng tiền vào đúng giai đoạn.
           </p>
         </Card>
