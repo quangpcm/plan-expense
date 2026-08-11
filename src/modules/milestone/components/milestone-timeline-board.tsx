@@ -168,6 +168,7 @@ export function MilestoneTimelineBoard({
         const shouldShowMonthLabel = monthLabel !== previousMonthLabel;
         const isMonthSelected = selectedMonthLabel !== null && monthLabel === selectedMonthLabel;
         const tone = getMilestoneCardTone(displayedStatus, isSelected);
+        const shouldExpandDetails = displayedStatus !== 'completed' || isSelected;
         previousMonthLabel = monthLabel;
 
         return (
@@ -304,64 +305,74 @@ export function MilestoneTimelineBoard({
               </button>
             </div>
 
-            <div className="mt-3 ml-[11px] space-y-2 border-l-2 border-[#edf1f8] pl-4 sm:mt-4 sm:ml-4 sm:space-y-3 sm:pl-6">
-              {milestoneTodos.length > 0 ? (
-                milestoneTodos.map((todo) => {
-                  const assignee = members.find((member) => member.id === todo.assigneeMemberId) ?? null;
-                  const canToggle = canManagePlan && !isPlanClosed;
-
-                  return (
-                    <div className="relative" key={todo.id} onClick={(event) => event.stopPropagation()}>
-                      <span className="absolute -left-[23px] top-1/2 size-3 -translate-y-1/2 rounded-full bg-[#c8d1e4] sm:-left-[35px] sm:size-4" />
-                      <TodoMilestoneCard
-                        assignee={assignee}
-                        canToggle={canToggle}
-                        isSubmitting={isTodoSubmitting}
-                        onChangeStatus={onChangeTodoStatus}
-                        onView={onViewTodo}
-                        todo={todo}
-                      />
-                    </div>
-                  );
-                })
-              ) : (
-                <Card className="border-slate-100 bg-slate-50 text-slate-600 shadow-none">
-                  <p className="text-sm leading-2">Milestone này chưa có todo nào.</p>
-                </Card>
+            <div
+              aria-hidden={!shouldExpandDetails}
+              className={cn(
+                'ml-[11px] overflow-hidden transition-[max-height,opacity,margin,transform] duration-300 ease-out sm:ml-4',
+                shouldExpandDetails
+                  ? 'mt-3 max-h-[2200px] opacity-100 sm:mt-4'
+                  : 'mt-0 max-h-0 translate-y-[-6px] opacity-0 pointer-events-none',
               )}
+            >
+              <div className="space-y-2 border-l-2 border-[#edf1f8] pl-4 sm:space-y-3 sm:pl-6">
+                {milestoneTodos.length > 0 ? (
+                  milestoneTodos.map((todo) => {
+                    const assignee = members.find((member) => member.id === todo.assigneeMemberId) ?? null;
+                    const canToggle = canManagePlan && !isPlanClosed;
 
-              <button
-                className={cn(
-                  'flex min-h-11 w-full items-center justify-center gap-2 rounded-[18px] px-4 py-2.5 text-sm font-semibold transition',
-                  canManagePlan && !isPlanClosed
-                    ? 'bg-transparent text-slate-600 hover:bg-white hover:text-[#0050cb]'
-                    : 'cursor-not-allowed bg-transparent text-slate-400',
+                    return (
+                      <div className="relative" key={todo.id} onClick={(event) => event.stopPropagation()}>
+                        <span className="absolute -left-[23px] top-1/2 size-3 -translate-y-1/2 rounded-full bg-[#c8d1e4] sm:-left-[35px] sm:size-4" />
+                        <TodoMilestoneCard
+                          assignee={assignee}
+                          canToggle={canToggle}
+                          isSubmitting={isTodoSubmitting}
+                          onChangeStatus={onChangeTodoStatus}
+                          onView={onViewTodo}
+                          todo={todo}
+                        />
+                      </div>
+                    );
+                  })
+                ) : (
+                  <Card className="border-slate-100 bg-slate-50 text-slate-600 shadow-none">
+                    <p className="text-sm leading-2">Milestone này chưa có todo nào.</p>
+                  </Card>
                 )}
-                disabled={!canManagePlan || isPlanClosed}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onAddTodo(milestone);
-                }}
-                type="button"
-              >
-                <Plus className="size-5" />
-                Thêm công việc
-              </button>
 
-              {canManagePlan ? (
-                <div className="flex flex-wrap justify-end gap-2 lg:hidden">
-                  <Button
-                    className={isSelected ? tone.action : ''}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onEditMilestone(milestone);
-                    }}
-                    variant={isSelected ? 'ghost' : 'secondary'}
-                  >
-                    <PencilLine className="size-4" />
-                  </Button>
-                </div>
-              ) : null}
+                <button
+                  className={cn(
+                    'flex min-h-11 w-full items-center justify-center gap-2 rounded-[18px] px-4 py-2.5 text-sm font-semibold transition',
+                    canManagePlan && !isPlanClosed
+                      ? 'bg-transparent text-slate-600 hover:bg-white hover:text-[#0050cb]'
+                      : 'cursor-not-allowed bg-transparent text-slate-400',
+                  )}
+                  disabled={!canManagePlan || isPlanClosed}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onAddTodo(milestone);
+                  }}
+                  type="button"
+                >
+                  <Plus className="size-5" />
+                  Thêm công việc
+                </button>
+
+                {canManagePlan ? (
+                  <div className="flex flex-wrap justify-end gap-2 lg:hidden">
+                    <Button
+                      className={isSelected ? tone.action : ''}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onEditMilestone(milestone);
+                      }}
+                      variant={isSelected ? 'ghost' : 'secondary'}
+                    >
+                      <PencilLine className="size-4" />
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
         );
