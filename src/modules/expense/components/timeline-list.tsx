@@ -68,13 +68,13 @@ export function TimelineList({
     ...filteredExpenses.map((expense): TimelineEntry => ({
       kind: 'expense',
       id: expense.id,
-      timestamp: timestampToDate(expense.spentAt) ?? new Date(0),
+      timestamp: timestampToDate(expense.createdAt) ?? new Date(0),
       data: expense,
     })),
     ...filteredIncomes.map((income): TimelineEntry => ({
       kind: 'income',
       id: income.id,
-      timestamp: timestampToDate(income.receivedAt) ?? new Date(0),
+      timestamp: timestampToDate(income.createdAt) ?? new Date(0),
       data: income,
     })),
   ];

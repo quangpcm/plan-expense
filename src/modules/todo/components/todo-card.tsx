@@ -7,17 +7,19 @@ import type { MouseEvent } from 'react';
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import { priorityLabel, statusLabel, toVendorHref } from '@/modules/todo/utils/todo-display';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
+import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import { Avatar } from '@/shared/components/ui/avatar';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { formatCurrency } from '@/shared/utils/currency';
-import { formatDate } from '@/shared/utils/date';
+import { formatDateTime } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 
 type TodoCardProps = {
   todo: TodoDocument;
   assignee: PlanMemberDocument | null;
+  milestone: MilestoneDocument | null;
   canManagePlan: boolean;
   isSubmitting: boolean;
   onEdit: (todo: TodoDocument) => void;
@@ -33,6 +35,7 @@ function stopPropagation(event: MouseEvent) {
 export function TodoCard({
   todo,
   assignee,
+  milestone,
   canManagePlan,
   isSubmitting,
   onEdit,
@@ -41,7 +44,7 @@ export function TodoCard({
   onDeleteTodo,
 }: TodoCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const dueDate = timestampToDate(todo.dueDate);
+  const createdAt = timestampToDate(todo.createdAt);
 
   function toggleExpanded() {
     setIsExpanded((value) => !value);
@@ -67,7 +70,14 @@ export function TodoCard({
           src={assignee?.avatarUrl ?? null}
         />
         <div className="min-w-0 flex-1 space-y-1.5">
-          <h4 className="truncate text-base font-semibold text-slate-950">{todo.title}</h4>
+          <div className="flex flex-wrap items-center gap-2">
+            <h4 className="truncate text-base font-semibold text-slate-950">{todo.title}</h4>
+            {milestone ? (
+              <Badge className="px-2 py-0.5 text-[11px]" variant="neutral">
+                {milestone.title}
+              </Badge>
+            ) : null}
+          </div>
           <div className="flex flex-wrap gap-1.5">
             <Badge
               className="px-2 py-0.5 text-[11px]"
@@ -89,7 +99,7 @@ export function TodoCard({
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600">
         <span className="inline-flex items-center gap-1.5">
           <CalendarDays className="size-4 text-slate-400" />
-          {dueDate ? formatDate(dueDate) : 'Chưa đặt'}
+          {createdAt ? formatDateTime(createdAt) : 'Chưa đặt'}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <Wallet className="size-4 text-slate-400" />

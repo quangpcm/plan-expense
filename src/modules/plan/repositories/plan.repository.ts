@@ -15,6 +15,7 @@ export type CreatePlanPersistenceInput = {
 
 export type UpdatePlanPersistenceInput = {
   name: string;
+  description: string | null;
   startDate: Date | null;
   endDate: Date | null;
 };

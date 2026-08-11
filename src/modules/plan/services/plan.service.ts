@@ -64,6 +64,7 @@ export class PlanService {
 
     await this.planRepository.updatePlan(plan.id, {
       name: normalizedName,
+      description: input.description?.trim() || null,
       startDate,
       endDate,
     });

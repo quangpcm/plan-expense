@@ -10,7 +10,9 @@ import { updatePlanSchema, type UpdatePlanSchema } from '@/modules/plan/schemas/
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import { Button } from '@/shared/components/ui/button';
+import { DateField } from '@/shared/components/ui/date-field';
 import { Input } from '@/shared/components/ui/input';
+import { Textarea } from '@/shared/components/ui/textarea';
 import { timestampToDate } from '@/shared/utils/firebase';
 
 type EditPlanFormProps = {
@@ -37,6 +39,7 @@ export function EditPlanForm({ plan, currentMember }: EditPlanFormProps) {
   const { register, handleSubmit } = useForm<UpdatePlanSchema>({
     defaultValues: {
       name: plan.name,
+      description: plan.description || '',
       startDate: toDateInputValue(timestampToDate(plan.startDate)),
       endDate: toDateInputValue(timestampToDate(plan.endDate)),
     },
@@ -75,14 +78,21 @@ export function EditPlanForm({ plan, currentMember }: EditPlanFormProps) {
           <label className="text-sm font-medium text-slate-700" htmlFor="edit-plan-startDate">
             Ngày bắt đầu
           </label>
-          <Input id="edit-plan-startDate" type="date" {...register('startDate')} />
+          <DateField id="edit-plan-startDate" {...register('startDate')} />
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="edit-plan-endDate">
             Ngày kết thúc
           </label>
-          <Input id="edit-plan-endDate" type="date" {...register('endDate')} />
+          <DateField id="edit-plan-endDate" {...register('endDate')} />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700" htmlFor="edit-plan-description">
+          Mô tả
+        </label>
+        <Textarea id="edit-plan-description" placeholder="Mục tiêu hoặc ghi chú ngắn cho kế hoạch..." {...register('description')} />
       </div>
 
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}

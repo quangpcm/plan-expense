@@ -16,6 +16,7 @@ import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { Collapsible } from '@/shared/components/ui/collapsible';
+import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
 
 type MemberManagementPanelProps = {
@@ -47,6 +48,8 @@ export function MemberManagementPanel({
       role: 'viewer',
     },
   });
+  const guestRole = guestForm.watch('role');
+  const inviteRole = inviteForm.watch('role');
 
   const submitGuest = guestForm.handleSubmit(async (values) => {
     if (!user) {
@@ -127,13 +130,15 @@ export function MemberManagementPanel({
         >
           <form className="space-y-4" onSubmit={submitGuest}>
             <Input placeholder="Biệt danh của khách" {...guestForm.register('nickname')} />
-            <select
-              className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-              {...guestForm.register('role')}
-            >
-              <option value="editor">Thành viên</option>
-              <option value="viewer">Chỉ xem</option>
-            </select>
+            <input type="hidden" {...guestForm.register('role')} />
+            <DropdownSelect
+              onValueChange={(value) => guestForm.setValue('role', value as AddGuestSchema['role'], { shouldDirty: true, shouldValidate: true })}
+              options={[
+                { value: 'editor', label: 'Thành viên' },
+                { value: 'viewer', label: 'Chỉ xem' },
+              ]}
+              value={guestRole}
+            />
             <p className="text-sm text-slate-500">
               Khách có thể được chọn trong các khoản thu, chi và chia sẻ chi phí.
             </p>
@@ -155,13 +160,15 @@ export function MemberManagementPanel({
         >
           <form className="space-y-4" onSubmit={submitInvitation}>
             <Input placeholder="member@example.com (tùy chọn)" {...inviteForm.register('email')} />
-            <select
-              className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-              {...inviteForm.register('role')}
-            >
-              <option value="viewer">Chỉ xem</option>
-              <option value="editor">Thành viên</option>
-            </select>
+            <input type="hidden" {...inviteForm.register('role')} />
+            <DropdownSelect
+              onValueChange={(value) => inviteForm.setValue('role', value as CreateInvitationSchema['role'], { shouldDirty: true, shouldValidate: true })}
+              options={[
+                { value: 'viewer', label: 'Chỉ xem' },
+                { value: 'editor', label: 'Thành viên' },
+              ]}
+              value={inviteRole}
+            />
             <p className="text-sm text-slate-500">
               Nếu không nhập email, liên kết mời có thể được chia sẻ với bất kỳ ai.
             </p>

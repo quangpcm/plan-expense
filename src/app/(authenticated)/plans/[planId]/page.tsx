@@ -136,10 +136,12 @@ export default function PlanDetailPage() {
   const [todoActionError, setTodoActionError] = useState<string | null>(null);
   const [vendorFormTodo, setVendorFormTodo] = useState<TodoDocument | null>(null);
   const [detailTodo, setDetailTodo] = useState<TodoDocument | null>(null);
+  const [todoToRestoreAfterVendor, setTodoToRestoreAfterVendor] = useState<TodoDocument | null>(null);
   const [expenseSheetMilestoneId, setExpenseSheetMilestoneId] = useState<string | null>(null);
   const [workViewMode, setWorkViewMode] = useState<'milestones' | 'todos'>('milestones');
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const [headerModal, setHeaderModal] = useState<HeaderModal>(null);
+  const [showClosePlanConfirm, setShowClosePlanConfirm] = useState(false);
   const [showStatisticSheet, setShowStatisticSheet] = useState(false);
   const previousPlanIdRef = useRef<string | undefined>(undefined);
 
@@ -468,6 +470,7 @@ export default function PlanDetailPage() {
 
     try {
       await planService.closePlan(ensuredPlan, currentMember);
+      setShowClosePlanConfirm(false);
     } catch (error) {
       setClosingError(error instanceof Error ? error.message : 'Hiện chưa thể đóng kế hoạch này.');
     } finally {
@@ -795,6 +798,8 @@ export default function PlanDetailPage() {
                   emptyMessage="Không có công việc nào sắp đến hạn."
                   isSubmitting={isTodoSubmitting}
                   members={members}
+                  milestones={milestones}
+                  preserveOrder
                   onAddVendor={setVendorFormTodo}
                   onChangeStatus={handleChangeTodoStatus}
                   onDeleteTodo={handleDeleteTodo}
@@ -1037,6 +1042,7 @@ export default function PlanDetailPage() {
                     emptyMessage="Kế hoạch này chưa có công việc nào."
                     isSubmitting={isTodoSubmitting}
                     members={members}
+                    milestones={milestones}
                     onAddVendor={setVendorFormTodo}
                     onChangeStatus={handleChangeTodoStatus}
                     onDeleteTodo={handleDeleteTodo}
@@ -1211,6 +1217,7 @@ export default function PlanDetailPage() {
                   isSubmitting={isTodoSubmitting}
                   onAddVendor={(todo) => {
                     setDetailTodo(null);
+                    setTodoToRestoreAfterVendor(todo);
                     setVendorFormTodo(todo);
                   }}
                   onChangeStatus={handleChangeTodoStatus}
@@ -1237,6 +1244,7 @@ export default function PlanDetailPage() {
                   isSubmitting={isTodoSubmitting}
                   onAddVendor={(todo) => {
                     setDetailTodo(null);
+                    setTodoToRestoreAfterVendor(todo);
                     setVendorFormTodo(todo);
                   }}
                   onChangeStatus={handleChangeTodoStatus}
@@ -1263,7 +1271,11 @@ export default function PlanDetailPage() {
               <button
                 aria-label="Đóng form nhà cung cấp"
                 className="absolute inset-0"
-                onClick={() => setVendorFormTodo(null)}
+                onClick={() => {
+                  setVendorFormTodo(null);
+                  setDetailTodo(todoToRestoreAfterVendor);
+                  setTodoToRestoreAfterVendor(null);
+                }}
                 type="button"
               />
               <Dialog
@@ -1274,12 +1286,23 @@ export default function PlanDetailPage() {
                 <TodoVendorForm
                   currentMember={currentMember}
                   currentUser={user}
-                  onSuccess={() => setVendorFormTodo(null)}
+                  onSuccess={() => {
+                    setVendorFormTodo(null);
+                    setDetailTodo(todoToRestoreAfterVendor);
+                    setTodoToRestoreAfterVendor(null);
+                  }}
                   plan={ensuredPlan}
                   todo={vendorFormTodo}
                 />
                 <div className="mt-4 flex justify-end">
-                  <Button onClick={() => setVendorFormTodo(null)} variant="ghost">
+                  <Button
+                    onClick={() => {
+                      setVendorFormTodo(null);
+                      setDetailTodo(todoToRestoreAfterVendor);
+                      setTodoToRestoreAfterVendor(null);
+                    }}
+                    variant="ghost"
+                  >
                     Đóng form
                   </Button>
                 </div>
@@ -1288,19 +1311,34 @@ export default function PlanDetailPage() {
             <div className="md:hidden">
               <BottomSheet
                 description={`Thêm nhà cung cấp tham khảo cho "${vendorFormTodo.title}".`}
-                onClose={() => setVendorFormTodo(null)}
+                onClose={() => {
+                  setVendorFormTodo(null);
+                  setDetailTodo(todoToRestoreAfterVendor);
+                  setTodoToRestoreAfterVendor(null);
+                }}
                 open={Boolean(vendorFormTodo)}
                 title="Thêm nhà cung cấp"
               >
                 <TodoVendorForm
                   currentMember={currentMember}
                   currentUser={user}
-                  onSuccess={() => setVendorFormTodo(null)}
+                  onSuccess={() => {
+                    setVendorFormTodo(null);
+                    setDetailTodo(todoToRestoreAfterVendor);
+                    setTodoToRestoreAfterVendor(null);
+                  }}
                   plan={ensuredPlan}
                   todo={vendorFormTodo}
                 />
                 <div className="mt-4 flex justify-end">
-                  <Button onClick={() => setVendorFormTodo(null)} variant="ghost">
+                  <Button
+                    onClick={() => {
+                      setVendorFormTodo(null);
+                      setDetailTodo(todoToRestoreAfterVendor);
+                      setTodoToRestoreAfterVendor(null);
+                    }}
+                    variant="ghost"
+                  >
                     Đóng form
                   </Button>
                 </div>
@@ -1347,6 +1385,57 @@ export default function PlanDetailPage() {
             </div>
           </>
         ) : null}
+        {showClosePlanConfirm ? (
+          <>
+            <div className="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
+              <button
+                aria-label="Đóng xác nhận đóng kế hoạch"
+                className="absolute inset-0"
+                onClick={() => setShowClosePlanConfirm(false)}
+                type="button"
+              />
+              <Dialog
+                className="relative z-10 w-full max-w-md"
+                description="Sau khi đóng, kế hoạch sẽ khóa các thao tác tạo hoặc chỉnh sửa mới. Dữ liệu hiện có vẫn có thể xem lại."
+                title="Xác nhận đóng kế hoạch?"
+              >
+                <div className="flex justify-end gap-2">
+                  <Button onClick={() => setShowClosePlanConfirm(false)} variant="secondary">
+                    Hủy
+                  </Button>
+                  <Button
+                    className="bg-red-600 text-white hover:bg-red-700"
+                    disabled={isClosingPlan}
+                    onClick={handleClosePlan}
+                  >
+                    {isClosingPlan ? 'Đang đóng kế hoạch...' : 'Đóng kế hoạch'}
+                  </Button>
+                </div>
+              </Dialog>
+            </div>
+            <div className="md:hidden">
+              <BottomSheet
+                description="Sau khi đóng, kế hoạch sẽ khóa các thao tác tạo hoặc chỉnh sửa mới. Dữ liệu hiện có vẫn có thể xem lại."
+                onClose={() => setShowClosePlanConfirm(false)}
+                open={showClosePlanConfirm}
+                title="Xác nhận đóng kế hoạch?"
+              >
+                <div className="flex justify-end gap-2">
+                  <Button onClick={() => setShowClosePlanConfirm(false)} variant="secondary">
+                    Hủy
+                  </Button>
+                  <Button
+                    className="bg-red-600 text-white hover:bg-red-700"
+                    disabled={isClosingPlan}
+                    onClick={handleClosePlan}
+                  >
+                    {isClosingPlan ? 'Đang đóng kế hoạch...' : 'Đóng kế hoạch'}
+                  </Button>
+                </div>
+              </BottomSheet>
+            </div>
+          </>
+        ) : null}
         {headerModal === 'plan-settings' ? (
           <>
             <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
@@ -1373,11 +1462,14 @@ export default function PlanDetailPage() {
                 </div>
                 <div className="mt-4 flex flex-wrap justify-end gap-2">
                   {permissions.canManagePlan ? (
-                    <Button disabled={isClosingPlan || plan.status === 'closed'} onClick={handleClosePlan} variant="secondary">
+                    <Button
+                      className="border border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
+                      disabled={isClosingPlan || plan.status === 'closed'}
+                      onClick={() => setShowClosePlanConfirm(true)}
+                      variant="secondary"
+                    >
                       {plan.status === 'closed'
                         ? 'Đã đóng kế hoạch'
-                        : isClosingPlan
-                          ? 'Đang đóng kế hoạch...'
                           : 'Đóng kế hoạch'}
                     </Button>
                   ) : null}
@@ -1406,11 +1498,14 @@ export default function PlanDetailPage() {
                 </div>
                 <div className="mt-4 flex flex-wrap justify-end gap-2">
                   {permissions.canManagePlan ? (
-                    <Button disabled={isClosingPlan || plan.status === 'closed'} onClick={handleClosePlan} variant="secondary">
+                    <Button
+                      className="border border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
+                      disabled={isClosingPlan || plan.status === 'closed'}
+                      onClick={() => setShowClosePlanConfirm(true)}
+                      variant="secondary"
+                    >
                       {plan.status === 'closed'
                         ? 'Đã đóng kế hoạch'
-                        : isClosingPlan
-                          ? 'Đang đóng kế hoạch...'
                           : 'Đóng kế hoạch'}
                     </Button>
                   ) : null}

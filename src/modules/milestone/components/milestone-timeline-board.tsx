@@ -177,7 +177,7 @@ export function MilestoneTimelineBoard({
               <div className="relative mb-3 flex items-center gap-2 sm:mb-4 sm:gap-3">
                 <span
                   className={cn(
-                    'absolute -left-8 top-1 z-10 flex size-6 items-center justify-center rounded-full bg-white ring-2 sm:-left-11 sm:size-7 sm:ring-4',
+                    'absolute -left-8 top-1/2 z-10 flex size-6 -translate-y-1/2 items-center justify-center rounded-full bg-white ring-2 sm:-left-11 sm:size-7 sm:ring-4',
                     isMonthSelected ? 'ring-[#0050cb]/10' : 'ring-slate-100',
                   )}
                 >
@@ -335,9 +335,7 @@ export function MilestoneTimelineBoard({
                     );
                   })
                 ) : (
-                  <Card className="border-slate-100 bg-slate-50 text-slate-600 shadow-none">
-                    <p className="text-sm leading-2">Milestone này chưa có todo nào.</p>
-                  </Card>
+                  <p className="px-1 text-sm text-slate-500">Milestone này chưa có todo nào.</p>
                 )}
 
                 <button

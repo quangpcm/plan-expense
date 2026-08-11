@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const updatePlanSchema = z
   .object({
     name: z.string().trim().min(2).max(120),
+    description: z.string().trim().max(1000).optional().or(z.literal('')),
     startDate: z.string().optional().or(z.literal('')),
     endDate: z.string().optional().or(z.literal('')),
   })

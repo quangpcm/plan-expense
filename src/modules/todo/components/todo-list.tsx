@@ -1,11 +1,14 @@
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
+import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import { Card } from '@/shared/components/ui/card';
 
 import { TodoCard } from './todo-card';
 
 type TodoListProps = {
   todos: TodoDocument[];
+  milestones?: MilestoneDocument[];
+  preserveOrder?: boolean;
   members: PlanMemberDocument[];
   canManagePlan: boolean;
   isSubmitting: boolean;
@@ -18,6 +21,8 @@ type TodoListProps = {
 
 export function TodoList({
   todos,
+  milestones = [],
+  preserveOrder = false,
   members,
   canManagePlan,
   isSubmitting,
@@ -35,14 +40,17 @@ export function TodoList({
     );
   }
 
+  const sortedTodos = preserveOrder ? todos : [...todos].sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+
   return (
     <div className="grid gap-3">
-      {todos.map((todo) => (
+      {sortedTodos.map((todo) => (
         <TodoCard
           assignee={members.find((member) => member.id === todo.assigneeMemberId) ?? null}
           canManagePlan={canManagePlan}
           isSubmitting={isSubmitting}
           key={todo.id}
+          milestone={milestones.find((milestone) => milestone.id === todo.milestoneId) ?? null}
           onAddVendor={onAddVendor}
           onChangeStatus={onChangeStatus}
           onDeleteTodo={onDeleteTodo}

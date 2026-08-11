@@ -6,6 +6,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { formatCurrency } from '@/shared/utils/currency';
 import { cn } from '@/shared/utils/cn';
+import { timestampToDate } from '@/shared/utils/firebase';
 
 type MilestoneListProps = {
   milestones: MilestoneDocument[];
@@ -24,6 +25,37 @@ const milestoneStatusLabel: Record<MilestoneDocument['status'], string> = {
   completed: 'Hoàn thành',
   cancelled: 'Đã hủy',
 };
+
+function getDisplayedMilestoneStatus(milestone: MilestoneDocument): MilestoneDocument['status'] {
+  if (milestone.status === 'cancelled' || milestone.status === 'completed') {
+    return milestone.status;
+  }
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startDate = timestampToDate(milestone.startDate);
+  const endDate = timestampToDate(milestone.endDate);
+  const normalizedStartDate = startDate
+    ? new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
+    : null;
+  const normalizedEndDate = endDate
+    ? new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
+    : null;
+
+  if (normalizedStartDate && today < normalizedStartDate) {
+    return 'upcoming';
+  }
+
+  if (normalizedEndDate && today > normalizedEndDate) {
+    return 'completed';
+  }
+
+  if (normalizedStartDate || normalizedEndDate) {
+    return 'in_progress';
+  }
+
+  return milestone.status;
+}
 
 export function MilestoneList({
   milestones,
@@ -51,14 +83,17 @@ export function MilestoneList({
         const isSelected = milestone.id === selectedMilestoneId;
         const progress =
           milestone.todoCount > 0 ? Math.round((milestone.completedTodoCount / milestone.todoCount) * 100) : 0;
+        const displayedStatus = getDisplayedMilestoneStatus(milestone);
 
         return (
           <button
             className={cn(
               'w-full rounded-[28px] border p-0 text-left transition',
               isSelected
-                ? 'border-slate-950 bg-slate-950 text-white shadow-[0_18px_50px_rgba(15,23,42,0.18)]'
-                : 'border-slate-200 bg-white text-slate-950 hover:border-slate-300',
+                ? 'border-[var(--color-milestone-selected-border)] bg-[var(--color-milestone-selected)] text-[var(--color-milestone-selected-foreground)] shadow-[0_18px_50px_rgba(36,59,107,0.18)]'
+                : displayedStatus === 'completed'
+                  ? 'border-[var(--color-milestone-completed-border)] bg-[var(--color-milestone-completed)] text-[var(--color-milestone-completed-foreground)] hover:border-[var(--color-milestone-completed-border)]'
+                  : 'border-[var(--color-milestone-upcoming-border)] bg-[var(--color-milestone-upcoming)] text-[var(--color-milestone-upcoming-foreground)] hover:border-slate-300',
             )}
             key={milestone.id}
             onClick={() => onSelect(milestone.id)}
@@ -72,8 +107,8 @@ export function MilestoneList({
                     {milestone.description || 'Chưa có mô tả'}
                   </p>
                 </div>
-                <Badge variant={milestone.status === 'completed' ? 'success' : milestone.status === 'cancelled' ? 'neutral' : 'info'}>
-                  {milestoneStatusLabel[milestone.status]}
+                <Badge className={displayedStatus === 'completed' ? 'bg-[var(--color-success-soft)] text-[#047857]' : displayedStatus === 'cancelled' ? '' : 'bg-[var(--color-info-soft)] text-[var(--color-info)]'}>
+                  {milestoneStatusLabel[displayedStatus]}
                 </Badge>
               </div>
               <div className="grid grid-cols-3 gap-3 text-sm">

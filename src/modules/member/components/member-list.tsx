@@ -149,20 +149,20 @@ function EditableMemberRow({
       >
         <Avatar initials={member.nickname.slice(0, 2).toUpperCase()} src={member.avatarUrl} />
       </button>
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold text-slate-950">{member.nickname}</p>
+      <div className="min-w-0 flex-1 space-y-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="truncate font-semibold text-slate-950">{member.nickname}</p>
+          <Badge variant="info">{roleLabel[member.role]}</Badge>
+          {member.status !== 'active' ? (
+            <Badge variant={member.status === 'invited' ? 'info' : 'neutral'}>
+              {memberStatusLabel[member.status]}
+            </Badge>
+          ) : null}
+          {member.permissions.canEditAllExpenses ? <Badge>được sửa mọi khoản chi</Badge> : null}
+        </div>
         {member.memberType === 'guest' ? null : (
           <p className="text-sm text-slate-500">{member.email || 'Thành viên đã đăng ký'}</p>
         )}
-      </div>
-      <div className="flex flex-wrap justify-end gap-2">
-        <Badge variant="info">{roleLabel[member.role]}</Badge>
-        {member.status !== 'active' ? (
-          <Badge variant={member.status === 'invited' ? 'info' : 'neutral'}>
-            {memberStatusLabel[member.status]}
-          </Badge>
-        ) : null}
-        {member.permissions.canEditAllExpenses ? <Badge>được sửa mọi khoản chi</Badge> : null}
       </div>
     </div>
   );

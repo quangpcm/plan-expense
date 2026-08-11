@@ -174,6 +174,7 @@ export class FirestorePlanRepository implements PlanRepository {
     try {
       await updateDoc(planRef, {
         name: input.name,
+        description: input.description,
         startDate: input.startDate ? Timestamp.fromDate(input.startDate) : null,
         endDate: input.endDate ? Timestamp.fromDate(input.endDate) : null,
         updatedAt: now,
