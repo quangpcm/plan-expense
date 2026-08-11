@@ -36,8 +36,10 @@ import { memberService } from '@/modules/member/services';
 import type { PlanMemberDocument, PlanRole } from '@/modules/member/types/member';
 import { buildLinkedMemberIdSet } from '@/modules/member/utils/member-linkage';
 import { EditPlanForm } from '@/modules/plan/components/edit-plan-form';
+import { planTypeOptions } from '@/modules/plan/constants/plan.constants';
 import { planService } from '@/modules/plan/services';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
+import type { PlanStatus } from '@/modules/plan/types/plan';
 import {
   MilestoneExpensePanel,
   MilestoneForm,
@@ -60,7 +62,6 @@ import { SettlementSuggestionCard } from '@/modules/settlement/components/settle
 import { useSettlements } from '@/modules/settlement/hooks/use-settlements';
 import { settlementService } from '@/modules/settlement/services';
 import type { SettlementDocument, SettlementSuggestion } from '@/modules/settlement/types/settlement';
-import { Badge } from '@/shared/components/ui/badge';
 import { Breadcrumbs } from '@/shared/components/ui/breadcrumbs';
 import { Button } from '@/shared/components/ui/button';
 import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
@@ -69,7 +70,6 @@ import { Collapsible } from '@/shared/components/ui/collapsible';
 import { Dialog } from '@/shared/components/ui/dialog';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 import { Skeleton } from '@/shared/components/ui/skeleton';
-import { formatCurrency } from '@/shared/utils/currency';
 import { formatDate } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 import { cn } from '@/shared/utils/cn';
@@ -94,6 +94,12 @@ const TAB_BY_QUERY_PARAM: Record<string, (typeof tabs)[number]> = {
 
 type HeaderModal = 'edit-plan' | 'plan-settings' | 'leave-or-delete' | null;
 type HeaderMenuItem = { key: string; label: string; icon: LucideIcon; destructive?: boolean; onSelect: () => void };
+
+const planStatusLabel: Record<PlanStatus, string> = {
+  active: 'Đang diễn ra',
+  closed: 'Đã đóng',
+  archived: 'Đã lưu trữ',
+};
 
 export default function PlanDetailPage() {
   const params = useParams<{ planId: string }>();
@@ -603,52 +609,30 @@ export default function PlanDetailPage() {
           type="error"
         />
       ) : null}
-      <Card className={cn('gap-6')}>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <h1 className="min-w-0 flex-1 truncate text-3xl font-semibold text-slate-950">{plan.name}</h1>
-            <div className="relative shrink-0">
-              <button
-                aria-label="Tùy chọn kế hoạch"
-                className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
-                onClick={() => setShowHeaderMenu((value) => !value)}
-                type="button"
-              >
-                <MoreVertical className="size-4" />
-              </button>
-              {showHeaderMenu ? (
-                <>
-                  <div className="hidden md:block">
-                    <button
-                      aria-label="Đóng menu"
-                      className="fixed inset-0 z-40"
-                      onClick={() => setShowHeaderMenu(false)}
-                      type="button"
-                    />
-                    <Card className="absolute top-12 right-0 z-50 w-64 gap-1 p-2 shadow-[0_16px_60px_rgba(15,23,42,0.16)]">
-                      {headerMenuItems.map((item) => (
-                        <button
-                          className={cn(
-                            'flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition hover:bg-slate-100',
-                            item.destructive ? 'text-rose-600' : 'text-slate-700',
-                          )}
-                          key={item.key}
-                          onClick={item.onSelect}
-                          type="button"
-                        >
-                          <item.icon className="size-4 shrink-0" />
-                          {item.label}
-                        </button>
-                      ))}
-                    </Card>
-                  </div>
-                  <div className="md:hidden">
-                    <BottomSheet
-                      onClose={() => setShowHeaderMenu(false)}
-                      open={showHeaderMenu}
-                      title="Tùy chọn kế hoạch"
-                    >
-                      <div className="grid gap-1">
+      {activeTab === 'Tổng quan' ? (
+        <Card className={cn('gap-6')}>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <h1 className="min-w-0 flex-1 truncate text-3xl font-semibold text-slate-950">{plan.name}</h1>
+              <div className="relative shrink-0">
+                <button
+                  aria-label="Tùy chọn kế hoạch"
+                  className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+                  onClick={() => setShowHeaderMenu((value) => !value)}
+                  type="button"
+                >
+                  <MoreVertical className="size-4" />
+                </button>
+                {showHeaderMenu ? (
+                  <>
+                    <div className="hidden md:block">
+                      <button
+                        aria-label="Đóng menu"
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowHeaderMenu(false)}
+                        type="button"
+                      />
+                      <Card className="absolute top-12 right-0 z-50 w-64 gap-1 p-2 shadow-[0_16px_60px_rgba(15,23,42,0.16)]">
                         {headerMenuItems.map((item) => (
                           <button
                             className={cn(
@@ -663,43 +647,46 @@ export default function PlanDetailPage() {
                             {item.label}
                           </button>
                         ))}
-                      </div>
-                    </BottomSheet>
-                  </div>
-                </>
-              ) : null}
+                      </Card>
+                    </div>
+                    <div className="md:hidden">
+                      <BottomSheet
+                        onClose={() => setShowHeaderMenu(false)}
+                        open={showHeaderMenu}
+                        title="Tùy chọn kế hoạch"
+                      >
+                        <div className="grid gap-1">
+                          {headerMenuItems.map((item) => (
+                            <button
+                              className={cn(
+                                'flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition hover:bg-slate-100',
+                                item.destructive ? 'text-rose-600' : 'text-slate-700',
+                              )}
+                              key={item.key}
+                              onClick={item.onSelect}
+                              type="button"
+                            >
+                              <item.icon className="size-4 shrink-0" />
+                              {item.label}
+                            </button>
+                          ))}
+                        </div>
+                      </BottomSheet>
+                    </div>
+                  </>
+                ) : null}
+              </div>
             </div>
-          </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="info">{plan.planType.replace('_', ' ')}</Badge>
-              <Badge variant={plan.status === 'active' ? 'success' : 'neutral'}>{plan.status}</Badge>
-            </div>
-            {/* <span className="inline-flex shrink-0 items-center gap-1.5 text-sm text-slate-500">
-              <CalendarDays className="size-4" />
-              {formatDate(timestampToDate(plan.createdAt) ?? new Date())}
-            </span> */}
-          </div>
+            <p className="text-sm text-slate-600">
+              {planTypeOptions.find((option) => option.value === plan.planType)?.label ?? plan.planType} ·{' '}
+              {planStatusLabel[plan.status]}
+            </p>
 
-          {plan.description ? <p className="text-sm leading-6 text-slate-600">{plan.description}</p> : null}
-        </div>
-
-        <div className="grid grid-cols-3 gap-3 rounded-[24px] bg-white/60 p-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Thành viên</p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">{plan.memberCount}</p>
+            {plan.description ? <p className="text-sm leading-6 text-slate-600">{plan.description}</p> : null}
           </div>
-          <div>
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Tổng chi</p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">{formatCurrency(plan.totalExpense)}</p>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Tổng thu</p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">{formatCurrency(plan.totalIncome)}</p>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      ) : null}
 
       <Card className="gap-4">
         <div className="flex items-center gap-2">
