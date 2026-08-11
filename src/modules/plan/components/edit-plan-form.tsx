@@ -18,6 +18,7 @@ import { timestampToDate } from '@/shared/utils/firebase';
 type EditPlanFormProps = {
   plan: PlanDocument;
   currentMember: PlanMemberDocument | null;
+  onClose?: () => void;
 };
 
 function toDateInputValue(date: Date | null) {
@@ -32,7 +33,7 @@ function toDateInputValue(date: Date | null) {
   return `${year}-${month}-${day}`;
 }
 
-export function EditPlanForm({ plan, currentMember }: EditPlanFormProps) {
+export function EditPlanForm({ plan, currentMember, onClose }: EditPlanFormProps) {
   const { updatePlan, isSubmitting } = useUpdatePlan();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -73,7 +74,7 @@ export function EditPlanForm({ plan, currentMember }: EditPlanFormProps) {
         <Input id="edit-plan-name" {...register('name')} />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="edit-plan-startDate">
             Ngày bắt đầu
@@ -98,7 +99,12 @@ export function EditPlanForm({ plan, currentMember }: EditPlanFormProps) {
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       {successMessage ? <AuthFormMessage message={successMessage} type="success" /> : null}
 
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-3">
+        {onClose ? (
+          <Button onClick={onClose} type="button" variant="ghost">
+            Đóng
+          </Button>
+        ) : null}
         <Button disabled={isSubmitting} type="submit">
           {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}
         </Button>

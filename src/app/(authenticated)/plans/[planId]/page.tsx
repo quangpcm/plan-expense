@@ -1360,12 +1360,7 @@ export default function PlanDetailPage() {
                 description="Chỉ chủ kế hoạch có thể sửa tên và thời gian diễn ra kế hoạch."
                 title="Chỉnh sửa kế hoạch"
               >
-                <EditPlanForm currentMember={currentMember} plan={currentPlan} />
-                <div className="mt-4 flex justify-end">
-                  <Button onClick={() => setHeaderModal(null)} variant="ghost">
-                    Đóng
-                  </Button>
-                </div>
+                <EditPlanForm currentMember={currentMember} onClose={() => setHeaderModal(null)} plan={currentPlan} />
               </Dialog>
             </div>
             <div className="md:hidden">
@@ -1375,12 +1370,7 @@ export default function PlanDetailPage() {
                 open={headerModal === 'edit-plan'}
                 title="Chỉnh sửa kế hoạch"
               >
-                <EditPlanForm currentMember={currentMember} plan={currentPlan} />
-                <div className="mt-4 flex justify-end">
-                  <Button onClick={() => setHeaderModal(null)} variant="ghost">
-                    Đóng
-                  </Button>
-                </div>
+                <EditPlanForm currentMember={currentMember} onClose={() => setHeaderModal(null)} plan={currentPlan} />
               </BottomSheet>
             </div>
           </>
