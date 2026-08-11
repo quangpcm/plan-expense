@@ -66,7 +66,6 @@ import { Breadcrumbs } from '@/shared/components/ui/breadcrumbs';
 import { Button } from '@/shared/components/ui/button';
 import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Card } from '@/shared/components/ui/card';
-import { Collapsible } from '@/shared/components/ui/collapsible';
 import { Dialog } from '@/shared/components/ui/dialog';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 import { Skeleton } from '@/shared/components/ui/skeleton';
@@ -137,6 +136,7 @@ export default function PlanDetailPage() {
   const [vendorFormTodo, setVendorFormTodo] = useState<TodoDocument | null>(null);
   const [detailTodo, setDetailTodo] = useState<TodoDocument | null>(null);
   const [expenseSheetMilestoneId, setExpenseSheetMilestoneId] = useState<string | null>(null);
+  const [workViewMode, setWorkViewMode] = useState<'milestones' | 'todos'>('milestones');
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const [headerModal, setHeaderModal] = useState<HeaderModal>(null);
   const [showStatisticSheet, setShowStatisticSheet] = useState(false);
@@ -830,78 +830,143 @@ export default function PlanDetailPage() {
         {activeTab === 'Công việc' ? (
           <div className="space-y-5">
             <SectionHeading
-              eyebrow="Mốc kế hoạch"
-              title="Lộ trình kế hoạch"
-              description="Theo dõi các mốc quan trọng và công việc cần hoàn thành."
+              eyebrow="Công việc"
+              title={workViewMode === 'milestones' ? 'Lộ trình kế hoạch' : 'Tất cả công việc'}
+              description={
+                workViewMode === 'milestones'
+                  ? 'Theo dõi các mốc quan trọng và công việc cần hoàn thành.'
+                  : 'Danh sách này gom toàn bộ công việc từ các milestone, giúp bạn rà nhanh tiến độ mà không cần mở từng mốc.'
+              }
             />
+            <div className="inline-flex gap-1 rounded-full bg-slate-100 p-1">
+              <button
+                className={cn(
+                  'rounded-full px-4 py-2 text-sm font-medium transition',
+                  workViewMode === 'milestones' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-600',
+                )}
+                onClick={() => setWorkViewMode('milestones')}
+                type="button"
+              >
+                Theo mốc
+              </button>
+              <button
+                className={cn(
+                  'rounded-full px-4 py-2 text-sm font-medium transition',
+                  workViewMode === 'todos' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-600',
+                )}
+                onClick={() => setWorkViewMode('todos')}
+                type="button"
+              >
+                Tất cả công việc
+              </button>
+            </div>
             {milestoneActionError ? <AuthFormMessage message={milestoneActionError} type="error" /> : null}
             {todoActionError ? <AuthFormMessage message={todoActionError} type="error" /> : null}
-            {isMilestonesLoading ? (
-              <Skeleton className="h-48 rounded-[28px]" />
-            ) : (
-              <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-                <MilestoneTimelineBoard
-                  canManagePlan={permissions.canManagePlan}
-                  isMilestoneSubmitting={isMilestoneSubmitting}
-                  isPlanClosed={plan.status === 'closed'}
-                  isTodoSubmitting={isTodoSubmitting}
-                  milestones={milestones}
-                  members={members}
-                  onAddTodo={(milestone) => {
-                    setSelectedMilestoneId(milestone.id);
-                    setEditingTodo(null);
-                    setShowTodoForm(true);
-                  }}
-                  onChangeTodoStatus={handleChangeTodoStatus}
-                  onEditMilestone={(milestone) => {
-                    setEditingMilestone(milestone);
-                    setShowMilestoneForm(true);
-                  }}
-                  onOpenExpenseSheet={(milestone) => {
-                    setSelectedMilestoneId(milestone.id);
-                    setExpenseSheetMilestoneId(milestone.id);
-                  }}
-                  onSelect={(milestoneId) => setSelectedMilestoneId(milestoneId)}
-                  onViewTodo={setDetailTodo}
-                  selectedMilestoneId={selectedMilestone?.id ?? null}
-                  todos={todos}
-                />
-                {selectedMilestone ? (
-                  <div className="space-y-4">
-                    <div className="hidden lg:block">
-                      <MilestoneExpensePanel
-                        canCreateExpense={plan.status !== 'closed'}
-                        expenses={selectedMilestoneExpenses}
-                        milestone={selectedMilestone}
-                        onShowTimeline={() => setActiveTab('Tài chính')}
-                        planId={planId}
-                      />
-                    </div>
-                  </div>
+            {workViewMode === 'milestones' ? (
+              <>
+                {isMilestonesLoading ? (
+                  <Skeleton className="h-48 rounded-[28px]" />
                 ) : (
-                  <Card className="border-slate-200 bg-slate-50 shadow-none">
-                    <p className="text-sm leading-6 text-slate-600">
-                      Chọn một mốc kế hoạch để xem chi tiết hoặc tạo mốc đầu tiên nếu kế hoạch của bạn chưa có giai đoạn nào.
-                    </p>
-                  </Card>
+                  <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+                    <MilestoneTimelineBoard
+                      canManagePlan={permissions.canManagePlan}
+                      isMilestoneSubmitting={isMilestoneSubmitting}
+                      isPlanClosed={plan.status === 'closed'}
+                      isTodoSubmitting={isTodoSubmitting}
+                      milestones={milestones}
+                      members={members}
+                      onAddTodo={(milestone) => {
+                        setSelectedMilestoneId(milestone.id);
+                        setEditingTodo(null);
+                        setShowTodoForm(true);
+                      }}
+                      onChangeTodoStatus={handleChangeTodoStatus}
+                      onEditMilestone={(milestone) => {
+                        setEditingMilestone(milestone);
+                        setShowMilestoneForm(true);
+                      }}
+                      onOpenExpenseSheet={(milestone) => {
+                        setSelectedMilestoneId(milestone.id);
+                        setExpenseSheetMilestoneId(milestone.id);
+                      }}
+                      onSelect={(milestoneId) => setSelectedMilestoneId(milestoneId)}
+                      onViewTodo={setDetailTodo}
+                      selectedMilestoneId={selectedMilestone?.id ?? null}
+                      todos={todos}
+                    />
+                    {selectedMilestone ? (
+                      <div className="space-y-4">
+                        <div className="hidden lg:block">
+                          <MilestoneExpensePanel
+                            canCreateExpense={plan.status !== 'closed'}
+                            expenses={selectedMilestoneExpenses}
+                            milestone={selectedMilestone}
+                            onShowTimeline={() => setActiveTab('Tài chính')}
+                            planId={planId}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <Card className="border-slate-200 bg-slate-50 shadow-none">
+                        <p className="text-sm leading-6 text-slate-600">
+                          Chọn một mốc kế hoạch để xem chi tiết hoặc tạo mốc đầu tiên nếu kế hoạch của bạn chưa có giai đoạn nào.
+                        </p>
+                      </Card>
+                    )}
+                  </div>
+                )}
+                <BottomSheet
+                  description="Danh sách khoản chi thuộc milestone đang chọn trên mobile."
+                  onClose={() => setExpenseSheetMilestoneId(null)}
+                  open={Boolean(expenseSheetMilestone)}
+                  title={expenseSheetMilestone ? `Khoản chi · ${expenseSheetMilestone.title}` : 'Khoản chi milestone'}
+                >
+                  {expenseSheetMilestone ? (
+                    <MilestoneExpensePanel
+                      canCreateExpense={plan.status !== 'closed'}
+                      expenses={expenseSheetMilestoneExpenses}
+                      milestone={expenseSheetMilestone}
+                      planId={planId}
+                    />
+                  ) : null}
+                </BottomSheet>
+                {permissions.canManagePlan && plan.status !== 'closed' ? (
+                  <button
+                    aria-label="Tạo mốc kế hoạch"
+                    className="fixed right-4 bottom-24 z-30 flex size-16 items-center justify-center rounded-full bg-[#0050cb] text-white shadow-[0_18px_45px_rgba(0,80,203,0.35)] transition hover:bg-[#0047b4] md:right-8 md:bottom-8"
+                    onClick={() => {
+                      setEditingMilestone(null);
+                      setShowMilestoneForm(true);
+                    }}
+                    type="button"
+                  >
+                    <Plus className="size-8" />
+                  </button>
+                ) : null}
+              </>
+            ) : (
+              <div className="space-y-3">
+                {isTodosLoading ? (
+                  <Skeleton className="h-40 rounded-[28px]" />
+                ) : (
+                  <TodoList
+                    canManagePlan={permissions.canManagePlan && plan.status !== 'closed'}
+                    emptyMessage="Kế hoạch này chưa có công việc nào."
+                    isSubmitting={isTodoSubmitting}
+                    members={members}
+                    onAddVendor={setVendorFormTodo}
+                    onChangeStatus={handleChangeTodoStatus}
+                    onDeleteTodo={handleDeleteTodo}
+                    onEdit={(todo) => {
+                      setSelectedMilestoneId(todo.milestoneId);
+                      setEditingTodo(todo);
+                      setShowTodoForm(true);
+                    }}
+                    todos={todos}
+                  />
                 )}
               </div>
             )}
-            <BottomSheet
-              description="Danh sách khoản chi thuộc milestone đang chọn trên mobile."
-              onClose={() => setExpenseSheetMilestoneId(null)}
-              open={Boolean(expenseSheetMilestone)}
-              title={expenseSheetMilestone ? `Khoản chi · ${expenseSheetMilestone.title}` : 'Khoản chi milestone'}
-            >
-              {expenseSheetMilestone ? (
-                <MilestoneExpensePanel
-                  canCreateExpense={plan.status !== 'closed'}
-                  expenses={expenseSheetMilestoneExpenses}
-                  milestone={expenseSheetMilestone}
-                  planId={planId}
-                />
-              ) : null}
-            </BottomSheet>
             {showMilestoneForm ? (
               <>
                 <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
@@ -1042,47 +1107,6 @@ export default function PlanDetailPage() {
                 </div>
               </>
             ) : null}
-            {permissions.canManagePlan && plan.status !== 'closed' ? (
-              <button
-                aria-label="Tạo mốc kế hoạch"
-                className="fixed right-4 bottom-24 z-30 flex size-16 items-center justify-center rounded-full bg-[#0050cb] text-white shadow-[0_18px_45px_rgba(0,80,203,0.35)] transition hover:bg-[#0047b4] md:right-8 md:bottom-8"
-                onClick={() => {
-                  setEditingMilestone(null);
-                  setShowMilestoneForm(true);
-                }}
-                type="button"
-              >
-                <Plus className="size-8" />
-              </button>
-            ) : null}
-
-            <Collapsible
-              defaultOpen={false}
-              description="Danh sách này gom toàn bộ công việc từ các milestone, giúp bạn rà nhanh tiến độ mà không cần mở từng mốc."
-              title="Tổng hợp công việc toàn kế hoạch"
-            >
-              {todoActionError ? <AuthFormMessage message={todoActionError} type="error" /> : null}
-              {isTodosLoading ? (
-                <Skeleton className="h-40 rounded-[28px]" />
-              ) : (
-                <TodoList
-                  canManagePlan={permissions.canManagePlan && plan.status !== 'closed'}
-                  emptyMessage="Kế hoạch này chưa có công việc nào."
-                  isSubmitting={isTodoSubmitting}
-                  members={members}
-                  onAddVendor={setVendorFormTodo}
-                  onChangeStatus={handleChangeTodoStatus}
-                  onDeleteTodo={handleDeleteTodo}
-                  onEdit={(todo) => {
-                    setSelectedMilestoneId(todo.milestoneId);
-                    setEditingTodo(todo);
-                    setShowTodoForm(true);
-                    setActiveTab('Công việc');
-                  }}
-                  todos={todos}
-                />
-              )}
-            </Collapsible>
           </div>
         ) : null}
         {detailTodo ? (
