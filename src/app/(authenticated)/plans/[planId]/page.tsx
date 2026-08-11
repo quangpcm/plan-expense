@@ -3,7 +3,20 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { notFound, useParams, useSearchParams } from 'next/navigation';
-import { BarChart3, Clock, Flag, Plus, ReceiptText, Settings, Users } from 'lucide-react';
+import {
+  BarChart3,
+  Clock,
+  Flag,
+  LayoutDashboard,
+  LogOut,
+  MoreVertical,
+  PencilLine,
+  Plus,
+  Settings,
+  Trash2,
+  Users,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
@@ -23,12 +36,12 @@ import { memberService } from '@/modules/member/services';
 import type { PlanMemberDocument, PlanRole } from '@/modules/member/types/member';
 import { buildLinkedMemberIdSet } from '@/modules/member/utils/member-linkage';
 import { EditPlanForm } from '@/modules/plan/components/edit-plan-form';
-import { planTypeGradients } from '@/modules/plan/constants/plan.constants';
 import { planService } from '@/modules/plan/services';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
 import {
   MilestoneExpensePanel,
   MilestoneForm,
+  MilestoneList,
   MilestoneTimelineBoard,
   milestoneService,
   useMilestones,
@@ -52,6 +65,7 @@ import { Breadcrumbs } from '@/shared/components/ui/breadcrumbs';
 import { Button } from '@/shared/components/ui/button';
 import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Card } from '@/shared/components/ui/card';
+import { Collapsible } from '@/shared/components/ui/collapsible';
 import { Dialog } from '@/shared/components/ui/dialog';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 import { Skeleton } from '@/shared/components/ui/skeleton';
@@ -60,25 +74,26 @@ import { formatDate } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 import { cn } from '@/shared/utils/cn';
 
-const tabs = ['Mốc kế hoạch', 'Thu chi', 'Todos', 'Thống kê', 'Thành viên', 'Thiết lập'] as const;
+const tabs = ['Tổng quan', 'Công việc', 'Tài chính', 'Thành viên'] as const;
 
 const tabIcons = {
-  'Mốc kế hoạch': Flag,
-  'Thu chi': Clock,
-  Todos: Users,
-  'Thống kê': BarChart3,
+  'Tổng quan': LayoutDashboard,
+  'Công việc': Flag,
+  'Tài chính': Clock,
   'Thành viên': Users,
-  'Thiết lập': Settings,
 } as const;
 
 const TAB_BY_QUERY_PARAM: Record<string, (typeof tabs)[number]> = {
-  milestones: 'Mốc kế hoạch',
-  timeline: 'Thu chi',
-  todos: 'Todos',
-  statistic: 'Thống kê',
+  milestones: 'Công việc',
+  todos: 'Công việc',
+  timeline: 'Tài chính',
+  statistic: 'Tài chính',
   members: 'Thành viên',
-  settings: 'Thiết lập',
+  // 'settings' xử lý riêng trong effect bên dưới — mở headerModal thay vì set activeTab
 };
+
+type HeaderModal = 'edit-plan' | 'plan-settings' | 'leave-or-delete' | null;
+type HeaderMenuItem = { key: string; label: string; icon: LucideIcon; destructive?: boolean; onSelect: () => void };
 
 export default function PlanDetailPage() {
   const params = useParams<{ planId: string }>();
@@ -86,7 +101,7 @@ export default function PlanDetailPage() {
   const planId = Array.isArray(params.planId) ? params.planId[0] : params.planId;
   const { user } = useAuthSession();
   const { plan, isLoading, errorMessage: planError } = usePlan(planId);
-  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('Mốc kế hoạch');
+  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('Tổng quan');
   const { milestones, isLoading: isMilestonesLoading, errorMessage: milestoneError } = useMilestones(planId);
   const { todos, isLoading: isTodosLoading, errorMessage: todoError } = useTodos(planId);
   const { members, currentMember, permissions, errorMessage: memberError } = usePlanMembers(planId);
@@ -116,6 +131,9 @@ export default function PlanDetailPage() {
   const [vendorFormTodo, setVendorFormTodo] = useState<TodoDocument | null>(null);
   const [detailTodo, setDetailTodo] = useState<TodoDocument | null>(null);
   const [expenseSheetMilestoneId, setExpenseSheetMilestoneId] = useState<string | null>(null);
+  const [showHeaderMenu, setShowHeaderMenu] = useState(false);
+  const [headerModal, setHeaderModal] = useState<HeaderModal>(null);
+  const [showStatisticSheet, setShowStatisticSheet] = useState(false);
   const previousPlanIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
@@ -123,10 +141,16 @@ export default function PlanDetailPage() {
     const isNewPlan = previousPlanIdRef.current !== undefined && previousPlanIdRef.current !== planId;
     previousPlanIdRef.current = planId;
 
-    if (tabParam && TAB_BY_QUERY_PARAM[tabParam]) {
+    if (tabParam === 'settings') {
+      setHeaderModal('plan-settings');
+    } else if (tabParam && TAB_BY_QUERY_PARAM[tabParam]) {
       setActiveTab(TAB_BY_QUERY_PARAM[tabParam]);
+
+      if (tabParam === 'statistic') {
+        setShowStatisticSheet(true);
+      }
     } else if (isNewPlan) {
-      setActiveTab('Mốc kế hoạch');
+      setActiveTab('Tổng quan');
     }
   }, [planId, searchParams]);
 
@@ -171,6 +195,17 @@ export default function PlanDetailPage() {
         : [],
     [expenseSheetMilestone, expenses],
   );
+  const upcomingMilestones = useMemo(() => {
+    const sorted = [...milestones].sort((a, b) => a.orderIndex - b.orderIndex);
+    const pending = sorted.filter((milestone) => milestone.status !== 'completed' && milestone.status !== 'cancelled');
+    return (pending.length > 0 ? pending : sorted).slice(0, 3);
+  }, [milestones]);
+  const upcomingTodos = useMemo(() => {
+    return todos
+      .filter((todo) => todo.status !== 'done' && todo.status !== 'cancelled' && todo.dueDate)
+      .sort((a, b) => a.dueDate!.toMillis() - b.dueDate!.toMillis())
+      .slice(0, 5);
+  }, [todos]);
 
   useEffect(() => {
     const milestoneIdParam = searchParams.get('milestoneId');
@@ -491,6 +526,48 @@ export default function PlanDetailPage() {
     }
   }
 
+  const headerMenuItems: HeaderMenuItem[] = [
+    permissions.canManagePlan
+      ? {
+          key: 'edit-plan',
+          label: 'Chỉnh sửa kế hoạch',
+          icon: PencilLine,
+          onSelect: () => {
+            setShowHeaderMenu(false);
+            setHeaderModal('edit-plan');
+          },
+        }
+      : null,
+    {
+      key: 'manage-members',
+      label: 'Quản lý thành viên',
+      icon: Users,
+      onSelect: () => {
+        setShowHeaderMenu(false);
+        setActiveTab('Thành viên');
+      },
+    },
+    {
+      key: 'plan-settings',
+      label: 'Cài đặt kế hoạch',
+      icon: Settings,
+      onSelect: () => {
+        setShowHeaderMenu(false);
+        setHeaderModal('plan-settings');
+      },
+    },
+    {
+      key: 'leave-or-delete',
+      label: permissions.canManagePlan ? 'Xóa kế hoạch' : 'Rời kế hoạch',
+      icon: permissions.canManagePlan ? Trash2 : LogOut,
+      destructive: true,
+      onSelect: () => {
+        setShowHeaderMenu(false);
+        setHeaderModal('leave-or-delete');
+      },
+    },
+  ].filter((item): item is HeaderMenuItem => item !== null);
+
   return (
     <main className="flex flex-col gap-5">
       <Breadcrumbs
@@ -530,9 +607,71 @@ export default function PlanDetailPage() {
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-3">
             <h1 className="min-w-0 flex-1 truncate text-3xl font-semibold text-slate-950">{plan.name}</h1>
-            <div className="flex shrink-0 gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <Badge variant="info">{plan.planType.replace('_', ' ')}</Badge>
               <Badge variant={plan.status === 'active' ? 'success' : 'neutral'}>{plan.status}</Badge>
+              <div className="relative">
+                <button
+                  aria-label="Tùy chọn kế hoạch"
+                  className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+                  onClick={() => setShowHeaderMenu((value) => !value)}
+                  type="button"
+                >
+                  <MoreVertical className="size-4" />
+                </button>
+                {showHeaderMenu ? (
+                  <>
+                    <div className="hidden md:block">
+                      <button
+                        aria-label="Đóng menu"
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowHeaderMenu(false)}
+                        type="button"
+                      />
+                      <Card className="absolute top-12 right-0 z-50 w-64 gap-1 p-2 shadow-[0_16px_60px_rgba(15,23,42,0.16)]">
+                        {headerMenuItems.map((item) => (
+                          <button
+                            className={cn(
+                              'flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition hover:bg-slate-100',
+                              item.destructive ? 'text-rose-600' : 'text-slate-700',
+                            )}
+                            key={item.key}
+                            onClick={item.onSelect}
+                            type="button"
+                          >
+                            <item.icon className="size-4 shrink-0" />
+                            {item.label}
+                          </button>
+                        ))}
+                      </Card>
+                    </div>
+                    <div className="md:hidden">
+                      <BottomSheet
+                        onClose={() => setShowHeaderMenu(false)}
+                        open={showHeaderMenu}
+                        title="Tùy chọn kế hoạch"
+                      >
+                        <div className="grid gap-1">
+                          {headerMenuItems.map((item) => (
+                            <button
+                              className={cn(
+                                'flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition hover:bg-slate-100',
+                                item.destructive ? 'text-rose-600' : 'text-slate-700',
+                              )}
+                              key={item.key}
+                              onClick={item.onSelect}
+                              type="button"
+                            >
+                              <item.icon className="size-4 shrink-0" />
+                              {item.label}
+                            </button>
+                          ))}
+                        </div>
+                      </BottomSheet>
+                    </div>
+                  </>
+                ) : null}
+              </div>
             </div>
           </div>
           <p className="text-sm leading-6 text-slate-600">
@@ -583,7 +722,86 @@ export default function PlanDetailPage() {
             );
           })}
         </div>
-        {activeTab === 'Thu chi' ? (
+        {activeTab === 'Tổng quan' ? (
+          <div className="space-y-6">
+            <SectionHeading
+              eyebrow="Tổng quan"
+              title="Tình hình kế hoạch"
+              description="Xem nhanh các mốc gần nhất, công việc sắp đến hạn và số liệu tài chính tổng hợp."
+            />
+
+            <div className="space-y-3">
+              <SectionHeading
+                eyebrow="Mốc kế hoạch"
+                title="Các mốc gần đây"
+                description="Mở tab Công việc để quản lý chi tiết từng mốc."
+              />
+              {milestoneActionError ? <AuthFormMessage message={milestoneActionError} type="error" /> : null}
+              {isMilestonesLoading ? (
+                <Skeleton className="h-32 rounded-[28px]" />
+              ) : (
+                <MilestoneList
+                  canManagePlan={false}
+                  isSubmitting={false}
+                  milestones={upcomingMilestones}
+                  onEdit={() => setActiveTab('Công việc')}
+                  onMoveDown={() => {}}
+                  onMoveUp={() => {}}
+                  onSelect={(milestoneId) => {
+                    setSelectedMilestoneId(milestoneId);
+                    setActiveTab('Công việc');
+                  }}
+                  selectedMilestoneId={selectedMilestone?.id ?? null}
+                />
+              )}
+              <Button className="w-full justify-center" onClick={() => setActiveTab('Công việc')} variant="ghost">
+                Xem tất cả mốc kế hoạch
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              <SectionHeading
+                eyebrow="Todos"
+                title="Công việc sắp đến hạn"
+                description="5 công việc chưa hoàn thành có hạn gần nhất."
+              />
+              {todoActionError ? <AuthFormMessage message={todoActionError} type="error" /> : null}
+              {isTodosLoading ? (
+                <Skeleton className="h-32 rounded-[28px]" />
+              ) : (
+                <TodoList
+                  canManagePlan={permissions.canManagePlan && plan.status !== 'closed'}
+                  emptyMessage="Không có công việc nào sắp đến hạn."
+                  isSubmitting={isTodoSubmitting}
+                  members={members}
+                  onAddVendor={setVendorFormTodo}
+                  onChangeStatus={handleChangeTodoStatus}
+                  onDeleteTodo={handleDeleteTodo}
+                  onEdit={(todo) => {
+                    setSelectedMilestoneId(todo.milestoneId);
+                    setEditingTodo(todo);
+                    setShowTodoForm(true);
+                    setActiveTab('Công việc');
+                  }}
+                  todos={upcomingTodos}
+                />
+              )}
+              <Button className="w-full justify-center" onClick={() => setActiveTab('Công việc')} variant="ghost">
+                Xem tất cả công việc
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              <SectionHeading
+                eyebrow="Tài chính"
+                title="Tổng hợp thu chi"
+                description="Mở tab Tài chính để xem thống kê chi tiết."
+              />
+              <StatisticOverview statistic={statistic} />
+            </div>
+          </div>
+        ) : null}
+        {activeTab === 'Tài chính' ? (
           <>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <SectionHeading
@@ -591,7 +809,11 @@ export default function PlanDetailPage() {
                 title="Dòng tiền kế hoạch"
                 description="Khoản chi và khoản thu của kế hoạch được nhóm theo ngày và có thể lọc theo từng mốc để bám sát tiến độ thực tế."
               />
-              <div className="flex justify-end gap-2">
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button onClick={() => setShowStatisticSheet(true)} variant="secondary">
+                  <BarChart3 className="size-4" />
+                  Thống kê
+                </Button>
                 {plan.status === 'closed' ? (
                   <Button disabled variant="secondary">
                     Thêm khoản thu
@@ -626,7 +848,7 @@ export default function PlanDetailPage() {
             />
           </>
         ) : null}
-        {activeTab === 'Mốc kế hoạch' ? (
+        {activeTab === 'Công việc' ? (
           <div className="space-y-5">
             <SectionHeading
               eyebrow="Milestones"
@@ -672,7 +894,7 @@ export default function PlanDetailPage() {
                         canCreateExpense={plan.status !== 'closed'}
                         expenses={selectedMilestoneExpenses}
                         milestone={selectedMilestone}
-                        onShowTimeline={() => setActiveTab('Thu chi')}
+                        onShowTimeline={() => setActiveTab('Tài chính')}
                         planId={planId}
                       />
                     </div>
@@ -854,6 +1076,34 @@ export default function PlanDetailPage() {
                 <Plus className="size-8" />
               </button>
             ) : null}
+
+            <Collapsible
+              defaultOpen={false}
+              description="Danh sách này gom toàn bộ công việc từ các milestone, giúp bạn rà nhanh tiến độ mà không cần mở từng mốc."
+              title="Tổng hợp công việc toàn kế hoạch"
+            >
+              {todoActionError ? <AuthFormMessage message={todoActionError} type="error" /> : null}
+              {isTodosLoading ? (
+                <Skeleton className="h-40 rounded-[28px]" />
+              ) : (
+                <TodoList
+                  canManagePlan={permissions.canManagePlan && plan.status !== 'closed'}
+                  emptyMessage="Kế hoạch này chưa có công việc nào."
+                  isSubmitting={isTodoSubmitting}
+                  members={members}
+                  onAddVendor={setVendorFormTodo}
+                  onChangeStatus={handleChangeTodoStatus}
+                  onDeleteTodo={handleDeleteTodo}
+                  onEdit={(todo) => {
+                    setSelectedMilestoneId(todo.milestoneId);
+                    setEditingTodo(todo);
+                    setShowTodoForm(true);
+                    setActiveTab('Công việc');
+                  }}
+                  todos={todos}
+                />
+              )}
+            </Collapsible>
           </div>
         ) : null}
         {detailTodo ? (
@@ -972,13 +1222,165 @@ export default function PlanDetailPage() {
             </div>
           </>
         ) : null}
-        {activeTab === 'Thống kê' ? (
+        {headerModal === 'edit-plan' && permissions.canManagePlan ? (
+          <>
+            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
+              <button
+                aria-label="Đóng form sửa kế hoạch"
+                className="absolute inset-0"
+                onClick={() => setHeaderModal(null)}
+                type="button"
+              />
+              <Dialog
+                className="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto"
+                description="Chỉ chủ kế hoạch có thể sửa tên và thời gian diễn ra kế hoạch."
+                title="Chỉnh sửa kế hoạch"
+              >
+                <EditPlanForm currentMember={currentMember} plan={currentPlan} />
+                <div className="mt-4 flex justify-end">
+                  <Button onClick={() => setHeaderModal(null)} variant="ghost">
+                    Đóng
+                  </Button>
+                </div>
+              </Dialog>
+            </div>
+            <div className="md:hidden">
+              <BottomSheet
+                description="Chỉ chủ kế hoạch có thể sửa tên và thời gian diễn ra kế hoạch."
+                onClose={() => setHeaderModal(null)}
+                open={headerModal === 'edit-plan'}
+                title="Chỉnh sửa kế hoạch"
+              >
+                <EditPlanForm currentMember={currentMember} plan={currentPlan} />
+                <div className="mt-4 flex justify-end">
+                  <Button onClick={() => setHeaderModal(null)} variant="ghost">
+                    Đóng
+                  </Button>
+                </div>
+              </BottomSheet>
+            </div>
+          </>
+        ) : null}
+        {headerModal === 'plan-settings' ? (
+          <>
+            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
+              <button
+                aria-label="Đóng cài đặt kế hoạch"
+                className="absolute inset-0"
+                onClick={() => setHeaderModal(null)}
+                type="button"
+              />
+              <Dialog
+                className="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto"
+                description="Chủ kế hoạch có thể đóng kế hoạch để khóa thao tác mới nhưng vẫn giữ khả năng xem timeline và thống kê."
+                title="Cài đặt kế hoạch"
+              >
+                {closingError ? <AuthFormMessage message={closingError} type="error" /> : null}
+                <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
+                  Múi giờ hiện tại: {plan.timezone}
+                  <br />
+                  Thành viên chủ kế hoạch: {plan.ownerMemberId}
+                  <br />
+                  Trạng thái kế hoạch: {plan.status}
+                  <br />
+                  Thời điểm đóng: {plan.closedAt ? formatDate(timestampToDate(plan.closedAt) ?? new Date()) : 'Chưa đóng'}
+                </div>
+                <div className="mt-4 flex flex-wrap justify-end gap-2">
+                  {permissions.canManagePlan ? (
+                    <Button disabled={isClosingPlan || plan.status === 'closed'} onClick={handleClosePlan} variant="secondary">
+                      {plan.status === 'closed'
+                        ? 'Đã đóng kế hoạch'
+                        : isClosingPlan
+                          ? 'Đang đóng kế hoạch...'
+                          : 'Đóng kế hoạch'}
+                    </Button>
+                  ) : null}
+                  <Button onClick={() => setHeaderModal(null)} variant="ghost">
+                    Đóng
+                  </Button>
+                </div>
+              </Dialog>
+            </div>
+            <div className="md:hidden">
+              <BottomSheet
+                description="Chủ kế hoạch có thể đóng kế hoạch để khóa thao tác mới nhưng vẫn giữ khả năng xem timeline và thống kê."
+                onClose={() => setHeaderModal(null)}
+                open={headerModal === 'plan-settings'}
+                title="Cài đặt kế hoạch"
+              >
+                {closingError ? <AuthFormMessage message={closingError} type="error" /> : null}
+                <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
+                  Múi giờ hiện tại: {plan.timezone}
+                  <br />
+                  Thành viên chủ kế hoạch: {plan.ownerMemberId}
+                  <br />
+                  Trạng thái kế hoạch: {plan.status}
+                  <br />
+                  Thời điểm đóng: {plan.closedAt ? formatDate(timestampToDate(plan.closedAt) ?? new Date()) : 'Chưa đóng'}
+                </div>
+                <div className="mt-4 flex flex-wrap justify-end gap-2">
+                  {permissions.canManagePlan ? (
+                    <Button disabled={isClosingPlan || plan.status === 'closed'} onClick={handleClosePlan} variant="secondary">
+                      {plan.status === 'closed'
+                        ? 'Đã đóng kế hoạch'
+                        : isClosingPlan
+                          ? 'Đang đóng kế hoạch...'
+                          : 'Đóng kế hoạch'}
+                    </Button>
+                  ) : null}
+                  <Button onClick={() => setHeaderModal(null)} variant="ghost">
+                    Đóng
+                  </Button>
+                </div>
+              </BottomSheet>
+            </div>
+          </>
+        ) : null}
+        {headerModal === 'leave-or-delete' ? (
+          <>
+            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
+              <button
+                aria-label="Đóng"
+                className="absolute inset-0"
+                onClick={() => setHeaderModal(null)}
+                type="button"
+              />
+              <Dialog
+                className="relative z-10 w-full max-w-md"
+                description="Tính năng này đang được phát triển và sẽ sớm ra mắt."
+                title={permissions.canManagePlan ? 'Xóa kế hoạch' : 'Rời kế hoạch'}
+              >
+                <div className="flex justify-end">
+                  <Button onClick={() => setHeaderModal(null)} variant="ghost">
+                    Đã hiểu
+                  </Button>
+                </div>
+              </Dialog>
+            </div>
+            <div className="md:hidden">
+              <BottomSheet
+                description="Tính năng này đang được phát triển và sẽ sớm ra mắt."
+                onClose={() => setHeaderModal(null)}
+                open={headerModal === 'leave-or-delete'}
+                title={permissions.canManagePlan ? 'Xóa kế hoạch' : 'Rời kế hoạch'}
+              >
+                <div className="flex justify-end">
+                  <Button onClick={() => setHeaderModal(null)} variant="ghost">
+                    Đã hiểu
+                  </Button>
+                </div>
+              </BottomSheet>
+            </div>
+          </>
+        ) : null}
+        <BottomSheet
+          className="max-h-[85vh] overflow-y-auto"
+          description="Các số liệu được tính trực tiếp từ milestone, expense, income và settlement để ưu tiên góc nhìn theo từng giai đoạn của kế hoạch."
+          onClose={() => setShowStatisticSheet(false)}
+          open={showStatisticSheet}
+          title="Thống kê kế hoạch"
+        >
           <div className="space-y-5">
-            <SectionHeading
-              eyebrow="Thống kê"
-              title="Thống kê kế hoạch"
-              description="Các số liệu được tính trực tiếp từ milestone, expense, income và settlement để ưu tiên góc nhìn theo từng giai đoạn của kế hoạch."
-            />
             <StatisticOverview statistic={statistic} />
             <MilestoneBreakdown statistic={statistic} />
             <MemberBalanceTable statistic={statistic} />
@@ -1028,37 +1430,7 @@ export default function PlanDetailPage() {
               />
             </div>
           </div>
-        ) : null}
-        {activeTab === 'Todos' ? (
-          <div className="space-y-5">
-            <SectionHeading
-              eyebrow="Todos"
-              title="Tổng hợp công việc toàn kế hoạch"
-              description="Danh sách này gom toàn bộ công việc từ các milestone, giúp bạn rà nhanh tiến độ mà không cần mở từng mốc."
-            />
-            {todoActionError ? <AuthFormMessage message={todoActionError} type="error" /> : null}
-            {isTodosLoading ? (
-              <Skeleton className="h-40 rounded-[28px]" />
-            ) : (
-              <TodoList
-                canManagePlan={permissions.canManagePlan && plan.status !== 'closed'}
-                emptyMessage="Kế hoạch này chưa có công việc nào."
-                isSubmitting={isTodoSubmitting}
-                members={members}
-                onAddVendor={setVendorFormTodo}
-                onChangeStatus={handleChangeTodoStatus}
-                onDeleteTodo={handleDeleteTodo}
-                onEdit={(todo) => {
-                  setSelectedMilestoneId(todo.milestoneId);
-                  setEditingTodo(todo);
-                  setShowTodoForm(true);
-                  setActiveTab('Mốc kế hoạch');
-                }}
-                todos={todos}
-              />
-            )}
-          </div>
-        ) : null}
+        </BottomSheet>
         {activeTab === 'Thành viên' ? (
           <div className="space-y-5">
             <SectionHeading
@@ -1109,46 +1481,6 @@ export default function PlanDetailPage() {
               onRevoke={handleRevokeInvitation}
             />
           </div>
-        ) : null}
-        {activeTab === 'Thiết lập' ? (
-          <>
-            {permissions.canManagePlan ? (
-              <>
-                <SectionHeading
-                  eyebrow="Thiết lập"
-                  title="Thông tin kế hoạch"
-                  description="Chỉ chủ kế hoạch có thể sửa tên và thời gian diễn ra kế hoạch."
-                />
-                <EditPlanForm currentMember={currentMember} plan={currentPlan} />
-              </>
-            ) : null}
-            <SectionHeading
-              eyebrow="Thiết lập"
-              title="Trạng thái và khóa bảo vệ kế hoạch"
-              description="Chủ kế hoạch có thể đóng kế hoạch để khóa thao tác mới nhưng vẫn giữ khả năng xem timeline và thống kê."
-            />
-            {closingError ? <AuthFormMessage message={closingError} type="error" /> : null}
-            <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
-              Múi giờ hiện tại: {plan.timezone}
-              <br />
-              Thành viên chủ kế hoạch: {plan.ownerMemberId}
-              <br />
-              Trạng thái kế hoạch: {plan.status}
-              <br />
-              Thời điểm đóng: {plan.closedAt ? formatDate(timestampToDate(plan.closedAt) ?? new Date()) : 'Chưa đóng'}
-            </div>
-            {permissions.canManagePlan ? (
-              <div className="flex justify-end">
-                <Button disabled={isClosingPlan || plan.status === 'closed'} onClick={handleClosePlan} variant="ghost">
-                  {plan.status === 'closed'
-                    ? 'Đã đóng kế hoạch'
-                    : isClosingPlan
-                      ? 'Đang đóng kế hoạch...'
-                      : 'Đóng kế hoạch'}
-                </Button>
-              </div>
-            ) : null}
-          </>
         ) : null}
       </Card>
     </main>
