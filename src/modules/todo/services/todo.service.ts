@@ -1,5 +1,6 @@
 import type { TodoRepository } from '@/modules/todo/repositories/todo.repository';
-import type { CreateTodoInput, UpdateTodoInput } from '@/modules/todo/types/todo';
+import type { AddTodoVendorSchema } from '@/modules/todo/schemas/add-todo-vendor.schema';
+import type { CreateTodoInput, TodoDocument, UpdateTodoInput } from '@/modules/todo/types/todo';
 import type { AuthUser } from '@/modules/auth/types/auth';
 import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
@@ -44,6 +45,7 @@ export class TodoService {
       assigneeMemberId: input.assigneeMemberId?.trim() || null,
       dueDate: input.dueDate ? new Date(input.dueDate) : null,
       priority: input.priority,
+      budget: input.budget ?? null,
       createdByUserId: currentUser.uid,
     });
   }
@@ -89,6 +91,42 @@ export class TodoService {
       currentUser,
       currentMember,
     );
+  }
+
+  async addVendor(
+    plan: PlanDocument,
+    input: AddTodoVendorSchema,
+    currentUser: AuthUser,
+    currentMember: PlanMemberDocument | null,
+  ) {
+    void currentUser;
+    this.assertEditablePlan(plan);
+    this.assertManagePlanPermission(currentMember);
+
+    const name = input.name.trim();
+
+    if (!name) {
+      throw new AppError('Vendor name is required.', 'TODO_VENDOR_NAME_REQUIRED', 400);
+    }
+
+    await this.todoRepository.addVendor(plan.id, input.todoId, {
+      name,
+      link: input.link?.trim() || null,
+      price: input.price,
+    });
+  }
+
+  async deleteTodo(
+    plan: PlanDocument,
+    todo: TodoDocument,
+    currentUser: AuthUser,
+    currentMember: PlanMemberDocument | null,
+  ) {
+    void currentUser;
+    this.assertEditablePlan(plan);
+    this.assertManagePlanPermission(currentMember);
+
+    await this.todoRepository.deleteTodo(plan.id, todo.id);
   }
 
   watchTodos(

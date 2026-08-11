@@ -3,6 +3,13 @@ import type { Timestamp } from 'firebase/firestore';
 export type TodoPriority = 'low' | 'medium' | 'high';
 export type TodoStatus = 'todo' | 'in_progress' | 'done' | 'cancelled';
 
+export type TodoVendor = {
+  id: string;
+  name: string;
+  link: string | null;
+  price: number;
+};
+
 export type TodoDocument = {
   id: string;
   planId: string;
@@ -13,6 +20,8 @@ export type TodoDocument = {
   dueDate: Timestamp | null;
   priority: TodoPriority;
   status: TodoStatus;
+  budget: number | null;
+  vendors: TodoVendor[];
   createdByUserId: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -27,6 +36,7 @@ export type CreateTodoInput = {
   assigneeMemberId?: string | undefined;
   dueDate?: string | undefined;
   priority: TodoPriority;
+  budget?: number | undefined;
 };
 
 export type UpdateTodoInput = {
@@ -38,4 +48,5 @@ export type UpdateTodoInput = {
   dueDate?: string | undefined;
   priority: TodoPriority;
   status: TodoStatus;
+  budget?: number | undefined;
 };

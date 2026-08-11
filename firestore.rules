@@ -373,6 +373,7 @@ service cloud.firestore {
         request.resource.data.title is string &&
         request.resource.data.priority in ['low', 'medium', 'high'] &&
         request.resource.data.status in ['todo', 'in_progress', 'done', 'cancelled'];
+      allow delete: if isPlanOwner(planId) && isPlanActive(planId);
     }
 
     match /plans/{planId}/expenses/{expenseId} {

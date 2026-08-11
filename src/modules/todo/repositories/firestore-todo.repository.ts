@@ -13,11 +13,20 @@ import {
 
 import { getFirebaseFirestore } from '@/config/firebase.config';
 import type {
+  AddTodoVendorPersistenceInput,
   CreateTodoPersistenceInput,
   TodoRepository,
 } from '@/modules/todo/repositories/todo.repository';
-import type { TodoDocument, UpdateTodoInput } from '@/modules/todo/types/todo';
+import type { TodoDocument, TodoVendor, UpdateTodoInput } from '@/modules/todo/types/todo';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
+
+function normalizeTodo(raw: TodoDocument): TodoDocument {
+  return {
+    ...raw,
+    budget: raw.budget ?? null,
+    vendors: raw.vendors ?? [],
+  };
+}
 
 export class FirestoreTodoRepository implements TodoRepository {
   async createTodo(input: CreateTodoPersistenceInput) {
@@ -38,6 +47,8 @@ export class FirestoreTodoRepository implements TodoRepository {
         dueDate: input.dueDate ? Timestamp.fromDate(input.dueDate) : null,
         priority: input.priority,
         status: 'todo',
+        budget: input.budget,
+        vendors: [],
         createdByUserId: input.createdByUserId,
         createdAt: now,
         updatedAt: now,
@@ -88,6 +99,7 @@ export class FirestoreTodoRepository implements TodoRepository {
         dueDate: input.dueDate ? Timestamp.fromDate(new Date(input.dueDate)) : null,
         priority: input.priority,
         status: input.status,
+        budget: input.budget !== undefined ? input.budget : previousTodo.budget ?? null,
         updatedAt: now,
         completedAt: input.status === 'done' ? previousTodo.completedAt ?? now : null,
         cancelledAt: input.status === 'cancelled' ? previousTodo.cancelledAt ?? now : null,
@@ -99,6 +111,64 @@ export class FirestoreTodoRepository implements TodoRepository {
 
       transaction.update(milestoneRef, {
         completedTodoCount: increment(completedDelta),
+        updatedAt: now,
+      });
+    });
+  }
+
+  async addVendor(planId: string, todoId: string, vendor: AddTodoVendorPersistenceInput) {
+    const db = getFirebaseFirestore();
+    const todoRef = doc(db, 'plans', planId, 'todos', todoId);
+    const now = Timestamp.now();
+
+    await runTransaction(db, async (transaction) => {
+      const todoSnapshot = await transaction.get(todoRef);
+
+      if (!todoSnapshot.exists()) {
+        throw new Error('Todo not found.');
+      }
+
+      const previousTodo = todoSnapshot.data() as TodoDocument;
+      const newVendor: TodoVendor = {
+        id: crypto.randomUUID(),
+        name: vendor.name,
+        link: vendor.link,
+        price: vendor.price,
+      };
+
+      transaction.update(todoRef, {
+        vendors: [...(previousTodo.vendors ?? []), newVendor],
+        updatedAt: now,
+      });
+    });
+  }
+
+  async deleteTodo(planId: string, todoId: string) {
+    const db = getFirebaseFirestore();
+    const todoRef = doc(db, 'plans', planId, 'todos', todoId);
+    const planRef = doc(db, 'plans', planId);
+    const now = Timestamp.now();
+
+    await runTransaction(db, async (transaction) => {
+      const todoSnapshot = await transaction.get(todoRef);
+
+      if (!todoSnapshot.exists()) {
+        return;
+      }
+
+      const previousTodo = todoSnapshot.data() as TodoDocument;
+      const milestoneRef = doc(db, 'plans', planId, 'milestones', previousTodo.milestoneId);
+
+      transaction.delete(todoRef);
+
+      transaction.update(planRef, {
+        todoCount: increment(-1),
+        updatedAt: now,
+      });
+
+      transaction.update(milestoneRef, {
+        todoCount: increment(-1),
+        completedTodoCount: increment(previousTodo.status === 'done' ? -1 : 0),
         updatedAt: now,
       });
     });
@@ -117,7 +187,7 @@ export class FirestoreTodoRepository implements TodoRepository {
     return onSnapshot(
       todosQuery,
       (snapshot) => {
-        callback(snapshot.docs.map((item) => item.data() as TodoDocument));
+        callback(snapshot.docs.map((item) => normalizeTodo(item.data() as TodoDocument)));
       },
       (error) => {
         onError?.(mapFirebaseError(error, 'Unable to load todos for this plan.', 'TODO_WATCH_FAILED'));
@@ -141,7 +211,7 @@ export class FirestoreTodoRepository implements TodoRepository {
       (snapshot) => {
         callback(
           snapshot.docs
-            .map((item) => item.data() as TodoDocument)
+            .map((item) => normalizeTodo(item.data() as TodoDocument))
             .filter((todo) => todo.milestoneId === milestoneId),
         );
       },

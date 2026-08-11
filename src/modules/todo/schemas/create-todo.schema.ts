@@ -7,6 +7,7 @@ export const createTodoSchema = z.object({
   assigneeMemberId: z.string().optional().or(z.literal('')),
   dueDate: z.string().optional().or(z.literal('')),
   priority: z.enum(['low', 'medium', 'high']),
+  budget: z.coerce.number().int().min(0).optional(),
 });
 
 export type CreateTodoSchema = z.infer<typeof createTodoSchema>;

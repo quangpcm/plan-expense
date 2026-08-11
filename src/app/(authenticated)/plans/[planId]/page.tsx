@@ -34,7 +34,7 @@ import {
   useMilestones,
 } from '@/modules/milestone';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
-import { TodoForm, TodoList, useTodos, todoService } from '@/modules/todo';
+import { TodoForm, TodoList, TodoVendorForm, useTodos, todoService } from '@/modules/todo';
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import { CategoryBreakdown } from '@/modules/statistic/components/category-breakdown';
 import { ExpenseTimelineChart } from '@/modules/statistic/components/expense-timeline-chart';
@@ -113,6 +113,7 @@ export default function PlanDetailPage() {
   const [showTodoForm, setShowTodoForm] = useState(false);
   const [isTodoSubmitting, setIsTodoSubmitting] = useState(false);
   const [todoActionError, setTodoActionError] = useState<string | null>(null);
+  const [vendorFormTodo, setVendorFormTodo] = useState<TodoDocument | null>(null);
   const [expenseSheetMilestoneId, setExpenseSheetMilestoneId] = useState<string | null>(null);
   const previousPlanIdRef = useRef<string | undefined>(undefined);
 
@@ -461,6 +462,29 @@ export default function PlanDetailPage() {
       );
     } catch (error) {
       setTodoActionError(error instanceof Error ? error.message : 'Hiện chưa thể cập nhật trạng thái công việc.');
+    } finally {
+      setIsTodoSubmitting(false);
+    }
+  }
+
+  async function handleDeleteTodo(todo: TodoDocument) {
+    if (!user) {
+      return;
+    }
+
+    const confirmed = window.confirm(`Xóa công việc "${todo.title}"? Hành động này không thể hoàn tác.`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsTodoSubmitting(true);
+    setTodoActionError(null);
+
+    try {
+      await todoService.deleteTodo(ensuredPlan, todo, user, currentMember);
+    } catch (error) {
+      setTodoActionError(error instanceof Error ? error.message : 'Hiện chưa thể xóa công việc này.');
     } finally {
       setIsTodoSubmitting(false);
     }
@@ -849,6 +873,57 @@ export default function PlanDetailPage() {
             ) : null}
           </div>
         ) : null}
+        {vendorFormTodo ? (
+          <>
+            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
+              <button
+                aria-label="Đóng form nhà cung cấp"
+                className="absolute inset-0"
+                onClick={() => setVendorFormTodo(null)}
+                type="button"
+              />
+              <Dialog
+                className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto"
+                description={`Thêm nhà cung cấp tham khảo cho "${vendorFormTodo.title}".`}
+                title="Thêm nhà cung cấp"
+              >
+                <TodoVendorForm
+                  currentMember={currentMember}
+                  currentUser={user}
+                  onSuccess={() => setVendorFormTodo(null)}
+                  plan={ensuredPlan}
+                  todo={vendorFormTodo}
+                />
+                <div className="mt-4 flex justify-end">
+                  <Button onClick={() => setVendorFormTodo(null)} variant="ghost">
+                    Đóng form
+                  </Button>
+                </div>
+              </Dialog>
+            </div>
+            <div className="md:hidden">
+              <BottomSheet
+                description={`Thêm nhà cung cấp tham khảo cho "${vendorFormTodo.title}".`}
+                onClose={() => setVendorFormTodo(null)}
+                open={Boolean(vendorFormTodo)}
+                title="Thêm nhà cung cấp"
+              >
+                <TodoVendorForm
+                  currentMember={currentMember}
+                  currentUser={user}
+                  onSuccess={() => setVendorFormTodo(null)}
+                  plan={ensuredPlan}
+                  todo={vendorFormTodo}
+                />
+                <div className="mt-4 flex justify-end">
+                  <Button onClick={() => setVendorFormTodo(null)} variant="ghost">
+                    Đóng form
+                  </Button>
+                </div>
+              </BottomSheet>
+            </div>
+          </>
+        ) : null}
         {activeTab === 'Thống kê' ? (
           <div className="space-y-5">
             <SectionHeading
@@ -922,7 +997,9 @@ export default function PlanDetailPage() {
                 emptyMessage="Kế hoạch này chưa có công việc nào."
                 isSubmitting={isTodoSubmitting}
                 members={members}
+                onAddVendor={setVendorFormTodo}
                 onChangeStatus={handleChangeTodoStatus}
+                onDeleteTodo={handleDeleteTodo}
                 onEdit={(todo) => {
                   setSelectedMilestoneId(todo.milestoneId);
                   setEditingTodo(todo);

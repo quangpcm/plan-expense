@@ -9,6 +9,7 @@ export const updateTodoSchema = z.object({
   dueDate: z.string().optional().or(z.literal('')),
   priority: z.enum(['low', 'medium', 'high']),
   status: z.enum(['todo', 'in_progress', 'done', 'cancelled']),
+  budget: z.coerce.number().int().min(0).optional(),
 });
 
 export type UpdateTodoSchema = z.infer<typeof updateTodoSchema>;

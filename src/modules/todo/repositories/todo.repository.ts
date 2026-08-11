@@ -8,12 +8,21 @@ export type CreateTodoPersistenceInput = {
   assigneeMemberId: string | null;
   dueDate: Date | null;
   priority: TodoDocument['priority'];
+  budget: number | null;
   createdByUserId: string;
+};
+
+export type AddTodoVendorPersistenceInput = {
+  name: string;
+  link: string | null;
+  price: number;
 };
 
 export interface TodoRepository {
   createTodo(input: CreateTodoPersistenceInput): Promise<{ todoId: string }>;
   updateTodo(planId: string, input: UpdateTodoInput): Promise<void>;
+  addVendor(planId: string, todoId: string, vendor: AddTodoVendorPersistenceInput): Promise<void>;
+  deleteTodo(planId: string, todoId: string): Promise<void>;
   watchTodos(
     planId: string,
     callback: (todos: TodoDocument[]) => void,

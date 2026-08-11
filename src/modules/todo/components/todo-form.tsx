@@ -12,6 +12,7 @@ import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import type { AuthUser } from '@/modules/auth/types/auth';
+import { AmountInput } from '@/shared/components/ui/amount-input';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
@@ -41,6 +42,7 @@ export function TodoForm({
   const [dueDate, setDueDate] = useState(todo?.dueDate ? new Date(todo.dueDate.toDate()).toISOString().slice(0, 10) : '');
   const [priority, setPriority] = useState<TodoDocument['priority']>(todo?.priority ?? 'medium');
   const [status, setStatus] = useState<TodoDocument['status']>(todo?.status ?? 'todo');
+  const [budget, setBudget] = useState(todo?.budget ?? 0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,6 +72,7 @@ export function TodoForm({
           dueDate,
           priority,
           status,
+          budget: budget > 0 ? budget : undefined,
         });
 
         await todoService.updateTodo(plan, parsed, currentUser, currentMember);
@@ -82,6 +85,7 @@ export function TodoForm({
           assigneeMemberId,
           dueDate,
           priority,
+          budget: budget > 0 ? budget : undefined,
         });
 
         await todoService.createTodo(plan, parsed, currentUser, currentMember);
@@ -91,6 +95,7 @@ export function TodoForm({
         setAssigneeMemberId('');
         setDueDate('');
         setPriority('medium');
+        setBudget(0);
       }
 
       onSuccess?.();
@@ -118,6 +123,10 @@ export function TodoForm({
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700">Mô tả</label>
         <Textarea onChange={(event) => setDescription(event.target.value)} placeholder="Ghi chú ngắn cho việc này" value={description} />
+      </div>
+      <div className="space-y-2 text-center">
+        <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#727687]">Ngân sách dự tính</label>
+        <AmountInput onChange={setBudget} value={budget} />
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="space-y-2">
