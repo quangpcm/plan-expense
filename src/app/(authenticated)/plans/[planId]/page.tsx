@@ -52,6 +52,7 @@ import { Breadcrumbs } from '@/shared/components/ui/breadcrumbs';
 import { Button } from '@/shared/components/ui/button';
 import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Card } from '@/shared/components/ui/card';
+import { Dialog } from '@/shared/components/ui/dialog';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { formatCurrency } from '@/shared/utils/currency';
@@ -59,11 +60,11 @@ import { formatDate } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 import { cn } from '@/shared/utils/cn';
 
-const tabs = ['Dòng thời gian', 'Mốc kế hoạch', 'Todos', 'Thống kê', 'Thành viên', 'Thiết lập'] as const;
+const tabs = ['Mốc kế hoạch', 'Thu chi', 'Todos', 'Thống kê', 'Thành viên', 'Thiết lập'] as const;
 
 const tabIcons = {
-  'Dòng thời gian': Clock,
   'Mốc kế hoạch': Flag,
+  'Thu chi': Clock,
   Todos: Users,
   'Thống kê': BarChart3,
   'Thành viên': Users,
@@ -71,8 +72,8 @@ const tabIcons = {
 } as const;
 
 const TAB_BY_QUERY_PARAM: Record<string, (typeof tabs)[number]> = {
-  timeline: 'Dòng thời gian',
   milestones: 'Mốc kế hoạch',
+  timeline: 'Thu chi',
   todos: 'Todos',
   statistic: 'Thống kê',
   members: 'Thành viên',
@@ -85,7 +86,7 @@ export default function PlanDetailPage() {
   const planId = Array.isArray(params.planId) ? params.planId[0] : params.planId;
   const { user } = useAuthSession();
   const { plan, isLoading, errorMessage: planError } = usePlan(planId);
-  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('Dòng thời gian');
+  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>('Mốc kế hoạch');
   const { milestones, isLoading: isMilestonesLoading, errorMessage: milestoneError } = useMilestones(planId);
   const { todos, isLoading: isTodosLoading, errorMessage: todoError } = useTodos(planId);
   const { members, currentMember, permissions, errorMessage: memberError } = usePlanMembers(planId);
@@ -123,7 +124,7 @@ export default function PlanDetailPage() {
     if (tabParam && TAB_BY_QUERY_PARAM[tabParam]) {
       setActiveTab(TAB_BY_QUERY_PARAM[tabParam]);
     } else if (isNewPlan) {
-      setActiveTab('Dòng thời gian');
+      setActiveTab('Mốc kế hoạch');
     }
   }, [planId, searchParams]);
 
@@ -205,6 +206,8 @@ export default function PlanDetailPage() {
   if (!currentPlan) {
     notFound();
   }
+
+  const ensuredPlan = currentPlan;
 
   async function handleUpdateMember(
     member: PlanMemberDocument,
@@ -317,7 +320,7 @@ export default function PlanDetailPage() {
       throw new Error('Hiện chưa thể tạo link liên kết.');
     }
 
-    return invitationService.createClaimInvitation(currentPlan, member, email, user, currentMember);
+    return invitationService.createClaimInvitation(ensuredPlan, member, email, user, currentMember);
   }
 
   async function handleRevokeInvitation(invitation: InvitationDocument) {
@@ -350,7 +353,7 @@ export default function PlanDetailPage() {
 
     try {
       await settlementService.confirm(suggestion, {
-        plan: currentPlan,
+        plan: ensuredPlan,
         members,
         currentMember,
         currentUser: user,
@@ -373,7 +376,7 @@ export default function PlanDetailPage() {
     setSettlementMessage(null);
 
     try {
-      await settlementService.cancel(currentPlan, settlement, user, currentMember);
+      await settlementService.cancel(ensuredPlan, settlement, user, currentMember);
       setSettlementMessage('Đã hủy đối soát.');
     } catch (error) {
       setSettlementError(error instanceof Error ? error.message : 'Hiện chưa thể hủy đối soát này.');
@@ -387,7 +390,7 @@ export default function PlanDetailPage() {
     setClosingError(null);
 
     try {
-      await planService.closePlan(currentPlan, currentMember);
+      await planService.closePlan(ensuredPlan, currentMember);
     } catch (error) {
       setClosingError(error instanceof Error ? error.message : 'Hiện chưa thể đóng kế hoạch này.');
     } finally {
@@ -424,7 +427,7 @@ export default function PlanDetailPage() {
         return { milestoneId: item.id, orderIndex: item.orderIndex };
       });
 
-      await milestoneService.reorderMilestones(currentPlan, reordered, currentMember);
+      await milestoneService.reorderMilestones(ensuredPlan, reordered, currentMember);
     } catch (error) {
       setMilestoneActionError(error instanceof Error ? error.message : 'Hiện chưa thể sắp xếp lại mốc kế hoạch.');
     } finally {
@@ -442,7 +445,7 @@ export default function PlanDetailPage() {
 
     try {
       await todoService.updateTodo(
-        currentPlan,
+        ensuredPlan,
         {
           todoId: todo.id,
           milestoneId: todo.milestoneId,
@@ -555,13 +558,13 @@ export default function PlanDetailPage() {
             );
           })}
         </div>
-        {activeTab === 'Dòng thời gian' ? (
+        {activeTab === 'Thu chi' ? (
           <>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <SectionHeading
-                eyebrow="Dòng thời gian"
-                title="Financial Timeline"
-                description="Dòng tiền của kế hoạch được nhóm theo ngày và có thể lọc theo từng mốc để bám sát tiến độ thực tế."
+                eyebrow="Dòng tiền"
+                title="Dòng tiền kế hoạch"
+                description="Khoản chi và khoản thu của kế hoạch được nhóm theo ngày và có thể lọc theo từng mốc để bám sát tiến độ thực tế."
               />
               <div className="flex justify-end gap-2">
                 {plan.status === 'closed' ? (
@@ -607,68 +610,6 @@ export default function PlanDetailPage() {
             />
             {milestoneActionError ? <AuthFormMessage message={milestoneActionError} type="error" /> : null}
             {todoActionError ? <AuthFormMessage message={todoActionError} type="error" /> : null}
-            {showMilestoneForm ? (
-              <Card className="border-slate-200 bg-white">
-                <SectionHeading
-                  eyebrow="Milestone Form"
-                  title={editingMilestone ? 'Cập nhật mốc kế hoạch' : 'Tạo mốc kế hoạch mới'}
-                  description="Bản đầu của milestone core hỗ trợ tạo, sửa và sắp xếp lại các mốc lớn của kế hoạch."
-                />
-                <MilestoneForm
-                  currentMember={currentMember}
-                  currentUser={user}
-                  milestone={editingMilestone ?? undefined}
-                  onSuccess={() => {
-                    setShowMilestoneForm(false);
-                    setEditingMilestone(null);
-                  }}
-                  plan={currentPlan}
-                />
-                <div className="flex justify-end">
-                  <Button
-                    onClick={() => {
-                      setShowMilestoneForm(false);
-                      setEditingMilestone(null);
-                    }}
-                    variant="ghost"
-                  >
-                    Đóng form
-                  </Button>
-                </div>
-              </Card>
-            ) : null}
-            {showTodoForm && selectedMilestone ? (
-              <Card className="border-slate-200 bg-white">
-                <SectionHeading
-                  eyebrow="Todo Form"
-                  title={editingTodo ? 'Cập nhật công việc' : `Thêm công việc cho "${selectedMilestone.title}"`}
-                  description="Todo luôn gắn với đúng một milestone để sau này nối sang thống kê tiến độ và dòng tiền."
-                />
-                <TodoForm
-                  currentMember={currentMember}
-                  currentUser={user}
-                  members={members}
-                  milestone={selectedMilestone}
-                  onSuccess={() => {
-                    setShowTodoForm(false);
-                    setEditingTodo(null);
-                  }}
-                  plan={currentPlan}
-                  todo={editingTodo ?? undefined}
-                />
-                <div className="flex justify-end">
-                  <Button
-                    onClick={() => {
-                      setShowTodoForm(false);
-                      setEditingTodo(null);
-                    }}
-                    variant="ghost"
-                  >
-                    Đóng form
-                  </Button>
-                </div>
-              </Card>
-            ) : null}
             {isMilestonesLoading ? (
               <Skeleton className="h-48 rounded-[28px]" />
             ) : (
@@ -695,8 +636,6 @@ export default function PlanDetailPage() {
                     setEditingTodo(todo);
                     setShowTodoForm(true);
                   }}
-                  onMoveDown={(milestone) => handleMoveMilestone(milestone, 'down')}
-                  onMoveUp={(milestone) => handleMoveMilestone(milestone, 'up')}
                   onOpenExpenseSheet={(milestone) => {
                     setSelectedMilestoneId(milestone.id);
                     setExpenseSheetMilestoneId(milestone.id);
@@ -712,7 +651,7 @@ export default function PlanDetailPage() {
                         canCreateExpense={plan.status !== 'closed'}
                         expenses={selectedMilestoneExpenses}
                         milestone={selectedMilestone}
-                        onShowTimeline={() => setActiveTab('Dòng thời gian')}
+                        onShowTimeline={() => setActiveTab('Thu chi')}
                         planId={planId}
                       />
                     </div>
@@ -741,6 +680,160 @@ export default function PlanDetailPage() {
                 />
               ) : null}
             </BottomSheet>
+            {showMilestoneForm ? (
+              <>
+                <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
+                  <button
+                    aria-label="Đóng form milestone"
+                    className="absolute inset-0"
+                    onClick={() => {
+                      setShowMilestoneForm(false);
+                      setEditingMilestone(null);
+                    }}
+                    type="button"
+                  />
+                  <Dialog
+                    className="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto"
+                    description="Bản đầu của milestone core hỗ trợ tạo, sửa và sắp xếp lại các mốc lớn của kế hoạch."
+                    title={editingMilestone ? 'Cập nhật mốc kế hoạch' : 'Tạo mốc kế hoạch mới'}
+                  >
+                    <MilestoneForm
+                      currentMember={currentMember}
+                      currentUser={user}
+                      onSuccess={() => {
+                        setShowMilestoneForm(false);
+                        setEditingMilestone(null);
+                      }}
+                      plan={ensuredPlan}
+                      {...(editingMilestone ? { milestone: editingMilestone } : {})}
+                    />
+                    <div className="mt-4 flex justify-end">
+                      <Button
+                        onClick={() => {
+                          setShowMilestoneForm(false);
+                          setEditingMilestone(null);
+                        }}
+                        variant="ghost"
+                      >
+                        Đóng form
+                      </Button>
+                    </div>
+                  </Dialog>
+                </div>
+                <div className="md:hidden">
+                  <BottomSheet
+                    description="Bản đầu của milestone core hỗ trợ tạo, sửa và sắp xếp lại các mốc lớn của kế hoạch."
+                    onClose={() => {
+                      setShowMilestoneForm(false);
+                      setEditingMilestone(null);
+                    }}
+                    open={showMilestoneForm}
+                    title={editingMilestone ? 'Cập nhật mốc kế hoạch' : 'Tạo mốc kế hoạch mới'}
+                  >
+                    <MilestoneForm
+                      currentMember={currentMember}
+                      currentUser={user}
+                      onSuccess={() => {
+                        setShowMilestoneForm(false);
+                        setEditingMilestone(null);
+                      }}
+                      plan={ensuredPlan}
+                      {...(editingMilestone ? { milestone: editingMilestone } : {})}
+                    />
+                    <div className="mt-4 flex justify-end">
+                      <Button
+                        onClick={() => {
+                          setShowMilestoneForm(false);
+                          setEditingMilestone(null);
+                        }}
+                        variant="ghost"
+                      >
+                        Đóng form
+                      </Button>
+                    </div>
+                  </BottomSheet>
+                </div>
+              </>
+            ) : null}
+            {showTodoForm && selectedMilestone ? (
+              <>
+                <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
+                  <button
+                    aria-label="Đóng form todo"
+                    className="absolute inset-0"
+                    onClick={() => {
+                      setShowTodoForm(false);
+                      setEditingTodo(null);
+                    }}
+                    type="button"
+                  />
+                  <Dialog
+                    className="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto"
+                    description="Todo luôn gắn với đúng một milestone để sau này nối sang thống kê tiến độ và dòng tiền."
+                    title={editingTodo ? 'Cập nhật công việc' : `Thêm công việc cho "${selectedMilestone.title}"`}
+                  >
+                    <TodoForm
+                      currentMember={currentMember}
+                      currentUser={user}
+                      members={members}
+                      milestone={selectedMilestone}
+                      onSuccess={() => {
+                        setShowTodoForm(false);
+                        setEditingTodo(null);
+                      }}
+                      plan={ensuredPlan}
+                      {...(editingTodo ? { todo: editingTodo } : {})}
+                    />
+                    <div className="mt-4 flex justify-end">
+                      <Button
+                        onClick={() => {
+                          setShowTodoForm(false);
+                          setEditingTodo(null);
+                        }}
+                        variant="ghost"
+                      >
+                        Đóng form
+                      </Button>
+                    </div>
+                  </Dialog>
+                </div>
+                <div className="md:hidden">
+                  <BottomSheet
+                    description="Todo luôn gắn với đúng một milestone để sau này nối sang thống kê tiến độ và dòng tiền."
+                    onClose={() => {
+                      setShowTodoForm(false);
+                      setEditingTodo(null);
+                    }}
+                    open={showTodoForm}
+                    title={editingTodo ? 'Cập nhật công việc' : `Thêm công việc cho "${selectedMilestone.title}"`}
+                  >
+                    <TodoForm
+                      currentMember={currentMember}
+                      currentUser={user}
+                      members={members}
+                      milestone={selectedMilestone}
+                      onSuccess={() => {
+                        setShowTodoForm(false);
+                        setEditingTodo(null);
+                      }}
+                      plan={ensuredPlan}
+                      {...(editingTodo ? { todo: editingTodo } : {})}
+                    />
+                    <div className="mt-4 flex justify-end">
+                      <Button
+                        onClick={() => {
+                          setShowTodoForm(false);
+                          setEditingTodo(null);
+                        }}
+                        variant="ghost"
+                      >
+                        Đóng form
+                      </Button>
+                    </div>
+                  </BottomSheet>
+                </div>
+              </>
+            ) : null}
             {permissions.canManagePlan && plan.status !== 'closed' ? (
               <button
                 aria-label="Tạo mốc kế hoạch"

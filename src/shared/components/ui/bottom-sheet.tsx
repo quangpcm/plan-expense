@@ -50,8 +50,7 @@ export function BottomSheet({
         onClick={onClose}
         type="button"
       />
-      <div className="relative w-full max-w-md">{content}</div>
+      <div className="relative w-full md:max-w-md">{content}</div>
     </div>
   );
 }
-
