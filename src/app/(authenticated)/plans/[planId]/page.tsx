@@ -872,7 +872,17 @@ export default function PlanDetailPage() {
                 <TodoDetailView
                   assignee={members.find((member) => member.id === detailTodo.assigneeMemberId) ?? null}
                   canManagePlan={permissions.canManagePlan && plan.status !== 'closed'}
+                  isSubmitting={isTodoSubmitting}
+                  onAddVendor={(todo) => {
+                    setDetailTodo(null);
+                    setVendorFormTodo(todo);
+                  }}
+                  onChangeStatus={handleChangeTodoStatus}
                   onClose={() => setDetailTodo(null)}
+                  onDeleteTodo={(todo) => {
+                    setDetailTodo(null);
+                    void handleDeleteTodo(todo);
+                  }}
                   onEdit={(todo) => {
                     setDetailTodo(null);
                     setSelectedMilestoneId(todo.milestoneId);
@@ -888,7 +898,17 @@ export default function PlanDetailPage() {
                 <TodoDetailView
                   assignee={members.find((member) => member.id === detailTodo.assigneeMemberId) ?? null}
                   canManagePlan={permissions.canManagePlan && plan.status !== 'closed'}
+                  isSubmitting={isTodoSubmitting}
+                  onAddVendor={(todo) => {
+                    setDetailTodo(null);
+                    setVendorFormTodo(todo);
+                  }}
+                  onChangeStatus={handleChangeTodoStatus}
                   onClose={() => setDetailTodo(null)}
+                  onDeleteTodo={(todo) => {
+                    setDetailTodo(null);
+                    void handleDeleteTodo(todo);
+                  }}
                   onEdit={(todo) => {
                     setDetailTodo(null);
                     setSelectedMilestoneId(todo.milestoneId);

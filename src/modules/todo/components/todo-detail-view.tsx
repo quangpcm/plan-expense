@@ -1,4 +1,4 @@
-import { CalendarDays, PencilLine, Wallet } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Clock3, PencilLine, Plus, Trash2, Wallet } from 'lucide-react';
 
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import { priorityLabel, statusLabel, toVendorHref } from '@/modules/todo/utils/todo-display';
@@ -14,11 +14,25 @@ type TodoDetailViewProps = {
   todo: TodoDocument;
   assignee: PlanMemberDocument | null;
   canManagePlan: boolean;
+  isSubmitting: boolean;
   onEdit: (todo: TodoDocument) => void;
+  onAddVendor: (todo: TodoDocument) => void;
+  onChangeStatus: (todo: TodoDocument, status: TodoDocument['status']) => void;
+  onDeleteTodo: (todo: TodoDocument) => void;
   onClose: () => void;
 };
 
-export function TodoDetailView({ todo, assignee, canManagePlan, onEdit, onClose }: TodoDetailViewProps) {
+export function TodoDetailView({
+  todo,
+  assignee,
+  canManagePlan,
+  isSubmitting,
+  onEdit,
+  onAddVendor,
+  onChangeStatus,
+  onDeleteTodo,
+  onClose,
+}: TodoDetailViewProps) {
   const dueDate = timestampToDate(todo.dueDate);
 
   return (
@@ -85,17 +99,55 @@ export function TodoDetailView({ todo, assignee, canManagePlan, onEdit, onClose 
         ) : (
           <p className="text-sm text-slate-500">Chưa có nhà cung cấp nào.</p>
         )}
+        {canManagePlan ? (
+          <Button className="w-full justify-center" onClick={() => onAddVendor(todo)} variant="ghost">
+            <Plus className="size-4" />
+            Thêm
+          </Button>
+        ) : null}
       </div>
 
-      <div className="flex items-center justify-end gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <Button onClick={onClose} variant="ghost">
           Đóng
         </Button>
         {canManagePlan ? (
-          <Button onClick={() => onEdit(todo)}>
-            <PencilLine className="size-4" />
-            Sửa
-          </Button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {todo.status !== 'done' ? (
+              <Button
+                className="px-4"
+                disabled={isSubmitting}
+                onClick={() => onChangeStatus(todo, 'done')}
+                variant="secondary"
+              >
+                <CheckCircle2 className="size-4" />
+                Hoàn thành
+              </Button>
+            ) : (
+              <Button
+                className="px-4"
+                disabled={isSubmitting}
+                onClick={() => onChangeStatus(todo, 'in_progress')}
+                variant="secondary"
+              >
+                <Clock3 className="size-4" />
+                Đang làm lại
+              </Button>
+            )}
+            <Button className="px-4" disabled={isSubmitting} onClick={() => onEdit(todo)}>
+              <PencilLine className="size-4" />
+              Sửa
+            </Button>
+            <Button
+              aria-label="Xóa công việc"
+              className="size-9 min-h-9 shrink-0 justify-center px-0 text-rose-600 hover:bg-rose-50"
+              disabled={isSubmitting}
+              onClick={() => onDeleteTodo(todo)}
+              variant="ghost"
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
         ) : null}
       </div>
     </div>
