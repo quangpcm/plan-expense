@@ -94,6 +94,7 @@ function makeIncome(overrides: Partial<IncomeDocument> = {}): IncomeDocument {
   return {
     id: 'income-1',
     planId: 'plan-1',
+    milestoneId: 'milestone-1',
     title: 'Top up',
     categoryId: null,
     amount: 500,

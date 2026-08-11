@@ -2,6 +2,7 @@ import { AppError } from '@/shared/errors/app-error';
 import type { AuthUser } from '@/modules/auth/types/auth';
 import type { CategoryDocument } from '@/modules/category/types/category';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
+import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import type { CreateIncomeInput, IncomeDocument, UpdateIncomeInput } from '@/modules/income/types/income';
@@ -13,10 +14,21 @@ type IncomeContext = {
   currentMember: PlanMemberDocument | null;
   currentUser: AuthUser;
   categories: CategoryDocument[];
+  milestones: MilestoneDocument[];
 };
 
 export class IncomeService {
   constructor(private readonly incomeRepository: IncomeRepository) {}
+
+  private assertValidMilestone(planId: string, milestoneId: string, milestones: MilestoneDocument[]) {
+    const milestone = milestones.find((item) => item.id === milestoneId);
+
+    if (!milestone || milestone.planId !== planId) {
+      throw new AppError('Milestone phải thuộc đúng kế hoạch hiện tại.', 'INCOME_INVALID_MILESTONE', 400);
+    }
+
+    return milestone;
+  }
 
   private assertEditablePlan(plan: PlanDocument) {
     if (plan.status === 'closed') {
@@ -43,8 +55,11 @@ export class IncomeService {
       throw new AppError('Contributor must be active in this plan.', 'INCOME_INVALID_CONTRIBUTOR', 400);
     }
 
+    const milestone = this.assertValidMilestone(context.plan.id, input.milestoneId, context.milestones);
+
     return this.incomeRepository.createIncome({
       planId: context.plan.id,
+      milestoneId: milestone.id,
       title: input.title.trim(),
       categoryId: input.categoryId || null,
       amount: input.amount,
@@ -70,6 +85,8 @@ export class IncomeService {
     if (!activeMembers.some((member) => member.id === input.contributedByMemberId)) {
       throw new AppError('Contributor must be active in this plan.', 'INCOME_INVALID_CONTRIBUTOR', 400);
     }
+
+    this.assertValidMilestone(context.plan.id, input.milestoneId, context.milestones);
 
     await this.incomeRepository.updateIncome(context.plan.id, input);
   }

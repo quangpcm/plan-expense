@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Landmark, Paperclip, Users } from 'lucide-react';
 
 import { Card } from '@/shared/components/ui/card';
+import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDate, formatTime } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
@@ -56,7 +57,10 @@ export function TimelineList({
     [expenses, selectedMilestoneId],
   );
   const filteredIncomes = useMemo(
-    () => (selectedMilestoneId === 'all' ? incomes : []),
+    () =>
+      selectedMilestoneId === 'all'
+        ? incomes
+        : incomes.filter((income) => income.milestoneId === selectedMilestoneId),
     [incomes, selectedMilestoneId],
   );
 
@@ -82,19 +86,15 @@ export function TimelineList({
           <label className="text-sm font-medium text-slate-700" htmlFor="timeline-milestone-filter">
             Mốc kế hoạch
           </label>
-          <select
-            className="min-h-11 w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-foreground)] outline-none transition focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent-soft)]"
+          <DropdownSelect
             id="timeline-milestone-filter"
-            onChange={(event) => handleChangeMilestone(event.target.value)}
+            onValueChange={handleChangeMilestone}
+            options={[
+              { value: 'all', label: 'Tất cả các mốc' },
+              ...milestones.map((milestone) => ({ value: milestone.id, label: milestone.title })),
+            ]}
             value={selectedMilestoneId}
-          >
-            <option value="all">Tất cả các mốc</option>
-            {milestones.map((milestone) => (
-              <option key={milestone.id} value={milestone.id}>
-                {milestone.title}
-              </option>
-            ))}
-          </select>
+          />
         </div>
         <Card>
           <p className="text-sm leading-6 text-[var(--color-muted)]">
@@ -123,19 +123,15 @@ export function TimelineList({
         <label className="text-sm font-medium text-slate-700" htmlFor="timeline-milestone-filter">
           Mốc kế hoạch
         </label>
-        <select
-          className="min-h-11 w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm text-[var(--color-foreground)] outline-none transition focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent-soft)]"
+        <DropdownSelect
           id="timeline-milestone-filter"
-          onChange={(event) => handleChangeMilestone(event.target.value)}
+          onValueChange={handleChangeMilestone}
+          options={[
+            { value: 'all', label: 'Tất cả các mốc' },
+            ...milestones.map((milestone) => ({ value: milestone.id, label: milestone.title })),
+          ]}
           value={selectedMilestoneId}
-        >
-          <option value="all">Tất cả các mốc</option>
-          {milestones.map((milestone) => (
-            <option key={milestone.id} value={milestone.id}>
-              {milestone.title}
-            </option>
-          ))}
-        </select>
+        />
       </div>
       <div className="space-y-8">
         {Object.entries(grouped).map(([day, dayEntries]) => (

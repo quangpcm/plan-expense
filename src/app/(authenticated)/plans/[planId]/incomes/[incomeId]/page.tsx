@@ -11,6 +11,7 @@ import { IncomeDetailCard } from '@/modules/income/components/income-detail-card
 import { useIncome } from '@/modules/income/hooks/use-income';
 import { incomeService } from '@/modules/income/services';
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
+import { useMilestones } from '@/modules/milestone';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
 import { Breadcrumbs } from '@/shared/components/ui/breadcrumbs';
 import { Button } from '@/shared/components/ui/button';
@@ -27,6 +28,7 @@ export default function IncomeDetailPage() {
   const { members, currentMember, permissions } = usePlanMembers(planId);
   const { categories: expenseCategories, errorMessage: expenseCategoryError } = useExpenseCategories(planId);
   const { categories: incomeCategories, errorMessage: incomeCategoryError } = useIncomeCategories(planId);
+  const { milestones, errorMessage: milestoneError } = useMilestones(planId);
   const { income, isLoading, errorMessage: incomeError } = useIncome(planId, incomeId);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -72,12 +74,13 @@ export default function IncomeDetailPage() {
           { label: currentIncome.title },
         ]}
       />
-      {planError || expenseCategoryError || incomeCategoryError || incomeError ? (
+      {planError || expenseCategoryError || incomeCategoryError || milestoneError || incomeError ? (
         <AuthFormMessage
           message={
             planError ||
             expenseCategoryError ||
             incomeCategoryError ||
+            milestoneError ||
             incomeError ||
             'Hiện chưa thể tải màn hình khoản thu này.'
           }
@@ -88,6 +91,7 @@ export default function IncomeDetailPage() {
         categories={[...expenseCategories, ...incomeCategories]}
         income={income}
         members={members}
+        milestones={milestones}
       />
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       <Card className="gap-3 sm:flex-row sm:justify-end">

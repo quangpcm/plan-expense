@@ -29,6 +29,7 @@ export class FirestoreIncomeRepository implements IncomeRepository {
       transaction.set(incomeRef, {
         id: incomeRef.id,
         planId: input.planId,
+        milestoneId: input.milestoneId,
         title: input.title,
         categoryId: input.categoryId,
         amount: input.amount,
@@ -75,6 +76,7 @@ export class FirestoreIncomeRepository implements IncomeRepository {
 
       transaction.update(incomeRef, {
         title: input.title,
+        milestoneId: input.milestoneId,
         categoryId: input.categoryId || null,
         amount: input.amount,
         contributedByMemberId: input.contributedByMemberId,

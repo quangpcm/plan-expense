@@ -1,7 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { startTransition, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { startTransition, useEffect, useState } from 'react';
 import { Landmark } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
 import { ZodError } from 'zod';
@@ -11,6 +11,7 @@ import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
 import { getCategoryIcon } from '@/modules/category/utils/category-icon';
 import { useIncomeCategories } from '@/modules/category/hooks/use-income-categories';
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
+import { useMilestones } from '@/modules/milestone';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
 import { createIncomeSchema, type CreateIncomeSchema } from '@/modules/income/schemas/create-income.schema';
 import { updateIncomeSchema, type UpdateIncomeSchema } from '@/modules/income/schemas/update-income.schema';
@@ -18,6 +19,7 @@ import { incomeService } from '@/modules/income/services';
 import type { IncomeDocument } from '@/modules/income/types/income';
 import { AmountInput } from '@/shared/components/ui/amount-input';
 import { Button } from '@/shared/components/ui/button';
+import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { cn } from '@/shared/utils/cn';
@@ -30,17 +32,22 @@ type IncomeFormProps = {
 
 export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuthSession();
   const { plan } = usePlan(planId);
   const { members, currentMember } = usePlanMembers(planId);
+  const { milestones } = useMilestones(planId);
   const { categories } = useIncomeCategories(planId);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const activeMembers = members.filter((member) => member.status === 'active');
+  const milestoneIdFromQuery = searchParams.get('milestoneId') || '';
+  const defaultMilestoneId = income?.milestoneId || milestoneIdFromQuery || milestones[0]?.id || '';
   const form = useForm<CreateIncomeSchema>({
     defaultValues: {
       title: income?.title || '',
       amount: income?.amount || 0,
+      milestoneId: defaultMilestoneId,
       categoryId: income?.categoryId || '',
       contributedByMemberId: income?.contributedByMemberId || currentMember?.id || activeMembers[0]?.id || '',
       note: income?.note || '',
@@ -49,6 +56,22 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
   });
   const categoryIdWatched = useWatch({ control: form.control, name: 'categoryId' });
   const amountWatched = useWatch({ control: form.control, name: 'amount' });
+  const milestoneIdWatched = useWatch({ control: form.control, name: 'milestoneId' });
+  const contributedByMemberIdWatched = useWatch({ control: form.control, name: 'contributedByMemberId' });
+
+  const selectedContributor = activeMembers.find((member) => member.id === contributedByMemberIdWatched);
+
+  useEffect(() => {
+    if (!form.getValues('milestoneId') && defaultMilestoneId) {
+      form.setValue('milestoneId', defaultMilestoneId, { shouldValidate: true });
+    }
+
+    if (!form.getValues('contributedByMemberId') && (currentMember?.id || activeMembers[0]?.id)) {
+      form.setValue('contributedByMemberId', currentMember?.id || activeMembers[0]?.id || '', {
+        shouldValidate: true,
+      });
+    }
+  }, [activeMembers, currentMember?.id, defaultMilestoneId, form]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     if (!plan || !user) {
@@ -67,6 +90,7 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
           currentMember,
           currentUser: user,
           categories,
+          milestones,
         });
         startTransition(() => {
           router.replace(`/plans/${planId}?tab=timeline`);
@@ -84,6 +108,7 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
             currentMember,
             currentUser: user,
             categories,
+            milestones,
           },
           income,
         );
@@ -119,6 +144,19 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
       <Input placeholder="Đóng quỹ, nạp thêm..." {...form.register('title')} />
 
       <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700" htmlFor="milestoneId">
+          Mốc kế hoạch
+        </label>
+        <DropdownSelect
+          id="milestoneId"
+          onValueChange={(value) => form.setValue('milestoneId', value, { shouldValidate: true, shouldDirty: true })}
+          options={milestones.map((milestone) => ({ value: milestone.id, label: milestone.title }))}
+          placeholder="Chọn mốc kế hoạch"
+          value={milestoneIdWatched || ''}
+        />
+      </div>
+
+      <div className="space-y-2">
         <p className="text-sm font-medium text-slate-700">Danh mục</p>
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
           {categories.map((category) => {
@@ -147,16 +185,23 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
         </div>
       </div>
 
-      <select
-        className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-        {...form.register('contributedByMemberId')}
-      >
-        {activeMembers.map((member) => (
-          <option key={member.id} value={member.id}>
-            {member.nickname}
-          </option>
-        ))}
-      </select>
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700" htmlFor="contributedByMemberId">
+          Người nạp
+        </label>
+        <DropdownSelect
+          id="contributedByMemberId"
+          onValueChange={(value) =>
+            form.setValue('contributedByMemberId', value, { shouldValidate: true, shouldDirty: true })
+          }
+          options={activeMembers.map((member) => ({
+            value: member.id,
+            label: member.id === currentMember?.id ? `${member.nickname} (Mặc định)` : member.nickname,
+          }))}
+          placeholder="Chọn người nạp"
+          value={contributedByMemberIdWatched || selectedContributor?.id || ''}
+        />
+      </div>
       <Input type="datetime-local" {...form.register('receivedAt')} />
       <Textarea placeholder="Ghi chú thêm (không bắt buộc)" {...form.register('note')} />
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}

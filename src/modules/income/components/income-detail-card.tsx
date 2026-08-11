@@ -7,18 +7,21 @@ import { formatDateTime } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 import type { CategoryDocument } from '@/modules/category/types/category';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
+import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import type { IncomeDocument } from '@/modules/income/types/income';
 
 type IncomeDetailCardProps = {
   income: IncomeDocument;
   members: PlanMemberDocument[];
   categories: CategoryDocument[];
+  milestones: MilestoneDocument[];
 };
 
-export function IncomeDetailCard({ income, members, categories }: IncomeDetailCardProps) {
+export function IncomeDetailCard({ income, members, categories, milestones }: IncomeDetailCardProps) {
   const category = categories.find((item) => item.id === income.categoryId);
   const contributor = members.find((member) => member.id === income.contributedByMemberId);
   const createdBy = members.find((member) => member.id === income.createdByMemberId);
+  const milestone = milestones.find((item) => item.id === income.milestoneId);
   const receivedAt = timestampToDate(income.receivedAt);
   const createdAt = timestampToDate(income.createdAt);
   const updatedAt = timestampToDate(income.updatedAt);
@@ -29,7 +32,10 @@ export function IncomeDetailCard({ income, members, categories }: IncomeDetailCa
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold text-slate-950">{income.title}</h1>
-          <Badge variant="info">{category?.name || 'Không có danh mục'}</Badge>
+          <div className="flex flex-wrap gap-2">
+            {milestone ? <Badge variant="neutral">{milestone.title}</Badge> : null}
+            <Badge variant="info">{category?.name || 'Không có danh mục'}</Badge>
+          </div>
         </div>
         <p className="text-2xl font-semibold text-emerald-700">+{formatCurrency(income.amount)}</p>
       </div>

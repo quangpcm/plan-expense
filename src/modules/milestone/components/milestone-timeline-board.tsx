@@ -231,7 +231,7 @@ export function MilestoneTimelineBoard({
                         Đã chi
                       </p>
                       <p className={cn('mt-1 text-lg font-semibold sm:mt-2 sm:text-2xl', isSelected ? 'text-white' : 'text-[#0050cb]')}>
-                        {formatCurrency(milestone.totalExpense)}
+                        {formatCompactCurrency(milestone.totalExpense)}
                       </p>
                     </div>
                     <div>

@@ -12,6 +12,8 @@ import type { PlanDocument } from '@/modules/plan/types/plan';
 import type { AuthUser } from '@/modules/auth/types/auth';
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { Button } from '@/shared/components/ui/button';
+import { CurrencyField } from '@/shared/components/ui/currency-field';
+import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
 
@@ -32,7 +34,7 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
   const [endDate, setEndDate] = useState(
     milestone?.endDate ? new Date(milestone.endDate.toDate()).toISOString().slice(0, 10) : '',
   );
-  const [budgetAmount, setBudgetAmount] = useState(milestone?.budgetAmount?.toString() ?? '');
+  const [budgetAmount, setBudgetAmount] = useState(milestone?.budgetAmount ?? 0);
   const [status, setStatus] = useState<MilestoneDocument['status']>(milestone?.status ?? 'upcoming');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -58,7 +60,7 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
           description,
           startDate,
           endDate,
-          budgetAmount: budgetAmount ? Number(budgetAmount) : undefined,
+          budgetAmount: budgetAmount > 0 ? budgetAmount : undefined,
           status,
           iconId: milestone.iconId ?? '',
         });
@@ -71,7 +73,7 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
           description,
           startDate,
           endDate,
-          budgetAmount: budgetAmount ? Number(budgetAmount) : undefined,
+          budgetAmount: budgetAmount > 0 ? budgetAmount : undefined,
           iconId: '',
         });
 
@@ -81,7 +83,7 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
         setDescription('');
         setStartDate('');
         setEndDate('');
-        setBudgetAmount('');
+        setBudgetAmount(0);
       }
 
       onSuccess?.();
@@ -130,6 +132,7 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
             Ngày bắt đầu
           </label>
           <Input
+            className="min-h-11"
             id={`milestone-start-${milestone?.id ?? 'new'}`}
             onChange={(event) => setStartDate(event.target.value)}
             type="date"
@@ -141,6 +144,7 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
             Ngày kết thúc
           </label>
           <Input
+            className="min-h-11"
             id={`milestone-end-${milestone?.id ?? 'new'}`}
             onChange={(event) => setEndDate(event.target.value)}
             type="date"
@@ -153,12 +157,10 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
           <label className="text-sm font-medium text-slate-700" htmlFor={`milestone-budget-${milestone?.id ?? 'new'}`}>
             Ngân sách dự kiến
           </label>
-          <Input
+          <CurrencyField
             id={`milestone-budget-${milestone?.id ?? 'new'}`}
-            inputMode="numeric"
-            onChange={(event) => setBudgetAmount(event.target.value)}
+            onChange={setBudgetAmount}
             placeholder="0"
-            type="number"
             value={budgetAmount}
           />
         </div>
@@ -167,17 +169,17 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
             <label className="text-sm font-medium text-slate-700" htmlFor={`milestone-status-${milestone.id}`}>
               Trạng thái
             </label>
-            <select
-              className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+            <DropdownSelect
               id={`milestone-status-${milestone.id}`}
-              onChange={(event) => setStatus(event.target.value as MilestoneDocument['status'])}
+              onValueChange={(value) => setStatus(value as MilestoneDocument['status'])}
+              options={[
+                { value: 'upcoming', label: 'Sắp tới' },
+                { value: 'in_progress', label: 'Đang làm' },
+                { value: 'completed', label: 'Hoàn thành' },
+                { value: 'cancelled', label: 'Đã hủy' },
+              ]}
               value={status}
-            >
-              <option value="upcoming">Sắp tới</option>
-              <option value="in_progress">Đang làm</option>
-              <option value="completed">Hoàn thành</option>
-              <option value="cancelled">Đã hủy</option>
-            </select>
+            />
           </div>
         ) : null}
       </div>

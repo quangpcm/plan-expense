@@ -125,6 +125,7 @@ export default function PlanDetailPage() {
   const [closingError, setClosingError] = useState<string | null>(null);
   const [isClosingPlan, setIsClosingPlan] = useState(false);
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
+  const [selectedTimelineMilestoneId, setSelectedTimelineMilestoneId] = useState<string | null>(null);
   const [showMilestoneForm, setShowMilestoneForm] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState<MilestoneDocument | null>(null);
   const [isMilestoneSubmitting, setIsMilestoneSubmitting] = useState(false);
@@ -217,7 +218,7 @@ export default function PlanDetailPage() {
     const milestoneIdParam = searchParams.get('milestoneId');
 
     if (milestoneIdParam && milestones.some((milestone) => milestone.id === milestoneIdParam)) {
-      setSelectedMilestoneId(milestoneIdParam);
+      setSelectedTimelineMilestoneId(milestoneIdParam);
     }
   }, [milestones, searchParams]);
 
@@ -231,6 +232,12 @@ export default function PlanDetailPage() {
       setSelectedMilestoneId(milestones[0]?.id ?? null);
     }
   }, [milestones, selectedMilestoneId]);
+
+  useEffect(() => {
+    if (selectedTimelineMilestoneId && !milestones.some((milestone) => milestone.id === selectedTimelineMilestoneId)) {
+      setSelectedTimelineMilestoneId(null);
+    }
+  }, [milestones, selectedTimelineMilestoneId]);
 
   if (!planId) {
     notFound();
@@ -809,7 +816,7 @@ export default function PlanDetailPage() {
                 ) : (
                   <Button
                     className="min-w-0 px-3"
-                    href={`/plans/${planId}/expenses/new${selectedMilestone?.id ? `?milestoneId=${selectedMilestone.id}` : ''}`}
+                    href={`/plans/${planId}/expenses/new${selectedTimelineMilestoneId ? `?milestoneId=${selectedTimelineMilestoneId}` : ''}`}
                   >
                     + Khoản Chi
                   </Button>
@@ -828,9 +835,9 @@ export default function PlanDetailPage() {
               incomes={incomes}
               members={members}
               milestones={milestones}
-              onSelectedMilestoneChange={setSelectedMilestoneId}
+              onSelectedMilestoneChange={setSelectedTimelineMilestoneId}
               planId={planId}
-              selectedMilestoneId={selectedMilestone?.id ?? null}
+              selectedMilestoneId={selectedTimelineMilestoneId}
             />
           </>
         ) : null}

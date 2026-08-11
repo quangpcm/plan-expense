@@ -20,6 +20,7 @@ import type { ExpenseDocument } from '@/modules/expense/types/expense';
 import { AmountInput } from '@/shared/components/ui/amount-input';
 import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
+import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { splitMethods } from '@/shared/constants';
@@ -95,6 +96,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
   const amountWatched = useWatch({ control: form.control, name: 'amount' });
   const categoryIdWatched = useWatch({ control: form.control, name: 'categoryId' });
   const paidByMemberIdWatched = useWatch({ control: form.control, name: 'paidByMemberId' });
+  const milestoneIdWatched = useWatch({ control: form.control, name: 'milestoneId' });
   const isFirstSplitMethodRender = useRef(true);
   const totalSplitValue = selectedMembers.reduce(
     (sum, memberId) => sum + (Number(splitValuesWatched[memberId]) || 0),
@@ -223,18 +225,15 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
         <label className="text-sm font-medium text-slate-700" htmlFor="milestoneId">
           Mốc kế hoạch
         </label>
-        <select
-          className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+        <DropdownSelect
           id="milestoneId"
-          {...form.register('milestoneId')}
-        >
-          <option value="">Chọn mốc kế hoạch</option>
-          {milestones.map((milestone) => (
-            <option key={milestone.id} value={milestone.id}>
-              {milestone.title}
-            </option>
-          ))}
-        </select>
+          onValueChange={(value) => form.setValue('milestoneId', value, { shouldValidate: true, shouldDirty: true })}
+          options={[
+            { value: '', label: 'Chọn mốc kế hoạch' },
+            ...milestones.map((milestone) => ({ value: milestone.id, label: milestone.title })),
+          ]}
+          value={milestoneIdWatched || ''}
+        />
       </div>
 
       <div className="space-y-2">
@@ -350,16 +349,22 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
             <label className="text-sm font-medium text-slate-700" htmlFor="splitMethod">
               Chia tiền
             </label>
-            <select
-              className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+            <DropdownSelect
               id="splitMethod"
-              {...form.register('splitMethod')}
-            >
-              <option value={splitMethods.equal}>Chia đều</option>
-              <option value={splitMethods.exact}>Số tiền cụ thể</option>
-              <option value={splitMethods.percentage}>Theo phần trăm</option>
-              <option value={splitMethods.shares}>Theo số phần</option>
-            </select>
+              onValueChange={(value) =>
+                form.setValue('splitMethod', value as CreateExpenseSchema['splitMethod'], {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                })
+              }
+              options={[
+                { value: splitMethods.equal, label: 'Chia đều' },
+                { value: splitMethods.exact, label: 'Số tiền cụ thể' },
+                { value: splitMethods.percentage, label: 'Theo phần trăm' },
+                { value: splitMethods.shares, label: 'Theo số phần' },
+              ]}
+              value={selectedSplitMethod}
+            />
           </div>
           {selectedSplitMethod !== 'equal' ? (
             <div className="space-y-2">

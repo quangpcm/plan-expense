@@ -38,6 +38,9 @@ export function formatCompactCurrency(amount: number) {
     return `${trimTrailingZero(amount / 1_000_000)} triệu`;
   }
 
+  if (abs >= 1_000) {
+    return `${trimTrailingZero(amount / 1_000)} nghìn`;
+  }
+
   return formatCurrency(amount);
 }
-

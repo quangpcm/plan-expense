@@ -4,6 +4,7 @@ import type { IncomeDocument, UpdateIncomeInput } from '@/modules/income/types/i
 
 export type CreateIncomePersistenceInput = {
   planId: string;
+  milestoneId: string;
   title: string;
   categoryId: string | null;
   amount: number;

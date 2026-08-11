@@ -8,6 +8,7 @@ export type IncomeStatus = 'active' | 'deleted';
 export type IncomeDocument = {
   id: string;
   planId: string;
+  milestoneId: string;
   title: string;
   categoryId: string | null;
   amount: number;
@@ -29,6 +30,7 @@ export type IncomeDocument = {
 export type CreateIncomeInput = {
   title: string;
   amount: number;
+  milestoneId: string;
   categoryId?: string | undefined;
   contributedByMemberId: string;
   note?: string | undefined;
@@ -39,9 +41,9 @@ export type UpdateIncomeInput = {
   incomeId: string;
   title: string;
   amount: number;
+  milestoneId: string;
   categoryId?: string | undefined;
   contributedByMemberId: string;
   note?: string | undefined;
   receivedAt?: string | undefined;
 };
-
