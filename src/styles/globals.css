@@ -29,6 +29,18 @@
   --color-expense-soft: #fcebe8;
   --color-info: #2563eb;
   --color-info-soft: #e8f0ff;
+  --color-milestone-selected: #243b6b;
+  --color-milestone-selected-border: #243b6b;
+  --color-milestone-selected-foreground: #ffffff;
+  --color-milestone-selected-muted: #cbd7ee;
+  --color-milestone-completed: #eef7f3;
+  --color-milestone-completed-border: #cde9dc;
+  --color-milestone-completed-foreground: #245c49;
+  --color-milestone-completed-muted: #648477;
+  --color-milestone-upcoming: #ffffff;
+  --color-milestone-upcoming-border: #dfe5ef;
+  --color-milestone-upcoming-foreground: #172033;
+  --color-milestone-upcoming-muted: #68738a;
   --radius-card: 1.5rem;
 }
 

@@ -291,6 +291,33 @@ export default function PlanDetailPage() {
     }
   }
 
+  async function handleUpdateMemberAvatar(member: PlanMemberDocument, avatarUrl: string | null) {
+    if (!user) {
+      return;
+    }
+
+    setIsMemberActionSubmitting(true);
+    setMemberActionError(null);
+    setMemberActionMessage(null);
+
+    try {
+      await memberService.updateMemberAvatar(
+        planId,
+        {
+          memberId: member.id,
+          avatarUrl,
+        },
+        user,
+        currentMember,
+      );
+      setMemberActionMessage('Đã cập nhật avatar thành viên.');
+    } catch (error) {
+      setMemberActionError(error instanceof Error ? error.message : 'Hiện chưa thể cập nhật avatar thành viên.');
+    } finally {
+      setIsMemberActionSubmitting(false);
+    }
+  }
+
   async function handleRemoveMember(member: PlanMemberDocument) {
     if (!user) {
       return;
@@ -1478,6 +1505,7 @@ export default function PlanDetailPage() {
               onReactivate={handleReactivateMember}
               onRemove={handleRemoveMember}
               onUnlinkAccount={handleUnlinkAccount}
+              onUpdateAvatar={handleUpdateMemberAvatar}
               onUpdateMember={handleUpdateMember}
               planId={planId}
             />

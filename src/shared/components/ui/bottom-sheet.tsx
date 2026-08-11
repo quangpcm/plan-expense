@@ -26,15 +26,17 @@ export function BottomSheet({
   const content = (
     <div
       className={cn(
-        'rounded-t-[32px] border border-b-0 border-slate-200 bg-white p-5 shadow-[0_-16px_60px_rgba(15,23,42,0.08)]',
+        'flex max-h-[85vh] flex-col overflow-hidden rounded-t-[32px] border border-b-0 border-slate-200 bg-white p-5 shadow-[0_-16px_60px_rgba(15,23,42,0.08)]',
         className,
       )}
       {...props}
     >
       <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200" />
-      <h2 className="text-lg font-semibold text-slate-950">{title}</h2>
-      {description ? <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p> : null}
-      {children ? <div className="mt-4">{children}</div> : null}
+      <div className="shrink-0">
+        <h2 className="text-lg font-semibold text-slate-950">{title}</h2>
+        {description ? <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p> : null}
+      </div>
+      {children ? <div className="mt-4 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">{children}</div> : null}
     </div>
   );
 

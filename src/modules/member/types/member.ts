@@ -57,3 +57,8 @@ export type UpdateMemberInput = {
   role: Exclude<PlanRole, 'owner'>;
   canEditAllExpenses: boolean;
 };
+
+export type UpdateMemberAvatarInput = {
+  memberId: string;
+  avatarUrl: string | null;
+};

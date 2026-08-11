@@ -4,6 +4,7 @@ import type { MemberRepository } from '@/modules/member/repositories/member.repo
 import type {
   AddGuestInput,
   PlanMemberDocument,
+  UpdateMemberAvatarInput,
   UpdateMemberInput,
 } from '@/modules/member/types/member';
 import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
@@ -39,6 +40,19 @@ export class MemberService {
     }
 
     await this.memberRepository.updateMember(planId, input, actor);
+  }
+
+  async updateMemberAvatar(
+    planId: string,
+    input: UpdateMemberAvatarInput,
+    actor: AuthUser,
+    currentMember: PlanMemberDocument | null,
+  ) {
+    if (!resolvePlanPermissions(currentMember).canManageMembers) {
+      throw new AppError('You do not have permission to edit members.', 'MEMBER_PERMISSION_DENIED', 403);
+    }
+
+    await this.memberRepository.updateMemberAvatar(planId, input, actor);
   }
 
   async removeMember(

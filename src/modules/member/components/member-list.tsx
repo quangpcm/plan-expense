@@ -9,7 +9,9 @@ import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { Collapsible } from '@/shared/components/ui/collapsible';
+import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
+import { MemberAvatarPicker } from '@/modules/member/components/member-avatar-picker';
 import type { PlanMemberDocument, PlanMemberStatus, PlanRole } from '@/modules/member/types/member';
 
 const roleLabel: Record<PlanRole, string> = {
@@ -41,6 +43,7 @@ type MemberListProps = {
   onReactivate?: (member: PlanMemberDocument) => Promise<void>;
   onDelete?: (member: PlanMemberDocument) => Promise<void>;
   onUnlinkAccount?: (member: PlanMemberDocument) => Promise<void>;
+  onUpdateAvatar?: (member: PlanMemberDocument, avatarUrl: string | null) => Promise<void>;
   onCreateClaimInvitation?: (
     member: PlanMemberDocument,
     email: string | null,
@@ -58,6 +61,7 @@ function EditableMemberRow({
   onReactivate,
   onDelete,
   onUnlinkAccount,
+  onUpdateAvatar,
   onCreateClaimInvitation,
 }: {
   planId: string;
@@ -70,6 +74,7 @@ function EditableMemberRow({
   onReactivate?: MemberListProps['onReactivate'];
   onDelete?: MemberListProps['onDelete'];
   onUnlinkAccount?: MemberListProps['onUnlinkAccount'];
+  onUpdateAvatar?: MemberListProps['onUpdateAvatar'];
   onCreateClaimInvitation?: MemberListProps['onCreateClaimInvitation'];
 }) {
   const [nickname, setNickname] = useState(member.nickname);
@@ -85,6 +90,7 @@ function EditableMemberRow({
   const [claimError, setClaimError] = useState<string | null>(null);
   const [isClaimSubmitting, setIsClaimSubmitting] = useState(false);
   const [isClaimLinkCopied, setIsClaimLinkCopied] = useState(false);
+  const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
   const canUnlink = member.memberType === 'registered' && Boolean(member.userId);
   const isClaimable = member.memberType === 'guest' && member.status === 'active';
 
@@ -134,7 +140,15 @@ function EditableMemberRow({
 
   const summary = (
     <div className="flex items-center gap-3">
-      <Avatar initials={member.nickname.slice(0, 2).toUpperCase()} />
+      <button
+        aria-label={`Đổi avatar của ${member.nickname}`}
+        className="rounded-full transition hover:scale-[1.03] disabled:cursor-default disabled:hover:scale-100"
+        disabled={!canManageMembers}
+        onClick={() => setIsAvatarPickerOpen(true)}
+        type="button"
+      >
+        <Avatar initials={member.nickname.slice(0, 2).toUpperCase()} src={member.avatarUrl} />
+      </button>
       <div className="min-w-0 flex-1">
         <p className="truncate font-semibold text-slate-950">{member.nickname}</p>
         {member.memberType === 'guest' ? null : (
@@ -161,14 +175,14 @@ function EditableMemberRow({
         value={nickname}
       />
       <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
-        <select
-          className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-          onChange={(event) => setRole(event.target.value as Exclude<PlanRole, 'owner'>)}
+        <DropdownSelect
+          onValueChange={(value) => setRole(value as Exclude<PlanRole, 'owner'>)}
+          options={[
+            { value: 'editor', label: 'Thành viên' },
+            { value: 'viewer', label: 'Chỉ xem' },
+          ]}
           value={role}
-        >
-          <option value="editor">Thành viên</option>
-          <option value="viewer">Chỉ xem</option>
-        </select>
+        />
         <label className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700">
           <input
             checked={canEditAllExpenses}
@@ -319,6 +333,14 @@ function EditableMemberRow({
           )}
         </div>
       </BottomSheet>
+      <MemberAvatarPicker
+        isSaving={isSaving}
+        memberName={member.nickname}
+        onClose={() => setIsAvatarPickerOpen(false)}
+        onSave={async (avatarUrl) => onUpdateAvatar?.(member, avatarUrl)}
+        open={isAvatarPickerOpen}
+        value={member.avatarUrl}
+      />
     </Card>
   );
 }
@@ -334,6 +356,7 @@ export function MemberList({
   onReactivate,
   onDelete,
   onUnlinkAccount,
+  onUpdateAvatar,
   onCreateClaimInvitation,
 }: MemberListProps) {
   return (
@@ -350,6 +373,7 @@ export function MemberList({
           onReactivate={onReactivate}
           onRemove={onRemove}
           onUnlinkAccount={onUnlinkAccount}
+          onUpdateAvatar={onUpdateAvatar}
           onUpdateMember={onUpdateMember}
           planId={planId}
         />

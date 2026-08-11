@@ -36,6 +36,51 @@ const milestoneStatusLabel: Record<MilestoneDocument['status'], string> = {
   cancelled: 'Đã hủy',
 };
 
+function getMilestoneCardTone(displayedStatus: MilestoneDocument['status'], isSelected: boolean) {
+  if (isSelected) {
+    return {
+      card: 'border-[var(--color-milestone-selected-border)] bg-[var(--color-milestone-selected)] text-[var(--color-milestone-selected-foreground)] shadow-[0_24px_70px_rgba(36,59,107,0.22)]',
+      titleMuted: 'text-[var(--color-milestone-selected-muted)]',
+      valueStrong: 'text-[var(--color-milestone-selected-foreground)]',
+      valueSoft: 'text-[var(--color-milestone-selected-muted)]',
+      action: 'border border-white/20 bg-white/8 text-white hover:bg-white/14',
+      mobileExpenseAction: 'secondary' as const,
+    };
+  }
+
+  if (displayedStatus === 'completed') {
+    return {
+      card: 'border-[var(--color-milestone-completed-border)] bg-[var(--color-milestone-completed)] text-[var(--color-milestone-completed-foreground)] hover:shadow-[0_14px_40px_rgba(36,92,73,0.08)]',
+      titleMuted: 'text-[var(--color-milestone-completed-muted)]',
+      valueStrong: 'text-[var(--color-milestone-completed-foreground)]',
+      valueSoft: 'text-[var(--color-milestone-completed-muted)]',
+      action: 'bg-white/80 text-[var(--color-milestone-completed-foreground)] hover:bg-white',
+      mobileExpenseAction: 'ghost' as const,
+    };
+  }
+
+  return {
+    card: 'border-[var(--color-milestone-upcoming-border)] bg-[var(--color-milestone-upcoming)] text-[var(--color-milestone-upcoming-foreground)] hover:border-[var(--color-border-strong)] hover:shadow-[0_14px_40px_rgba(15,23,42,0.08)]',
+    titleMuted: 'text-[var(--color-milestone-upcoming-muted)]',
+    valueStrong: 'text-[var(--color-primary)]',
+    valueSoft: 'text-[var(--color-milestone-upcoming-muted)]',
+    action: '',
+    mobileExpenseAction: 'ghost' as const,
+  };
+}
+
+function getMilestoneBadgeClass(displayedStatus: MilestoneDocument['status']) {
+  if (displayedStatus === 'completed') {
+    return 'bg-[var(--color-success-soft)] text-[#047857]';
+  }
+
+  if (displayedStatus === 'cancelled') {
+    return 'bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)]';
+  }
+
+  return 'bg-[var(--color-info-soft)] text-[var(--color-info)]';
+}
+
 function getDisplayedMilestoneStatus(milestone: MilestoneDocument): MilestoneDocument['status'] {
   if (milestone.status === 'cancelled' || milestone.status === 'completed') {
     return milestone.status;
@@ -122,6 +167,7 @@ export function MilestoneTimelineBoard({
         const monthLabel = formatMonthLabel(anchorDate);
         const shouldShowMonthLabel = monthLabel !== previousMonthLabel;
         const isMonthSelected = selectedMonthLabel !== null && monthLabel === selectedMonthLabel;
+        const tone = getMilestoneCardTone(displayedStatus, isSelected);
         previousMonthLabel = monthLabel;
 
         return (
@@ -153,18 +199,29 @@ export function MilestoneTimelineBoard({
               <span
                 className={cn(
                   'absolute -left-[27px] top-1/2 z-10 flex size-3 -translate-y-1/2 items-center justify-center rounded-full border-[3px] bg-white sm:-left-[41px] sm:size-[18px] sm:border-4',
-                  isSelected ? 'border-[#0050cb]' : 'border-[#cfd8ea]',
+                  isSelected
+                    ? 'border-[var(--color-primary)]'
+                    : displayedStatus === 'completed'
+                      ? 'border-[var(--color-milestone-completed-border)]'
+                      : 'border-[#cfd8ea]',
                 )}
               >
-                <span className={cn('size-1.5 rounded-full sm:size-2', isSelected ? 'bg-[#0050cb]' : 'bg-[#8c97ad]')} />
+                <span
+                  className={cn(
+                    'size-1.5 rounded-full sm:size-2',
+                    isSelected
+                      ? 'bg-[var(--color-primary)]'
+                      : displayedStatus === 'completed'
+                        ? 'bg-[var(--color-success)]'
+                        : 'bg-[#8c97ad]',
+                  )}
+                />
               </span>
 
               <button
                 className={cn(
                   'group relative z-[1] w-full rounded-[20px] border p-0 text-left transition sm:rounded-[32px]',
-                  isSelected
-                    ? 'border-[#0f172a] bg-[#141a22] text-white shadow-[0_24px_70px_rgba(15,23,42,0.18)]'
-                    : 'border-slate-200 bg-white text-slate-950 hover:border-slate-300 hover:shadow-[0_14px_40px_rgba(15,23,42,0.08)]',
+                  tone.card,
                 )}
                 onClick={() => onSelect(milestone.id)}
                 type="button"
@@ -174,22 +231,14 @@ export function MilestoneTimelineBoard({
                     <div className="min-w-0 space-y-2 sm:space-y-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="truncate text-xl font-semibold sm:text-2xl">{milestone.title}</h3>
-                        <Badge
-                          variant={
-                            displayedStatus === 'completed'
-                              ? 'success'
-                              : displayedStatus === 'cancelled'
-                                ? 'neutral'
-                                : 'info'
-                          }
-                        >
+                        <Badge className={getMilestoneBadgeClass(displayedStatus)}>
                           {milestoneStatusLabel[displayedStatus]}
                         </Badge>
                       </div>
-                      <p className={cn('hidden text-sm leading-6 md:block', isSelected ? 'text-slate-300' : 'text-slate-600')}>
+                      <p className={cn('hidden text-sm leading-6 md:block', tone.titleMuted)}>
                         {milestone.description || 'Chưa có mô tả cho milestone này.'}
                       </p>
-                      <div className={cn('hidden items-center gap-2 text-sm md:inline-flex', isSelected ? 'text-slate-300' : 'text-slate-600')}>
+                      <div className={cn('hidden items-center gap-2 text-sm md:inline-flex', tone.titleMuted)}>
                         <CalendarDays className="size-4 shrink-0" />
                         <span>
                           {startDate ? formatDate(startDate) : 'Chưa đặt'} - {endDate ? formatDate(endDate) : 'Chưa đặt'}
@@ -204,14 +253,14 @@ export function MilestoneTimelineBoard({
                           event.stopPropagation();
                           onOpenExpenseSheet(milestone);
                         }}
-                        variant={isSelected ? 'secondary' : 'ghost'}
+                        variant={tone.mobileExpenseAction}
                       >
                         <CircleDollarSign className="size-4" />
                       </Button>
                       {canManagePlan ? (
                         <div className="hidden flex-wrap justify-end gap-2 lg:flex">
                           <Button
-                            className={isSelected ? 'border border-slate-700 bg-transparent text-white hover:bg-slate-800' : ''}
+                            className={tone.action}
                             onClick={(event) => {
                               event.stopPropagation();
                               onEditMilestone(milestone);
@@ -227,23 +276,23 @@ export function MilestoneTimelineBoard({
 
                   <div className="grid grid-cols-3 gap-2 text-sm sm:gap-3">
                     <div>
-                      <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', isSelected ? 'text-slate-400' : 'text-slate-400')}>
+                      <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', tone.titleMuted)}>
                         Đã chi
                       </p>
-                      <p className={cn('mt-1 text-lg font-semibold sm:mt-2 sm:text-2xl', isSelected ? 'text-white' : 'text-[#0050cb]')}>
+                      <p className={cn('mt-1 text-lg font-semibold sm:mt-2 sm:text-2xl', tone.valueStrong)}>
                         {formatCompactCurrency(milestone.totalExpense)}
                       </p>
                     </div>
                     <div>
-                      <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', isSelected ? 'text-slate-400' : 'text-slate-400')}>
+                      <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', tone.titleMuted)}>
                         Dự kiến chi
                       </p>
-                      <p className={cn('mt-1 text-lg font-semibold sm:mt-2 sm:text-2xl', isSelected ? 'text-slate-400' : 'text-slate-500')}>
+                      <p className={cn('mt-1 text-lg font-semibold sm:mt-2 sm:text-2xl', tone.valueSoft)}>
                         {formatCompactCurrency(estimatedBudget)}
                       </p>
                     </div>
                     <div>
-                      <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', isSelected ? 'text-slate-400' : 'text-slate-400')}>
+                      <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', tone.titleMuted)}>
                         Công việc
                       </p>
                       <p className="mt-1 text-lg font-semibold sm:mt-2 sm:text-2xl">
@@ -302,11 +351,12 @@ export function MilestoneTimelineBoard({
               {canManagePlan ? (
                 <div className="flex flex-wrap justify-end gap-2 lg:hidden">
                   <Button
+                    className={isSelected ? tone.action : ''}
                     onClick={(event) => {
                       event.stopPropagation();
                       onEditMilestone(milestone);
                     }}
-                    variant="secondary"
+                    variant={isSelected ? 'ghost' : 'secondary'}
                   >
                     <PencilLine className="size-4" />
                   </Button>

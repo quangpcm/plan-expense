@@ -21,6 +21,7 @@ import type { MemberRepository } from '@/modules/member/repositories/member.repo
 import type {
   AddGuestInput,
   PlanMemberDocument,
+  UpdateMemberAvatarInput,
   UpdateMemberInput,
 } from '@/modules/member/types/member';
 import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
@@ -91,6 +92,13 @@ export class FirestoreMemberRepository implements MemberRepository {
       permissions: {
         canEditAllExpenses: input.canEditAllExpenses,
       },
+      updatedAt: Timestamp.now(),
+    });
+  }
+
+  async updateMemberAvatar(planId: string, input: UpdateMemberAvatarInput) {
+    await updateDoc(doc(getFirebaseFirestore(), 'plans', planId, 'members', input.memberId), {
+      avatarUrl: input.avatarUrl,
       updatedAt: Timestamp.now(),
     });
   }
