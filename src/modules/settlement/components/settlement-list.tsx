@@ -5,7 +5,12 @@ import { formatCurrency } from '@/shared/utils/currency';
 import { formatDateTime } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
-import type { SettlementDocument } from '@/modules/settlement/types/settlement';
+import type { SettlementDocument, SettlementStatus } from '@/modules/settlement/types/settlement';
+
+const settlementStatusLabel: Record<SettlementStatus, string> = {
+  completed: 'Đã chuyển',
+  cancelled: 'Đã hủy',
+};
 
 type SettlementListProps = {
   canCancel: boolean;
@@ -25,7 +30,7 @@ export function SettlementList({
   if (settlements.length === 0) {
     return (
       <Card>
-        <p className="text-sm leading-6 text-slate-600">Chưa có bản ghi đối soát nào.</p>
+        <p className="text-sm leading-6 text-slate-600">Chưa có khoản chuyển nào được xác nhận.</p>
       </Card>
     );
   }
@@ -43,7 +48,7 @@ export function SettlementList({
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-2">
                   <Badge variant={settlement.status === 'completed' ? 'success' : 'danger'}>
-                    {settlement.status}
+                    {settlementStatusLabel[settlement.status]}
                   </Badge>
                   <Badge>{formatCurrency(settlement.amount)}</Badge>
                 </div>
@@ -52,7 +57,7 @@ export function SettlementList({
                   {toMember?.nickname || settlement.toMemberId}
                 </p>
                 <p className="text-sm text-slate-600">
-                  Thời gian đối soát: {settledAt ? formatDateTime(settledAt) : 'Không rõ'}
+                  Thời gian chuyển: {settledAt ? formatDateTime(settledAt) : 'Không rõ'}
                 </p>
                 {settlement.note ? <p className="text-sm text-slate-600">Ghi chú: {settlement.note}</p> : null}
               </div>

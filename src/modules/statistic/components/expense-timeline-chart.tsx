@@ -9,12 +9,7 @@ type ExpenseTimelineChartProps = {
 export function ExpenseTimelineChart({ statistic }: ExpenseTimelineChartProps) {
   return (
     <Card>
-      <div className="space-y-1">
-        <h3 className="text-lg font-semibold text-slate-950">Diễn biến chi tiêu</h3>
-        <p className="text-sm leading-6 text-slate-600">
-          Timeline này vẫn hữu ích để đọc nhịp giải ngân theo ngày, nhưng giờ đứng sau milestone breakdown.
-        </p>
-      </div>
+      <h3 className="text-lg font-semibold text-slate-950">Diễn biến chi tiêu</h3>
       <div className="grid gap-3">
         {statistic.expenseTimeline.map((row) => (
           <div

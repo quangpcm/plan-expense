@@ -8,7 +8,7 @@ type MilestoneBreakdownProps = {
 
 const milestoneStatusLabel = {
   upcoming: 'Sắp tới',
-  in_progress: 'Đang làm',
+  in_progress: 'Đang diễn ra',
   completed: 'Hoàn thành',
   cancelled: 'Đã hủy',
 } as const;
@@ -16,12 +16,7 @@ const milestoneStatusLabel = {
 export function MilestoneBreakdown({ statistic }: MilestoneBreakdownProps) {
   return (
     <Card>
-      <div className="space-y-1">
-        <h3 className="text-lg font-semibold text-slate-950">Phân bổ theo mốc kế hoạch</h3>
-        <p className="text-sm leading-6 text-slate-600">
-          Đây là lớp thống kê chính của plan. Mỗi milestone gom tiến độ todo và tổng chi để bạn nhìn đúng theo từng giai đoạn thực tế.
-        </p>
-      </div>
+      <h3 className="text-lg font-semibold text-slate-950">Theo mốc kế hoạch</h3>
       <div className="grid gap-3">
         {statistic.milestoneBreakdown.map((row) => (
           <div
@@ -36,11 +31,11 @@ export function MilestoneBreakdown({ statistic }: MilestoneBreakdownProps) {
                 </span>
               </div>
               <p className="text-xs text-slate-500">
-                {row.completedTodoCount}/{row.todoCount} todo hoàn thành · {row.expenseCount} khoản chi
+                {row.completedTodoCount}/{row.todoCount} công việc hoàn thành · {row.expenseCount} khoản chi
               </p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Chi tiêu</p>
+              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Đã chi</p>
               <p className="mt-1 font-semibold text-slate-950">{formatCurrency(row.totalAmount)}</p>
               <p className="mt-1 text-xs text-slate-500">
                 {row.budgetAmount != null ? `Ngân sách ${formatCurrency(row.budgetAmount)}` : 'Chưa đặt ngân sách'}
@@ -60,7 +55,7 @@ export function MilestoneBreakdown({ statistic }: MilestoneBreakdownProps) {
         ))}
         {statistic.milestoneBreakdown.length === 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-            Kế hoạch này chưa có milestone nào để phân tích.
+            Chưa có mốc kế hoạch nào.
           </div>
         ) : null}
       </div>

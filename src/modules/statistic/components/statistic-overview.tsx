@@ -30,15 +30,15 @@ export function StatisticOverview({ statistic }: StatisticOverviewProps) {
         </p>
       </div> */}
       <div>
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Số thành viên</p>
+        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Thành viên</p>
         <p className="mt-1 text-lg font-semibold text-slate-950">{statistic.overview.memberCount}</p>
       </div>
       <div>
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Số khoản chi</p>
+        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Khoản chi</p>
         <p className="mt-1 text-lg font-semibold text-slate-950">{statistic.overview.expenseCount}</p>
       </div>
       <div>
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Mốc có chi</p>
+        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Mốc phát sinh chi</p>
         <p className="mt-1 text-lg font-semibold text-slate-950">{activeMilestoneCount}</p>
       </div>
     </Card>

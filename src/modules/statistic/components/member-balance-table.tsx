@@ -28,7 +28,9 @@ export function MemberBalanceTable({ statistic }: MemberBalanceTableProps) {
                 row.adjustedBalance >= 0 ? 'font-medium text-emerald-700' : 'font-medium text-rose-700'
               }
             >
-              Số dư thực: {formatCurrency(row.adjustedBalance)}
+              {row.adjustedBalance >= 0
+                ? `Sẽ nhận: ${formatCurrency(row.adjustedBalance)}`
+                : `Cần trả: ${formatCurrency(Math.abs(row.adjustedBalance))}`}
             </div>
           </div>
         ))}

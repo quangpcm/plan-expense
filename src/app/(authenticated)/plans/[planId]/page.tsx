@@ -1367,10 +1367,9 @@ export default function PlanDetailPage() {
         ) : null}
         <BottomSheet
           className="max-h-[85vh] overflow-y-auto"
-          description="Các số liệu được tính trực tiếp từ milestone, expense, income và settlement để ưu tiên góc nhìn theo từng giai đoạn của kế hoạch."
           onClose={() => setShowStatisticSheet(false)}
           open={showStatisticSheet}
-          title="Thống kê kế hoạch"
+          title="Tổng quan tài chính"
         >
           <div className="space-y-5">
             <StatisticOverview statistic={statistic} />
@@ -1380,9 +1379,9 @@ export default function PlanDetailPage() {
             <ExpenseTimelineChart statistic={statistic} />
             <Card>
               <SectionHeading
-                eyebrow="Gợi ý đối soát"
-                title="Gợi ý chuyển khoản để cân bằng"
-                description="Các gợi ý dùng số dư thực, nên những khoản đã đối soát sẽ không bị đề xuất lại."
+                eyebrow="Đối soát"
+                title="Ai cần chuyển cho ai?"
+                description="Các khoản chuyển đề xuất để cân bằng chi phí giữa các thành viên."
               />
               {settlementError ? <AuthFormMessage message={settlementError} type="error" /> : null}
               {settlementMessage ? <AuthFormMessage message={settlementMessage} type="success" /> : null}
@@ -1401,7 +1400,7 @@ export default function PlanDetailPage() {
                 ) : (
                   <Card className="border-slate-200 bg-slate-50 shadow-none">
                     <p className="text-sm leading-6 text-slate-600">
-                      Hiện chưa cần gợi ý đối soát nào. Số dư thực của các thành viên đã cân bằng.
+                      Chi phí giữa các thành viên đã cân bằng, chưa cần chuyển khoản nào.
                     </p>
                   </Card>
                 )}
@@ -1409,9 +1408,9 @@ export default function PlanDetailPage() {
             </Card>
             <div className="space-y-3">
               <SectionHeading
-                eyebrow="Đối soát"
-                title="Lịch sử đã hoàn tất và đã hủy"
-                description="Đây là các khoản chuyển tiền thực tế đã được chủ kế hoạch xác nhận."
+                eyebrow="Lịch sử"
+                title="Lịch sử đối soát"
+                description="Các khoản đã xác nhận hoặc đã hủy."
               />
               <SettlementList
                 canCancel={permissions.canManageSettlements && plan.status !== 'closed'}
