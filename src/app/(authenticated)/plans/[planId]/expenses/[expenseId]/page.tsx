@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
@@ -19,6 +19,7 @@ import { Skeleton } from '@/shared/components/ui/skeleton';
 
 export default function ExpenseDetailPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const params = useParams<{ planId: string; expenseId: string }>();
   const planId = Array.isArray(params.planId) ? params.planId[0] : params.planId;
   const expenseId = Array.isArray(params.expenseId) ? params.expenseId[0] : params.expenseId;
@@ -46,6 +47,8 @@ export default function ExpenseDetailPage() {
   const currentUser = user;
   const currentExpense = expense;
   const currentPlan = plan;
+  const returnTab = searchParams.get('returnTab');
+  const milestoneId = searchParams.get('milestoneId') || currentExpense.milestoneId;
   const canEdit = permissions.canEditAllExpenses || currentExpense.createdByUserId === currentUser.uid;
   const canDelete = permissions.canDeleteAllExpenses || currentExpense.createdByUserId === currentUser.uid;
 
@@ -55,7 +58,13 @@ export default function ExpenseDetailPage() {
 
     try {
       await expenseService.deleteExpense(currentPlan, currentExpense, currentUser, currentMember);
-      router.replace(`/plans/${planId}`);
+      router.replace(
+        returnTab === 'milestones'
+          ? `/plans/${planId}?tab=milestones&milestoneId=${milestoneId}`
+          : returnTab === 'timeline'
+            ? `/plans/${planId}?tab=timeline${milestoneId ? `&milestoneId=${milestoneId}` : ''}`
+            : `/plans/${planId}`,
+      );
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Hiện chưa thể xóa khoản chi này.');
     } finally {
@@ -81,10 +90,25 @@ export default function ExpenseDetailPage() {
       <ExpenseDetailCard categories={categories} expense={expense} members={members} milestones={milestones} />
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       <Card className="gap-3 sm:flex-row sm:justify-end">
-        <Button href={`/plans/${planId}`} variant="secondary">
+        <Button
+          href={
+            returnTab === 'milestones'
+              ? `/plans/${planId}?tab=milestones&milestoneId=${milestoneId}`
+              : returnTab === 'timeline'
+                ? `/plans/${planId}?tab=timeline${milestoneId ? `&milestoneId=${milestoneId}` : ''}`
+                : `/plans/${planId}`
+          }
+          variant="secondary"
+        >
           Quay lại kế hoạch
         </Button>
-        {canEdit ? <Button href={`/plans/${planId}/expenses/${currentExpense.id}/edit`}>Chỉnh sửa</Button> : null}
+        {canEdit ? (
+          <Button
+            href={`/plans/${planId}/expenses/${currentExpense.id}/edit${returnTab ? `?returnTab=${returnTab}${milestoneId ? `&milestoneId=${milestoneId}` : ''}` : ''}`}
+          >
+            Chỉnh sửa
+          </Button>
+        ) : null}
         {canDelete ? (
           <Button disabled={isDeleting} onClick={handleDelete} variant="ghost">
             {isDeleting ? 'Đang xóa...' : 'Xóa'}

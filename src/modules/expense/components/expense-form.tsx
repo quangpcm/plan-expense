@@ -55,6 +55,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
     activeMembers.map((member) => member.id);
   const defaultCategoryId = expense?.categoryId || categories[0]?.id || '';
   const milestoneIdFromQuery = searchParams.get('milestoneId') || '';
+  const returnTab = searchParams.get('returnTab');
   const defaultMilestoneId = expense?.milestoneId || milestoneIdFromQuery || milestones[0]?.id || '';
   const defaultSplitValues: Record<string, number> = {};
 
@@ -164,7 +165,11 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
           localStorage.setItem(`last-expense-category:${planId}`, parsed.categoryId);
         }
         startTransition(() => {
-          router.replace(`/plans/${planId}?tab=timeline&milestoneId=${parsed.milestoneId}`);
+          router.replace(
+            returnTab === 'milestones'
+              ? `/plans/${planId}?tab=milestones&milestoneId=${parsed.milestoneId}`
+              : `/plans/${planId}?tab=timeline&milestoneId=${parsed.milestoneId}`,
+          );
         });
       } else if (expense) {
         const parsed = updateExpenseSchema.parse({
@@ -180,7 +185,13 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
           categories,
         }, expense);
         startTransition(() => {
-          router.replace(`/plans/${planId}/expenses/${expense.id}`);
+          router.replace(
+            returnTab === 'milestones'
+              ? `/plans/${planId}?tab=milestones&milestoneId=${parsed.milestoneId}`
+              : returnTab === 'timeline'
+                ? `/plans/${planId}?tab=timeline&milestoneId=${parsed.milestoneId}`
+                : `/plans/${planId}/expenses/${expense.id}`,
+          );
         });
       }
     } catch (error) {

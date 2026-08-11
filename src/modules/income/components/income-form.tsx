@@ -42,6 +42,7 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const activeMembers = members.filter((member) => member.status === 'active');
   const milestoneIdFromQuery = searchParams.get('milestoneId') || '';
+  const returnTab = searchParams.get('returnTab');
   const defaultMilestoneId = income?.milestoneId || milestoneIdFromQuery || milestones[0]?.id || '';
   const form = useForm<CreateIncomeSchema>({
     defaultValues: {
@@ -93,7 +94,11 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
           milestones,
         });
         startTransition(() => {
-          router.replace(`/plans/${planId}?tab=timeline`);
+          router.replace(
+            returnTab === 'milestones' && parsed.milestoneId
+              ? `/plans/${planId}?tab=milestones&milestoneId=${parsed.milestoneId}`
+              : `/plans/${planId}?tab=timeline${parsed.milestoneId ? `&milestoneId=${parsed.milestoneId}` : ''}`,
+          );
         });
       } else if (income) {
         const parsed = updateIncomeSchema.parse({
@@ -113,7 +118,13 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
           income,
         );
         startTransition(() => {
-          router.replace(`/plans/${planId}/incomes/${income.id}`);
+          router.replace(
+            returnTab === 'milestones' && parsed.milestoneId
+              ? `/plans/${planId}?tab=milestones&milestoneId=${parsed.milestoneId}`
+              : returnTab === 'timeline'
+                ? `/plans/${planId}?tab=timeline${parsed.milestoneId ? `&milestoneId=${parsed.milestoneId}` : ''}`
+                : `/plans/${planId}/incomes/${income.id}`,
+          );
         });
       }
     } catch (error) {
@@ -207,7 +218,13 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
         <Button
-          href={income ? `/plans/${planId}/incomes/${income.id}` : `/plans/${planId}`}
+          href={
+            income
+              ? `/plans/${planId}/incomes/${income.id}`
+              : returnTab === 'milestones' && milestoneIdWatched
+                ? `/plans/${planId}?tab=milestones&milestoneId=${milestoneIdWatched}`
+                : `/plans/${planId}?tab=timeline${milestoneIdWatched ? `&milestoneId=${milestoneIdWatched}` : ''}`
+          }
           variant="secondary"
         >
           Hủy

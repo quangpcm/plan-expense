@@ -822,32 +822,74 @@ export default function PlanDetailPage() {
           <>
             <div className="flex flex-col gap-4">
               <SectionHeading eyebrow="Thu chi" title="Dòng tiền kế hoạch" />
-              <div className="grid grid-cols-3 gap-2">
-                <Button className="min-w-0 px-3" onClick={() => setShowStatisticSheet(true)} variant="secondary">
-                  <BarChart3 className="size-4" />
-                  Thống kê
-                </Button>
-                {plan.status === 'closed' ? (
-                  <Button className="min-w-0 px-3" disabled variant="secondary">
-                    + Khoản Thu
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)]">
+                <div className="grid grid-cols-3 gap-2 lg:hidden">
+                  <Button className="min-w-0 justify-center px-3" onClick={() => setShowStatisticSheet(true)} variant="secondary">
+                    <BarChart3 className="size-4" />
+                    Thống kê
                   </Button>
-                ) : (
-                  <Button className="min-w-0 px-3" href={`/plans/${planId}/incomes/new`} variant="secondary">
-                    + Khoản Thu
+                  {plan.status === 'closed' ? (
+                    <Button className="min-w-0 px-3" disabled variant="secondary">
+                      + Khoản Thu
+                    </Button>
+                  ) : (
+                    <Button
+                      className="min-w-0 justify-center border border-[var(--color-income)]/14 bg-[var(--color-income-soft)] px-3 text-[var(--color-income)] hover:bg-[color-mix(in_srgb,var(--color-income-soft)_72%,white)]"
+                      href={`/plans/${planId}/incomes/new${selectedTimelineMilestoneId ? `?milestoneId=${selectedTimelineMilestoneId}&returnTab=timeline` : '?returnTab=timeline'}`}
+                      variant="secondary"
+                    >
+                      + Khoản Thu
+                    </Button>
+                  )}
+                  {plan.status === 'closed' ? (
+                    <Button className="min-w-0 px-3" disabled>
+                      + Khoản Chi
+                    </Button>
+                  ) : (
+                    <Button
+                      className="min-w-0 justify-center bg-[color:color-mix(in_srgb,var(--color-primary)_92%,white)] px-3"
+                      href={`/plans/${planId}/expenses/new${selectedTimelineMilestoneId ? `?milestoneId=${selectedTimelineMilestoneId}&returnTab=timeline` : '?returnTab=timeline'}`}
+                    >
+                      + Khoản Chi
+                    </Button>
+                  )}
+                </div>
+
+                <div className="hidden space-y-2 lg:block">
+                  <Button className="w-full justify-center" onClick={() => setShowStatisticSheet(true)} variant="secondary">
+                    <BarChart3 className="size-4" />
+                    Thống kê
                   </Button>
-                )}
-                {plan.status === 'closed' ? (
-                  <Button className="min-w-0 px-3" disabled>
-                    + Khoản Chi
-                  </Button>
-                ) : (
-                  <Button
-                    className="min-w-0 px-3"
-                    href={`/plans/${planId}/expenses/new${selectedTimelineMilestoneId ? `?milestoneId=${selectedTimelineMilestoneId}` : ''}`}
-                  >
-                    + Khoản Chi
-                  </Button>
-                )}
+                </div>
+                <div className="hidden space-y-2 lg:block">
+                  <div className="grid grid-cols-2 gap-2">
+                    {plan.status === 'closed' ? (
+                      <Button className="min-w-0 px-3" disabled variant="secondary">
+                        + Khoản Thu
+                      </Button>
+                    ) : (
+                      <Button
+                        className="min-w-0 justify-center border border-[var(--color-income)]/14 bg-[var(--color-income-soft)] text-[var(--color-income)] hover:bg-[color-mix(in_srgb,var(--color-income-soft)_72%,white)]"
+                        href={`/plans/${planId}/incomes/new${selectedTimelineMilestoneId ? `?milestoneId=${selectedTimelineMilestoneId}&returnTab=timeline` : '?returnTab=timeline'}`}
+                        variant="secondary"
+                      >
+                        + Khoản Thu
+                      </Button>
+                    )}
+                    {plan.status === 'closed' ? (
+                      <Button className="min-w-0 px-3" disabled>
+                        + Khoản Chi
+                      </Button>
+                    ) : (
+                      <Button
+                        className="min-w-0 justify-center bg-[color:color-mix(in_srgb,var(--color-primary)_92%,white)]"
+                        href={`/plans/${planId}/expenses/new${selectedTimelineMilestoneId ? `?milestoneId=${selectedTimelineMilestoneId}&returnTab=timeline` : '?returnTab=timeline'}`}
+                      >
+                        + Khoản Chi
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
             {plan.status === 'closed' ? (

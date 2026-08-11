@@ -25,23 +25,24 @@ export function MilestoneExpensePanel({
   canCreateExpense,
   onShowTimeline,
 }: MilestoneExpensePanelProps) {
+  const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+
   return (
     <Card className="gap-5 shadow-none">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-primary)]">
             <CircleDollarSign className="size-3.5" />
-            Khoản chi milestone
+            Khoản chi
           </p>
           <h3 className="text-xl font-semibold text-slate-950">{milestone.title}</h3>
-          <p className="text-sm leading-6 text-slate-600">
-            Danh sách khoản chi đang gắn với milestone này qua `expense.milestoneId`.
+          <p className="text-sm font-medium text-slate-600">
+            {expenses.length} khoản chi · Tổng {formatCurrency(totalAmount)}
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <Badge variant="info">{expenses.length} khoản chi</Badge>
           {canCreateExpense ? (
-            <Button href={`/plans/${planId}/expenses/new?milestoneId=${milestone.id}`} variant="secondary">
+            <Button href={`/plans/${planId}/expenses/new?milestoneId=${milestone.id}&returnTab=milestones`} variant="secondary">
               <Plus className="size-4" />
               Thêm khoản chi
             </Button>
@@ -54,7 +55,7 @@ export function MilestoneExpensePanel({
           {expenses.map((expense) => (
             <Link
               className="rounded-[24px] border border-[var(--color-border)] bg-[var(--color-surface-soft)] px-4 py-4 transition hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface)]"
-              href={`/plans/${planId}/expenses/${expense.id}`}
+              href={`/plans/${planId}/expenses/${expense.id}?returnTab=milestones&milestoneId=${milestone.id}`}
               key={expense.id}
             >
               <div className="flex items-start justify-between gap-3">
@@ -64,7 +65,7 @@ export function MilestoneExpensePanel({
                     {formatDate(timestampToDate(expense.spentAt) ?? new Date())}
                   </p>
                 </div>
-                <p className="shrink-0 text-sm font-semibold text-[var(--color-expense)]">{formatCurrency(expense.amount)}</p>
+                <p className="shrink-0 text-sm font-semibold text-[#c94f43]">−{formatCurrency(expense.amount)}</p>
               </div>
             </Link>
           ))}
@@ -81,7 +82,7 @@ export function MilestoneExpensePanel({
         <div className="flex justify-end">
           <Button onClick={onShowTimeline} variant="ghost">
             <ReceiptText className="size-4" />
-            Xem toàn bộ trên timeline
+            Xem trên dòng thời gian
           </Button>
         </div>
       ) : null}

@@ -193,7 +193,10 @@ function ExpenseTimelineCard({ planId, expense, members, categories, milestones 
       <span className="flex size-6 shrink-0 items-center justify-center pt-5">
         <span className="size-2 rounded-full bg-[var(--color-expense)]" />
       </span>
-      <Link className="min-w-0 flex-1" href={`/plans/${planId}/expenses/${expense.id}`}>
+      <Link
+        className="min-w-0 flex-1"
+        href={`/plans/${planId}/expenses/${expense.id}?returnTab=timeline${expense.milestoneId ? `&milestoneId=${expense.milestoneId}` : ''}`}
+      >
         <Card className="gap-2 border-[var(--color-danger-soft)] bg-[var(--color-surface)] p-4 transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
           <h3 className="text-base font-semibold text-[var(--color-foreground)]">{expense.title}</h3>
           <p className="text-sm text-[var(--color-subtle)]">
@@ -252,7 +255,10 @@ function IncomeTimelineCard({ planId, income, members, categories }: IncomeTimel
       <span className="flex size-6 shrink-0 items-center justify-center pt-5">
         <span className="size-2 rounded-full bg-[var(--color-income)]" />
       </span>
-      <Link className="min-w-0 flex-1" href={`/plans/${planId}/incomes/${income.id}`}>
+      <Link
+        className="min-w-0 flex-1"
+        href={`/plans/${planId}/incomes/${income.id}?returnTab=timeline${income.milestoneId ? `&milestoneId=${income.milestoneId}` : ''}`}
+      >
         <Card className="gap-2 border-[var(--color-income-soft)] bg-[var(--color-income-soft)]/40 p-4 transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
           <div className="flex items-center gap-2">
             <Landmark className="size-4 text-[var(--color-income)]" />
