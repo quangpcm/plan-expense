@@ -122,7 +122,7 @@ export function MemberManagementPanel({
       <Card>
         <Collapsible
           title="Thêm khách"
-          description="Khách chỉ cần biệt danh và chỉ tồn tại trong kế hoạch này."
+          description="Thêm người tham gia không cần tài khoản."
           icon={<UserRoundPlus className="size-5" />}
         >
           <form className="space-y-4" onSubmit={submitGuest}>
@@ -131,9 +131,12 @@ export function MemberManagementPanel({
               className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
               {...guestForm.register('role')}
             >
-              <option value="editor">Biên tập</option>
+              <option value="editor">Thành viên</option>
               <option value="viewer">Chỉ xem</option>
             </select>
+            <p className="text-sm text-slate-500">
+              Khách có thể được chọn trong các khoản thu, chi và chia sẻ chi phí.
+            </p>
             {guestError ? <AuthFormMessage message={guestError} type="error" /> : null}
             {guestMessage ? <AuthFormMessage message={guestMessage} type="success" /> : null}
             <Button className="w-full" disabled={isGuestSubmitting} type="submit">
@@ -147,7 +150,7 @@ export function MemberManagementPanel({
       <Card>
         <Collapsible
           title="Mời thành viên"
-          description="Bỏ trống email để tạo link mời dùng chung, hoặc nhập email để chỉ tài khoản đó mới nhận được."
+          description="Mời qua email hoặc chia sẻ liên kết mời."
           icon={<UserPlus2 className="size-5" />}
         >
           <form className="space-y-4" onSubmit={submitInvitation}>
@@ -157,8 +160,11 @@ export function MemberManagementPanel({
               {...inviteForm.register('role')}
             >
               <option value="viewer">Chỉ xem</option>
-              <option value="editor">Biên tập</option>
+              <option value="editor">Thành viên</option>
             </select>
+            <p className="text-sm text-slate-500">
+              Nếu không nhập email, liên kết mời có thể được chia sẻ với bất kỳ ai.
+            </p>
             {inviteError ? <AuthFormMessage message={inviteError} type="error" /> : null}
             {inviteLink ? (
               <div className="space-y-2">

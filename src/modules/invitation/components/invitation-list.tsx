@@ -1,7 +1,19 @@
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
-import type { InvitationDocument } from '@/modules/invitation/types/invitation';
+import type { InvitationDocument, InviteRole, InvitationStatus } from '@/modules/invitation/types/invitation';
+
+const inviteRoleLabel: Record<InviteRole, string> = {
+  editor: 'Thành viên',
+  viewer: 'Chỉ xem',
+};
+
+const invitationStatusLabel: Record<InvitationStatus, string> = {
+  pending: 'Đang chờ',
+  accepted: 'Đã chấp nhận',
+  expired: 'Đã hết hạn',
+  revoked: 'Đã hủy',
+};
 
 type InvitationListProps = {
   invitations: InvitationDocument[];
@@ -14,7 +26,7 @@ export function InvitationList({ invitations, canRevoke, isSubmitting, onRevoke 
   if (invitations.length === 0) {
     return (
       <Card>
-        <p className="text-sm leading-6 text-slate-600">Chưa có lời mời nào.</p>
+        <p className="text-sm leading-6 text-slate-600">Không có lời mời đang chờ.</p>
       </Card>
     );
   }
@@ -26,10 +38,10 @@ export function InvitationList({ invitations, canRevoke, isSubmitting, onRevoke 
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-semibold text-slate-950">{invitation.email || 'Liên kết mời'}</p>
-              <p className="text-sm text-slate-500">Vai trò: {invitation.role}</p>
+              <p className="text-sm text-slate-500">Vai trò: {inviteRoleLabel[invitation.role]}</p>
             </div>
             <Badge variant={invitation.status === 'pending' ? 'info' : 'neutral'}>
-              {invitation.status}
+              {invitationStatusLabel[invitation.status]}
             </Badge>
           </div>
           {canRevoke && invitation.status === 'pending' ? (

@@ -1426,8 +1426,8 @@ export default function PlanDetailPage() {
           <div className="space-y-5">
             <SectionHeading
               eyebrow="Thành viên"
-              title="Quản lý thành viên"
-              description="Chủ kế hoạch hiện có thể thêm khách và quản lý các bản ghi lời mời."
+              title="Thành viên kế hoạch"
+              description="Thêm và quản lý những người tham gia kế hoạch."
             />
             {permissions.canManageMembers ? (
               <MemberManagementPanel currentMember={currentMember} plan={currentPlan} />
@@ -1438,11 +1438,7 @@ export default function PlanDetailPage() {
                 </p>
               </Card>
             )}
-            <SectionHeading
-              eyebrow="Danh sách thành viên"
-              title={`Thành viên hiện tại (${activeMembers.length})`}
-              description="Thành viên đã xóa vẫn còn trong lịch sử Firestore nhưng không nên dùng cho giao dịch mới."
-            />
+            <SectionHeading eyebrow="Danh sách" title={`Thành viên (${activeMembers.length})`} />
             {memberActionError ? <AuthFormMessage message={memberActionError} type="error" /> : null}
             {memberActionMessage ? (
               <AuthFormMessage message={memberActionMessage} type="success" />
@@ -1460,11 +1456,7 @@ export default function PlanDetailPage() {
               onUpdateMember={handleUpdateMember}
               planId={planId}
             />
-            <SectionHeading
-              eyebrow="Lời mời"
-              title="Các lời mời đang chờ"
-              description="Luồng chấp nhận lời mời sẽ được mở rộng ở phase sau, nhưng dữ liệu lời mời hiện đã hoạt động."
-            />
+            <SectionHeading eyebrow="Lời mời" title="Đang chờ tham gia" />
             <InvitationList
               canRevoke={permissions.canManageMembers}
               invitations={invitations}

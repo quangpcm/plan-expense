@@ -10,7 +10,19 @@ import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { Collapsible } from '@/shared/components/ui/collapsible';
 import { Input } from '@/shared/components/ui/input';
-import type { PlanMemberDocument, PlanRole } from '@/modules/member/types/member';
+import type { PlanMemberDocument, PlanMemberStatus, PlanRole } from '@/modules/member/types/member';
+
+const roleLabel: Record<PlanRole, string> = {
+  owner: 'Chủ kế hoạch',
+  editor: 'Thành viên',
+  viewer: 'Chỉ xem',
+};
+
+const memberStatusLabel: Record<PlanMemberStatus, string> = {
+  invited: 'Đang chờ',
+  active: 'Đang hoạt động',
+  removed: 'Đã ngừng hoạt động',
+};
 
 type UpdateMemberValues = {
   nickname: string;
@@ -130,8 +142,12 @@ function EditableMemberRow({
         )}
       </div>
       <div className="flex flex-wrap justify-end gap-2">
-        <Badge variant="info">{member.role}</Badge>
-        <Badge variant={member.status === 'active' ? 'success' : 'neutral'}>{member.status}</Badge>
+        <Badge variant="info">{roleLabel[member.role]}</Badge>
+        {member.status !== 'active' ? (
+          <Badge variant={member.status === 'invited' ? 'info' : 'neutral'}>
+            {memberStatusLabel[member.status]}
+          </Badge>
+        ) : null}
         {member.permissions.canEditAllExpenses ? <Badge>được sửa mọi khoản chi</Badge> : null}
       </div>
     </div>
@@ -150,7 +166,7 @@ function EditableMemberRow({
           onChange={(event) => setRole(event.target.value as Exclude<PlanRole, 'owner'>)}
           value={role}
         >
-          <option value="editor">Biên tập</option>
+          <option value="editor">Thành viên</option>
           <option value="viewer">Chỉ xem</option>
         </select>
         <label className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700">
@@ -178,7 +194,7 @@ function EditableMemberRow({
           onClick={() => (isRemoved ? onReactivate?.(member) : onRemove?.(member))}
           variant="secondary"
         >
-          {isRemoved ? 'Active' : 'Deactive'}
+          {isRemoved ? 'Kích hoạt lại' : 'Ngừng hoạt động'}
         </Button>
         {canUnlink ? (
           <Button
