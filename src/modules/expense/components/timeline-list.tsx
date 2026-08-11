@@ -80,7 +80,7 @@ export function TimelineList({
       <div className="space-y-4">
         <div className="flex flex-col gap-2 sm:max-w-xs">
           <label className="text-sm font-medium text-slate-700" htmlFor="timeline-milestone-filter">
-            Lọc theo mốc kế hoạch
+            Mốc kế hoạch
           </label>
           <select
             className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
@@ -88,7 +88,7 @@ export function TimelineList({
             onChange={(event) => handleChangeMilestone(event.target.value)}
             value={selectedMilestoneId}
           >
-            <option value="all">Tất cả mốc kế hoạch</option>
+            <option value="all">Tất cả các mốc</option>
             {milestones.map((milestone) => (
               <option key={milestone.id} value={milestone.id}>
                 {milestone.title}
@@ -121,7 +121,7 @@ export function TimelineList({
     <div className="space-y-5">
       <div className="flex flex-col gap-2 sm:max-w-xs">
         <label className="text-sm font-medium text-slate-700" htmlFor="timeline-milestone-filter">
-          Lọc theo mốc kế hoạch
+          Mốc kế hoạch
         </label>
         <select
           className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
@@ -129,7 +129,7 @@ export function TimelineList({
           onChange={(event) => handleChangeMilestone(event.target.value)}
           value={selectedMilestoneId}
         >
-          <option value="all">Tất cả mốc kế hoạch</option>
+          <option value="all">Tất cả các mốc</option>
           {milestones.map((milestone) => (
             <option key={milestone.id} value={milestone.id}>
               {milestone.title}
@@ -201,8 +201,7 @@ function ExpenseTimelineCard({ planId, expense, members, categories, milestones 
         <Card className="gap-2 p-4 transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(15,23,42,0.08)]">
           <h3 className="text-base font-semibold text-[#191c1e]">{expense.title}</h3>
           <p className="text-sm text-[#727687]">
-            Trả:{' '}
-            <span className="font-medium text-[#424656]">{paidBy?.nickname || 'Không rõ'}</span> lúc{' '}
+            <span className="font-medium text-[#424656]">{paidBy?.nickname || 'Không rõ'}</span> đã trả ·{' '}
             <span className="font-medium text-[#424656]">
               {spentAt ? formatTime(spentAt) : '--:--'}
             </span>
@@ -231,7 +230,7 @@ function ExpenseTimelineCard({ planId, expense, members, categories, milestones 
               ) : null}
             </div>
             <p className="shrink-0 text-base font-bold text-[#191c1e]">
-              {formatCurrency(expense.amount)}
+              −{formatCurrency(expense.amount)}
             </p>
           </div>
         </Card>
@@ -264,8 +263,7 @@ function IncomeTimelineCard({ planId, income, members, categories }: IncomeTimel
             <h3 className="text-base font-semibold text-[#191c1e]">{income.title}</h3>
           </div>
           <p className="text-sm text-[#727687]">
-            Nạp:{' '}
-            <span className="font-medium text-[#424656]">{contributor?.nickname || 'Không rõ'}</span> lúc{' '}
+            <span className="font-medium text-[#424656]">{contributor?.nickname || 'Không rõ'}</span> đã nạp ·{' '}
             <span className="font-medium text-[#424656]">
               {receivedAt ? formatTime(receivedAt) : '--:--'}
             </span>

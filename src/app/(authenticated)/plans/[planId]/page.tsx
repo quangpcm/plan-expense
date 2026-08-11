@@ -800,11 +800,7 @@ export default function PlanDetailPage() {
         {activeTab === 'Tài chính' ? (
           <>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <SectionHeading
-                eyebrow="Dòng tiền"
-                title="Dòng tiền kế hoạch"
-                description="Khoản chi và khoản thu của kế hoạch được nhóm theo ngày và có thể lọc theo từng mốc để bám sát tiến độ thực tế."
-              />
+              <SectionHeading eyebrow="Thu chi" title="Dòng tiền kế hoạch" />
               <div className="flex flex-wrap justify-end gap-2">
                 <Button onClick={() => setShowStatisticSheet(true)} variant="secondary">
                   <BarChart3 className="size-4" />
@@ -812,17 +808,17 @@ export default function PlanDetailPage() {
                 </Button>
                 {plan.status === 'closed' ? (
                   <Button disabled variant="secondary">
-                    Thêm thu
+                    Thêm khoản thu
                   </Button>
                 ) : (
                   <Button href={`/plans/${planId}/incomes/new`} variant="secondary">
-                    Thêm thu
+                    Thêm khoản thu
                   </Button>
                 )}
                 {plan.status === 'closed' ? (
-                  <Button disabled>Thêm chi</Button>
+                  <Button disabled>Thêm khoản chi</Button>
                 ) : (
-                  <Button href={`/plans/${planId}/expenses/new${selectedMilestone?.id ? `?milestoneId=${selectedMilestone.id}` : ''}`}>Thêm chi</Button>
+                  <Button href={`/plans/${planId}/expenses/new${selectedMilestone?.id ? `?milestoneId=${selectedMilestone.id}` : ''}`}>Thêm khoản chi</Button>
                 )}
               </div>
             </div>
