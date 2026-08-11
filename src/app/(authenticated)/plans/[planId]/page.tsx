@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { notFound, useParams, useSearchParams } from 'next/navigation';
 import {
   BarChart3,
+  CalendarDays,
   Clock,
   Flag,
   LayoutDashboard,
@@ -604,31 +605,51 @@ export default function PlanDetailPage() {
         />
       ) : null}
       <Card className={cn('gap-6')}>
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">
             <h1 className="min-w-0 flex-1 truncate text-3xl font-semibold text-slate-950">{plan.name}</h1>
-            <div className="flex shrink-0 items-center gap-2">
-              <Badge variant="info">{plan.planType.replace('_', ' ')}</Badge>
-              <Badge variant={plan.status === 'active' ? 'success' : 'neutral'}>{plan.status}</Badge>
-              <div className="relative">
-                <button
-                  aria-label="Tùy chọn kế hoạch"
-                  className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
-                  onClick={() => setShowHeaderMenu((value) => !value)}
-                  type="button"
-                >
-                  <MoreVertical className="size-4" />
-                </button>
-                {showHeaderMenu ? (
-                  <>
-                    <div className="hidden md:block">
-                      <button
-                        aria-label="Đóng menu"
-                        className="fixed inset-0 z-40"
-                        onClick={() => setShowHeaderMenu(false)}
-                        type="button"
-                      />
-                      <Card className="absolute top-12 right-0 z-50 w-64 gap-1 p-2 shadow-[0_16px_60px_rgba(15,23,42,0.16)]">
+            <div className="relative shrink-0">
+              <button
+                aria-label="Tùy chọn kế hoạch"
+                className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+                onClick={() => setShowHeaderMenu((value) => !value)}
+                type="button"
+              >
+                <MoreVertical className="size-4" />
+              </button>
+              {showHeaderMenu ? (
+                <>
+                  <div className="hidden md:block">
+                    <button
+                      aria-label="Đóng menu"
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowHeaderMenu(false)}
+                      type="button"
+                    />
+                    <Card className="absolute top-12 right-0 z-50 w-64 gap-1 p-2 shadow-[0_16px_60px_rgba(15,23,42,0.16)]">
+                      {headerMenuItems.map((item) => (
+                        <button
+                          className={cn(
+                            'flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition hover:bg-slate-100',
+                            item.destructive ? 'text-rose-600' : 'text-slate-700',
+                          )}
+                          key={item.key}
+                          onClick={item.onSelect}
+                          type="button"
+                        >
+                          <item.icon className="size-4 shrink-0" />
+                          {item.label}
+                        </button>
+                      ))}
+                    </Card>
+                  </div>
+                  <div className="md:hidden">
+                    <BottomSheet
+                      onClose={() => setShowHeaderMenu(false)}
+                      open={showHeaderMenu}
+                      title="Tùy chọn kế hoạch"
+                    >
+                      <div className="grid gap-1">
                         {headerMenuItems.map((item) => (
                           <button
                             className={cn(
@@ -643,43 +664,29 @@ export default function PlanDetailPage() {
                             {item.label}
                           </button>
                         ))}
-                      </Card>
-                    </div>
-                    <div className="md:hidden">
-                      <BottomSheet
-                        onClose={() => setShowHeaderMenu(false)}
-                        open={showHeaderMenu}
-                        title="Tùy chọn kế hoạch"
-                      >
-                        <div className="grid gap-1">
-                          {headerMenuItems.map((item) => (
-                            <button
-                              className={cn(
-                                'flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition hover:bg-slate-100',
-                                item.destructive ? 'text-rose-600' : 'text-slate-700',
-                              )}
-                              key={item.key}
-                              onClick={item.onSelect}
-                              type="button"
-                            >
-                              <item.icon className="size-4 shrink-0" />
-                              {item.label}
-                            </button>
-                          ))}
-                        </div>
-                      </BottomSheet>
-                    </div>
-                  </>
-                ) : null}
-              </div>
+                      </div>
+                    </BottomSheet>
+                  </div>
+                </>
+              ) : null}
             </div>
           </div>
-          <p className="text-sm leading-6 text-slate-600">
-            {plan.description || 'Chưa có mô tả. Thành viên, dòng thời gian và thống kê sẽ tiếp tục được xây dựng trên kế hoạch này.'}
-          </p>
+
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="info">{plan.planType.replace('_', ' ')}</Badge>
+              <Badge variant={plan.status === 'active' ? 'success' : 'neutral'}>{plan.status}</Badge>
+            </div>
+            {/* <span className="inline-flex shrink-0 items-center gap-1.5 text-sm text-slate-500">
+              <CalendarDays className="size-4" />
+              {formatDate(timestampToDate(plan.createdAt) ?? new Date())}
+            </span> */}
+          </div>
+
+          {plan.description ? <p className="text-sm leading-6 text-slate-600">{plan.description}</p> : null}
         </div>
 
-        <div className="grid grid-cols-2 gap-3 rounded-[24px] bg-white/60 p-4">
+        <div className="grid grid-cols-3 gap-3 rounded-[24px] bg-white/60 p-4">
           <div>
             <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Thành viên</p>
             <p className="mt-1 text-lg font-semibold text-slate-900">{plan.memberCount}</p>
@@ -687,6 +694,10 @@ export default function PlanDetailPage() {
           <div>
             <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Tổng chi</p>
             <p className="mt-1 text-lg font-semibold text-slate-900">{formatCurrency(plan.totalExpense)}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Tổng thu</p>
+            <p className="mt-1 text-lg font-semibold text-slate-900">{formatCurrency(plan.totalIncome)}</p>
           </div>
         </div>
       </Card>
@@ -816,17 +827,17 @@ export default function PlanDetailPage() {
                 </Button>
                 {plan.status === 'closed' ? (
                   <Button disabled variant="secondary">
-                    Thêm khoản thu
+                    Thêm thu
                   </Button>
                 ) : (
                   <Button href={`/plans/${planId}/incomes/new`} variant="secondary">
-                    Thêm khoản thu
+                    Thêm thu
                   </Button>
                 )}
                 {plan.status === 'closed' ? (
-                  <Button disabled>Thêm khoản chi</Button>
+                  <Button disabled>Thêm chi</Button>
                 ) : (
-                  <Button href={`/plans/${planId}/expenses/new${selectedMilestone?.id ? `?milestoneId=${selectedMilestone.id}` : ''}`}>Thêm khoản chi</Button>
+                  <Button href={`/plans/${planId}/expenses/new${selectedMilestone?.id ? `?milestoneId=${selectedMilestone.id}` : ''}`}>Thêm chi</Button>
                 )}
               </div>
             </div>
