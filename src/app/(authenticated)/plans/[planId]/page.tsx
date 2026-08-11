@@ -91,6 +91,15 @@ const TAB_BY_QUERY_PARAM: Record<string, (typeof tabs)[number]> = {
   // 'settings' xử lý riêng trong effect bên dưới — mở headerModal thay vì set activeTab
 };
 
+function getMilestoneWorkSortTime(milestone: MilestoneDocument) {
+  return (
+    timestampToDate(milestone.startDate)?.getTime() ??
+    timestampToDate(milestone.endDate)?.getTime() ??
+    timestampToDate(milestone.createdAt)?.getTime() ??
+    0
+  );
+}
+
 type HeaderModal = 'edit-plan' | 'plan-settings' | 'leave-or-delete' | null;
 type HeaderMenuItem = { key: string; label: string; icon: LucideIcon; destructive?: boolean; onSelect: () => void };
 
@@ -175,12 +184,25 @@ export default function PlanDetailPage() {
   const suggestions = settlementService.suggest(statistic.memberBalances);
   const activeMembers = members.filter((member) => member.status === 'active');
   const linkedMemberIds = buildLinkedMemberIdSet({ expenses, incomes, settlements });
+  const sortedWorkMilestones = useMemo(
+    () =>
+      [...milestones].sort((a, b) => {
+        const timeDifference = getMilestoneWorkSortTime(a) - getMilestoneWorkSortTime(b);
+
+        if (timeDifference !== 0) {
+          return timeDifference;
+        }
+
+        return a.orderIndex - b.orderIndex;
+      }),
+    [milestones],
+  );
   const selectedMilestone = useMemo(
     () =>
-      milestones.find((milestone) => milestone.id === selectedMilestoneId) ??
-      milestones[0] ??
+      sortedWorkMilestones.find((milestone) => milestone.id === selectedMilestoneId) ??
+      sortedWorkMilestones[0] ??
       null,
-    [milestones, selectedMilestoneId],
+    [selectedMilestoneId, sortedWorkMilestones],
   );
   const selectedMilestoneExpenses = useMemo(
     () =>
@@ -225,15 +247,18 @@ export default function PlanDetailPage() {
   }, [milestones, searchParams]);
 
   useEffect(() => {
-    if (!selectedMilestoneId && milestones[0]) {
-      setSelectedMilestoneId(milestones[0].id);
+    if (!selectedMilestoneId && sortedWorkMilestones[0]) {
+      setSelectedMilestoneId(sortedWorkMilestones[0].id);
       return;
     }
 
-    if (selectedMilestoneId && !milestones.some((milestone) => milestone.id === selectedMilestoneId)) {
-      setSelectedMilestoneId(milestones[0]?.id ?? null);
+    if (
+      selectedMilestoneId &&
+      !sortedWorkMilestones.some((milestone) => milestone.id === selectedMilestoneId)
+    ) {
+      setSelectedMilestoneId(sortedWorkMilestones[0]?.id ?? null);
     }
-  }, [milestones, selectedMilestoneId]);
+  }, [selectedMilestoneId, sortedWorkMilestones]);
 
   useEffect(() => {
     if (selectedTimelineMilestoneId && !milestones.some((milestone) => milestone.id === selectedTimelineMilestoneId)) {
@@ -961,7 +986,7 @@ export default function PlanDetailPage() {
                       isMilestoneSubmitting={isMilestoneSubmitting}
                       isPlanClosed={plan.status === 'closed'}
                       isTodoSubmitting={isTodoSubmitting}
-                      milestones={milestones}
+                      milestones={sortedWorkMilestones}
                       members={members}
                       onAddTodo={(milestone) => {
                         setSelectedMilestoneId(milestone.id);

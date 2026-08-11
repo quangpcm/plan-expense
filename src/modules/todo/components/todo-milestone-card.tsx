@@ -50,7 +50,7 @@ export function TodoMilestoneCard({
       />
       <div className="min-w-0 flex-1 space-y-1">
         <p className="truncate text-base font-semibold text-slate-950 sm:text-lg">{todo.title}</p>
-        <div className="flex flex-nowrap items-center gap-2 text-sm text-slate-600 sm:gap-3 sm:text-base">
+        <div className="flex flex-nowrap items-center gap-4 text-sm text-slate-600 sm:gap-5 sm:text-base">
           <span className="inline-flex shrink-0 items-center gap-1.5">
             <CalendarDays className="size-4 text-slate-400 sm:size-5" />
             {dueDate ? formatDate(dueDate) : 'Chưa đặt'}
