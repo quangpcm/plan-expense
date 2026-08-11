@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { startTransition, useState } from 'react';
-import { CalendarDays, FolderPlus } from 'lucide-react';
+import { CalendarDays, ChevronDown, FolderPlus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { ZodError } from 'zod';
 
@@ -54,38 +54,64 @@ export function CreatePlanForm() {
         <label className="text-sm font-medium text-slate-700" htmlFor="name">
           Tên kế hoạch
         </label>
-        <Input id="name" placeholder="Đi Huế, cưới hỏi, quỹ phòng..." {...register('name')} />
+        <Input id="name" placeholder="Ví dụ: Đi Huế, Đám cưới, Quỹ nhóm..." {...register('name')} />
       </div>
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700" htmlFor="planType">
           Loại kế hoạch
         </label>
-        <select
-          className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-          id="planType"
-          {...register('planType')}
-        >
-          {planTypeOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <select
+            className="min-h-11 w-full appearance-none rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 pr-11 text-sm text-[var(--color-foreground)] outline-none transition focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent-soft)]"
+            id="planType"
+            {...register('planType')}
+          >
+            {planTypeOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-[var(--color-subtle)]">
+            <ChevronDown className="size-4" />
+          </span>
+        </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="startDate">
-            Ngày bắt đầu
+            Bắt đầu
           </label>
-          <Input id="startDate" type="date" {...register('startDate')} />
+          <div className="relative">
+            <Input
+              className="pr-11 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-11 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
+              id="startDate"
+              type="date"
+              {...register('startDate')}
+            />
+            <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-[var(--color-subtle)]">
+              <CalendarDays className="size-4" />
+            </span>
+          </div>
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="endDate">
-            Ngày kết thúc
+            Kết thúc
+            <span className="ml-1 text-xs font-normal text-slate-500">(không bắt buộc)</span>
           </label>
-          <Input id="endDate" type="date" {...register('endDate')} />
+          <div className="relative">
+            <Input
+              className="pr-11 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-11 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
+              id="endDate"
+              type="date"
+              {...register('endDate')}
+            />
+            <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-[var(--color-subtle)]">
+              <CalendarDays className="size-4" />
+            </span>
+          </div>
         </div>
       </div>
 
@@ -95,17 +121,14 @@ export function CreatePlanForm() {
         </label>
         <Textarea
           id="description"
-          placeholder="Thông tin thêm về kế hoạch, mục đích ngân sách hoặc chi tiết chuyến đi."
+          placeholder="Thêm ghi chú hoặc mục tiêu của kế hoạch..."
           {...register('description')}
         />
       </div>
 
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-        <Button href="/plans" variant="secondary">
-          Hủy
-        </Button>
+      <div className="flex flex-col gap-3">
         <Button disabled={isSubmitting} type="submit">
           {isSubmitting ? (
             'Đang tạo...'
@@ -116,16 +139,9 @@ export function CreatePlanForm() {
             </>
           )}
         </Button>
-      </div>
-
-      <div className="rounded-[24px] bg-slate-50 p-4 text-sm leading-7 text-slate-600">
-        <span className="inline-flex items-center gap-2 font-medium text-slate-800">
-          <CalendarDays className="size-4" />
-          Tiếp theo sẽ có gì
-        </span>
-        <br />
-        Ứng dụng sẽ tạo kế hoạch, thêm bạn làm chủ kế hoạch, sinh danh mục mặc định và mở ngay
-        màn hình chi tiết của kế hoạch mới.
+        <Button className="mx-auto w-fit px-4" href="/plans" variant="ghost">
+          Hủy
+        </Button>
       </div>
     </form>
   );

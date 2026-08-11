@@ -786,26 +786,33 @@ export default function PlanDetailPage() {
         ) : null}
         {activeTab === 'Tài chính' ? (
           <>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex flex-col gap-4">
               <SectionHeading eyebrow="Thu chi" title="Dòng tiền kế hoạch" />
-              <div className="flex flex-wrap justify-end gap-2">
-                <Button onClick={() => setShowStatisticSheet(true)} variant="secondary">
+              <div className="grid grid-cols-3 gap-2">
+                <Button className="min-w-0 px-3" onClick={() => setShowStatisticSheet(true)} variant="secondary">
                   <BarChart3 className="size-4" />
                   Thống kê
                 </Button>
                 {plan.status === 'closed' ? (
-                  <Button disabled variant="secondary">
-                    Thêm khoản thu
+                  <Button className="min-w-0 px-3" disabled variant="secondary">
+                    + Khoản Thu
                   </Button>
                 ) : (
-                  <Button href={`/plans/${planId}/incomes/new`} variant="secondary">
-                    Thêm khoản thu
+                  <Button className="min-w-0 px-3" href={`/plans/${planId}/incomes/new`} variant="secondary">
+                    + Khoản Thu
                   </Button>
                 )}
                 {plan.status === 'closed' ? (
-                  <Button disabled>Thêm khoản chi</Button>
+                  <Button className="min-w-0 px-3" disabled>
+                    + Khoản Chi
+                  </Button>
                 ) : (
-                  <Button href={`/plans/${planId}/expenses/new${selectedMilestone?.id ? `?milestoneId=${selectedMilestone.id}` : ''}`}>Thêm khoản chi</Button>
+                  <Button
+                    className="min-w-0 px-3"
+                    href={`/plans/${planId}/expenses/new${selectedMilestone?.id ? `?milestoneId=${selectedMilestone.id}` : ''}`}
+                  >
+                    + Khoản Chi
+                  </Button>
                 )}
               </div>
             </div>

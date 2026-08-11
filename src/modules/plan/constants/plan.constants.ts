@@ -10,7 +10,7 @@ export const planTypeOptions: Array<{ value: PlanType; label: string }> = [
   { value: 'birthday', label: 'Sinh nhật' },
   { value: 'event', label: 'Sự kiện' },
   { value: 'shared_living', label: 'Sinh hoạt chung' },
-  { value: 'general', label: 'Tổng hợp' },
+  { value: 'general', label: 'Chung' },
 ];
 
 export const planTypeIcons: Record<PlanType, LucideIcon> = {

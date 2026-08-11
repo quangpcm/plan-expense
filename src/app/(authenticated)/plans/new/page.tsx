@@ -14,9 +14,9 @@ export default function CreatePlanPage() {
       />
       <Card>
         <SectionHeading
-          eyebrow="Tạo kế hoạch"
-          title="Bắt đầu một kế hoạch dùng chung mới"
-          description="Thiết lập thông tin cơ bản trước. Thành viên và khoản chi có thể được thêm ngay sau khi tạo kế hoạch."
+          eyebrow="Kế hoạch mới"
+          title="Tạo kế hoạch mới"
+          description="Nhập thông tin cơ bản để bắt đầu."
         />
       </Card>
 

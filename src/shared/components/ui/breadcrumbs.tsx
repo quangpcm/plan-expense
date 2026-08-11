@@ -21,6 +21,7 @@ export function Breadcrumbs({ items, className }: BreadcrumbsProps) {
         'sticky top-0 z-10 -mx-4 flex flex-wrap items-center gap-2 border-b border-[var(--color-border)] bg-white/95 px-4 py-3 text-sm text-slate-500 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8',
         className,
       )}
+      style={{ top: 'env(safe-area-inset-top)' }}
     >
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
