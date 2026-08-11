@@ -62,6 +62,14 @@
     font: inherit;
   }
 
+  @media (max-width: 640px) {
+    input,
+    textarea,
+    select {
+      font-size: 16px;
+    }
+  }
+
   ::selection {
     background: color-mix(in srgb, var(--color-accent) 18%, white);
   }

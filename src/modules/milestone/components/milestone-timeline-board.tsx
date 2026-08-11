@@ -277,7 +277,7 @@ export function MilestoneTimelineBoard({
                 })
               ) : (
                 <Card className="border-slate-100 bg-slate-50 text-slate-600 shadow-none">
-                  <p className="text-sm leading-6">Milestone này chưa có todo nào.</p>
+                  <p className="text-sm leading-2">Milestone này chưa có todo nào.</p>
                 </Card>
               )}
 
