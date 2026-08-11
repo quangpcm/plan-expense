@@ -100,19 +100,25 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
       }
 
       const previousExpense = expenseSnapshot.data() as ExpenseDocument;
-      const previousMilestoneRef = doc(db, 'plans', planId, 'milestones', previousExpense.milestoneId);
+      const previousMilestoneId =
+        typeof previousExpense.milestoneId === 'string' && previousExpense.milestoneId.trim()
+          ? previousExpense.milestoneId
+          : null;
+      const previousMilestoneRef = previousMilestoneId
+        ? doc(db, 'plans', planId, 'milestones', previousMilestoneId)
+        : null;
       const nextMilestoneRef = doc(db, 'plans', planId, 'milestones', input.milestoneId);
-      const previousMilestoneSnapshot = await transaction.get(previousMilestoneRef);
+      const previousMilestoneSnapshot = previousMilestoneRef ? await transaction.get(previousMilestoneRef) : null;
       const nextMilestoneSnapshot = await transaction.get(nextMilestoneRef);
 
-      if (!previousMilestoneSnapshot.exists() || !nextMilestoneSnapshot.exists()) {
+      if (!nextMilestoneSnapshot.exists()) {
         throw new Error('Milestone not found.');
       }
 
       const delta = input.amount - previousExpense.amount;
       const currentTotalExpense = (planSnapshot.data()?.totalExpense as number | undefined) ?? 0;
       const updatedTotalExpense = currentTotalExpense + delta;
-      const previousMilestoneTotal = (previousMilestoneSnapshot.data()?.totalExpense as number | undefined) ?? 0;
+      const previousMilestoneTotal = (previousMilestoneSnapshot?.data()?.totalExpense as number | undefined) ?? 0;
       const nextMilestoneTotal = (nextMilestoneSnapshot.data()?.totalExpense as number | undefined) ?? 0;
 
       transaction.update(expenseRef, {
@@ -136,16 +142,18 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
         updatedAt: now,
       });
 
-      if (previousExpense.milestoneId === input.milestoneId) {
+      if (previousMilestoneId === input.milestoneId) {
         transaction.update(nextMilestoneRef, {
           totalExpense: nextMilestoneTotal + delta,
           updatedAt: now,
         });
       } else {
-        transaction.update(previousMilestoneRef, {
-          totalExpense: previousMilestoneTotal - previousExpense.amount,
-          updatedAt: now,
-        });
+        if (previousMilestoneRef && previousMilestoneSnapshot?.exists()) {
+          transaction.update(previousMilestoneRef, {
+            totalExpense: previousMilestoneTotal - previousExpense.amount,
+            updatedAt: now,
+          });
+        }
         transaction.update(nextMilestoneRef, {
           totalExpense: nextMilestoneTotal + input.amount,
           updatedAt: now,
