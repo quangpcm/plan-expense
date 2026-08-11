@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { CalendarDays, CheckCircle2, Circle, Clock3, PencilLine, Plus, Trash2, Wallet, XCircle } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Clock3, PencilLine, Plus, Trash2, Wallet } from 'lucide-react';
 import type { MouseEvent } from 'react';
 
 import type { TodoDocument } from '@/modules/todo/types/todo';
+import { priorityLabel, statusLabel, toVendorHref } from '@/modules/todo/utils/todo-display';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import { Avatar } from '@/shared/components/ui/avatar';
 import { Badge } from '@/shared/components/ui/badge';
@@ -24,23 +25,6 @@ type TodoCardProps = {
   onAddVendor: (todo: TodoDocument) => void;
   onDeleteTodo: (todo: TodoDocument) => void;
 };
-
-const priorityLabel: Record<TodoDocument['priority'], string> = {
-  low: 'Thấp',
-  medium: 'Trung bình',
-  high: 'Cao',
-};
-
-const statusLabel: Record<TodoDocument['status'], string> = {
-  todo: 'Cần làm',
-  in_progress: 'Đang làm',
-  done: 'Hoàn thành',
-  cancelled: 'Đã hủy',
-};
-
-function toHref(link: string) {
-  return link.startsWith('http://') || link.startsWith('https://') ? link : `https://${link}`;
-}
 
 function stopPropagation(event: MouseEvent) {
   event.stopPropagation();
@@ -98,7 +82,9 @@ export function TodoCard({
         </div>
       </div>
 
-      <p className="line-clamp-1 text-sm leading-6 text-slate-600">{todo.description || 'Chưa có mô tả.'}</p>
+      {todo.description ? (
+        <p className="line-clamp-1 text-sm leading-6 text-slate-600">{todo.description}</p>
+      ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600">
         <span className="inline-flex items-center gap-1.5">
@@ -114,7 +100,7 @@ export function TodoCard({
       {isExpanded ? (
         <div className="space-y-4" onClick={stopPropagation}>
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Danh sách nhà cung cấp</p>
+            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Nhà cung cấp</p>
             {todo.vendors.length > 0 ? (
               <ul className="space-y-2">
                 {todo.vendors.map((vendor) => (
@@ -126,7 +112,7 @@ export function TodoCard({
                       {vendor.link ? (
                         <a
                           className="text-sky-700 hover:underline"
-                          href={toHref(vendor.link)}
+                          href={toVendorHref(vendor.link)}
                           onClick={stopPropagation}
                           rel="noreferrer"
                           target="_blank"
@@ -160,9 +146,10 @@ export function TodoCard({
           </div>
 
           {canManagePlan ? (
-            <div className="flex flex-wrap justify-end gap-2">
+            <div className="flex flex-nowrap items-center justify-end gap-2">
               {todo.status !== 'done' ? (
                 <Button
+                  className="px-4"
                   disabled={isSubmitting}
                   onClick={(event) => {
                     event.stopPropagation();
@@ -175,6 +162,7 @@ export function TodoCard({
                 </Button>
               ) : (
                 <Button
+                  className="px-4"
                   disabled={isSubmitting}
                   onClick={(event) => {
                     event.stopPropagation();
@@ -186,32 +174,8 @@ export function TodoCard({
                   Đang làm lại
                 </Button>
               )}
-              {todo.status !== 'cancelled' ? (
-                <Button
-                  disabled={isSubmitting}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onChangeStatus(todo, 'cancelled');
-                  }}
-                  variant="secondary"
-                >
-                  <XCircle className="size-4" />
-                  Hủy
-                </Button>
-              ) : (
-                <Button
-                  disabled={isSubmitting}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onChangeStatus(todo, 'todo');
-                  }}
-                  variant="secondary"
-                >
-                  <Circle className="size-4" />
-                  Khôi phục
-                </Button>
-              )}
               <Button
+                className="px-4"
                 disabled={isSubmitting}
                 onClick={(event) => {
                   event.stopPropagation();
@@ -223,7 +187,8 @@ export function TodoCard({
                 Sửa
               </Button>
               <Button
-                className="text-rose-600 hover:bg-rose-50"
+                aria-label="Xóa công việc"
+                className="size-9 min-h-9 shrink-0 justify-center px-0 text-rose-600 hover:bg-rose-50"
                 disabled={isSubmitting}
                 onClick={(event) => {
                   event.stopPropagation();
@@ -232,7 +197,6 @@ export function TodoCard({
                 variant="ghost"
               >
                 <Trash2 className="size-4" />
-                Xóa
               </Button>
             </div>
           ) : null}

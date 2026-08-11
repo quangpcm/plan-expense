@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { ZodError } from 'zod';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
@@ -25,6 +26,7 @@ type TodoFormProps = {
   currentUser: AuthUser | null;
   todo?: TodoDocument;
   onSuccess?: () => void;
+  onCancel?: () => void;
 };
 
 export function TodoForm({
@@ -35,6 +37,7 @@ export function TodoForm({
   currentUser,
   todo,
   onSuccess,
+  onCancel,
 }: TodoFormProps) {
   const [title, setTitle] = useState(todo?.title ?? '');
   const [description, setDescription] = useState(todo?.description ?? '');
@@ -116,6 +119,10 @@ export function TodoForm({
     <form className="space-y-4" onSubmit={handleSubmit}>
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       {successMessage ? <AuthFormMessage message={successMessage} type="success" /> : null}
+      <div className="space-y-2 text-center">
+        <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#727687]">Ngân sách dự tính</label>
+        <AmountInput onChange={setBudget} value={budget} />
+      </div>
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700">Tên công việc</label>
         <Input onChange={(event) => setTitle(event.target.value)} placeholder="Ví dụ: Khảo sát 3 nhà hàng" value={title} />
@@ -124,59 +131,71 @@ export function TodoForm({
         <label className="text-sm font-medium text-slate-700">Mô tả</label>
         <Textarea onChange={(event) => setDescription(event.target.value)} placeholder="Ghi chú ngắn cho việc này" value={description} />
       </div>
-      <div className="space-y-2 text-center">
-        <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#727687]">Ngân sách dự tính</label>
-        <AmountInput onChange={setBudget} value={budget} />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700">Người phụ trách</label>
-          <select
-            className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-            onChange={(event) => setAssigneeMemberId(event.target.value)}
-            value={assigneeMemberId}
-          >
-            <option value="">Chưa giao</option>
-            {activeMembers.map((member) => (
-              <option key={member.id} value={member.id}>
-                {member.nickname}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              className="min-h-11 w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-2.5 pr-10 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+              onChange={(event) => setAssigneeMemberId(event.target.value)}
+              value={assigneeMemberId}
+            >
+              <option value="">Chưa giao</option>
+              {activeMembers.map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.nickname}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 text-slate-400" />
+          </div>
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700">Hạn hoàn thành</label>
           <Input onChange={(event) => setDueDate(event.target.value)} type="date" value={dueDate} />
         </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700">Ưu tiên</label>
-          <select
-            className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-            onChange={(event) => setPriority(event.target.value as TodoDocument['priority'])}
-            value={priority}
-          >
-            <option value="low">Thấp</option>
-            <option value="medium">Trung bình</option>
-            <option value="high">Cao</option>
-          </select>
+          <div className="relative">
+            <select
+              className="min-h-11 w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-2.5 pr-10 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+              onChange={(event) => setPriority(event.target.value as TodoDocument['priority'])}
+              value={priority}
+            >
+              <option value="low">Thấp</option>
+              <option value="medium">Trung bình</option>
+              <option value="high">Cao</option>
+            </select>
+            <ChevronDown className="pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 text-slate-400" />
+          </div>
         </div>
+        {todo ? (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">Trạng thái</label>
+            <div className="relative">
+              <select
+                className="min-h-11 w-full appearance-none rounded-2xl border border-slate-200 bg-white px-4 py-2.5 pr-10 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                onChange={(event) => setStatus(event.target.value as TodoDocument['status'])}
+                value={status}
+              >
+                <option value="todo">Cần làm</option>
+                <option value="in_progress">Đang làm</option>
+                <option value="done">Hoàn thành</option>
+                <option value="cancelled">Đã hủy</option>
+              </select>
+              <ChevronDown className="pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 text-slate-400" />
+            </div>
+          </div>
+        ) : null}
       </div>
-      {todo ? (
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Trạng thái</label>
-          <select
-            className="min-h-11 w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-950 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-            onChange={(event) => setStatus(event.target.value as TodoDocument['status'])}
-            value={status}
-          >
-            <option value="todo">Cần làm</option>
-            <option value="in_progress">Đang làm</option>
-            <option value="done">Hoàn thành</option>
-            <option value="cancelled">Đã hủy</option>
-          </select>
-        </div>
-      ) : null}
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-2">
+        {onCancel ? (
+          <Button onClick={onCancel} type="button" variant="ghost">
+            Đóng form
+          </Button>
+        ) : null}
         <Button disabled={isSubmitting} type="submit">
           {isSubmitting ? 'Đang lưu...' : todo ? 'Lưu công việc' : 'Tạo công việc'}
         </Button>

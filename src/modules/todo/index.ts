@@ -1,8 +1,10 @@
 export { todoService } from './services';
 export { useTodos } from './hooks/use-todos';
 export { useTodosByMilestone } from './hooks/use-todos-by-milestone';
+export { TodoDetailView } from './components/todo-detail-view';
 export { TodoForm } from './components/todo-form';
 export { TodoList } from './components/todo-list';
+export { TodoMilestoneCard } from './components/todo-milestone-card';
 export { TodoVendorForm } from './components/todo-vendor-form';
 export type {
   CreateTodoInput,

@@ -34,7 +34,7 @@ import {
   useMilestones,
 } from '@/modules/milestone';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
-import { TodoForm, TodoList, TodoVendorForm, useTodos, todoService } from '@/modules/todo';
+import { TodoDetailView, TodoForm, TodoList, TodoVendorForm, useTodos, todoService } from '@/modules/todo';
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import { CategoryBreakdown } from '@/modules/statistic/components/category-breakdown';
 import { ExpenseTimelineChart } from '@/modules/statistic/components/expense-timeline-chart';
@@ -114,6 +114,7 @@ export default function PlanDetailPage() {
   const [isTodoSubmitting, setIsTodoSubmitting] = useState(false);
   const [todoActionError, setTodoActionError] = useState<string | null>(null);
   const [vendorFormTodo, setVendorFormTodo] = useState<TodoDocument | null>(null);
+  const [detailTodo, setDetailTodo] = useState<TodoDocument | null>(null);
   const [expenseSheetMilestoneId, setExpenseSheetMilestoneId] = useState<string | null>(null);
   const previousPlanIdRef = useRef<string | undefined>(undefined);
 
@@ -655,16 +656,12 @@ export default function PlanDetailPage() {
                     setEditingMilestone(milestone);
                     setShowMilestoneForm(true);
                   }}
-                  onEditTodo={(todo) => {
-                    setSelectedMilestoneId(todo.milestoneId);
-                    setEditingTodo(todo);
-                    setShowTodoForm(true);
-                  }}
                   onOpenExpenseSheet={(milestone) => {
                     setSelectedMilestoneId(milestone.id);
                     setExpenseSheetMilestoneId(milestone.id);
                   }}
                   onSelect={(milestoneId) => setSelectedMilestoneId(milestoneId)}
+                  onViewTodo={setDetailTodo}
                   selectedMilestoneId={selectedMilestone?.id ?? null}
                   todos={todos}
                 />
@@ -801,6 +798,10 @@ export default function PlanDetailPage() {
                       currentUser={user}
                       members={members}
                       milestone={selectedMilestone}
+                      onCancel={() => {
+                        setShowTodoForm(false);
+                        setEditingTodo(null);
+                      }}
                       onSuccess={() => {
                         setShowTodoForm(false);
                         setEditingTodo(null);
@@ -808,17 +809,6 @@ export default function PlanDetailPage() {
                       plan={ensuredPlan}
                       {...(editingTodo ? { todo: editingTodo } : {})}
                     />
-                    <div className="mt-4 flex justify-end">
-                      <Button
-                        onClick={() => {
-                          setShowTodoForm(false);
-                          setEditingTodo(null);
-                        }}
-                        variant="ghost"
-                      >
-                        Đóng form
-                      </Button>
-                    </div>
                   </Dialog>
                 </div>
                 <div className="md:hidden">
@@ -836,6 +826,10 @@ export default function PlanDetailPage() {
                       currentUser={user}
                       members={members}
                       milestone={selectedMilestone}
+                      onCancel={() => {
+                        setShowTodoForm(false);
+                        setEditingTodo(null);
+                      }}
                       onSuccess={() => {
                         setShowTodoForm(false);
                         setEditingTodo(null);
@@ -843,17 +837,6 @@ export default function PlanDetailPage() {
                       plan={ensuredPlan}
                       {...(editingTodo ? { todo: editingTodo } : {})}
                     />
-                    <div className="mt-4 flex justify-end">
-                      <Button
-                        onClick={() => {
-                          setShowTodoForm(false);
-                          setEditingTodo(null);
-                        }}
-                        variant="ghost"
-                      >
-                        Đóng form
-                      </Button>
-                    </div>
                   </BottomSheet>
                 </div>
               </>
@@ -872,6 +855,51 @@ export default function PlanDetailPage() {
               </button>
             ) : null}
           </div>
+        ) : null}
+        {detailTodo ? (
+          <>
+            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
+              <button
+                aria-label="Đóng chi tiết công việc"
+                className="absolute inset-0"
+                onClick={() => setDetailTodo(null)}
+                type="button"
+              />
+              <Dialog
+                className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto"
+                title="Chi tiết công việc"
+              >
+                <TodoDetailView
+                  assignee={members.find((member) => member.id === detailTodo.assigneeMemberId) ?? null}
+                  canManagePlan={permissions.canManagePlan && plan.status !== 'closed'}
+                  onClose={() => setDetailTodo(null)}
+                  onEdit={(todo) => {
+                    setDetailTodo(null);
+                    setSelectedMilestoneId(todo.milestoneId);
+                    setEditingTodo(todo);
+                    setShowTodoForm(true);
+                  }}
+                  todo={detailTodo}
+                />
+              </Dialog>
+            </div>
+            <div className="md:hidden">
+              <BottomSheet onClose={() => setDetailTodo(null)} open={Boolean(detailTodo)} title="Chi tiết công việc">
+                <TodoDetailView
+                  assignee={members.find((member) => member.id === detailTodo.assigneeMemberId) ?? null}
+                  canManagePlan={permissions.canManagePlan && plan.status !== 'closed'}
+                  onClose={() => setDetailTodo(null)}
+                  onEdit={(todo) => {
+                    setDetailTodo(null);
+                    setSelectedMilestoneId(todo.milestoneId);
+                    setEditingTodo(todo);
+                    setShowTodoForm(true);
+                  }}
+                  todo={detailTodo}
+                />
+              </BottomSheet>
+            </div>
+          </>
         ) : null}
         {vendorFormTodo ? (
           <>
