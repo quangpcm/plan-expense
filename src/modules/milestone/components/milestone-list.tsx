@@ -20,7 +20,7 @@ type MilestoneListProps = {
 
 const milestoneStatusLabel: Record<MilestoneDocument['status'], string> = {
   upcoming: 'Sắp tới',
-  in_progress: 'Đang làm',
+  in_progress: 'Đang diễn ra',
   completed: 'Hoàn thành',
   cancelled: 'Đã hủy',
 };
@@ -79,13 +79,13 @@ export function MilestoneList({
               <div className="grid grid-cols-3 gap-3 text-sm">
                 <div>
                   <p className={cn('text-xs uppercase tracking-[0.16em]', isSelected ? 'text-slate-400' : 'text-slate-400')}>
-                    Chi tiêu
+                    Đã chi
                   </p>
                   <p className="mt-1 font-medium">{formatCurrency(milestone.totalExpense)}</p>
                 </div>
                 <div>
                   <p className={cn('text-xs uppercase tracking-[0.16em]', isSelected ? 'text-slate-400' : 'text-slate-400')}>
-                    Todo
+                    Công việc
                   </p>
                   <p className="mt-1 font-medium">
                     {milestone.completedTodoCount}/{milestone.todoCount}

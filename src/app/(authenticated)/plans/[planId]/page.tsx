@@ -5,7 +5,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { notFound, useParams, useSearchParams } from 'next/navigation';
 import {
   BarChart3,
-  CalendarDays,
   Clock,
   Flag,
   LayoutDashboard,
@@ -735,18 +734,8 @@ export default function PlanDetailPage() {
         </div>
         {activeTab === 'Tổng quan' ? (
           <div className="space-y-6">
-            <SectionHeading
-              eyebrow="Tổng quan"
-              title="Tình hình kế hoạch"
-              description="Xem nhanh các mốc gần nhất, công việc sắp đến hạn và số liệu tài chính tổng hợp."
-            />
-
             <div className="space-y-3">
-              <SectionHeading
-                eyebrow="Mốc kế hoạch"
-                title="Các mốc gần đây"
-                description="Mở tab Công việc để quản lý chi tiết từng mốc."
-              />
+              <SectionHeading eyebrow="Mốc kế hoạch" title="Mốc sắp tới" />
               {milestoneActionError ? <AuthFormMessage message={milestoneActionError} type="error" /> : null}
               {isMilestonesLoading ? (
                 <Skeleton className="h-32 rounded-[28px]" />
@@ -766,15 +755,15 @@ export default function PlanDetailPage() {
                 />
               )}
               <Button className="w-full justify-center" onClick={() => setActiveTab('Công việc')} variant="ghost">
-                Xem tất cả mốc kế hoạch
+                Xem tất cả mốc
               </Button>
             </div>
 
             <div className="space-y-3">
               <SectionHeading
-                eyebrow="Todos"
-                title="Công việc sắp đến hạn"
-                description="5 công việc chưa hoàn thành có hạn gần nhất."
+                eyebrow="Công việc"
+                title="Việc sắp đến hạn"
+                description="5 việc chưa hoàn thành"
               />
               {todoActionError ? <AuthFormMessage message={todoActionError} type="error" /> : null}
               {isTodosLoading ? (
@@ -803,11 +792,7 @@ export default function PlanDetailPage() {
             </div>
 
             <div className="space-y-3">
-              <SectionHeading
-                eyebrow="Tài chính"
-                title="Tổng hợp thu chi"
-                description="Mở tab Tài chính để xem thống kê chi tiết."
-              />
+              <SectionHeading eyebrow="Tài chính" title="Thu chi kế hoạch" />
               <StatisticOverview statistic={statistic} />
             </div>
           </div>
@@ -862,9 +847,9 @@ export default function PlanDetailPage() {
         {activeTab === 'Công việc' ? (
           <div className="space-y-5">
             <SectionHeading
-              eyebrow="Milestones"
-              title="Mốc kế hoạch"
-              description="Mỗi mốc là một giai đoạn lớn của kế hoạch. Phase này tập trung dựng lõi milestone trước khi gắn todo và dòng tiền sâu hơn."
+              eyebrow="Mốc kế hoạch"
+              title="Lộ trình kế hoạch"
+              description="Theo dõi các mốc quan trọng và công việc cần hoàn thành."
             />
             {milestoneActionError ? <AuthFormMessage message={milestoneActionError} type="error" /> : null}
             {todoActionError ? <AuthFormMessage message={todoActionError} type="error" /> : null}

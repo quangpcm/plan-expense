@@ -8,14 +8,6 @@ export function formatDate(input: DateInput, locale = 'vi-VN') {
   }).format(new Date(input));
 }
 
-export function formatCompactDate(input: DateInput, locale = 'vi-VN') {
-  return new Intl.DateTimeFormat(locale, {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit',
-  }).format(new Date(input));
-}
-
 export function formatTime(input: DateInput, locale = 'vi-VN') {
   return new Intl.DateTimeFormat(locale, {
     hour: '2-digit',

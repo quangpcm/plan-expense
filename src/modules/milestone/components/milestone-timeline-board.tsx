@@ -31,7 +31,7 @@ type MilestoneTimelineBoardProps = {
 
 const milestoneStatusLabel: Record<MilestoneDocument['status'], string> = {
   upcoming: 'Sắp tới',
-  in_progress: 'Đang làm',
+  in_progress: 'Đang diễn ra',
   completed: 'Hoàn thành',
   cancelled: 'Đã hủy',
 };
@@ -76,12 +76,7 @@ function formatMonthLabel(date: Date | null) {
     return 'CHƯA ĐẶT THỜI GIAN';
   }
 
-  return new Intl.DateTimeFormat('vi-VN', {
-    month: 'long',
-    year: 'numeric',
-  })
-    .format(date)
-    .toUpperCase();
+  return `THÁNG ${date.getMonth() + 1} · ${date.getFullYear()}`;
 }
 
 export function MilestoneTimelineBoard({
@@ -120,8 +115,6 @@ export function MilestoneTimelineBoard({
         const isSelected = milestone.id === selectedMilestoneId;
         const milestoneTodos = todos.filter((todo) => todo.milestoneId === milestone.id);
         const estimatedBudget = milestoneTodos.reduce((total, todoItem) => total + (todoItem.budget ?? 0), 0);
-        const progress =
-          milestone.todoCount > 0 ? Math.round((milestone.completedTodoCount / milestone.todoCount) * 100) : 0;
         const startDate = timestampToDate(milestone.startDate);
         const endDate = timestampToDate(milestone.endDate);
         const displayedStatus = getDisplayedMilestoneStatus(milestone);
@@ -235,7 +228,7 @@ export function MilestoneTimelineBoard({
                   <div className="grid grid-cols-3 gap-2 text-sm sm:gap-3">
                     <div>
                       <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', isSelected ? 'text-slate-400' : 'text-slate-400')}>
-                        Chi tiêu
+                        Đã chi
                       </p>
                       <p className={cn('mt-1 text-lg font-semibold sm:mt-2 sm:text-2xl', isSelected ? 'text-white' : 'text-[#0050cb]')}>
                         {formatCurrency(milestone.totalExpense)}
@@ -243,7 +236,7 @@ export function MilestoneTimelineBoard({
                     </div>
                     <div>
                       <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', isSelected ? 'text-slate-400' : 'text-slate-400')}>
-                        Dự kiến
+                        Dự kiến chi
                       </p>
                       <p className={cn('mt-1 text-lg font-semibold sm:mt-2 sm:text-2xl', isSelected ? 'text-slate-400' : 'text-slate-500')}>
                         {formatCompactCurrency(estimatedBudget)}
@@ -251,9 +244,11 @@ export function MilestoneTimelineBoard({
                     </div>
                     <div>
                       <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', isSelected ? 'text-slate-400' : 'text-slate-400')}>
-                        Tiến độ
+                        Công việc
                       </p>
-                      <p className="mt-1 text-lg font-semibold sm:mt-2 sm:text-2xl">{progress}%</p>
+                      <p className="mt-1 text-lg font-semibold sm:mt-2 sm:text-2xl">
+                        {milestone.completedTodoCount}/{milestone.todoCount}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -301,7 +296,7 @@ export function MilestoneTimelineBoard({
                 type="button"
               >
                 <Plus className="size-5" />
-                THÊM TODO
+                Thêm công việc
               </button>
 
               {canManagePlan ? (

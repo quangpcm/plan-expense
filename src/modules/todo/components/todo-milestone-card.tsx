@@ -6,7 +6,7 @@ import type { TodoDocument } from '@/modules/todo/types/todo';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import { Avatar } from '@/shared/components/ui/avatar';
 import { formatCompactCurrency } from '@/shared/utils/currency';
-import { formatCompactDate } from '@/shared/utils/date';
+import { formatDate } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 import { cn } from '@/shared/utils/cn';
 
@@ -53,7 +53,7 @@ export function TodoMilestoneCard({
         <div className="flex flex-nowrap items-center gap-2 text-sm text-slate-600 sm:gap-3 sm:text-base">
           <span className="inline-flex shrink-0 items-center gap-1.5">
             <CalendarDays className="size-4 text-slate-400 sm:size-5" />
-            {dueDate ? formatCompactDate(dueDate) : 'Chưa đặt'}
+            {dueDate ? formatDate(dueDate) : 'Chưa đặt'}
           </span>
           <span className="inline-flex shrink-0 items-center gap-1.5">
             <Wallet className="size-4 text-slate-400 sm:size-5" />
