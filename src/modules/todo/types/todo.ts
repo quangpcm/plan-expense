@@ -22,6 +22,7 @@ export type TodoDocument = {
   status: TodoStatus;
   budget: number | null;
   vendors: TodoVendor[];
+  selectedTodoVendorId: string | null;
   createdByUserId: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -49,4 +50,5 @@ export type UpdateTodoInput = {
   priority: TodoPriority;
   status: TodoStatus;
   budget?: number | undefined;
+  selectedTodoVendorId?: string | undefined;
 };

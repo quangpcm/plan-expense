@@ -116,6 +116,24 @@ export class TodoService {
     });
   }
 
+  async selectVendor(
+    plan: PlanDocument,
+    todo: TodoDocument,
+    vendorId: string | null,
+    currentUser: AuthUser,
+    currentMember: PlanMemberDocument | null,
+  ) {
+    void currentUser;
+    this.assertEditablePlan(plan);
+    this.assertManagePlanPermission(currentMember);
+
+    if (vendorId && !todo.vendors.some((vendor) => vendor.id === vendorId)) {
+      throw new AppError('Vendor không tồn tại trong công việc này.', 'TODO_VENDOR_NOT_FOUND', 400);
+    }
+
+    await this.todoRepository.selectVendor(plan.id, todo.id, vendorId);
+  }
+
   async deleteTodo(
     plan: PlanDocument,
     todo: TodoDocument,

@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarDays, CheckCircle2, Circle, Wallet } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Circle, Store, Wallet } from 'lucide-react';
 
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
@@ -9,6 +9,7 @@ import { formatCompactCurrency } from '@/shared/utils/currency';
 import { formatDate } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 import { cn } from '@/shared/utils/cn';
+import { getSelectedTodoVendor, getTodoBudgetAmount } from '@/modules/todo/utils/todo-budget';
 
 type TodoMilestoneCardProps = {
   todo: TodoDocument;
@@ -29,6 +30,8 @@ export function TodoMilestoneCard({
 }: TodoMilestoneCardProps) {
   const dueDate = timestampToDate(todo.dueDate);
   const isDone = todo.status === 'done';
+  const selectedVendor = getSelectedTodoVendor(todo);
+  const displayedBudget = getTodoBudgetAmount(todo);
 
   return (
     <div
@@ -57,9 +60,18 @@ export function TodoMilestoneCard({
           </span>
           <span className="inline-flex shrink-0 items-center gap-1.5">
             <Wallet className="size-4 text-slate-400 sm:size-5" />
-            {todo.budget != null ? formatCompactCurrency(todo.budget) : 'Chưa đặt'}
+            {displayedBudget != null ? formatCompactCurrency(displayedBudget) : 'Chưa đặt'}
           </span>
         </div>
+        {selectedVendor ? (
+          <div className="inline-flex max-w-full items-center gap-2 self-start rounded-full border border-[#d9e5f7] bg-[#f3f7fd] px-2.5 py-1 text-[11px] font-medium text-[#52627f] sm:px-3 sm:text-xs">
+            <Store className="size-3 shrink-0 text-[#6f86ab]" />
+            <span className="truncate text-[#41516d]">{selectedVendor.name}</span>
+            {displayedBudget != null ? (
+              <span className="shrink-0 text-[#64748b]">· {formatCompactCurrency(displayedBudget)}</span>
+            ) : null}
+          </div>
+        ) : null}
       </div>
       <button
         aria-label={isDone ? 'Đánh dấu đang làm lại' : 'Đánh dấu hoàn thành'}

@@ -1,11 +1,13 @@
-import { CalendarDays, CheckCircle2, Clock3, PencilLine, Plus, Trash2, Wallet } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Clock3, PencilLine, Plus, Trash2, Wallet, X } from 'lucide-react';
 
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import { priorityLabel, statusLabel, toVendorHref } from '@/modules/todo/utils/todo-display';
+import { getSelectedTodoVendor, getTodoBudgetAmount } from '@/modules/todo/utils/todo-budget';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import { Avatar } from '@/shared/components/ui/avatar';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
+import { cn } from '@/shared/utils/cn';
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDate } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
@@ -17,6 +19,7 @@ type TodoDetailViewProps = {
   isSubmitting: boolean;
   onEdit: (todo: TodoDocument) => void;
   onAddVendor: (todo: TodoDocument) => void;
+  onSelectVendor: (todo: TodoDocument, vendorId: string) => void;
   onChangeStatus: (todo: TodoDocument, status: TodoDocument['status']) => void;
   onDeleteTodo: (todo: TodoDocument) => void;
   onClose: () => void;
@@ -29,11 +32,14 @@ export function TodoDetailView({
   isSubmitting,
   onEdit,
   onAddVendor,
+  onSelectVendor,
   onChangeStatus,
   onDeleteTodo,
   onClose,
 }: TodoDetailViewProps) {
   const dueDate = timestampToDate(todo.dueDate);
+  const selectedVendor = getSelectedTodoVendor(todo);
+  const displayedBudget = getTodoBudgetAmount(todo);
 
   return (
     <div className="space-y-4">
@@ -64,10 +70,34 @@ export function TodoDetailView({
           <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Ngân sách</p>
           <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-slate-900">
             <Wallet className="size-4 text-slate-400" />
-            {todo.budget != null ? formatCurrency(todo.budget) : 'Chưa đặt'}
+            {displayedBudget != null ? formatCurrency(displayedBudget) : 'Chưa đặt'}
           </p>
         </div>
       </div>
+
+      {selectedVendor ? (
+        <div className="flex items-start justify-between gap-3 rounded-2xl border border-[#d7e5ff] bg-[#eff5ff] px-4 py-3">
+          <div className="min-w-0">
+            <p className="text-xs uppercase tracking-[0.16em] text-[#6a84b6]">Nhà cung cấp đã chọn</p>
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
+              <span className="truncate font-semibold text-[#1d3f7a]">{selectedVendor.name}</span>
+              <span className="text-[#6b84b1]">·</span>
+              <span className="font-medium text-[#36568f]">{formatCurrency(selectedVendor.price)}</span>
+            </div>
+          </div>
+          {canManagePlan ? (
+            <button
+              aria-label="Bỏ chọn nhà cung cấp"
+              className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-[#5f79a8] transition hover:bg-white/70 hover:text-[#1d4ed8]"
+              disabled={isSubmitting}
+              onClick={() => onSelectVendor(todo, selectedVendor.id)}
+              type="button"
+            >
+              <X className="size-4" />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="space-y-2">
         <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Danh sách nhà cung cấp</p>
@@ -75,24 +105,43 @@ export function TodoDetailView({
           <ul className="space-y-2">
             {todo.vendors.map((vendor) => (
               <li
-                className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-2.5 text-sm"
+                className={cn(
+                  'flex items-center justify-between gap-3 rounded-2xl border px-4 py-2.5 text-sm transition',
+                  vendor.id === todo.selectedTodoVendorId
+                    ? 'border-[#cfe0ff] bg-[#eef4ff]'
+                    : 'border-transparent bg-slate-50 hover:border-[#dbe5f7]',
+                )}
                 key={vendor.id}
+                onClick={() => onSelectVendor(todo, vendor.id)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onSelectVendor(todo, vendor.id);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
               >
-                <span className="min-w-0 truncate font-medium text-slate-900">
-                  {vendor.link ? (
-                    <a
-                      className="text-sky-700 hover:underline"
-                      href={toVendorHref(vendor.link)}
-                      rel="noreferrer"
-                      target="_blank"
-                    >
-                      {vendor.name}
-                    </a>
-                  ) : (
-                    vendor.name
-                  )}
+                <div className="min-w-0">
+                  <span className="block truncate font-medium text-slate-900">
+                    {vendor.link ? (
+                      <a
+                        className="text-sky-700 hover:underline"
+                        href={toVendorHref(vendor.link)}
+                        onClick={(event) => event.stopPropagation()}
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        {vendor.name}
+                      </a>
+                    ) : (
+                      vendor.name
+                    )}
+                  </span>
+                </div>
+                <span className={cn('shrink-0 font-medium', vendor.id === todo.selectedTodoVendorId ? 'text-[#1d4ed8]' : 'text-slate-600')}>
+                  {formatCurrency(vendor.price)}
                 </span>
-                <span className="shrink-0 text-slate-600">{formatCurrency(vendor.price)}</span>
               </li>
             ))}
           </ul>

@@ -25,6 +25,7 @@ function normalizeTodo(raw: TodoDocument): TodoDocument {
     ...raw,
     budget: raw.budget ?? null,
     vendors: raw.vendors ?? [],
+    selectedTodoVendorId: raw.selectedTodoVendorId ?? null,
   };
 }
 
@@ -49,6 +50,7 @@ export class FirestoreTodoRepository implements TodoRepository {
         status: 'todo',
         budget: input.budget,
         vendors: [],
+        selectedTodoVendorId: null,
         createdByUserId: input.createdByUserId,
         createdAt: now,
         updatedAt: now,
@@ -100,6 +102,10 @@ export class FirestoreTodoRepository implements TodoRepository {
         priority: input.priority,
         status: input.status,
         budget: input.budget !== undefined ? input.budget : previousTodo.budget ?? null,
+        selectedTodoVendorId:
+          input.selectedTodoVendorId !== undefined
+            ? input.selectedTodoVendorId?.trim() || null
+            : previousTodo.selectedTodoVendorId ?? null,
         updatedAt: now,
         completedAt: input.status === 'done' ? previousTodo.completedAt ?? now : null,
         cancelledAt: input.status === 'cancelled' ? previousTodo.cancelledAt ?? now : null,
@@ -138,6 +144,31 @@ export class FirestoreTodoRepository implements TodoRepository {
 
       transaction.update(todoRef, {
         vendors: [...(previousTodo.vendors ?? []), newVendor],
+        updatedAt: now,
+      });
+    });
+  }
+
+  async selectVendor(planId: string, todoId: string, vendorId: string | null) {
+    const db = getFirebaseFirestore();
+    const todoRef = doc(db, 'plans', planId, 'todos', todoId);
+    const now = Timestamp.now();
+
+    await runTransaction(db, async (transaction) => {
+      const todoSnapshot = await transaction.get(todoRef);
+
+      if (!todoSnapshot.exists()) {
+        throw new Error('Todo not found.');
+      }
+
+      const previousTodo = normalizeTodo(todoSnapshot.data() as TodoDocument);
+
+      if (vendorId && !previousTodo.vendors.some((vendor) => vendor.id === vendorId)) {
+        throw new Error('Vendor not found.');
+      }
+
+      transaction.update(todoRef, {
+        selectedTodoVendorId: vendorId,
         updatedAt: now,
       });
     });

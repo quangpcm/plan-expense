@@ -11,6 +11,7 @@ import { formatCompactCurrency, formatCurrency } from '@/shared/utils/currency';
 import { formatDate } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 import { cn } from '@/shared/utils/cn';
+import { getTodoBudgetAmount } from '@/modules/todo/utils/todo-budget';
 
 type MilestoneTimelineBoardProps = {
   milestones: MilestoneDocument[];
@@ -159,7 +160,7 @@ export function MilestoneTimelineBoard({
       {milestones.map((milestone) => {
         const isSelected = milestone.id === selectedMilestoneId;
         const milestoneTodos = todos.filter((todo) => todo.milestoneId === milestone.id);
-        const estimatedBudget = milestoneTodos.reduce((total, todoItem) => total + (todoItem.budget ?? 0), 0);
+        const estimatedBudget = milestoneTodos.reduce((total, todoItem) => total + (getTodoBudgetAmount(todoItem) ?? 0), 0);
         const startDate = timestampToDate(milestone.startDate);
         const endDate = timestampToDate(milestone.endDate);
         const displayedStatus = getDisplayedMilestoneStatus(milestone);

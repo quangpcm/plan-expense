@@ -62,6 +62,7 @@ import { SettlementSuggestionCard } from '@/modules/settlement/components/settle
 import { useSettlements } from '@/modules/settlement/hooks/use-settlements';
 import { settlementService } from '@/modules/settlement/services';
 import type { SettlementDocument, SettlementSuggestion } from '@/modules/settlement/types/settlement';
+import { getTodoBudgetAmount } from '@/modules/todo/utils/todo-budget';
 import { Breadcrumbs } from '@/shared/components/ui/breadcrumbs';
 import { Button } from '@/shared/components/ui/button';
 import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
@@ -265,6 +266,35 @@ export default function PlanDetailPage() {
       setSelectedTimelineMilestoneId(null);
     }
   }, [milestones, selectedTimelineMilestoneId]);
+
+  useEffect(() => {
+    if (!detailTodo) {
+      return;
+    }
+
+    const nextTodo = todos.find((todo) => todo.id === detailTodo.id) ?? null;
+
+    if (!nextTodo) {
+      setDetailTodo(null);
+      return;
+    }
+
+    if (nextTodo !== detailTodo) {
+      setDetailTodo(nextTodo);
+    }
+  }, [detailTodo, todos]);
+
+  useEffect(() => {
+    if (!todoToRestoreAfterVendor) {
+      return;
+    }
+
+    const nextTodo = todos.find((todo) => todo.id === todoToRestoreAfterVendor.id) ?? null;
+
+    if (nextTodo !== todoToRestoreAfterVendor) {
+      setTodoToRestoreAfterVendor(nextTodo);
+    }
+  }, [todoToRestoreAfterVendor, todos]);
 
   if (!planId) {
     notFound();
@@ -560,12 +590,37 @@ export default function PlanDetailPage() {
           dueDate: todo.dueDate ? new Date(todo.dueDate.toDate()).toISOString().slice(0, 10) : '',
           priority: todo.priority,
           status,
+          budget: todo.budget ?? undefined,
+          selectedTodoVendorId: todo.selectedTodoVendorId || undefined,
         },
         user,
         currentMember,
       );
     } catch (error) {
       setTodoActionError(error instanceof Error ? error.message : 'Hiện chưa thể cập nhật trạng thái công việc.');
+    } finally {
+      setIsTodoSubmitting(false);
+    }
+  }
+
+  async function handleSelectTodoVendor(todo: TodoDocument, vendorId: string) {
+    if (!user) {
+      return;
+    }
+
+    setIsTodoSubmitting(true);
+    setTodoActionError(null);
+
+    try {
+      await todoService.selectVendor(
+        ensuredPlan,
+        todo,
+        todo.selectedTodoVendorId === vendorId ? null : vendorId,
+        user,
+        currentMember,
+      );
+    } catch (error) {
+      setTodoActionError(error instanceof Error ? error.message : 'Hiện chưa thể chọn nhà cung cấp này.');
     } finally {
       setIsTodoSubmitting(false);
     }
@@ -1247,6 +1302,7 @@ export default function PlanDetailPage() {
                     setEditingTodo(todo);
                     setShowTodoForm(true);
                   }}
+                  onSelectVendor={handleSelectTodoVendor}
                   todo={detailTodo}
                 />
               </Dialog>
@@ -1274,6 +1330,7 @@ export default function PlanDetailPage() {
                     setEditingTodo(todo);
                     setShowTodoForm(true);
                   }}
+                  onSelectVendor={handleSelectTodoVendor}
                   todo={detailTodo}
                 />
               </BottomSheet>

@@ -6,6 +6,7 @@ import type { MouseEvent } from 'react';
 
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import { priorityLabel, statusLabel, toVendorHref } from '@/modules/todo/utils/todo-display';
+import { getSelectedTodoVendor, getTodoBudgetAmount } from '@/modules/todo/utils/todo-budget';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import { Avatar } from '@/shared/components/ui/avatar';
@@ -45,6 +46,8 @@ export function TodoCard({
 }: TodoCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const createdAt = timestampToDate(todo.createdAt);
+  const selectedVendor = getSelectedTodoVendor(todo);
+  const displayedBudget = getTodoBudgetAmount(todo);
 
   function toggleExpanded() {
     setIsExpanded((value) => !value);
@@ -103,9 +106,16 @@ export function TodoCard({
         </span>
         <span className="inline-flex items-center gap-1.5">
           <Wallet className="size-4 text-slate-400" />
-          {todo.budget != null ? formatCurrency(todo.budget) : 'Chưa đặt'}
+          {displayedBudget != null ? formatCurrency(displayedBudget) : 'Chưa đặt'}
         </span>
       </div>
+
+      {selectedVendor ? (
+        <p className="text-sm text-slate-600">
+          Đã chọn nhà cung cấp: <span className="font-medium text-slate-900">{selectedVendor.name}</span>
+          {displayedBudget != null ? ` · ${formatCurrency(displayedBudget)}` : ''}
+        </p>
+      ) : null}
 
       {isExpanded ? (
         <div className="space-y-4" onClick={stopPropagation}>
