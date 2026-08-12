@@ -5,7 +5,7 @@ import { Card } from '@/shared/components/ui/card';
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDateTime } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
-import type { CategoryDocument } from '@/modules/category/types/category';
+import type { Category } from '@/modules/category/types/category';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import type { IncomeDocument } from '@/modules/income/types/income';
@@ -13,7 +13,7 @@ import type { IncomeDocument } from '@/modules/income/types/income';
 type IncomeDetailCardProps = {
   income: IncomeDocument;
   members: PlanMemberDocument[];
-  categories: CategoryDocument[];
+  categories: Category[];
   milestones: MilestoneDocument[];
 };
 

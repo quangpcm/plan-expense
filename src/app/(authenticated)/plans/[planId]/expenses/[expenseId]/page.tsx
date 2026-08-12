@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
-import { useExpenseCategories } from '@/modules/category/hooks/use-expense-categories';
+import { getExpenseCategories } from '@/modules/category/constants/category-presets';
 import { ExpenseDetailCard } from '@/modules/expense/components/expense-detail-card';
 import { useExpense } from '@/modules/expense/hooks/use-expense';
 import { expenseService } from '@/modules/expense/services';
@@ -27,7 +27,6 @@ export default function ExpenseDetailPage() {
   const { plan, errorMessage: planError } = usePlan(planId);
   const { milestones, errorMessage: milestoneError } = useMilestones(planId);
   const { members, currentMember, permissions } = usePlanMembers(planId);
-  const { categories, errorMessage: categoryError } = useExpenseCategories(planId);
   const { expense, isLoading, errorMessage: expenseError } = useExpense(planId, expenseId);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -47,6 +46,7 @@ export default function ExpenseDetailPage() {
   const currentUser = user;
   const currentExpense = expense;
   const currentPlan = plan;
+  const categories = getExpenseCategories(currentPlan.planType);
   const returnTab = searchParams.get('returnTab');
   const milestoneId = searchParams.get('milestoneId') || currentExpense.milestoneId;
   const canEdit = permissions.canEditAllExpenses || currentExpense.createdByUserId === currentUser.uid;
@@ -81,9 +81,9 @@ export default function ExpenseDetailPage() {
           { label: currentExpense.title },
         ]}
       />
-      {planError || categoryError || expenseError || milestoneError ? (
+      {planError || expenseError || milestoneError ? (
         <AuthFormMessage
-          message={planError || categoryError || expenseError || milestoneError || 'Hiện chưa thể tải màn hình khoản chi này.'}
+          message={planError || expenseError || milestoneError || 'Hiện chưa thể tải màn hình khoản chi này.'}
           type="error"
         />
       ) : null}

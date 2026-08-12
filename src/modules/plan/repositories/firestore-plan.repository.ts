@@ -138,24 +138,6 @@ export class FirestorePlanRepository implements PlanRepository {
       updatedAt: now,
     });
 
-    input.categoryPresets.forEach((category, index) => {
-      const categoryRef = doc(collection(db, 'plans', planRef.id, 'categories'));
-
-      batch.set(categoryRef, {
-        id: categoryRef.id,
-        planId: planRef.id,
-        name: category.name,
-        icon: category.icon,
-        categoryType: category.categoryType,
-        isDefault: true,
-        isActive: true,
-        sortOrder: index,
-        createdByUserId: input.owner.uid,
-        createdAt: now,
-        updatedAt: now,
-      });
-    });
-
     try {
       await batch.commit();
     } catch (error) {

@@ -316,14 +316,6 @@ service cloud.firestore {
       );
     }
 
-    match /plans/{planId}/categories/{categoryId} {
-      allow read: if isPlanVisible(planId);
-      allow create: if (
-          isSignedIn() &&
-          getAfter(/databases/$(database)/documents/plans/$(planId)).data.ownerUserId == request.auth.uid
-        ) || isPlanOwner(planId);
-    }
-
     match /plans/{planId}/milestones/{milestoneId} {
       allow read: if isPlanVisible(planId);
       allow create: if isPlanOwner(planId) &&

@@ -1,7 +1,7 @@
 import type { IncomeDocument } from '@/modules/income/types/income';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
-import type { CategoryDocument } from '@/modules/category/types/category';
+import type { Category } from '@/modules/category/types/category';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import type { SettlementDocument } from '@/modules/settlement/types/settlement';
 
@@ -68,6 +68,6 @@ export type StatisticInput = {
   expenses: ExpenseDocument[];
   incomes: IncomeDocument[];
   milestones: MilestoneDocument[];
-  categories: CategoryDocument[];
+  categories: Category[];
   settlements: SettlementDocument[];
 };

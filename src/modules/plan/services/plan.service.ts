@@ -1,6 +1,5 @@
 import { appConfig } from '@/config/app.config';
 import type { AuthUser } from '@/modules/auth/types/auth';
-import { categoryPresetsByPlanType } from '@/modules/category/constants/category-presets';
 import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanRepository } from '@/modules/plan/repositories/plan.repository';
@@ -32,7 +31,6 @@ export class PlanService {
       endDate,
       owner,
       timezone: appConfig.defaultTimezone,
-      categoryPresets: categoryPresetsByPlanType[input.planType],
     });
   }
 

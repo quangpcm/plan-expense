@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { startTransition, useEffect, useState } from 'react';
+import { startTransition, useEffect, useMemo, useState } from 'react';
 import { Landmark } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
 import { ZodError } from 'zod';
@@ -9,7 +9,7 @@ import { ZodError } from 'zod';
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
 import { getCategoryIcon } from '@/modules/category/utils/category-icon';
-import { useIncomeCategories } from '@/modules/category/hooks/use-income-categories';
+import { getIncomeCategories } from '@/modules/category/constants/category-presets';
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
 import { useMilestones } from '@/modules/milestone';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
@@ -38,7 +38,7 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
   const { plan } = usePlan(planId);
   const { members, currentMember } = usePlanMembers(planId);
   const { milestones } = useMilestones(planId);
-  const { categories } = useIncomeCategories(planId);
+  const categories = useMemo(() => (plan ? getIncomeCategories(plan.planType) : []), [plan]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const activeMembers = members.filter((member) => member.status === 'active');

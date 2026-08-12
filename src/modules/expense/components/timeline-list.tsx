@@ -7,7 +7,7 @@ import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDate, formatTime } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
-import type { CategoryDocument } from '@/modules/category/types/category';
+import type { Category } from '@/modules/category/types/category';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
@@ -18,7 +18,7 @@ type TimelineListProps = {
   expenses: ExpenseDocument[];
   incomes: IncomeDocument[];
   members: PlanMemberDocument[];
-  categories: CategoryDocument[];
+  categories: Category[];
   milestones: MilestoneDocument[];
   selectedMilestoneId?: string | null;
   onSelectedMilestoneChange?: (milestoneId: string | null) => void;
@@ -184,7 +184,7 @@ type ExpenseTimelineCardProps = {
   planId: string;
   expense: ExpenseDocument;
   members: PlanMemberDocument[];
-  categories: CategoryDocument[];
+  categories: Category[];
   milestones: MilestoneDocument[];
 };
 
@@ -248,7 +248,7 @@ type IncomeTimelineCardProps = {
   planId: string;
   income: IncomeDocument;
   members: PlanMemberDocument[];
-  categories: CategoryDocument[];
+  categories: Category[];
 };
 
 function IncomeTimelineCard({ planId, income, members, categories }: IncomeTimelineCardProps) {

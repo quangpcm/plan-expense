@@ -9,7 +9,7 @@ import { ZodError } from 'zod';
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
 import { getCategoryIcon } from '@/modules/category/utils/category-icon';
-import { useExpenseCategories } from '@/modules/category/hooks/use-expense-categories';
+import { getExpenseCategories } from '@/modules/category/constants/category-presets';
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
 import { useMilestones } from '@/modules/milestone';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
@@ -42,7 +42,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
   const { plan } = usePlan(planId);
   const { milestones } = useMilestones(planId);
   const { members, currentMember } = usePlanMembers(planId);
-  const { categories } = useExpenseCategories(planId);
+  const categories = useMemo(() => (plan ? getExpenseCategories(plan.planType) : []), [plan]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPaidByOpen, setIsPaidByOpen] = useState(false);

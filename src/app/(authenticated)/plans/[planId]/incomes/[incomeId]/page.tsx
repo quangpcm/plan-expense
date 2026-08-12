@@ -5,8 +5,7 @@ import { useState } from 'react';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
-import { useExpenseCategories } from '@/modules/category/hooks/use-expense-categories';
-import { useIncomeCategories } from '@/modules/category/hooks/use-income-categories';
+import { getExpenseCategories, getIncomeCategories } from '@/modules/category/constants/category-presets';
 import { IncomeDetailCard } from '@/modules/income/components/income-detail-card';
 import { useIncome } from '@/modules/income/hooks/use-income';
 import { incomeService } from '@/modules/income/services';
@@ -27,8 +26,6 @@ export default function IncomeDetailPage() {
   const { user } = useAuthSession();
   const { plan, errorMessage: planError } = usePlan(planId);
   const { members, currentMember, permissions } = usePlanMembers(planId);
-  const { categories: expenseCategories, errorMessage: expenseCategoryError } = useExpenseCategories(planId);
-  const { categories: incomeCategories, errorMessage: incomeCategoryError } = useIncomeCategories(planId);
   const { milestones, errorMessage: milestoneError } = useMilestones(planId);
   const { income, isLoading, errorMessage: incomeError } = useIncome(planId, incomeId);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -49,6 +46,7 @@ export default function IncomeDetailPage() {
   const currentUser = user;
   const currentIncome = income;
   const currentPlan = plan;
+  const categories = [...getExpenseCategories(currentPlan.planType), ...getIncomeCategories(currentPlan.planType)];
   const returnTab = searchParams.get('returnTab');
   const milestoneId = searchParams.get('milestoneId') || currentIncome.milestoneId;
   const canEdit = permissions.canEditOwnIncome && currentIncome.createdByMemberId === currentMember?.id;
@@ -83,25 +81,13 @@ export default function IncomeDetailPage() {
           { label: currentIncome.title },
         ]}
       />
-      {planError || expenseCategoryError || incomeCategoryError || milestoneError || incomeError ? (
+      {planError || milestoneError || incomeError ? (
         <AuthFormMessage
-          message={
-            planError ||
-            expenseCategoryError ||
-            incomeCategoryError ||
-            milestoneError ||
-            incomeError ||
-            'Hiện chưa thể tải màn hình khoản thu này.'
-          }
+          message={planError || milestoneError || incomeError || 'Hiện chưa thể tải màn hình khoản thu này.'}
           type="error"
         />
       ) : null}
-      <IncomeDetailCard
-        categories={[...expenseCategories, ...incomeCategories]}
-        income={income}
-        members={members}
-        milestones={milestones}
-      />
+      <IncomeDetailCard categories={categories} income={income} members={members} milestones={milestones} />
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       <Card className="gap-3 sm:flex-row sm:justify-end">
         <Button

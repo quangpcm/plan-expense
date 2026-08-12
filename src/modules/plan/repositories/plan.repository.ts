@@ -1,4 +1,3 @@
-import type { CategoryPreset } from '@/modules/category/types/category';
 import type { AuthUser } from '@/modules/auth/types/auth';
 import type { PlanDocument, PlanSummary } from '@/modules/plan/types/plan';
 
@@ -10,7 +9,6 @@ export type CreatePlanPersistenceInput = {
   endDate: Date | null;
   owner: AuthUser;
   timezone: string;
-  categoryPresets: CategoryPreset[];
 };
 
 export type UpdatePlanPersistenceInput = {

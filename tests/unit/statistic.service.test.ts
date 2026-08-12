@@ -2,7 +2,7 @@ import { Timestamp } from 'firebase/firestore';
 import { describe, expect, it } from 'vitest';
 
 import { StatisticService } from '@/modules/statistic/services/statistic.service';
-import type { CategoryDocument } from '@/modules/category/types/category';
+import type { Category } from '@/modules/category/types/category';
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
 import type { IncomeDocument } from '@/modules/income/types/income';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
@@ -140,19 +140,12 @@ function makeSettlement(overrides: Partial<SettlementDocument> = {}): Settlement
 
 describe('StatisticService', () => {
   const service = new StatisticService();
-  const categories: CategoryDocument[] = [
+  const categories: Category[] = [
     {
       id: 'cat-food',
-      planId: 'plan-1',
       name: 'Food',
       icon: 'utensils',
       categoryType: 'expense',
-      isDefault: true,
-      isActive: true,
-      sortOrder: 0,
-      createdByUserId: 'user-a',
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
     },
   ];
 

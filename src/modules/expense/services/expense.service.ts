@@ -9,7 +9,7 @@ import type {
   UpdateExpenseInput,
 } from '@/modules/expense/types/expense';
 import type { ExpenseRepository } from '@/modules/expense/repositories/expense.repository';
-import type { CategoryDocument } from '@/modules/category/types/category';
+import type { Category } from '@/modules/category/types/category';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
@@ -22,7 +22,7 @@ type ExpenseContext = {
   milestones: MilestoneDocument[];
   currentMember: PlanMemberDocument | null;
   currentUser: AuthUser;
-  categories: CategoryDocument[];
+  categories: Category[];
 };
 
 export class ExpenseService {

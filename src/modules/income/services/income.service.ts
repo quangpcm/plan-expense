@@ -1,6 +1,6 @@
 import { AppError } from '@/shared/errors/app-error';
 import type { AuthUser } from '@/modules/auth/types/auth';
-import type { CategoryDocument } from '@/modules/category/types/category';
+import type { Category } from '@/modules/category/types/category';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
@@ -13,7 +13,7 @@ type IncomeContext = {
   members: PlanMemberDocument[];
   currentMember: PlanMemberDocument | null;
   currentUser: AuthUser;
-  categories: CategoryDocument[];
+  categories: Category[];
   milestones: MilestoneDocument[];
 };
 

@@ -1,4 +1,6 @@
-export { categoryService } from './services';
-export { useExpenseCategories } from './hooks/use-expense-categories';
-export { useIncomeCategories } from './hooks/use-income-categories';
-export type { CategoryDocument, CategoryPreset, CategoryType } from './types/category';
+export {
+  categoryPresetsByPlanType,
+  getExpenseCategories,
+  getIncomeCategories,
+} from './constants/category-presets';
+export type { Category, CategoryType } from './types/category';

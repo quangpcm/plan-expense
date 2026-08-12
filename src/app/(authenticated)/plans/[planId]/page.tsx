@@ -25,8 +25,7 @@ import { usePlanInvitations } from '@/modules/invitation/hooks/use-plan-invitati
 import { invitationService } from '@/modules/invitation/services';
 import type { InvitationDocument } from '@/modules/invitation/types/invitation';
 import { useIncomes } from '@/modules/income/hooks/use-incomes';
-import { useExpenseCategories } from '@/modules/category/hooks/use-expense-categories';
-import { useIncomeCategories } from '@/modules/category/hooks/use-income-categories';
+import { getExpenseCategories, getIncomeCategories } from '@/modules/category/constants/category-presets';
 import { TimelineList } from '@/modules/expense/components/timeline-list';
 import { useExpenses } from '@/modules/expense/hooks/use-expenses';
 import { MemberList } from '@/modules/member/components/member-list';
@@ -119,8 +118,8 @@ export default function PlanDetailPage() {
   const { todos, isLoading: isTodosLoading, errorMessage: todoError } = useTodos(planId);
   const { members, currentMember, permissions, errorMessage: memberError } = usePlanMembers(planId);
   const { invitations, errorMessage: invitationError } = usePlanInvitations(planId);
-  const { categories, errorMessage: categoryError } = useExpenseCategories(planId);
-  const { categories: incomeCategories, errorMessage: incomeCategoryError } = useIncomeCategories(planId);
+  const categories = useMemo(() => (plan ? getExpenseCategories(plan.planType) : []), [plan]);
+  const incomeCategories = useMemo(() => (plan ? getIncomeCategories(plan.planType) : []), [plan]);
   const { expenses, errorMessage: expenseError } = useExpenses(planId);
   const { incomes, errorMessage: incomeError } = useIncomes(planId);
   const { settlements, errorMessage: settlementWatchError } = useSettlements(planId);
@@ -826,8 +825,6 @@ export default function PlanDetailPage() {
       todoError ||
       memberError ||
       invitationError ||
-      categoryError ||
-      incomeCategoryError ||
       expenseError ||
       incomeError ||
       settlementWatchError ? (
@@ -838,8 +835,6 @@ export default function PlanDetailPage() {
             todoError ||
             memberError ||
             invitationError ||
-            categoryError ||
-            incomeCategoryError ||
             expenseError ||
             incomeError ||
             settlementWatchError ||
