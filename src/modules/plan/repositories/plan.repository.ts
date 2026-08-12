@@ -22,6 +22,7 @@ export interface PlanRepository {
   createPlanGraph(input: CreatePlanPersistenceInput): Promise<{ planId: string }>;
   updatePlan(planId: string, input: UpdatePlanPersistenceInput): Promise<void>;
   closePlan(planId: string): Promise<void>;
+  deletePlan(planId: string, ownerUserId: string): Promise<void>;
   watchUserPlans(
     userId: string,
     callback: (plans: PlanSummary[]) => void,

@@ -5,42 +5,40 @@ export type MilestoneTemplate = {
   iconId: string | null;
 };
 
+// Milestones represent WHEN/which phase a transaction happened in, not WHAT it
+// was for (that's Category's job). Kept to a 3-milestone "minimum useful
+// structure" per plan so a freshly created plan doesn't open onto a long,
+// opinionated timeline the user has to fight — they can always add more.
 export const milestoneTemplatesByPlanType: Record<PlanType, MilestoneTemplate[]> = {
   travel: [
     { title: 'Chuẩn bị', iconId: 'luggage' },
-    { title: 'Di chuyển', iconId: 'plane' },
-    { title: 'Lưu trú', iconId: 'hotel' },
-    { title: 'Vui chơi', iconId: 'map' },
+    { title: 'Chuyến đi', iconId: 'plane' },
+    { title: 'Kết thúc', iconId: 'flag' },
   ],
   wedding: [
-    { title: 'Dạm ngõ', iconId: 'rings' },
-    { title: 'Thử váy cưới', iconId: 'shirt' },
-    { title: 'Chụp ảnh cưới', iconId: 'camera' },
-    { title: 'Chọn nhà hàng', iconId: 'utensils' },
-    { title: 'Đám hỏi', iconId: 'heart-handshake' },
-    { title: 'Đám cưới nhà gái', iconId: 'home' },
-    { title: 'Đám cưới nhà trai', iconId: 'home' },
+    { title: 'Chuẩn bị', iconId: 'clipboard-list' },
+    { title: 'Lễ cưới', iconId: 'rings' },
+    { title: 'Hoàn tất', iconId: 'flag' },
   ],
   saving: [
-    { title: 'Mục tiêu', iconId: 'target' },
+    { title: 'Bắt đầu', iconId: 'flag' },
     { title: 'Tích lũy', iconId: 'piggy-bank' },
-    { title: 'Đánh giá', iconId: 'chart-column' },
+    { title: 'Hoàn thành', iconId: 'check-circle-2' },
   ],
   birthday: [
     { title: 'Chuẩn bị', iconId: 'sparkles' },
-    { title: 'Khách mời', iconId: 'users' },
-    { title: 'Tổ chức tiệc', iconId: 'cake' },
+    { title: 'Tổ chức', iconId: 'cake' },
+    { title: 'Hoàn tất', iconId: 'flag' },
   ],
   event: [
-    { title: 'Lên ý tưởng', iconId: 'lightbulb' },
+    { title: 'Lên kế hoạch', iconId: 'lightbulb' },
     { title: 'Chuẩn bị', iconId: 'clipboard-list' },
-    { title: 'Vận hành', iconId: 'play-circle' },
+    { title: 'Tổ chức', iconId: 'play-circle' },
   ],
-  shared_living: [
-    { title: 'Việc chung', iconId: 'home' },
-    { title: 'Hóa đơn', iconId: 'receipt' },
-    { title: 'Bảo trì', iconId: 'wrench' },
-  ],
+  // Shared living is an ongoing plan with no natural start/end phases; a single
+  // catch-all milestone exists only because milestoneId is still required on
+  // every expense/income today. Drop this back to [] once that's optional.
+  shared_living: [{ title: 'Sinh hoạt chung', iconId: 'home' }],
   project: [
     { title: 'Lên kế hoạch', iconId: 'clipboard-list' },
     { title: 'Triển khai', iconId: 'play-circle' },

@@ -35,6 +35,15 @@ type ExpenseFormProps = {
   expense?: ExpenseDocument;
 };
 
+// Some legacy expenses predate this app's write path and can hold a non-string
+// value (or null) in these optional text fields. The schema for these fields is
+// `z.string().optional().or(z.literal(''))`, and Zod collapses ANY union mismatch
+// into a bare, field-less "Invalid input" message — so a stray null/number here
+// silently blocks saving with no clue which field caused it. Coerce defensively.
+function toSafeString(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+
 export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -62,7 +71,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
   const defaultParticipantIds =
     expense?.participants.map((participant) => participant.memberId) ||
     activeMembers.map((member) => member.id);
-  const defaultCategoryId = expense?.categoryId || categories[0]?.id || '';
+  const defaultCategoryId = toSafeString(expense?.categoryId) || categories[0]?.id || '';
   const milestoneIdFromQuery = searchParams.get('milestoneId') || '';
   const returnTab = searchParams.get('returnTab');
   const defaultMilestoneId = expense?.milestoneId || milestoneIdFromQuery || milestones[0]?.id || '';
@@ -90,9 +99,9 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
       participantMemberIds: defaultParticipantIds,
       splitMethod: expense?.splitMethod || 'equal',
       splitValues: defaultSplitValues,
-      merchantName: expense?.merchantName || '',
-      locationName: expense?.locationName || '',
-      note: expense?.note || '',
+      merchantName: toSafeString(expense?.merchantName),
+      locationName: toSafeString(expense?.locationName),
+      note: toSafeString(expense?.note),
       spentAt: expense ? formatDateTimeLocalInput(expense.spentAt.toDate()) : '',
       attachments: (expense?.attachments ?? []).map(
         (attachment): AttachmentDraft => ({ kind: 'existing', id: attachment.id, attachment }),
@@ -208,8 +217,10 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
     } catch (error) {
       if (error instanceof ZodError) {
         setErrorMessage(
-          error.issues.map((issue) => issue.message).filter(Boolean).join(' | ') ||
-            'Vui lòng kiểm tra lại thông tin khoản chi.',
+          error.issues
+            .map((issue) => (issue.path.length ? `${issue.path.join('.')}: ${issue.message}` : issue.message))
+            .filter(Boolean)
+            .join(' | ') || 'Vui lòng kiểm tra lại thông tin khoản chi.',
         );
       } else if (error instanceof Error) {
         setErrorMessage(error.message);

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { notFound, useParams, useSearchParams } from 'next/navigation';
+import { notFound, useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   BarChart3,
   Clock,
@@ -120,6 +120,7 @@ const planStatusLabel: Record<PlanStatus, string> = {
 
 export default function PlanDetailPage() {
   const params = useParams<{ planId: string }>();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const planId = Array.isArray(params.planId) ? params.planId[0] : params.planId;
   const { user } = useAuthSession();
@@ -142,6 +143,9 @@ export default function PlanDetailPage() {
   const [isSettlementSubmitting, setIsSettlementSubmitting] = useState(false);
   const [closingError, setClosingError] = useState<string | null>(null);
   const [isClosingPlan, setIsClosingPlan] = useState(false);
+  const [deletingError, setDeletingError] = useState<string | null>(null);
+  const [isDeletingPlan, setIsDeletingPlan] = useState(false);
+  const [showDeletePlanConfirm, setShowDeletePlanConfirm] = useState(false);
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
   const [selectedTimelineMilestoneId, setSelectedTimelineMilestoneId] = useState<string | null>(null);
   const [showMilestoneForm, setShowMilestoneForm] = useState(false);
@@ -607,6 +611,19 @@ export default function PlanDetailPage() {
       setClosingError(error instanceof Error ? error.message : 'Hiện chưa thể đóng kế hoạch này.');
     } finally {
       setIsClosingPlan(false);
+    }
+  }
+
+  async function handleDeletePlan() {
+    setIsDeletingPlan(true);
+    setDeletingError(null);
+
+    try {
+      await planService.deletePlan(ensuredPlan, currentMember);
+      router.replace('/plans');
+    } catch (error) {
+      setDeletingError(error instanceof Error ? error.message : 'Hiện chưa thể xóa kế hoạch này.');
+      setIsDeletingPlan(false);
     }
   }
 
@@ -1645,6 +1662,59 @@ export default function PlanDetailPage() {
             </div>
           </>
         ) : null}
+        {showDeletePlanConfirm ? (
+          <>
+            <div className="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
+              <button
+                aria-label="Đóng xác nhận xóa kế hoạch"
+                className="absolute inset-0"
+                onClick={() => (isDeletingPlan ? null : setShowDeletePlanConfirm(false))}
+                type="button"
+              />
+              <Dialog
+                className="relative z-10 w-full max-w-md"
+                description="Toàn bộ dữ liệu của kế hoạch này — thành viên, mốc kế hoạch, công việc, khoản thu/chi, đối soát, lời mời — sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác."
+                title="Xóa kế hoạch này?"
+              >
+                {deletingError ? <AuthFormMessage message={deletingError} type="error" /> : null}
+                <div className="mt-4 flex justify-end gap-2">
+                  <Button disabled={isDeletingPlan} onClick={() => setShowDeletePlanConfirm(false)} variant="secondary">
+                    Hủy
+                  </Button>
+                  <Button
+                    className="bg-red-600 text-white hover:bg-red-700"
+                    disabled={isDeletingPlan}
+                    onClick={handleDeletePlan}
+                  >
+                    {isDeletingPlan ? 'Đang xóa kế hoạch...' : 'Xóa vĩnh viễn'}
+                  </Button>
+                </div>
+              </Dialog>
+            </div>
+            <div className="md:hidden">
+              <BottomSheet
+                description="Toàn bộ dữ liệu của kế hoạch này — thành viên, mốc kế hoạch, công việc, khoản thu/chi, đối soát, lời mời — sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác."
+                onClose={() => (isDeletingPlan ? undefined : setShowDeletePlanConfirm(false))}
+                open={showDeletePlanConfirm}
+                title="Xóa kế hoạch này?"
+              >
+                {deletingError ? <AuthFormMessage message={deletingError} type="error" /> : null}
+                <div className="mt-4 flex justify-end gap-2">
+                  <Button disabled={isDeletingPlan} onClick={() => setShowDeletePlanConfirm(false)} variant="secondary">
+                    Hủy
+                  </Button>
+                  <Button
+                    className="bg-red-600 text-white hover:bg-red-700"
+                    disabled={isDeletingPlan}
+                    onClick={handleDeletePlan}
+                  >
+                    {isDeletingPlan ? 'Đang xóa kế hoạch...' : 'Xóa vĩnh viễn'}
+                  </Button>
+                </div>
+              </BottomSheet>
+            </div>
+          </>
+        ) : null}
         {headerModal === 'plan-settings' ? (
           <>
             <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
@@ -1737,27 +1807,57 @@ export default function PlanDetailPage() {
               />
               <Dialog
                 className="relative z-10 w-full max-w-md"
-                description="Tính năng này đang được phát triển và sẽ sớm ra mắt."
+                description={
+                  permissions.canManagePlan
+                    ? 'Xóa kế hoạch sẽ xóa vĩnh viễn toàn bộ dữ liệu — thành viên, mốc kế hoạch, công việc, khoản thu/chi, đối soát, lời mời. Hành động này không thể hoàn tác.'
+                    : 'Tính năng này đang được phát triển và sẽ sớm ra mắt.'
+                }
                 title={permissions.canManagePlan ? 'Xóa kế hoạch' : 'Rời kế hoạch'}
               >
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2">
                   <Button onClick={() => setHeaderModal(null)} variant="ghost">
-                    Đã hiểu
+                    {permissions.canManagePlan ? 'Hủy' : 'Đã hiểu'}
                   </Button>
+                  {permissions.canManagePlan ? (
+                    <Button
+                      className="bg-red-600 text-white hover:bg-red-700"
+                      onClick={() => {
+                        setHeaderModal(null);
+                        setShowDeletePlanConfirm(true);
+                      }}
+                    >
+                      Xóa kế hoạch
+                    </Button>
+                  ) : null}
                 </div>
               </Dialog>
             </div>
             <div className="md:hidden">
               <BottomSheet
-                description="Tính năng này đang được phát triển và sẽ sớm ra mắt."
+                description={
+                  permissions.canManagePlan
+                    ? 'Xóa kế hoạch sẽ xóa vĩnh viễn toàn bộ dữ liệu — thành viên, mốc kế hoạch, công việc, khoản thu/chi, đối soát, lời mời. Hành động này không thể hoàn tác.'
+                    : 'Tính năng này đang được phát triển và sẽ sớm ra mắt.'
+                }
                 onClose={() => setHeaderModal(null)}
                 open={headerModal === 'leave-or-delete'}
                 title={permissions.canManagePlan ? 'Xóa kế hoạch' : 'Rời kế hoạch'}
               >
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2">
                   <Button onClick={() => setHeaderModal(null)} variant="ghost">
-                    Đã hiểu
+                    {permissions.canManagePlan ? 'Hủy' : 'Đã hiểu'}
                   </Button>
+                  {permissions.canManagePlan ? (
+                    <Button
+                      className="bg-red-600 text-white hover:bg-red-700"
+                      onClick={() => {
+                        setHeaderModal(null);
+                        setShowDeletePlanConfirm(true);
+                      }}
+                    >
+                      Xóa kế hoạch
+                    </Button>
+                  ) : null}
                 </div>
               </BottomSheet>
             </div>

@@ -31,6 +31,15 @@ type IncomeFormProps = {
   income?: IncomeDocument;
 };
 
+// Some legacy incomes predate this app's write path and can hold a non-string
+// value (or null) in these optional text fields. The schema for these fields is
+// `z.string().optional().or(z.literal(''))`, and Zod collapses ANY union mismatch
+// into a bare, field-less "Invalid input" message — so a stray null/number here
+// silently blocks saving with no clue which field caused it. Coerce defensively.
+function toSafeString(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+
 export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -50,9 +59,9 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
       title: income?.title || '',
       amount: income?.amount || 0,
       milestoneId: defaultMilestoneId,
-      categoryId: income?.categoryId || '',
+      categoryId: toSafeString(income?.categoryId),
       contributedByMemberId: income?.contributedByMemberId || currentMember?.id || activeMembers[0]?.id || '',
-      note: income?.note || '',
+      note: toSafeString(income?.note),
       receivedAt: income ? formatDateTimeLocalInput(income.receivedAt.toDate()) : '',
     },
   });
@@ -130,7 +139,12 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
       }
     } catch (error) {
       if (error instanceof ZodError) {
-        setErrorMessage(error.issues[0]?.message || 'Vui lòng kiểm tra lại thông tin khoản thu.');
+        setErrorMessage(
+          error.issues
+            .map((issue) => (issue.path.length ? `${issue.path.join('.')}: ${issue.message}` : issue.message))
+            .filter(Boolean)
+            .join(' | ') || 'Vui lòng kiểm tra lại thông tin khoản thu.',
+        );
       } else if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {

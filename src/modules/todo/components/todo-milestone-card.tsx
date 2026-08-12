@@ -78,6 +78,17 @@ export function TodoMilestoneCard({
               {formatCompactCurrency(displayedBudget)}
             </span>
           ) : null}
+          {todo.vendors.length > 0 ? (
+            <span
+              className={cn(
+                'inline-flex shrink-0 items-center gap-1',
+                selectedVendor ? 'font-semibold text-[#2f518f]' : '',
+              )}
+            >
+              <Store className={cn('size-3 sm:size-5', selectedVendor ? 'text-[#5e7fb8]' : 'text-slate-400')} />
+              {todo.vendors.length}
+            </span>
+          ) : null}
         </div>
         {selectedVendor ? (
           <div className="inline-flex max-w-full items-center gap-2 self-start rounded-full border border-[#bfd6ff] bg-[#eef5ff] px-2.5 py-1 text-xs font-medium text-[#4f6792] sm:px-3">

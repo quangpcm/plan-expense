@@ -4,20 +4,24 @@ import {
   Timestamp,
   collection,
   doc,
+  getDocs,
   onSnapshot,
   orderBy,
   query,
   updateDoc,
   writeBatch,
 } from 'firebase/firestore';
+import type { DocumentReference } from 'firebase/firestore';
 
 import { getFirebaseFirestore } from '@/config/firebase.config';
+import { milestoneTemplatesByPlanType } from '@/modules/plan/constants/milestone-templates';
 import type {
   CreatePlanPersistenceInput,
   PlanRepository,
   UpdatePlanPersistenceInput,
 } from '@/modules/plan/repositories/plan.repository';
 import type { PlanDocument, PlanSummary } from '@/modules/plan/types/plan';
+import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import { AppError } from '@/shared/errors/app-error';
 import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
@@ -67,6 +71,7 @@ export class FirestorePlanRepository implements PlanRepository {
     const planRef = doc(collection(db, 'plans'));
     const ownerMemberRef = doc(collection(db, 'plans', planRef.id, 'members'));
     const userPlanRef = doc(db, 'userPlans', input.owner.uid, 'plans', planRef.id);
+    const milestoneTemplates = milestoneTemplatesByPlanType[input.planType];
 
     batch.set(planRef, {
       id: planRef.id,
@@ -83,7 +88,7 @@ export class FirestorePlanRepository implements PlanRepository {
       endDate: input.endDate ? Timestamp.fromDate(input.endDate) : null,
       status: 'active',
       memberCount: 1,
-      milestoneCount: 0,
+      milestoneCount: milestoneTemplates.length,
       todoCount: 0,
       expenseCount: 0,
       incomeCount: 0,
@@ -138,6 +143,31 @@ export class FirestorePlanRepository implements PlanRepository {
       updatedAt: now,
     });
 
+    milestoneTemplates.forEach((template, index) => {
+      const milestoneRef = doc(collection(db, 'plans', planRef.id, 'milestones'));
+
+      batch.set(milestoneRef, {
+        id: milestoneRef.id,
+        planId: planRef.id,
+        title: template.title,
+        description: null,
+        iconId: template.iconId,
+        startDate: null,
+        endDate: null,
+        status: 'upcoming',
+        orderIndex: index,
+        budgetAmount: null,
+        totalExpense: 0,
+        todoCount: 0,
+        completedTodoCount: 0,
+        createdByUserId: input.owner.uid,
+        createdAt: now,
+        updatedAt: now,
+        completedAt: null,
+        cancelledAt: null,
+      } satisfies MilestoneDocument);
+    });
+
     try {
       await batch.commit();
     } catch (error) {
@@ -179,6 +209,59 @@ export class FirestorePlanRepository implements PlanRepository {
       updatedAt: now,
     });
     await syncUserPlansAggregate(planId, { planStatus: 'closed', updatedAt: now });
+  }
+
+  async deletePlan(planId: string, ownerUserId: string) {
+    const db = getFirebaseFirestore();
+    // Firestore has no cascade delete: every subcollection doc and every
+    // member's `userPlans` index copy has to be deleted individually. The
+    // owner's OWN `userPlans` doc is what every delete rule below checks via
+    // isPlanOwner(), so it must be the very last thing removed — deleting it
+    // any earlier would make the owner fail the permission check partway
+    // through and abort the rest of the cleanup.
+    const subcollectionNames = ['members', 'milestones', 'todos', 'expenses', 'incomes', 'settlements', 'invitations'];
+
+    try {
+      const refsToDelete: DocumentReference[] = [];
+      const memberUserIds = new Set<string>();
+
+      for (const name of subcollectionNames) {
+        const snapshot = await getDocs(collection(db, 'plans', planId, name));
+
+        snapshot.forEach((docSnapshot) => {
+          refsToDelete.push(docSnapshot.ref);
+
+          if (name === 'members') {
+            const userId = (docSnapshot.data() as { userId?: string | null }).userId;
+
+            if (userId) {
+              memberUserIds.add(userId);
+            }
+          }
+        });
+      }
+
+      memberUserIds.delete(ownerUserId);
+      memberUserIds.forEach((userId) => {
+        refsToDelete.push(doc(db, 'userPlans', userId, 'plans', planId));
+      });
+
+      const CHUNK_SIZE = 450;
+
+      for (let index = 0; index < refsToDelete.length; index += CHUNK_SIZE) {
+        const batch = writeBatch(db);
+        refsToDelete.slice(index, index + CHUNK_SIZE).forEach((ref) => batch.delete(ref));
+        await batch.commit();
+      }
+
+      const finalBatch = writeBatch(db);
+      finalBatch.delete(doc(db, 'plans', planId));
+      finalBatch.delete(doc(db, 'userPlans', ownerUserId, 'plans', planId));
+      await finalBatch.commit();
+    } catch (error) {
+      console.error('deletePlan failed', error);
+      throw mapPlanWriteError(error);
+    }
   }
 
   watchUserPlans(userId: string, callback: (plans: PlanSummary[]) => void, onError?: (error: Error) => void) {
