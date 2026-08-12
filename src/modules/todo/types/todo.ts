@@ -6,6 +6,7 @@ export type TodoStatus = 'todo' | 'in_progress' | 'done' | 'cancelled';
 export type TodoVendor = {
   id: string;
   name: string;
+  description: string | null;
   link: string | null;
   price: number;
 };

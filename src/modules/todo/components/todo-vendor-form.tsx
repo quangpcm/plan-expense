@@ -13,6 +13,7 @@ import type { AuthUser } from '@/modules/auth/types/auth';
 import { AmountInput } from '@/shared/components/ui/amount-input';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import { Textarea } from '@/shared/components/ui/textarea';
 
 type TodoVendorFormProps = {
   plan: PlanDocument;
@@ -20,10 +21,12 @@ type TodoVendorFormProps = {
   currentMember: PlanMemberDocument | null;
   currentUser: AuthUser | null;
   onSuccess?: () => void;
+  onClose?: () => void;
 };
 
-export function TodoVendorForm({ plan, todo, currentMember, currentUser, onSuccess }: TodoVendorFormProps) {
+export function TodoVendorForm({ plan, todo, currentMember, currentUser, onSuccess, onClose }: TodoVendorFormProps) {
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [link, setLink] = useState('');
   const [price, setPrice] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -44,12 +47,14 @@ export function TodoVendorForm({ plan, todo, currentMember, currentUser, onSucce
       const parsed = addTodoVendorSchema.parse({
         todoId: todo.id,
         name,
+        description,
         link,
         price,
       });
 
       await todoService.addVendor(plan, parsed, currentUser, currentMember);
       setName('');
+      setDescription('');
       setLink('');
       setPrice(0);
       onSuccess?.();
@@ -81,7 +86,22 @@ export function TodoVendorForm({ plan, todo, currentMember, currentUser, onSucce
         <label className="text-sm font-medium text-slate-700">Link tham khảo</label>
         <Input onChange={(event) => setLink(event.target.value)} placeholder="Không bắt buộc" value={link} />
       </div>
-      <div className="flex justify-end">
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700">Mô tả ngắn</label>
+        <Textarea
+          className="min-h-20"
+          maxLength={280}
+          onChange={(event) => setDescription(event.target.value)}
+          placeholder="Không bắt buộc"
+          value={description}
+        />
+      </div>
+      <div className="flex items-center justify-end gap-2">
+        {onClose ? (
+          <Button onClick={onClose} variant="ghost">
+            Đóng form
+          </Button>
+        ) : null}
         <Button disabled={isSubmitting} type="submit">
           {isSubmitting ? 'Đang lưu...' : 'Thêm nhà cung cấp'}
         </Button>

@@ -124,26 +124,28 @@ export function TodoCard({
             {todo.vendors.length > 0 ? (
               <ul className="space-y-2">
                 {todo.vendors.map((vendor) => (
-                  <li
-                    className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-2.5 text-sm"
-                    key={vendor.id}
-                  >
-                    <span className="min-w-0 truncate font-medium text-slate-900">
-                      {vendor.link ? (
-                        <a
-                          className="text-sky-700 hover:underline"
-                          href={toVendorHref(vendor.link)}
-                          onClick={stopPropagation}
-                          rel="noreferrer"
-                          target="_blank"
-                        >
-                          {vendor.name}
-                        </a>
-                      ) : (
-                        vendor.name
-                      )}
-                    </span>
-                    <span className="shrink-0 text-slate-600">{formatCurrency(vendor.price)}</span>
+                  <li className="space-y-1 rounded-2xl bg-slate-50 px-4 py-2.5 text-sm" key={vendor.id}>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="min-w-0 truncate font-medium text-slate-900">
+                        {vendor.link ? (
+                          <a
+                            className="text-sky-700 hover:underline"
+                            href={toVendorHref(vendor.link)}
+                            onClick={stopPropagation}
+                            rel="noreferrer"
+                            target="_blank"
+                          >
+                            {vendor.name}
+                          </a>
+                        ) : (
+                          vendor.name
+                        )}
+                      </span>
+                      <span className="shrink-0 text-slate-600">{formatCurrency(vendor.price)}</span>
+                    </div>
+                    {vendor.description ? (
+                      <p className="line-clamp-2 text-xs leading-5 text-slate-500">{vendor.description}</p>
+                    ) : null}
                   </li>
                 ))}
               </ul>

@@ -117,6 +117,7 @@ export class TodoService {
 
     await this.todoRepository.addVendor(plan.id, input.todoId, {
       name,
+      description: input.description?.trim() || null,
       link: input.link?.trim() || null,
       price: input.price,
     });

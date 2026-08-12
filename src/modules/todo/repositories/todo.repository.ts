@@ -19,6 +19,7 @@ export type CreateTodoPersistenceInput = {
 
 export type AddTodoVendorPersistenceInput = {
   name: string;
+  description: string | null;
   link: string | null;
   price: number;
 };

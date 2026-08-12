@@ -111,7 +111,7 @@ export function TodoDetailView({
             {todo.vendors.map((vendor) => (
               <li
                 className={cn(
-                  'flex items-center justify-between gap-3 rounded-2xl border px-4 py-2.5 text-sm transition',
+                  'space-y-1 rounded-2xl border px-4 py-2.5 text-sm transition',
                   vendor.id === todo.selectedTodoVendorId
                     ? 'border-[#cfe0ff] bg-[#eef4ff]'
                     : 'border-transparent bg-slate-50 hover:border-[#dbe5f7]',
@@ -127,26 +127,31 @@ export function TodoDetailView({
                 role="button"
                 tabIndex={0}
               >
-                <div className="min-w-0">
-                  <span className="block truncate font-medium text-slate-900">
-                    {vendor.link ? (
-                      <a
-                        className="text-sky-700 hover:underline"
-                        href={toVendorHref(vendor.link)}
-                        onClick={(event) => event.stopPropagation()}
-                        rel="noreferrer"
-                        target="_blank"
-                      >
-                        {vendor.name}
-                      </a>
-                    ) : (
-                      vendor.name
-                    )}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <span className="block truncate font-medium text-slate-900">
+                      {vendor.link ? (
+                        <a
+                          className="text-sky-700 hover:underline"
+                          href={toVendorHref(vendor.link)}
+                          onClick={(event) => event.stopPropagation()}
+                          rel="noreferrer"
+                          target="_blank"
+                        >
+                          {vendor.name}
+                        </a>
+                      ) : (
+                        vendor.name
+                      )}
+                    </span>
+                  </div>
+                  <span className={cn('shrink-0 font-medium', vendor.id === todo.selectedTodoVendorId ? 'text-[#1d4ed8]' : 'text-slate-600')}>
+                    {formatCurrency(vendor.price)}
                   </span>
                 </div>
-                <span className={cn('shrink-0 font-medium', vendor.id === todo.selectedTodoVendorId ? 'text-[#1d4ed8]' : 'text-slate-600')}>
-                  {formatCurrency(vendor.price)}
-                </span>
+                {vendor.description ? (
+                  <p className="line-clamp-2 text-xs leading-5 text-slate-500">{vendor.description}</p>
+                ) : null}
               </li>
             ))}
           </ul>

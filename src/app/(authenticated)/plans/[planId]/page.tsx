@@ -603,6 +603,12 @@ export default function PlanDetailPage() {
     }
   }
 
+  function closeVendorForm() {
+    setVendorFormTodo(null);
+    setDetailTodo(todoToRestoreAfterVendor);
+    setTodoToRestoreAfterVendor(null);
+  }
+
   async function handleSelectTodoVendor(todo: TodoDocument, vendorId: string) {
     if (!user) {
       return;
@@ -1400,11 +1406,7 @@ export default function PlanDetailPage() {
               <button
                 aria-label="Đóng form nhà cung cấp"
                 className="absolute inset-0"
-                onClick={() => {
-                  setVendorFormTodo(null);
-                  setDetailTodo(todoToRestoreAfterVendor);
-                  setTodoToRestoreAfterVendor(null);
-                }}
+                onClick={closeVendorForm}
                 type="button"
               />
               <Dialog
@@ -1415,62 +1417,28 @@ export default function PlanDetailPage() {
                 <TodoVendorForm
                   currentMember={currentMember}
                   currentUser={user}
-                  onSuccess={() => {
-                    setVendorFormTodo(null);
-                    setDetailTodo(todoToRestoreAfterVendor);
-                    setTodoToRestoreAfterVendor(null);
-                  }}
+                  onClose={closeVendorForm}
+                  onSuccess={closeVendorForm}
                   plan={ensuredPlan}
                   todo={vendorFormTodo}
                 />
-                <div className="mt-4 flex justify-end">
-                  <Button
-                    onClick={() => {
-                      setVendorFormTodo(null);
-                      setDetailTodo(todoToRestoreAfterVendor);
-                      setTodoToRestoreAfterVendor(null);
-                    }}
-                    variant="ghost"
-                  >
-                    Đóng form
-                  </Button>
-                </div>
               </Dialog>
             </div>
             <div className="md:hidden">
               <BottomSheet
                 description={`Thêm nhà cung cấp tham khảo cho "${vendorFormTodo.title}".`}
-                onClose={() => {
-                  setVendorFormTodo(null);
-                  setDetailTodo(todoToRestoreAfterVendor);
-                  setTodoToRestoreAfterVendor(null);
-                }}
+                onClose={closeVendorForm}
                 open={Boolean(vendorFormTodo)}
                 title="Thêm nhà cung cấp"
               >
                 <TodoVendorForm
                   currentMember={currentMember}
                   currentUser={user}
-                  onSuccess={() => {
-                    setVendorFormTodo(null);
-                    setDetailTodo(todoToRestoreAfterVendor);
-                    setTodoToRestoreAfterVendor(null);
-                  }}
+                  onClose={closeVendorForm}
+                  onSuccess={closeVendorForm}
                   plan={ensuredPlan}
                   todo={vendorFormTodo}
                 />
-                <div className="mt-4 flex justify-end">
-                  <Button
-                    onClick={() => {
-                      setVendorFormTodo(null);
-                      setDetailTodo(todoToRestoreAfterVendor);
-                      setTodoToRestoreAfterVendor(null);
-                    }}
-                    variant="ghost"
-                  >
-                    Đóng form
-                  </Button>
-                </div>
               </BottomSheet>
             </div>
           </>

@@ -247,6 +247,7 @@ export class FirestoreTodoRepository implements TodoRepository {
       const newVendor: TodoVendor = {
         id: crypto.randomUUID(),
         name: vendor.name,
+        description: vendor.description,
         link: vendor.link,
         price: vendor.price,
       };
