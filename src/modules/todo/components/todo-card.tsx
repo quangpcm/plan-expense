@@ -9,6 +9,7 @@ import { priorityLabel, statusLabel, toVendorHref } from '@/modules/todo/utils/t
 import { getSelectedTodoVendor, getTodoBudgetAmount } from '@/modules/todo/utils/todo-budget';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
+import { AttachmentGallery } from '@/modules/storage';
 import { Avatar } from '@/shared/components/ui/avatar';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
@@ -119,6 +120,12 @@ export function TodoCard({
 
       {isExpanded ? (
         <div className="space-y-4" onClick={stopPropagation}>
+          {todo.attachments.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Hình ảnh</p>
+              <AttachmentGallery attachments={todo.attachments} />
+            </div>
+          ) : null}
           <div className="space-y-2">
             <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Nhà cung cấp</p>
             {todo.vendors.length > 0 ? (
@@ -145,6 +152,9 @@ export function TodoCard({
                     </div>
                     {vendor.description ? (
                       <p className="line-clamp-2 text-xs leading-5 text-slate-500">{vendor.description}</p>
+                    ) : null}
+                    {vendor.attachments.length > 0 ? (
+                      <AttachmentGallery attachments={vendor.attachments} size="sm" />
                     ) : null}
                   </li>
                 ))}

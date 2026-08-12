@@ -26,10 +26,14 @@ export type CreateExpensePersistenceInput = {
   attachments: ExpenseDocument['attachments'];
 };
 
+export type UpdateExpensePersistenceInput = Omit<UpdateExpenseInput, 'attachments'> & {
+  attachments: ExpenseDocument['attachments'];
+};
+
 export interface ExpenseRepository {
   generateExpenseId(planId: string): string;
   createExpense(input: CreateExpensePersistenceInput): Promise<{ expenseId: string }>;
-  updateExpense(planId: string, input: UpdateExpenseInput, participants: ExpenseParticipant[]): Promise<void>;
+  updateExpense(planId: string, input: UpdateExpensePersistenceInput, participants: ExpenseParticipant[]): Promise<void>;
   softDeleteExpense(planId: string, expenseId: string, actor: AuthUser): Promise<void>;
   watchExpenses(
     planId: string,

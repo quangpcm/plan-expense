@@ -43,6 +43,19 @@ const requestSchema = z.discriminatedUnion('mediaType', [
     settlementId: z.string().min(1),
     ...baseSchema,
   }),
+  z.object({
+    mediaType: z.literal('todo-attachment'),
+    planId: z.string().min(1),
+    todoId: z.string().min(1),
+    ...baseSchema,
+  }),
+  z.object({
+    mediaType: z.literal('todo-vendor-attachment'),
+    planId: z.string().min(1),
+    todoId: z.string().min(1),
+    vendorId: z.string().min(1),
+    ...baseSchema,
+  }),
 ]);
 
 async function resolveActiveMember(planId: string, uid: string): Promise<PlanMemberDocument> {
@@ -107,6 +120,13 @@ async function assertPermission(input: RequestUploadUrlInput, uid: string): Prom
 
   if (input.mediaType === 'settlement-attachment' && !permissions.canManageSettlements) {
     throw new AppError('You do not have permission to add settlement attachments.', 'STORAGE_PERMISSION_DENIED', 403);
+  }
+
+  if (
+    (input.mediaType === 'todo-attachment' || input.mediaType === 'todo-vendor-attachment') &&
+    !permissions.canManagePlan
+  ) {
+    throw new AppError('Only the plan owner can manage todo attachments.', 'STORAGE_PERMISSION_DENIED', 403);
   }
 }
 

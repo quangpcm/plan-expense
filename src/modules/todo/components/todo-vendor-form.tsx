@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ZodError } from 'zod';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
@@ -10,6 +10,7 @@ import type { TodoDocument } from '@/modules/todo/types/todo';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import type { AuthUser } from '@/modules/auth/types/auth';
+import { AttachmentPicker, type AttachmentDraft } from '@/modules/storage';
 import { AmountInput } from '@/shared/components/ui/amount-input';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
@@ -29,8 +30,16 @@ export function TodoVendorForm({ plan, todo, currentMember, currentUser, onSucce
   const [description, setDescription] = useState('');
   const [link, setLink] = useState('');
   const [price, setPrice] = useState(0);
+  const [attachmentDrafts, setAttachmentDrafts] = useState<AttachmentDraft[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const errorRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (errorMessage) {
+      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [errorMessage]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -50,6 +59,7 @@ export function TodoVendorForm({ plan, todo, currentMember, currentUser, onSucce
         description,
         link,
         price,
+        attachments: attachmentDrafts,
       });
 
       await todoService.addVendor(plan, parsed, currentUser, currentMember);
@@ -57,6 +67,7 @@ export function TodoVendorForm({ plan, todo, currentMember, currentUser, onSucce
       setDescription('');
       setLink('');
       setPrice(0);
+      setAttachmentDrafts([]);
       onSuccess?.();
     } catch (error) {
       if (error instanceof ZodError) {
@@ -73,7 +84,11 @@ export function TodoVendorForm({ plan, todo, currentMember, currentUser, onSucce
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
-      {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
+      {errorMessage ? (
+        <div ref={errorRef}>
+          <AuthFormMessage message={errorMessage} type="error" />
+        </div>
+      ) : null}
       <div className="space-y-2 text-center">
         <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#727687]">Giá tham khảo</label>
         <AmountInput onChange={setPrice} value={price} />
@@ -95,6 +110,10 @@ export function TodoVendorForm({ plan, todo, currentMember, currentUser, onSucce
           placeholder="Không bắt buộc"
           value={description}
         />
+      </div>
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700">Hình ảnh</label>
+        <AttachmentPicker maxCount={5} onChange={setAttachmentDrafts} value={attachmentDrafts} />
       </div>
       <div className="flex items-center justify-end gap-2">
         {onClose ? (

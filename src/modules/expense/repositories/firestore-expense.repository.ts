@@ -14,8 +14,9 @@ import type { AuthUser } from '@/modules/auth/types/auth';
 import type {
   CreateExpensePersistenceInput,
   ExpenseRepository,
+  UpdateExpensePersistenceInput,
 } from '@/modules/expense/repositories/expense.repository';
-import type { ExpenseDocument, ExpenseParticipant, UpdateExpenseInput } from '@/modules/expense/types/expense';
+import type { ExpenseDocument, ExpenseParticipant } from '@/modules/expense/types/expense';
 import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
@@ -89,7 +90,7 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
     return { expenseId: expenseRef.id };
   }
 
-  async updateExpense(planId: string, input: UpdateExpenseInput, participants: ExpenseParticipant[]) {
+  async updateExpense(planId: string, input: UpdateExpensePersistenceInput, participants: ExpenseParticipant[]) {
     const db = getFirebaseFirestore();
     const expenseRef = doc(db, 'plans', planId, 'expenses', input.expenseId);
     const planRef = doc(db, 'plans', planId);
@@ -137,6 +138,7 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
         locationName: input.locationName || null,
         note: input.note || null,
         spentAt: Timestamp.fromDate(input.spentAt ? new Date(input.spentAt) : new Date()),
+        attachments: input.attachments,
         updatedAt: now,
         version: previousExpense.version + 1,
       });

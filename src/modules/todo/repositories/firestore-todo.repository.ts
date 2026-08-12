@@ -19,31 +19,44 @@ import type {
   AddTodoVendorPersistenceInput,
   CreateTodoPersistenceInput,
   TodoRepository,
+  UpdateTodoPersistenceInput,
 } from '@/modules/todo/repositories/todo.repository';
 import type {
   MoveTodoToMilestoneInput,
   ReorderTodosWithinMilestoneInput,
   TodoDocument,
   TodoVendor,
-  UpdateTodoInput,
 } from '@/modules/todo/types/todo';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
 import { getFallbackTodoOrderIndex, sortTodosByMilestoneOrder, TODO_ORDER_INDEX_STEP } from '@/modules/todo/utils/todo-order';
+
+function normalizeVendor(raw: TodoVendor): TodoVendor {
+  return {
+    ...raw,
+    description: raw.description ?? null,
+    attachments: raw.attachments ?? [],
+  };
+}
 
 function normalizeTodo(raw: TodoDocument): TodoDocument {
   return {
     ...raw,
     orderIndex: Number.isFinite(raw.orderIndex) ? raw.orderIndex : getFallbackTodoOrderIndex(raw),
     budget: raw.budget ?? null,
-    vendors: raw.vendors ?? [],
+    vendors: (raw.vendors ?? []).map(normalizeVendor),
     selectedTodoVendorId: raw.selectedTodoVendorId ?? null,
+    attachments: raw.attachments ?? [],
   };
 }
 
 export class FirestoreTodoRepository implements TodoRepository {
+  generateTodoId(planId: string): string {
+    return doc(collection(getFirebaseFirestore(), 'plans', planId, 'todos')).id;
+  }
+
   async createTodo(input: CreateTodoPersistenceInput) {
     const db = getFirebaseFirestore();
-    const todoRef = doc(collection(db, 'plans', input.planId, 'todos'));
+    const todoRef = doc(db, 'plans', input.planId, 'todos', input.todoId);
     const planRef = doc(db, 'plans', input.planId);
     const milestoneRef = doc(db, 'plans', input.planId, 'milestones', input.milestoneId);
     const now = Timestamp.now();
@@ -63,6 +76,7 @@ export class FirestoreTodoRepository implements TodoRepository {
         budget: input.budget,
         vendors: [],
         selectedTodoVendorId: null,
+        attachments: input.attachments,
         createdByUserId: input.createdByUserId,
         createdAt: now,
         updatedAt: now,
@@ -84,7 +98,7 @@ export class FirestoreTodoRepository implements TodoRepository {
     return { todoId: todoRef.id };
   }
 
-  async updateTodo(planId: string, input: UpdateTodoInput) {
+  async updateTodo(planId: string, input: UpdateTodoPersistenceInput) {
     const db = getFirebaseFirestore();
     const todoRef = doc(db, 'plans', planId, 'todos', input.todoId);
     const planRef = doc(db, 'plans', planId);
@@ -123,6 +137,7 @@ export class FirestoreTodoRepository implements TodoRepository {
           input.selectedTodoVendorId !== undefined
             ? input.selectedTodoVendorId?.trim() || null
             : previousTodo.selectedTodoVendorId ?? null,
+        attachments: input.attachments !== undefined ? input.attachments : previousTodo.attachments ?? [],
         updatedAt: now,
         completedAt: input.status === 'done' ? previousTodo.completedAt ?? now : null,
         cancelledAt: input.status === 'cancelled' ? previousTodo.cancelledAt ?? now : null,
@@ -245,15 +260,16 @@ export class FirestoreTodoRepository implements TodoRepository {
 
       const previousTodo = todoSnapshot.data() as TodoDocument;
       const newVendor: TodoVendor = {
-        id: crypto.randomUUID(),
+        id: vendor.id,
         name: vendor.name,
         description: vendor.description,
         link: vendor.link,
         price: vendor.price,
+        attachments: vendor.attachments,
       };
 
       transaction.update(todoRef, {
-        vendors: [...(previousTodo.vendors ?? []), newVendor],
+        vendors: [...(previousTodo.vendors ?? []).map(normalizeVendor), newVendor],
         updatedAt: now,
       });
     });

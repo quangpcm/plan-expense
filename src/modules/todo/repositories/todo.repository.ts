@@ -7,6 +7,7 @@ import type {
 
 export type CreateTodoPersistenceInput = {
   planId: string;
+  todoId: string;
   milestoneId: string;
   title: string;
   description: string | null;
@@ -15,18 +16,26 @@ export type CreateTodoPersistenceInput = {
   priority: TodoDocument['priority'];
   budget: number | null;
   createdByUserId: string;
+  attachments: TodoDocument['attachments'];
+};
+
+export type UpdateTodoPersistenceInput = Omit<UpdateTodoInput, 'attachments'> & {
+  attachments?: TodoDocument['attachments'] | undefined;
 };
 
 export type AddTodoVendorPersistenceInput = {
+  id: string;
   name: string;
   description: string | null;
   link: string | null;
   price: number;
+  attachments: TodoDocument['attachments'];
 };
 
 export interface TodoRepository {
+  generateTodoId(planId: string): string;
   createTodo(input: CreateTodoPersistenceInput): Promise<{ todoId: string }>;
-  updateTodo(planId: string, input: UpdateTodoInput): Promise<void>;
+  updateTodo(planId: string, input: UpdateTodoPersistenceInput): Promise<void>;
   reorderTodosWithinMilestone(planId: string, input: ReorderTodosWithinMilestoneInput): Promise<void>;
   moveTodoToMilestone(planId: string, input: MoveTodoToMilestoneInput): Promise<void>;
   addVendor(planId: string, todoId: string, vendor: AddTodoVendorPersistenceInput): Promise<void>;

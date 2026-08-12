@@ -1,5 +1,7 @@
 import type { Timestamp } from 'firebase/firestore';
 
+import type { AttachmentDraft, MediaAttachment } from '@/modules/storage/types/attachment';
+
 export type TodoPriority = 'low' | 'medium' | 'high';
 export type TodoStatus = 'todo' | 'in_progress' | 'done' | 'cancelled';
 
@@ -9,6 +11,7 @@ export type TodoVendor = {
   description: string | null;
   link: string | null;
   price: number;
+  attachments: MediaAttachment[];
 };
 
 export type TodoDocument = {
@@ -25,6 +28,7 @@ export type TodoDocument = {
   budget: number | null;
   vendors: TodoVendor[];
   selectedTodoVendorId: string | null;
+  attachments: MediaAttachment[];
   createdByUserId: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -40,6 +44,7 @@ export type CreateTodoInput = {
   dueDate?: string | undefined;
   priority: TodoPriority;
   budget?: number | undefined;
+  attachments: AttachmentDraft[];
 };
 
 export type UpdateTodoInput = {
@@ -53,6 +58,7 @@ export type UpdateTodoInput = {
   status: TodoStatus;
   budget?: number | undefined;
   selectedTodoVendorId?: string | undefined;
+  attachments?: AttachmentDraft[] | undefined;
 };
 
 export type ReorderTodosWithinMilestoneInput = {

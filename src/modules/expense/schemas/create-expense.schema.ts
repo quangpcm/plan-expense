@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { validateSplitValues } from '@/modules/expense/schemas/validate-split-values';
+import { attachmentDraftSchema } from '@/modules/storage/schemas/attachment-draft.schema';
 
 export const createExpenseSchema = z
   .object({
@@ -16,7 +17,7 @@ export const createExpenseSchema = z
     locationName: z.string().trim().max(120).optional().or(z.literal('')),
     note: z.string().trim().max(500).optional().or(z.literal('')),
     spentAt: z.string().optional().or(z.literal('')),
-    attachments: z.array(z.instanceof(File)).max(5),
+    attachments: z.array(attachmentDraftSchema).max(5),
   })
   .superRefine(validateSplitValues);
 

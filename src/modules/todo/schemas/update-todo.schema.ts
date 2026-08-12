@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { attachmentDraftSchema } from '@/modules/storage/schemas/attachment-draft.schema';
+
 export const updateTodoSchema = z.object({
   todoId: z.string().min(1),
   milestoneId: z.string().min(1),
@@ -10,6 +12,7 @@ export const updateTodoSchema = z.object({
   priority: z.enum(['low', 'medium', 'high']),
   status: z.enum(['todo', 'in_progress', 'done', 'cancelled']),
   budget: z.coerce.number().int().min(0).optional(),
+  attachments: z.array(attachmentDraftSchema).max(5).optional(),
 });
 
 export type UpdateTodoSchema = z.infer<typeof updateTodoSchema>;

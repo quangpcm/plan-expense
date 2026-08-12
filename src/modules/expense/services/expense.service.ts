@@ -1,7 +1,6 @@
 import { AppError } from '@/shared/errors/app-error';
 import type { AuthUser } from '@/modules/auth/types/auth';
 import { SplitService } from '@/modules/expense/services/split.service';
-import { uploadExpenseAttachments } from '@/modules/expense/utils/attachment';
 import type {
   CreateExpenseInput,
   ExpenseDocument,
@@ -15,6 +14,7 @@ import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
+import { resolveAttachmentDrafts } from '@/modules/storage/utils/resolve-attachments';
 
 type ExpenseContext = {
   plan: PlanDocument;
@@ -109,7 +109,10 @@ export class ExpenseService {
 
     const participants = this.buildParticipants(input, participantIds);
     const expenseId = this.expenseRepository.generateExpenseId(context.plan.id);
-    const attachments = await uploadExpenseAttachments(context.plan.id, expenseId, input.attachments);
+    const attachments = await resolveAttachmentDrafts(
+      { mediaType: 'expense-attachment', planId: context.plan.id, expenseId },
+      input.attachments,
+    );
 
     return this.expenseRepository.createExpense({
       planId: context.plan.id,
@@ -146,8 +149,16 @@ export class ExpenseService {
       activeMembers.some((member) => member.id === memberId),
     );
     const participants = this.buildParticipants(input, participantIds);
+    const attachments = await resolveAttachmentDrafts(
+      { mediaType: 'expense-attachment', planId: context.plan.id, expenseId: expense.id },
+      input.attachments,
+    );
 
-    await this.expenseRepository.updateExpense(context.plan.id, { ...input, milestoneId: milestone.id }, participants);
+    await this.expenseRepository.updateExpense(
+      context.plan.id,
+      { ...input, milestoneId: milestone.id, attachments },
+      participants,
+    );
   }
 
   async deleteExpense(

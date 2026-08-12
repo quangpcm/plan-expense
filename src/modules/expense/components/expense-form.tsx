@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
-import { Camera, Check, CheckCircle2, ChevronRight, User } from 'lucide-react';
+import { Check, CheckCircle2, ChevronRight, User } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
 import { ZodError } from 'zod';
 
@@ -17,6 +17,7 @@ import { createExpenseSchema, type CreateExpenseSchema } from '@/modules/expense
 import { updateExpenseSchema, type UpdateExpenseSchema } from '@/modules/expense/schemas/update-expense.schema';
 import { expenseService } from '@/modules/expense/services';
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
+import { AttachmentPicker, type AttachmentDraft } from '@/modules/storage';
 import { AmountInput } from '@/shared/components/ui/amount-input';
 import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
@@ -45,6 +46,13 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPaidByOpen, setIsPaidByOpen] = useState(false);
+  const errorRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (errorMessage) {
+      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [errorMessage]);
   const activeMembers = useMemo(
     () => members.filter((member) => member.status === 'active'),
     [members],
@@ -86,7 +94,9 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
       locationName: expense?.locationName || '',
       note: expense?.note || '',
       spentAt: expense ? formatDateTimeLocalInput(expense.spentAt.toDate()) : '',
-      attachments: [],
+      attachments: (expense?.attachments ?? []).map(
+        (attachment): AttachmentDraft => ({ kind: 'existing', id: attachment.id, attachment }),
+      ),
     },
   });
   const selectedMembers = useWatch({
@@ -211,7 +221,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
     }
   });
 
-  const attachmentFiles = useWatch({ control: form.control, name: 'attachments' }) ?? [];
+  const attachmentDrafts = useWatch({ control: form.control, name: 'attachments' }) ?? [];
 
   return (
     <form className="space-y-5 pb-28" onSubmit={handleSubmit}>
@@ -443,34 +453,25 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
         </div>
       </details>
 
-      {mode === 'create' ? (
-        <div className="space-y-2">
-          <label
-            className="flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#c2c6d8] bg-[#f7f9fb] py-8 text-center"
-            htmlFor="attachments"
-          >
-            <Camera className="size-6 text-[#727687]" />
-            <span className="text-sm text-[#727687]">
-              {attachmentFiles.length > 0 ? `${attachmentFiles.length} ảnh đã chọn` : 'Thêm ảnh hóa đơn'}
-            </span>
-            <input
-              className="hidden"
-              id="attachments"
-              accept="image/*"
-              multiple
-              type="file"
-              onChange={(event) => {
-                form.setValue('attachments', Array.from(event.target.files || []), {
-                  shouldDirty: true,
-                });
-              }}
-            />
-          </label>
-          <p className="text-xs text-slate-500">Tối đa 5 ảnh. Khoản chi chỉ được tạo sau khi tải ảnh lên thành công.</p>
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-slate-700">Hóa đơn đính kèm</p>
+        <AttachmentPicker
+          label="Thêm ảnh hóa đơn"
+          maxCount={5}
+          onChange={(next) => form.setValue('attachments', next, { shouldDirty: true })}
+          value={attachmentDrafts}
+        />
+        <p className="text-xs text-slate-500">
+          Tối đa 5 ảnh. {mode === 'create' ? 'Khoản chi chỉ được tạo' : 'Thay đổi chỉ được lưu'} sau khi tải ảnh lên
+          thành công.
+        </p>
+      </div>
+
+      {errorMessage ? (
+        <div ref={errorRef}>
+          <AuthFormMessage message={errorMessage} type="error" />
         </div>
       ) : null}
-
-      {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
 
       <div className="fixed inset-x-0 bottom-24 z-10 mx-auto max-w-3xl px-4">
         <Button className="w-full justify-center rounded-full" disabled={isSubmitting} type="submit">

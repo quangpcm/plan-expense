@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ZodError } from 'zod';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
@@ -12,6 +12,7 @@ import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import type { AuthUser } from '@/modules/auth/types/auth';
+import { AttachmentPicker, type AttachmentDraft } from '@/modules/storage';
 import { AmountInput } from '@/shared/components/ui/amount-input';
 import { Button } from '@/shared/components/ui/button';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
@@ -46,9 +47,19 @@ export function TodoForm({
   const [priority, setPriority] = useState<TodoDocument['priority']>(todo?.priority ?? 'medium');
   const [status, setStatus] = useState<TodoDocument['status']>(todo?.status ?? 'todo');
   const [budget, setBudget] = useState(todo?.budget ?? 0);
+  const [attachmentDrafts, setAttachmentDrafts] = useState<AttachmentDraft[]>(
+    (todo?.attachments ?? []).map((attachment) => ({ kind: 'existing', id: attachment.id, attachment })),
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const messageRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (errorMessage || successMessage) {
+      messageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [errorMessage, successMessage]);
 
   const activeMembers = members.filter((member) => member.status === 'active');
 
@@ -76,6 +87,7 @@ export function TodoForm({
           priority,
           status,
           budget: budget > 0 ? budget : undefined,
+          attachments: attachmentDrafts,
         });
 
         await todoService.updateTodo(plan, parsed, currentUser, currentMember);
@@ -89,6 +101,7 @@ export function TodoForm({
           dueDate,
           priority,
           budget: budget > 0 ? budget : undefined,
+          attachments: attachmentDrafts,
         });
 
         await todoService.createTodo(plan, parsed, currentUser, currentMember);
@@ -99,6 +112,7 @@ export function TodoForm({
         setDueDate('');
         setPriority('medium');
         setBudget(0);
+        setAttachmentDrafts([]);
       }
 
       onSuccess?.();
@@ -117,8 +131,12 @@ export function TodoForm({
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
-      {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
-      {successMessage ? <AuthFormMessage message={successMessage} type="success" /> : null}
+      {errorMessage || successMessage ? (
+        <div ref={messageRef}>
+          {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
+          {successMessage ? <AuthFormMessage message={successMessage} type="success" /> : null}
+        </div>
+      ) : null}
       <div className="space-y-2 text-center">
         <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#727687]">Ngân sách dự tính</label>
         <AmountInput onChange={setBudget} value={budget} />
@@ -130,6 +148,10 @@ export function TodoForm({
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700">Mô tả</label>
         <Textarea onChange={(event) => setDescription(event.target.value)} placeholder="Ghi chú ngắn cho việc này" value={description} />
+      </div>
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700">Hình ảnh</label>
+        <AttachmentPicker maxCount={5} onChange={setAttachmentDrafts} value={attachmentDrafts} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">

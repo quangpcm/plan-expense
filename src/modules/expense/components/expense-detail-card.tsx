@@ -1,4 +1,4 @@
-import { FileText, History, User, UserRoundPlus } from 'lucide-react';
+import { History, User, UserRoundPlus } from 'lucide-react';
 
 import { Badge } from '@/shared/components/ui/badge';
 import { Card } from '@/shared/components/ui/card';
@@ -9,7 +9,7 @@ import type { CategoryDocument } from '@/modules/category/types/category';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
-import { getMediaPublicUrl } from '@/modules/storage';
+import { AttachmentGallery } from '@/modules/storage';
 
 type ExpenseDetailCardProps = {
   expense: ExpenseDocument;
@@ -96,41 +96,7 @@ export function ExpenseDetailCard({ expense, members, categories, milestones }: 
       ) : null}
       <div className="space-y-2">
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Ảnh đính kèm</p>
-        {expense.attachments.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {expense.attachments.map((attachment) =>
-              attachment.mimeType.startsWith('image/') ? (
-                <a
-                  key={attachment.id}
-                  href={getMediaPublicUrl(attachment.storagePath)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block overflow-hidden rounded-2xl border border-slate-200 bg-white"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element -- external R2 public URL, next/image domain not configured */}
-                  <img
-                    src={getMediaPublicUrl(attachment.storagePath)}
-                    alt={attachment.fileName}
-                    className="aspect-square w-full object-cover"
-                  />
-                </a>
-              ) : (
-                <a
-                  key={attachment.id}
-                  href={getMediaPublicUrl(attachment.storagePath)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700"
-                >
-                  <FileText className="size-4 shrink-0 text-slate-400" />
-                  <span className="truncate">{attachment.fileName}</span>
-                </a>
-              ),
-            )}
-          </div>
-        ) : (
-          <p className="text-sm text-slate-600">Chưa có ảnh đính kèm.</p>
-        )}
+        <AttachmentGallery attachments={expense.attachments} emptyLabel="Chưa có ảnh đính kèm." />
       </div>
     </Card>
   );

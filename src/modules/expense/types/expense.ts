@@ -1,21 +1,13 @@
 import type { Timestamp } from 'firebase/firestore';
 
+import type { AttachmentDraft, MediaAttachment } from '@/modules/storage/types/attachment';
 import type { CurrencyCode } from '@/modules/plan/types/plan';
 
 export type SplitMethod = 'equal' | 'exact' | 'percentage' | 'shares';
 
 export type ExpenseStatus = 'active' | 'deleted';
 
-export type ExpenseAttachment = {
-  id: string;
-  fileName: string;
-  storagePath: string;
-  mimeType: string;
-  size: number;
-  width: number | null;
-  height: number | null;
-  createdAt: Timestamp;
-};
+export type ExpenseAttachment = MediaAttachment;
 
 export type ExpenseParticipant = {
   memberId: string;
@@ -63,7 +55,7 @@ export type CreateExpenseInput = {
   locationName?: string | undefined;
   note?: string | undefined;
   spentAt?: string | undefined;
-  attachments: File[];
+  attachments: AttachmentDraft[];
 };
 
 export type UpdateExpenseInput = {
@@ -80,4 +72,5 @@ export type UpdateExpenseInput = {
   locationName?: string | undefined;
   note?: string | undefined;
   spentAt?: string | undefined;
+  attachments: AttachmentDraft[];
 };

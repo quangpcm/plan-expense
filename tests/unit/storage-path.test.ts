@@ -59,4 +59,25 @@ describe('buildStoragePath', () => {
     };
     expect(buildStoragePath(input, 'file1')).toBe('plans/plan1/settlements/settlement1/file1.png');
   });
+
+  it('builds the todo attachment path', () => {
+    const input: RequestUploadUrlInput = {
+      ...base,
+      mediaType: 'todo-attachment',
+      planId: 'plan1',
+      todoId: 'todo1',
+    };
+    expect(buildStoragePath(input, 'file1')).toBe('plans/plan1/todos/todo1/file1.png');
+  });
+
+  it('builds the todo vendor attachment path', () => {
+    const input: RequestUploadUrlInput = {
+      ...base,
+      mediaType: 'todo-vendor-attachment',
+      planId: 'plan1',
+      todoId: 'todo1',
+      vendorId: 'vendor1',
+    };
+    expect(buildStoragePath(input, 'file1')).toBe('plans/plan1/todos/todo1/vendors/vendor1/file1.png');
+  });
 });

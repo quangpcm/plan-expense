@@ -11,6 +11,7 @@ import type { AuthUser } from '@/modules/auth/types/auth';
 import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
+import { resolveAttachmentDrafts } from '@/modules/storage/utils/resolve-attachments';
 import { AppError } from '@/shared/errors/app-error';
 
 export class TodoService {
@@ -43,8 +44,15 @@ export class TodoService {
       throw new AppError('Todo title is required.', 'TODO_TITLE_REQUIRED', 400);
     }
 
+    const todoId = this.todoRepository.generateTodoId(plan.id);
+    const attachments = await resolveAttachmentDrafts(
+      { mediaType: 'todo-attachment', planId: plan.id, todoId },
+      input.attachments,
+    );
+
     await this.todoRepository.createTodo({
       planId: plan.id,
+      todoId,
       milestoneId: input.milestoneId,
       title,
       description: input.description?.trim() || null,
@@ -53,6 +61,7 @@ export class TodoService {
       priority: input.priority,
       budget: input.budget ?? null,
       createdByUserId: currentUser.uid,
+      attachments,
     });
   }
 
@@ -72,9 +81,18 @@ export class TodoService {
       throw new AppError('Todo title is required.', 'TODO_TITLE_REQUIRED', 400);
     }
 
+    const attachments =
+      input.attachments !== undefined
+        ? await resolveAttachmentDrafts(
+            { mediaType: 'todo-attachment', planId: plan.id, todoId: input.todoId },
+            input.attachments,
+          )
+        : undefined;
+
     await this.todoRepository.updateTodo(plan.id, {
       ...input,
       title,
+      attachments,
     });
   }
 
@@ -115,11 +133,19 @@ export class TodoService {
       throw new AppError('Vendor name is required.', 'TODO_VENDOR_NAME_REQUIRED', 400);
     }
 
+    const vendorId = crypto.randomUUID();
+    const attachments = await resolveAttachmentDrafts(
+      { mediaType: 'todo-vendor-attachment', planId: plan.id, todoId: input.todoId, vendorId },
+      input.attachments,
+    );
+
     await this.todoRepository.addVendor(plan.id, input.todoId, {
+      id: vendorId,
       name,
       description: input.description?.trim() || null,
       link: input.link?.trim() || null,
       price: input.price,
+      attachments,
     });
   }
 
