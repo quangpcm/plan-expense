@@ -45,6 +45,8 @@ import {
   MilestoneForm,
   MilestoneList,
   MilestoneTimelineBoard,
+  getDisplayedMilestoneStatus,
+  getMilestoneAnchorDate,
   milestoneService,
   useMilestones,
 } from '@/modules/milestone';
@@ -93,12 +95,7 @@ const TAB_BY_QUERY_PARAM: Record<string, (typeof tabs)[number]> = {
 };
 
 function getMilestoneWorkSortTime(milestone: MilestoneDocument) {
-  return (
-    timestampToDate(milestone.startDate)?.getTime() ??
-    timestampToDate(milestone.endDate)?.getTime() ??
-    timestampToDate(milestone.createdAt)?.getTime() ??
-    0
-  );
+  return getMilestoneAnchorDate(milestone)?.getTime() ?? 0;
 }
 
 type HeaderModal = 'edit-plan' | 'plan-settings' | 'leave-or-delete' | null;
@@ -198,12 +195,18 @@ export default function PlanDetailPage() {
       }),
     [milestones],
   );
+  const defaultWorkMilestone = useMemo(() => {
+    const eligible = sortedWorkMilestones.filter((milestone) => {
+      const displayedStatus = getDisplayedMilestoneStatus(milestone);
+      return displayedStatus === 'in_progress' || displayedStatus === 'upcoming';
+    });
+
+    return eligible[0] ?? sortedWorkMilestones[0] ?? null;
+  }, [sortedWorkMilestones]);
   const selectedMilestone = useMemo(
     () =>
-      sortedWorkMilestones.find((milestone) => milestone.id === selectedMilestoneId) ??
-      sortedWorkMilestones[0] ??
-      null,
-    [selectedMilestoneId, sortedWorkMilestones],
+      sortedWorkMilestones.find((milestone) => milestone.id === selectedMilestoneId) ?? defaultWorkMilestone,
+    [selectedMilestoneId, sortedWorkMilestones, defaultWorkMilestone],
   );
   const selectedMilestoneExpenses = useMemo(
     () =>
@@ -228,9 +231,13 @@ export default function PlanDetailPage() {
     [expenseSheetMilestone, expenses],
   );
   const upcomingMilestones = useMemo(() => {
-    const sorted = [...milestones].sort((a, b) => a.orderIndex - b.orderIndex);
-    const pending = sorted.filter((milestone) => milestone.status !== 'completed' && milestone.status !== 'cancelled');
-    return (pending.length > 0 ? pending : sorted).slice(0, 3);
+    return milestones
+      .filter((milestone) => {
+        const displayedStatus = getDisplayedMilestoneStatus(milestone);
+        return displayedStatus === 'in_progress' || displayedStatus === 'upcoming';
+      })
+      .sort((a, b) => getMilestoneWorkSortTime(a) - getMilestoneWorkSortTime(b))
+      .slice(0, 3);
   }, [milestones]);
   const upcomingTodos = useMemo(() => {
     return todos
@@ -248,8 +255,8 @@ export default function PlanDetailPage() {
   }, [milestones, searchParams]);
 
   useEffect(() => {
-    if (!selectedMilestoneId && sortedWorkMilestones[0]) {
-      setSelectedMilestoneId(sortedWorkMilestones[0].id);
+    if (!selectedMilestoneId && defaultWorkMilestone) {
+      setSelectedMilestoneId(defaultWorkMilestone.id);
       return;
     }
 
@@ -257,9 +264,9 @@ export default function PlanDetailPage() {
       selectedMilestoneId &&
       !sortedWorkMilestones.some((milestone) => milestone.id === selectedMilestoneId)
     ) {
-      setSelectedMilestoneId(sortedWorkMilestones[0]?.id ?? null);
+      setSelectedMilestoneId(defaultWorkMilestone?.id ?? null);
     }
-  }, [selectedMilestoneId, sortedWorkMilestones]);
+  }, [selectedMilestoneId, sortedWorkMilestones, defaultWorkMilestone]);
 
   useEffect(() => {
     if (selectedTimelineMilestoneId && !milestones.some((milestone) => milestone.id === selectedTimelineMilestoneId)) {
@@ -904,6 +911,7 @@ export default function PlanDetailPage() {
               ) : (
                 <MilestoneList
                   canManagePlan={false}
+                  emptyLabel="Không có mốc nào đang diễn ra hoặc sắp diễn ra."
                   isSubmitting={false}
                   milestones={upcomingMilestones}
                   onEdit={() => setActiveTab('Công việc')}

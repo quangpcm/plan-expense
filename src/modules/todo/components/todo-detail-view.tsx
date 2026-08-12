@@ -64,13 +64,6 @@ export function TodoDetailView({
 
       <p className="text-sm leading-6 text-slate-600">{todo.description || 'Chưa có mô tả.'}</p>
 
-      {todo.attachments.length > 0 ? (
-        <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Hình ảnh</p>
-          <AttachmentGallery attachments={todo.attachments} />
-        </div>
-      ) : null}
-
       <div className="grid grid-cols-2 gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Thời hạn</p>
@@ -189,6 +182,13 @@ export function TodoDetailView({
             placeholder="Chọn milestone đích"
             value={todo.milestoneId}
           />
+        </div>
+      ) : null}
+
+      {todo.attachments.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Hình ảnh</p>
+          <AttachmentGallery attachments={todo.attachments} />
         </div>
       ) : null}
 

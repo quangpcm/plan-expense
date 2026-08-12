@@ -149,10 +149,6 @@ export function TodoForm({
         <label className="text-sm font-medium text-slate-700">Mô tả</label>
         <Textarea onChange={(event) => setDescription(event.target.value)} placeholder="Ghi chú ngắn cho việc này" value={description} />
       </div>
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700">Hình ảnh</label>
-        <AttachmentPicker maxCount={5} onChange={setAttachmentDrafts} value={attachmentDrafts} />
-      </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700">Người phụ trách</label>
@@ -198,6 +194,10 @@ export function TodoForm({
             />
           </div>
         ) : null}
+      </div>
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700">Hình ảnh</label>
+        <AttachmentPicker maxCount={5} onChange={setAttachmentDrafts} value={attachmentDrafts} />
       </div>
       <div className="flex items-center justify-end gap-2">
         {onCancel ? (

@@ -16,7 +16,7 @@ export function AttachmentGallery({ attachments, size = 'md', emptyLabel }: Atta
   }
 
   return (
-    <div className={cn('grid gap-3', size === 'sm' ? 'grid-cols-4 gap-2 sm:grid-cols-5' : 'grid-cols-2 sm:grid-cols-3')}>
+    <div className={cn('grid', size === 'sm' ? 'grid-cols-4 gap-2' : 'grid-cols-3 gap-2')}>
       {attachments.map((attachment) => {
         const url = resolveAttachmentUrl(attachment);
 

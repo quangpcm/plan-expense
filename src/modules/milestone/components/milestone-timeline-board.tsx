@@ -4,6 +4,11 @@ import { CalendarDays, CircleDollarSign, PencilLine, Plus } from 'lucide-react';
 
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
+import {
+  getDisplayedMilestoneStatus,
+  getMilestoneAnchorDate,
+  milestoneStatusLabel,
+} from '@/modules/milestone/utils/milestone-status';
 import { TodoMilestoneCard } from '@/modules/todo/components/todo-milestone-card';
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import { Badge } from '@/shared/components/ui/badge';
@@ -53,13 +58,6 @@ type PendingDragState = {
   startY: number;
 };
 
-const milestoneStatusLabel: Record<MilestoneDocument['status'], string> = {
-  upcoming: 'Sắp tới',
-  in_progress: 'Đang diễn ra',
-  completed: 'Hoàn thành',
-  cancelled: 'Đã hủy',
-};
-
 function getMilestoneCardTone(displayedStatus: MilestoneDocument['status'], isSelected: boolean) {
   if (isSelected) {
     return {
@@ -103,41 +101,6 @@ function getMilestoneBadgeClass(displayedStatus: MilestoneDocument['status']) {
   }
 
   return 'bg-[var(--color-info-soft)] text-[var(--color-info)]';
-}
-
-function getDisplayedMilestoneStatus(milestone: MilestoneDocument): MilestoneDocument['status'] {
-  if (milestone.status === 'cancelled' || milestone.status === 'completed') {
-    return milestone.status;
-  }
-
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startDate = timestampToDate(milestone.startDate);
-  const endDate = timestampToDate(milestone.endDate);
-  const normalizedStartDate = startDate
-    ? new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
-    : null;
-  const normalizedEndDate = endDate
-    ? new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
-    : null;
-
-  if (normalizedStartDate && today < normalizedStartDate) {
-    return 'upcoming';
-  }
-
-  if (normalizedEndDate && today > normalizedEndDate) {
-    return 'completed';
-  }
-
-  if (normalizedStartDate || normalizedEndDate) {
-    return 'in_progress';
-  }
-
-  return milestone.status;
-}
-
-function getMilestoneAnchorDate(milestone: MilestoneDocument) {
-  return timestampToDate(milestone.startDate) ?? timestampToDate(milestone.endDate) ?? timestampToDate(milestone.createdAt);
 }
 
 function formatMonthLabel(date: Date | null) {
@@ -589,7 +552,7 @@ export function MilestoneTimelineBoard({
                   : 'mt-0 max-h-0 translate-y-[-6px] opacity-0 pointer-events-none',
               )}
             >
-              <div className="space-y-2 border-l-2 border-[#edf1f8] pl-4 sm:space-y-3 sm:pl-6">
+              <div className="space-y-2 pl-2 sm:space-y-3 sm:pl-3">
                 {milestoneTodos.length > 0 ? (
                   milestoneTodos.map((todo) => {
                     const assignee = members.find((member) => member.id === todo.assigneeMemberId) ?? null;
@@ -599,14 +562,12 @@ export function MilestoneTimelineBoard({
 
                     return (
                       <div
-                        className="relative"
                         key={todo.id}
                         onClick={(event) => event.stopPropagation()}
                         ref={(element) => {
                           itemRefs.current[todo.id] = element;
                         }}
                       >
-                        <span className="absolute -left-[23px] top-1/2 size-3 -translate-y-1/2 rounded-full bg-[#c8d1e4] sm:-left-[35px] sm:size-4" />
                         {isDraggingTodo && activeDrag ? (
                           <div
                             className="rounded-2xl border border-dashed border-[#c9d8f2] bg-[#f6f9ff] shadow-inner transition-all duration-200 animate-pulse sm:rounded-[24px]"
