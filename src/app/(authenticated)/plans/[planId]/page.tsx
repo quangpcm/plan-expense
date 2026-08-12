@@ -56,6 +56,7 @@ import type { TodoDocument } from '@/modules/todo/types/todo';
 import { CategoryBreakdown } from '@/modules/statistic/components/category-breakdown';
 import { ExpenseTimelineChart } from '@/modules/statistic/components/expense-timeline-chart';
 import { MemberBalanceTable } from '@/modules/statistic/components/member-balance-table';
+import { MemberSpendingList } from '@/modules/statistic/components/member-spending-list';
 import { MilestoneBreakdown } from '@/modules/statistic/components/milestone-breakdown';
 import { StatisticOverview } from '@/modules/statistic/components/statistic-overview';
 import { statisticService } from '@/modules/statistic/services';
@@ -150,6 +151,11 @@ export default function PlanDetailPage() {
   const [headerModal, setHeaderModal] = useState<HeaderModal>(null);
   const [showClosePlanConfirm, setShowClosePlanConfirm] = useState(false);
   const [showStatisticSheet, setShowStatisticSheet] = useState(false);
+  const [statisticMemberDrilldown, setStatisticMemberDrilldown] = useState<{ memberId: string } | null>(null);
+  const [statisticMilestoneMemberDrilldown, setStatisticMilestoneMemberDrilldown] = useState<{
+    milestoneId: string;
+    memberId: string;
+  } | null>(null);
   const previousPlanIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
@@ -171,15 +177,62 @@ export default function PlanDetailPage() {
   }, [planId, searchParams]);
 
   const currentPlan = plan;
-  const statistic = statisticService.calculate({
-    members,
-    expenses,
-    incomes,
-    milestones,
-    categories,
-    settlements,
-  });
+  const statistic = useMemo(
+    () =>
+      statisticService.calculate({
+        members,
+        expenses,
+        incomes,
+        milestones,
+        categories,
+        settlements,
+      }),
+    [members, expenses, incomes, milestones, categories, settlements],
+  );
   const suggestions = settlementService.suggest(statistic.memberBalances);
+  const statisticMemberDrilldownMember = useMemo(
+    () =>
+      statisticMemberDrilldown
+        ? (members.find((member) => member.id === statisticMemberDrilldown.memberId) ?? null)
+        : null,
+    [statisticMemberDrilldown, members],
+  );
+  const statisticMemberDrilldownExpenses = useMemo(
+    () =>
+      statisticMemberDrilldownMember
+        ? expenses
+            .filter((expense) => expense.paidByMemberId === statisticMemberDrilldownMember.id)
+            .sort((a, b) => b.spentAt.toMillis() - a.spentAt.toMillis())
+        : [],
+    [statisticMemberDrilldownMember, expenses],
+  );
+  const statisticMilestoneMemberDrilldownMilestone = useMemo(
+    () =>
+      statisticMilestoneMemberDrilldown
+        ? (milestones.find((milestone) => milestone.id === statisticMilestoneMemberDrilldown.milestoneId) ?? null)
+        : null,
+    [statisticMilestoneMemberDrilldown, milestones],
+  );
+  const statisticMilestoneMemberDrilldownMember = useMemo(
+    () =>
+      statisticMilestoneMemberDrilldown
+        ? (members.find((member) => member.id === statisticMilestoneMemberDrilldown.memberId) ?? null)
+        : null,
+    [statisticMilestoneMemberDrilldown, members],
+  );
+  const statisticMilestoneMemberDrilldownExpenses = useMemo(
+    () =>
+      statisticMilestoneMemberDrilldownMilestone && statisticMilestoneMemberDrilldownMember
+        ? expenses
+            .filter(
+              (expense) =>
+                expense.milestoneId === statisticMilestoneMemberDrilldownMilestone.id &&
+                expense.paidByMemberId === statisticMilestoneMemberDrilldownMember.id,
+            )
+            .sort((a, b) => b.spentAt.toMillis() - a.spentAt.toMillis())
+        : [],
+    [statisticMilestoneMemberDrilldownMilestone, statisticMilestoneMemberDrilldownMember, expenses],
+  );
   const activeMembers = members.filter((member) => member.status === 'active');
   const linkedMemberIds = buildLinkedMemberIdSet({ expenses, incomes, settlements });
   const sortedWorkMilestones = useMemo(
@@ -1657,10 +1710,18 @@ export default function PlanDetailPage() {
         >
           <div className="space-y-5">
             <StatisticOverview statistic={statistic} />
-            <MilestoneBreakdown statistic={statistic} />
-            <MemberBalanceTable statistic={statistic} />
+            <MemberSpendingList
+              onSelectMember={(memberId) => setStatisticMemberDrilldown({ memberId })}
+              statistic={statistic}
+            />
             <CategoryBreakdown statistic={statistic} />
-            <ExpenseTimelineChart statistic={statistic} />
+            <MilestoneBreakdown
+              onSelectMilestoneMember={(milestoneId, memberId) =>
+                setStatisticMilestoneMemberDrilldown({ milestoneId, memberId })
+              }
+              statistic={statistic}
+            />
+            <MemberBalanceTable statistic={statistic} />
             <Card>
               <SectionHeading
                 eyebrow="Đối soát"
@@ -1704,7 +1765,54 @@ export default function PlanDetailPage() {
                 settlements={settlements}
               />
             </div>
+            <ExpenseTimelineChart statistic={statistic} />
           </div>
+        </BottomSheet>
+
+        <BottomSheet
+          onClose={() => setStatisticMemberDrilldown(null)}
+          open={Boolean(statisticMemberDrilldownMember)}
+          showCloseButton
+          title={
+            statisticMemberDrilldownMember
+              ? `Khoản chi của ${statisticMemberDrilldownMember.nickname}`
+              : 'Khoản chi của thành viên'
+          }
+        >
+          {statisticMemberDrilldownMember ? (
+            <TimelineList
+              categories={[...categories, ...incomeCategories]}
+              expenses={statisticMemberDrilldownExpenses}
+              incomes={[]}
+              members={members}
+              milestones={milestones}
+              planId={planId}
+            />
+          ) : null}
+        </BottomSheet>
+
+        <BottomSheet
+          onClose={() => setStatisticMilestoneMemberDrilldown(null)}
+          open={Boolean(statisticMilestoneMemberDrilldownMilestone && statisticMilestoneMemberDrilldownMember)}
+          showCloseButton
+          title={
+            statisticMilestoneMemberDrilldownMilestone && statisticMilestoneMemberDrilldownMember
+              ? `${statisticMilestoneMemberDrilldownMember.nickname} · ${statisticMilestoneMemberDrilldownMilestone.title}`
+              : 'Khoản chi'
+          }
+        >
+          {statisticMilestoneMemberDrilldownMilestone && statisticMilestoneMemberDrilldownMember ? (
+            <TimelineList
+              categories={[...categories, ...incomeCategories]}
+              expenses={statisticMilestoneMemberDrilldownExpenses}
+              hideMilestoneFilter
+              incomes={[]}
+              members={members}
+              milestones={[statisticMilestoneMemberDrilldownMilestone]}
+              planId={planId}
+              selectedMilestoneId={statisticMilestoneMemberDrilldownMilestone.id}
+            />
+          ) : null}
         </BottomSheet>
         {activeTab === 'Thành viên' ? (
           <div className="space-y-5">

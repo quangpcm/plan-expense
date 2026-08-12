@@ -28,6 +28,12 @@ export type TimelineStatisticRow = {
   totalAmount: number;
 };
 
+export type MilestoneMemberStatisticRow = {
+  memberId: string;
+  nickname: string;
+  totalAmount: number;
+};
+
 export type MilestoneStatisticRow = {
   milestoneId: string;
   milestoneTitle: string;
@@ -38,6 +44,7 @@ export type MilestoneStatisticRow = {
   todoCount: number;
   completedTodoCount: number;
   progress: number;
+  memberBreakdown: MilestoneMemberStatisticRow[];
 };
 
 export type StatisticSummary = {

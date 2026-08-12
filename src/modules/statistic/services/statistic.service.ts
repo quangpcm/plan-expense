@@ -3,6 +3,7 @@ import { timestampToDate } from '@/shared/utils/firebase';
 import type {
   CategoryStatisticRow,
   MemberBalanceRow,
+  MilestoneMemberStatisticRow,
   MilestoneStatisticRow,
   StatisticInput,
   StatisticResult,
@@ -98,6 +99,21 @@ export class StatisticService {
             ? Math.round((milestone.completedTodoCount / milestone.todoCount) * 100)
             : 0;
 
+        const memberTotals = new Map<string, number>();
+        milestoneExpenses.forEach((expense) => {
+          memberTotals.set(
+            expense.paidByMemberId,
+            (memberTotals.get(expense.paidByMemberId) || 0) + expense.amount,
+          );
+        });
+        const memberBreakdown: MilestoneMemberStatisticRow[] = Array.from(memberTotals.entries())
+          .map(([memberId, memberTotalAmount]) => ({
+            memberId,
+            nickname: input.members.find((member) => member.id === memberId)?.nickname || 'Không rõ',
+            totalAmount: memberTotalAmount,
+          }))
+          .sort((a, b) => b.totalAmount - a.totalAmount);
+
         return {
           milestoneId: milestone.id,
           milestoneTitle: milestone.title,
@@ -108,6 +124,7 @@ export class StatisticService {
           todoCount: milestone.todoCount,
           completedTodoCount: milestone.completedTodoCount,
           progress,
+          memberBreakdown,
         };
       })
       .sort((a, b) => b.totalAmount - a.totalAmount);

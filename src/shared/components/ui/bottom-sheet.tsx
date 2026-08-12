@@ -1,4 +1,5 @@
 import type { HTMLAttributes, ReactNode } from 'react';
+import { X } from 'lucide-react';
 
 import { cn } from '@/shared/utils/cn';
 
@@ -7,6 +8,7 @@ type BottomSheetProps = HTMLAttributes<HTMLDivElement> & {
   description?: string;
   open?: boolean;
   onClose?: () => void;
+  showCloseButton?: boolean;
   children?: ReactNode;
 };
 
@@ -15,6 +17,7 @@ export function BottomSheet({
   description,
   open,
   onClose,
+  showCloseButton = false,
   children,
   className,
   ...props
@@ -26,11 +29,21 @@ export function BottomSheet({
   const content = (
     <div
       className={cn(
-        'flex max-h-[85vh] flex-col overflow-hidden rounded-t-[32px] border border-b-0 border-slate-200 bg-white p-5 shadow-[0_-16px_60px_rgba(15,23,42,0.08)]',
+        'relative flex max-h-[85vh] flex-col overflow-hidden rounded-t-[32px] border border-b-0 border-slate-200 bg-white p-5 shadow-[0_-16px_60px_rgba(15,23,42,0.08)]',
         className,
       )}
       {...props}
     >
+      {showCloseButton && onClose ? (
+        <button
+          aria-label="Đóng"
+          className="absolute right-4 top-4 rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+          onClick={onClose}
+          type="button"
+        >
+          <X className="size-5" />
+        </button>
+      ) : null}
       <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200" />
       <div className="shrink-0">
         <h2 className="text-lg font-semibold text-slate-950">{title}</h2>

@@ -212,6 +212,7 @@ describe('StatisticService', () => {
         todoCount: 2,
         completedTodoCount: 1,
         progress: 50,
+        memberBreakdown: [{ memberId: 'member-a', nickname: 'Alice', totalAmount: 300 }],
       },
     ]);
     expect(statistic.expenseTimeline).toEqual([{ date: '05/08/2026', totalAmount: 300 }]);
