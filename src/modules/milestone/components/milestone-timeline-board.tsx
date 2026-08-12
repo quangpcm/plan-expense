@@ -1,6 +1,6 @@
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, CircleDollarSign, GripVertical, PencilLine, Plus } from 'lucide-react';
+import { CalendarDays, CircleDollarSign, PencilLine, Plus } from 'lucide-react';
 
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
@@ -49,6 +49,8 @@ type ActiveDragState = {
 type PendingDragState = {
   milestoneId: string;
   todoId: string;
+  startX: number;
+  startY: number;
 };
 
 const milestoneStatusLabel: Record<MilestoneDocument['status'], string> = {
@@ -165,11 +167,13 @@ export function MilestoneTimelineBoard({
 }: MilestoneTimelineBoardProps) {
   const AUTO_SCROLL_EDGE_PX = 112;
   const AUTO_SCROLL_SPEED = 12;
+  const HOLD_MOVE_CANCEL_PX = 8;
   const [optimisticOrders, setOptimisticOrders] = useState<Record<string, string[]>>({});
   const [pendingDrag, setPendingDrag] = useState<PendingDragState | null>(null);
   const [activeDrag, setActiveDrag] = useState<ActiveDragState | null>(null);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const justDraggedRef = useRef(false);
 
   if (milestones.length === 0) {
     return (
@@ -206,6 +210,15 @@ export function MilestoneTimelineBoard({
 
     function handlePointerMove(event: PointerEvent) {
       if (!activeDrag) {
+        if (pendingDrag) {
+          const dx = event.clientX - pendingDrag.startX;
+          const dy = event.clientY - pendingDrag.startY;
+
+          if (Math.hypot(dx, dy) > HOLD_MOVE_CANCEL_PX) {
+            clearPendingDrag();
+          }
+        }
+
         return;
       }
 
@@ -261,6 +274,8 @@ export function MilestoneTimelineBoard({
         return;
       }
 
+      justDraggedRef.current = true;
+
       const finalOrder = optimisticOrders[activeDrag.milestoneId] ?? activeDrag.originalOrder;
       const hasOrderChanged = finalOrder.join('|') !== activeDrag.originalOrder.join('|');
       const nextMilestoneId = activeDrag.milestoneId;
@@ -294,7 +309,7 @@ export function MilestoneTimelineBoard({
       window.removeEventListener('pointerup', handlePointerUp);
       window.removeEventListener('pointercancel', handlePointerUp);
     };
-  }, [activeDrag, onReorderTodos, optimisticOrders]);
+  }, [activeDrag, onReorderTodos, optimisticOrders, pendingDrag]);
 
   useEffect(() => {
     return () => {
@@ -303,6 +318,15 @@ export function MilestoneTimelineBoard({
       }
     };
   }, []);
+
+  function handleViewTodo(todo: TodoDocument) {
+    if (justDraggedRef.current) {
+      justDraggedRef.current = false;
+      return;
+    }
+
+    onViewTodo(todo);
+  }
 
   function getDisplayedMilestoneTodos(milestoneId: string) {
     const milestoneTodos = todosByMilestone[milestoneId] ?? [];
@@ -319,13 +343,16 @@ export function MilestoneTimelineBoard({
     return [...orderedTodos, ...milestoneTodos.filter((todo) => !seenIds.has(todo.id))];
   }
 
-  function handleDragHandlePointerDown(event: ReactPointerEvent<HTMLButtonElement>, milestoneId: string, todoId: string) {
+  function handleTodoPointerDown(event: ReactPointerEvent<HTMLDivElement>, milestoneId: string, todoId: string) {
     if (!canManagePlan || isPlanClosed || isTodoSubmitting) {
       return;
     }
 
-    event.preventDefault();
-    event.stopPropagation();
+    if (event.pointerType === 'mouse' && event.button !== 0) {
+      return;
+    }
+
+    const clientX = event.clientX;
     const clientY = event.clientY;
 
     if (holdTimerRef.current) {
@@ -337,6 +364,8 @@ export function MilestoneTimelineBoard({
     setPendingDrag({
       milestoneId,
       todoId,
+      startX: clientX,
+      startY: clientY,
     });
 
     holdTimerRef.current = setTimeout(() => {
@@ -393,11 +422,6 @@ export function MilestoneTimelineBoard({
             <TodoMilestoneCard
               assignee={members.find((member) => member.id === draggedTodo.assigneeMemberId) ?? null}
               canToggle={false}
-              dragHandle={
-                <div className="flex size-8 items-center justify-center rounded-full border border-[#bfd0ee] bg-[#eef4ff] text-[#335b9c] sm:size-9">
-                  <GripVertical className="size-4" />
-                </div>
-              }
               isPreview
               isSubmitting
               onChangeStatus={() => undefined}
@@ -598,27 +622,16 @@ export function MilestoneTimelineBoard({
                             <TodoMilestoneCard
                               assignee={assignee}
                               canToggle={canToggle}
-                              dragHandle={
-                                canManagePlan && !isPlanClosed ? (
-                                  <button
-                                    aria-label="Giữ để kéo sắp xếp công việc"
-                                    className={cn(
-                                      'flex size-8 items-center justify-center rounded-full border border-[#d8e0ef] bg-white/80 text-[#7c8ba5] transition hover:border-[#bfd0ee] hover:text-[#335b9c] touch-none sm:size-9',
-                                      isPendingTodo ? 'border-[#bfd0ee] bg-[#eef4ff] text-[#335b9c] shadow-[0_0_0_6px_rgba(0,80,203,0.08)]' : '',
-                                    )}
-                                    onClick={(event) => event.stopPropagation()}
-                                    onContextMenu={(event) => event.preventDefault()}
-                                    onPointerDown={(event) => handleDragHandlePointerDown(event, milestone.id, todo.id)}
-                                    type="button"
-                                  >
-                                    <GripVertical className="size-4" />
-                                  </button>
-                                ) : null
-                              }
                               isSubmitting={isTodoSubmitting}
                               onChangeStatus={onChangeTodoStatus}
-                              onView={onViewTodo}
+                              onView={handleViewTodo}
                               todo={todo}
+                              {...(canManagePlan && !isPlanClosed
+                                ? {
+                                    onHoldPointerDown: (event: ReactPointerEvent<HTMLDivElement>) =>
+                                      handleTodoPointerDown(event, milestone.id, todo.id),
+                                  }
+                                : {})}
                             />
                           </div>
                         )}

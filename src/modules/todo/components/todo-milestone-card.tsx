@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import { CalendarDays, CheckCircle2, Circle, Store, Wallet } from 'lucide-react';
 
 import type { TodoDocument } from '@/modules/todo/types/todo';
@@ -17,7 +17,7 @@ type TodoMilestoneCardProps = {
   assignee: PlanMemberDocument | null;
   canToggle: boolean;
   isSubmitting: boolean;
-  dragHandle?: ReactNode;
+  onHoldPointerDown?: (event: ReactPointerEvent<HTMLDivElement>) => void;
   isPreview?: boolean;
   onView: (todo: TodoDocument) => void;
   onChangeStatus: (todo: TodoDocument, status: TodoDocument['status']) => void;
@@ -28,7 +28,7 @@ export function TodoMilestoneCard({
   assignee,
   canToggle,
   isSubmitting,
-  dragHandle,
+  onHoldPointerDown,
   isPreview = false,
   onView,
   onChangeStatus,
@@ -41,7 +41,7 @@ export function TodoMilestoneCard({
   return (
     <div
       className={cn(
-        'flex items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 px-3.5 py-2.5 transition-[transform,box-shadow,opacity] duration-200 sm:gap-3 sm:rounded-[24px] sm:px-4 sm:py-3.5',
+        'flex select-none items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 px-3.5 py-2.5 transition-[transform,box-shadow,opacity] duration-200 [-webkit-touch-callout:none] [-webkit-user-select:none] sm:gap-3 sm:rounded-[24px] sm:px-4 sm:py-3.5',
         isPreview ? 'pointer-events-none scale-[1.03] shadow-[0_24px_54px_rgba(15,23,42,0.24)] ring-1 ring-[#dbe5f7]' : '',
       )}
       onClick={() => {
@@ -49,12 +49,14 @@ export function TodoMilestoneCard({
           onView(todo);
         }
       }}
+      onContextMenu={onHoldPointerDown ? (event) => event.preventDefault() : undefined}
       onKeyDown={(event) => {
         if (!isPreview && (event.key === 'Enter' || event.key === ' ')) {
           event.preventDefault();
           onView(todo);
         }
       }}
+      onPointerDown={isPreview ? undefined : onHoldPointerDown}
       role="button"
       tabIndex={0}
     >
@@ -85,7 +87,6 @@ export function TodoMilestoneCard({
           </div>
         ) : null}
       </div>
-      {dragHandle ? <div className="shrink-0">{dragHandle}</div> : null}
       <button
         aria-label={isDone ? 'Đánh dấu đang làm lại' : 'Đánh dấu hoàn thành'}
         className={cn(
@@ -99,6 +100,7 @@ export function TodoMilestoneCard({
           event.stopPropagation();
           onChangeStatus(todo, isDone ? 'in_progress' : 'done');
         }}
+        onPointerDown={(event) => event.stopPropagation()}
         type="button"
       >
         {isDone ? <CheckCircle2 className="size-4" /> : <Circle className="size-4" />}
