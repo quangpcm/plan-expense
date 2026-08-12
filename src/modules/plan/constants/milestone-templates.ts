@@ -41,6 +41,11 @@ export const milestoneTemplatesByPlanType: Record<PlanType, MilestoneTemplate[]>
     { title: 'Hóa đơn', iconId: 'receipt' },
     { title: 'Bảo trì', iconId: 'wrench' },
   ],
+  project: [
+    { title: 'Lên kế hoạch', iconId: 'clipboard-list' },
+    { title: 'Triển khai', iconId: 'play-circle' },
+    { title: 'Tổng kết', iconId: 'flag' },
+  ],
   general: [
     { title: 'Bắt đầu', iconId: 'flag' },
     { title: 'Thực hiện', iconId: 'list-todo' },

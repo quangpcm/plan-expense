@@ -105,10 +105,12 @@ export function TodoCard({
           <CalendarDays className="size-4 text-slate-400" />
           {createdAt ? formatDateTime(createdAt) : 'Chưa đặt'}
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <Wallet className="size-4 text-slate-400" />
-          {displayedBudget != null ? formatCurrency(displayedBudget) : 'Chưa đặt'}
-        </span>
+        {displayedBudget != null ? (
+          <span className="inline-flex items-center gap-1.5">
+            <Wallet className="size-4 text-slate-400" />
+            {formatCurrency(displayedBudget)}
+          </span>
+        ) : null}
       </div>
 
       {selectedVendor ? (

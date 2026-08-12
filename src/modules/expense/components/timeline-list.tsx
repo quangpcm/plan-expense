@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { Landmark, Paperclip, Users } from 'lucide-react';
+import { Paperclip, Tag, Users } from 'lucide-react';
 
 import { Card } from '@/shared/components/ui/card';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDate, formatTime } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
+import { categoryIcons } from '@/modules/category/utils/category-icon';
 import type { Category } from '@/modules/category/types/category';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
@@ -193,6 +194,7 @@ function ExpenseTimelineCard({ planId, expense, members, categories, milestones 
   const category = categories.find((item) => item.id === expense.categoryId);
   const milestone = milestones.find((item) => item.id === expense.milestoneId);
   const spentAt = timestampToDate(expense.spentAt);
+  const CategoryIcon = category?.icon ? categoryIcons[category.icon] ?? Tag : Tag;
 
   return (
     <div className="relative flex items-start gap-3">
@@ -204,7 +206,10 @@ function ExpenseTimelineCard({ planId, expense, members, categories, milestones 
         href={`/plans/${planId}/expenses/${expense.id}?returnTab=timeline${expense.milestoneId ? `&milestoneId=${expense.milestoneId}` : ''}`}
       >
         <Card className="gap-2 border-[var(--color-danger-soft)] bg-[var(--color-surface)] p-4 transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
-          <h3 className="text-base font-semibold text-[var(--color-foreground)]">{expense.title}</h3>
+          <div className="flex items-center gap-2">
+            <CategoryIcon className="size-4 shrink-0 text-[var(--color-expense)]" />
+            <h3 className="text-base font-semibold text-[var(--color-foreground)]">{expense.title}</h3>
+          </div>
           <p className="text-sm text-[var(--color-subtle)]">
             <span className="font-medium text-[var(--color-muted)]">{paidBy?.nickname || 'Không rõ'}</span> đã trả ·{' '}
             <span className="font-medium text-[var(--color-muted)]">
@@ -213,25 +218,24 @@ function ExpenseTimelineCard({ planId, expense, members, categories, milestones 
           </p>
           <div className="flex items-center justify-between gap-3 pt-1">
             <div className="flex min-w-0 items-center gap-2 text-xs text-[var(--color-subtle)]">
-              <span className="truncate font-bold uppercase text-[var(--color-expense)]">
-                {category?.name || 'Khác'}
-              </span>
               {milestone ? (
                 <>
-                  <span className="text-[var(--color-border-strong)]">•</span>
                   <span className="truncate">{milestone.title}</span>
+                  <span className="text-[var(--color-border-strong)]">•</span>
                 </>
               ) : null}
-              <span className="text-[var(--color-border-strong)]">•</span>
               <span className="flex shrink-0 items-center gap-1">
                 <Users className="size-3.5" />
                 {expense.participants.length}
               </span>
               {expense.attachments.length > 0 ? (
-                <span className="flex shrink-0 items-center gap-1">
-                  <Paperclip className="size-3.5" />
-                  {expense.attachments.length}
-                </span>
+                <>
+                  <span className="text-[var(--color-border-strong)]">•</span>
+                  <span className="flex shrink-0 items-center gap-1">
+                    <Paperclip className="size-3.5" />
+                    {expense.attachments.length}
+                  </span>
+                </>
               ) : null}
             </div>
             <p className="shrink-0 text-base font-bold text-[var(--color-expense)]">
@@ -255,6 +259,7 @@ function IncomeTimelineCard({ planId, income, members, categories }: IncomeTimel
   const contributor = members.find((member) => member.id === income.contributedByMemberId);
   const category = categories.find((item) => item.id === income.categoryId);
   const receivedAt = timestampToDate(income.receivedAt);
+  const CategoryIcon = category?.icon ? categoryIcons[category.icon] ?? Tag : Tag;
 
   return (
     <div className="relative flex items-start gap-3">
@@ -267,7 +272,7 @@ function IncomeTimelineCard({ planId, income, members, categories }: IncomeTimel
       >
         <Card className="gap-2 border-[var(--color-income-soft)] bg-[var(--color-income-soft)]/40 p-4 transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
           <div className="flex items-center gap-2">
-            <Landmark className="size-4 text-[var(--color-income)]" />
+            <CategoryIcon className="size-4 shrink-0 text-[var(--color-income)]" />
             <h3 className="text-base font-semibold text-[var(--color-foreground)]">{income.title}</h3>
           </div>
           <p className="text-sm text-[var(--color-subtle)]">
@@ -276,10 +281,7 @@ function IncomeTimelineCard({ planId, income, members, categories }: IncomeTimel
               {receivedAt ? formatTime(receivedAt) : '--:--'}
             </span>
           </p>
-          <div className="flex items-center justify-between gap-3 pt-1">
-            <span className="truncate text-xs font-bold uppercase text-[var(--color-income)]">
-              {category?.name || 'Khác'}
-            </span>
+          <div className="flex items-center justify-end gap-3 pt-1">
             <p className="shrink-0 text-base font-bold text-[var(--color-income)]">
               +{formatCurrency(income.amount)}
             </p>

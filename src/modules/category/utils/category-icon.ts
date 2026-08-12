@@ -1,50 +1,99 @@
 import {
+  BadgeDollarSign,
+  BedDouble,
+  Bolt,
+  Boxes,
+  CakeSlice,
+  Camera,
   Car,
+  CircleEllipsis,
+  ConciergeBell,
+  Fuel,
   Gift,
-  Heart,
-  Home,
+  HandCoins,
+  Handshake,
+  HeartHandshake,
+  House,
   Landmark,
-  Music,
-  Plane,
-  Popcorn,
+  Laptop,
+  MailOpen,
+  MapPin,
+  Megaphone,
+  MicVocal,
+  MonitorCog,
+  PackageOpen,
+  Paintbrush,
+  PartyPopper,
+  PiggyBank,
+  Receipt,
+  ReceiptText,
+  RotateCcw,
   Shirt,
   ShoppingBag,
   Sparkles,
+  SprayCan,
   Tag,
+  Target,
   Ticket,
-  UtensilsCrossed,
-  Wallet,
+  Tickets,
+  TrendingUp,
+  Users,
+  Utensils,
+  WalletCards,
+  Wifi,
+  Wrench,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-const KEYWORD_ICONS: { keywords: string[]; icon: LucideIcon }[] = [
-  { keywords: ['an uong', 'am thuc', 'do uong'], icon: UtensilsCrossed },
-  { keywords: ['di chuyen', 'xe', 'nhien lieu', 've tham quan', 've xe'], icon: Car },
-  { keywords: ['may bay', 'du lich'], icon: Plane },
-  { keywords: ['mua sam', 'qua tang', 'thiep'], icon: ShoppingBag },
-  { keywords: ['khach san', 'dia diem', 'phong'], icon: Home },
-  { keywords: ['trang phuc', 'trang diem'], icon: Shirt },
-  { keywords: ['chup anh', 'quay phim'], icon: Ticket },
-  { keywords: ['giai tri', 'am thanh', 'mc'], icon: Popcorn },
-  { keywords: ['nhac', 'ca hat'], icon: Music },
-  { keywords: ['trang tri'], icon: Sparkles },
-  { keywords: ['cuoi', 'yeu'], icon: Heart },
-  { keywords: ['qua', 'gift'], icon: Gift },
-  { keywords: ['quy', 'nap quy', 'rut quy', 'tien lai', 'thu nhap', 'hoan tien'], icon: Landmark },
-  { keywords: ['phi dich vu', 'chi phi'], icon: Wallet },
-];
+export const categoryIcons: Record<string, LucideIcon> = {
+  BadgeDollarSign,
+  BedDouble,
+  Bolt,
+  Boxes,
+  CakeSlice,
+  Camera,
+  Car,
+  CircleEllipsis,
+  ConciergeBell,
+  Fuel,
+  Gift,
+  HandCoins,
+  Handshake,
+  HeartHandshake,
+  House,
+  Landmark,
+  Laptop,
+  MailOpen,
+  MapPin,
+  Megaphone,
+  MicVocal,
+  MonitorCog,
+  PackageOpen,
+  Paintbrush,
+  PartyPopper,
+  PiggyBank,
+  Receipt,
+  ReceiptText,
+  RotateCcw,
+  Shirt,
+  ShoppingBag,
+  Sparkles,
+  SprayCan,
+  Target,
+  Ticket,
+  Tickets,
+  TrendingUp,
+  Users,
+  Utensils,
+  WalletCards,
+  Wifi,
+  Wrench,
+};
 
-const DIACRITICS_PATTERN = new RegExp('[̀-ͯ]', 'g');
+export function getCategoryIcon(icon: string | null | undefined): LucideIcon {
+  if (!icon) {
+    return Tag;
+  }
 
-function normalize(value: string) {
-  return value.toLowerCase().normalize('NFD').replace(DIACRITICS_PATTERN, '');
-}
-
-export function getCategoryIcon(name: string): LucideIcon {
-  const normalized = normalize(name);
-  const match = KEYWORD_ICONS.find((entry) =>
-    entry.keywords.some((keyword) => normalized.includes(keyword)),
-  );
-
-  return match?.icon ?? Tag;
+  return categoryIcons[icon] ?? Tag;
 }

@@ -1,4 +1,4 @@
-import { Cake, Gem, Home, LayoutGrid, PartyPopper, PiggyBank, Plane } from 'lucide-react';
+import { Briefcase, Cake, Gem, Home, LayoutGrid, PartyPopper, PiggyBank, Plane } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 import type { PlanType } from '@/modules/plan/types/plan';
@@ -10,6 +10,7 @@ export const planTypeOptions: Array<{ value: PlanType; label: string }> = [
   { value: 'birthday', label: 'Sinh nhật' },
   { value: 'event', label: 'Sự kiện' },
   { value: 'shared_living', label: 'Sinh hoạt chung' },
+  { value: 'project', label: 'Dự án / Hoạt động' },
   { value: 'general', label: 'Chung' },
 ];
 
@@ -20,6 +21,7 @@ export const planTypeIcons: Record<PlanType, LucideIcon> = {
   birthday: Cake,
   event: PartyPopper,
   shared_living: Home,
+  project: Briefcase,
   general: LayoutGrid,
 };
 
@@ -30,6 +32,7 @@ export const planTypeGradients: Record<PlanType, string> = {
   birthday: 'bg-gradient-to-br from-amber-100 via-yellow-50 to-white',
   event: 'bg-gradient-to-br from-violet-100 via-purple-50 to-white',
   shared_living: 'bg-gradient-to-br from-teal-100 via-emerald-50 to-white',
+  project: 'bg-gradient-to-br from-indigo-100 via-blue-50 to-white',
   general: 'bg-gradient-to-br from-slate-100 via-slate-50 to-white',
 };
 
@@ -40,5 +43,6 @@ export const planTypeBadgeColors: Record<PlanType, string> = {
   shared_living: 'bg-[#4f5f7f]',
   birthday: 'bg-[#7c5d3b]',
   event: 'bg-[#5b6aa0]',
+  project: 'bg-[#3f5f8f]',
   general: 'bg-[#5c677d]',
 };

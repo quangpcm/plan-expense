@@ -11,6 +11,7 @@ export type PlanType =
   | 'birthday'
   | 'event'
   | 'shared_living'
+  | 'project'
   | 'general';
 
 export type CurrencyCode = 'VND';

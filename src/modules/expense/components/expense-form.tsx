@@ -262,7 +262,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
         <p className="text-sm font-medium text-slate-700">Danh mục</p>
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
           {categories.map((category) => {
-            const CategoryIcon = getCategoryIcon(category.name);
+            const CategoryIcon = getCategoryIcon(category.icon);
             const isSelected = categoryIdWatched === category.id;
 
             return (

@@ -11,6 +11,7 @@ export const createPlanSchema = z
       'birthday',
       'event',
       'shared_living',
+      'project',
       'general',
     ]),
     startDate: z.string().optional().or(z.literal('')),

@@ -69,16 +69,18 @@ export function TodoMilestoneCard({
         <p className="truncate text-base font-semibold text-slate-950 sm:text-lg">{todo.title}</p>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-600 sm:gap-x-4 sm:text-base">
           <span className="inline-flex shrink-0 items-center gap-1">
-            <CalendarDays className="size-3.5 text-slate-400 sm:size-5" />
+            <CalendarDays className="size-3 text-slate-400 sm:size-5" />
             {dueDate ? formatDate(dueDate) : 'Chưa đặt'}
           </span>
-          <span className="inline-flex shrink-0 items-center gap-1">
-            <Wallet className="size-3.5 text-slate-400 sm:size-5" />
-            {displayedBudget != null ? formatCompactCurrency(displayedBudget) : 'Chưa đặt'}
-          </span>
+          {displayedBudget != null ? (
+            <span className="inline-flex shrink-0 items-center gap-1">
+              <Wallet className="size-3 text-slate-400 sm:size-5" />
+              {formatCompactCurrency(displayedBudget)}
+            </span>
+          ) : null}
         </div>
         {selectedVendor ? (
-          <div className="inline-flex max-w-full items-center gap-2 self-start rounded-full border border-[#bfd6ff] bg-[#eef5ff] px-2.5 py-1 text-[11px] font-medium text-[#4f6792] sm:px-3 sm:text-xs">
+          <div className="inline-flex max-w-full items-center gap-2 self-start rounded-full border border-[#bfd6ff] bg-[#eef5ff] px-2.5 py-1 text-xs font-medium text-[#4f6792] sm:px-3">
             <Store className="size-3 shrink-0 text-[#5e7fb8]" />
             <span className="truncate text-[#2f518f]">{selectedVendor.name}</span>
             {displayedBudget != null ? (
