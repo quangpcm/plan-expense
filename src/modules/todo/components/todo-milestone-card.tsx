@@ -92,10 +92,10 @@ export function TodoMilestoneCard({
       <button
         aria-label={isDone ? 'Đánh dấu đang làm lại' : 'Đánh dấu hoàn thành'}
         className={cn(
-          'flex shrink-0 items-center justify-center rounded-full border transition',
+          'flex size-7 shrink-0 items-center justify-center rounded-full border transition sm:size-8',
           isDone
-            ? 'size-8 border-emerald-500 bg-emerald-500 text-white sm:size-9'
-            : 'size-7 border-[#c4cbe0] text-slate-500 hover:border-[#0050cb] sm:size-8',
+            ? 'border-emerald-500 bg-emerald-500 text-white'
+            : 'border-[#c4cbe0] text-slate-500 hover:border-[#0050cb]',
         )}
         disabled={!canToggle || isSubmitting || isPreview}
         onClick={(event) => {

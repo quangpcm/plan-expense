@@ -50,7 +50,18 @@ import {
   useMilestones,
 } from '@/modules/milestone';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
-import { TodoDetailView, TodoForm, TodoList, TodoVendorForm, useTodos, todoService } from '@/modules/todo';
+import {
+  TodoDetailView,
+  TodoForm,
+  TodoList,
+  TodoListControls,
+  TodoVendorForm,
+  filterTodosByStatus,
+  sortTodosByDueDate,
+  useTodos,
+  todoService,
+} from '@/modules/todo';
+import type { TodoDueSortOrder, TodoStatusFilter } from '@/modules/todo';
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import { CategoryBreakdown } from '@/modules/statistic/components/category-breakdown';
 import { ExpenseTimelineChart } from '@/modules/statistic/components/expense-timeline-chart';
@@ -147,6 +158,8 @@ export default function PlanDetailPage() {
   const [todoToRestoreAfterVendor, setTodoToRestoreAfterVendor] = useState<TodoDocument | null>(null);
   const [expenseSheetMilestoneId, setExpenseSheetMilestoneId] = useState<string | null>(null);
   const [workViewMode, setWorkViewMode] = useState<'milestones' | 'todos'>('milestones');
+  const [todoStatusFilter, setTodoStatusFilter] = useState<TodoStatusFilter>('pending');
+  const [todoDueSortOrder, setTodoDueSortOrder] = useState<TodoDueSortOrder>('oldest');
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const [headerModal, setHeaderModal] = useState<HeaderModal>(null);
   const [showClosePlanConfirm, setShowClosePlanConfirm] = useState(false);
@@ -298,6 +311,10 @@ export default function PlanDetailPage() {
       .sort((a, b) => a.dueDate!.toMillis() - b.dueDate!.toMillis())
       .slice(0, 5);
   }, [todos]);
+  const allTodosFilteredAndSorted = useMemo(
+    () => sortTodosByDueDate(filterTodosByStatus(todos, todoStatusFilter), todoDueSortOrder),
+    [todos, todoStatusFilter, todoDueSortOrder],
+  );
 
   useEffect(() => {
     const milestoneIdParam = searchParams.get('milestoneId');
@@ -1127,27 +1144,37 @@ export default function PlanDetailPage() {
                   : 'Danh sách này gom toàn bộ công việc từ các milestone, giúp bạn rà nhanh tiến độ mà không cần mở từng mốc.'
               }
             />
-            <div className="inline-flex gap-1 rounded-full bg-slate-100 p-1">
-              <button
-                className={cn(
-                  'rounded-full px-4 py-2 text-sm font-medium transition',
-                  workViewMode === 'milestones' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-600',
-                )}
-                onClick={() => setWorkViewMode('milestones')}
-                type="button"
-              >
-                Theo mốc
-              </button>
-              <button
-                className={cn(
-                  'rounded-full px-4 py-2 text-sm font-medium transition',
-                  workViewMode === 'todos' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-600',
-                )}
-                onClick={() => setWorkViewMode('todos')}
-                type="button"
-              >
-                Tất cả công việc
-              </button>
+            <div className="flex items-center justify-between gap-2">
+              <div className="inline-flex gap-1 rounded-full bg-slate-100 p-1">
+                <button
+                  className={cn(
+                    'rounded-full px-4 py-2 text-sm font-medium transition',
+                    workViewMode === 'milestones' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-600',
+                  )}
+                  onClick={() => setWorkViewMode('milestones')}
+                  type="button"
+                >
+                  Theo mốc
+                </button>
+                <button
+                  className={cn(
+                    'rounded-full px-4 py-2 text-sm font-medium transition',
+                    workViewMode === 'todos' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-600',
+                  )}
+                  onClick={() => setWorkViewMode('todos')}
+                  type="button"
+                >
+                  Tất cả công việc
+                </button>
+              </div>
+              {workViewMode === 'todos' ? (
+                <TodoListControls
+                  onSortOrderChange={setTodoDueSortOrder}
+                  onStatusFilterChange={setTodoStatusFilter}
+                  sortOrder={todoDueSortOrder}
+                  statusFilter={todoStatusFilter}
+                />
+              ) : null}
             </div>
             {milestoneActionError ? <AuthFormMessage message={milestoneActionError} type="error" /> : null}
             {todoActionError ? <AuthFormMessage message={todoActionError} type="error" /> : null}
@@ -1245,7 +1272,11 @@ export default function PlanDetailPage() {
                 ) : (
                   <TodoList
                     canManagePlan={permissions.canManagePlan && plan.status !== 'closed'}
-                    emptyMessage="Kế hoạch này chưa có công việc nào."
+                    emptyMessage={
+                      todoStatusFilter === 'done'
+                        ? 'Chưa có công việc nào hoàn thành.'
+                        : 'Kế hoạch này chưa có công việc nào.'
+                    }
                     isSubmitting={isTodoSubmitting}
                     members={members}
                     milestones={milestones}
@@ -1260,7 +1291,8 @@ export default function PlanDetailPage() {
                       setEditingTodo(todo);
                       setShowTodoForm(true);
                     }}
-                    todos={todos}
+                    preserveOrder
+                    todos={allTodosFilteredAndSorted}
                   />
                 )}
               </div>

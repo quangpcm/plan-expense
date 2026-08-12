@@ -2,6 +2,40 @@ import type { TodoDocument } from '@/modules/todo/types/todo';
 
 export const TODO_ORDER_INDEX_STEP = 1000;
 
+export type TodoStatusFilter = 'pending' | 'done';
+export type TodoDueSortOrder = 'oldest' | 'newest';
+
+export function filterTodosByStatus<T extends Pick<TodoDocument, 'status'>>(
+  todos: T[],
+  filter: TodoStatusFilter,
+): T[] {
+  return todos.filter((todo) => (filter === 'done' ? todo.status === 'done' : todo.status !== 'done'));
+}
+
+export function sortTodosByDueDate<T extends Pick<TodoDocument, 'dueDate'>>(
+  todos: T[],
+  order: TodoDueSortOrder,
+): T[] {
+  return [...todos].sort((a, b) => {
+    const aTime = a.dueDate ? a.dueDate.toMillis() : null;
+    const bTime = b.dueDate ? b.dueDate.toMillis() : null;
+
+    if (aTime === null && bTime === null) {
+      return 0;
+    }
+
+    if (aTime === null) {
+      return 1;
+    }
+
+    if (bTime === null) {
+      return -1;
+    }
+
+    return order === 'oldest' ? aTime - bTime : bTime - aTime;
+  });
+}
+
 export function getFallbackTodoOrderIndex(todo: Pick<TodoDocument, 'createdAt' | 'orderIndex'>) {
   if (Number.isFinite(todo.orderIndex)) {
     return todo.orderIndex;

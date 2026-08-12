@@ -563,11 +563,13 @@ export function MilestoneTimelineBoard({
                     return (
                       <div
                         key={todo.id}
+                        className="relative"
                         onClick={(event) => event.stopPropagation()}
                         ref={(element) => {
                           itemRefs.current[todo.id] = element;
                         }}
                       >
+                        <span className="absolute -left-[43px] top-1/2 z-10 size-1.5 -translate-y-1/2 rounded-full bg-slate-300 sm:-left-[64px] sm:size-2" />
                         {isDraggingTodo && activeDrag ? (
                           <div
                             className="rounded-2xl border border-dashed border-[#c9d8f2] bg-[#f6f9ff] shadow-inner transition-all duration-200 animate-pulse sm:rounded-[24px]"

@@ -4,8 +4,15 @@ export { useTodosByMilestone } from './hooks/use-todos-by-milestone';
 export { TodoDetailView } from './components/todo-detail-view';
 export { TodoForm } from './components/todo-form';
 export { TodoList } from './components/todo-list';
+export { TodoListControls } from './components/todo-list-controls';
 export { TodoMilestoneCard } from './components/todo-milestone-card';
 export { TodoVendorForm } from './components/todo-vendor-form';
+export {
+  filterTodosByStatus,
+  sortTodosByDueDate,
+  type TodoDueSortOrder,
+  type TodoStatusFilter,
+} from './utils/todo-order';
 export type {
   CreateTodoInput,
   MoveTodoToMilestoneInput,

@@ -46,7 +46,7 @@ export function TodoCard({
   onDeleteTodo,
 }: TodoCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const createdAt = timestampToDate(todo.createdAt);
+  const dueDate = timestampToDate(todo.dueDate);
   const selectedVendor = getSelectedTodoVendor(todo);
   const displayedBudget = getTodoBudgetAmount(todo);
 
@@ -74,10 +74,10 @@ export function TodoCard({
           src={assignee?.avatarUrl ?? null}
         />
         <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <h4 className="truncate text-base font-semibold text-slate-950">{todo.title}</h4>
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="min-w-0 truncate text-base font-semibold text-slate-950">{todo.title}</h4>
             {milestone ? (
-              <Badge className="px-2 py-0.5 text-[11px]" variant="neutral">
+              <Badge className="shrink-0 px-2 py-0.5 text-[11px]" variant="neutral">
                 {milestone.title}
               </Badge>
             ) : null}
@@ -103,7 +103,7 @@ export function TodoCard({
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600">
         <span className="inline-flex items-center gap-1.5">
           <CalendarDays className="size-4 text-slate-400" />
-          {createdAt ? formatDateTime(createdAt) : 'Chưa đặt'}
+          {dueDate ? formatDateTime(dueDate) : 'Chưa đặt'}
         </span>
         {displayedBudget != null ? (
           <span className="inline-flex items-center gap-1.5">
