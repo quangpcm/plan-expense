@@ -21,7 +21,7 @@ export function MilestoneBreakdown({ statistic }: MilestoneBreakdownProps) {
         {statistic.milestoneBreakdown.map((row) => (
           <div
             key={row.milestoneId}
-            className="grid gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm sm:grid-cols-[1.4fr_1fr_1fr]"
+            className="grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm sm:grid-cols-[1.4fr_1fr_1fr]"
           >
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">

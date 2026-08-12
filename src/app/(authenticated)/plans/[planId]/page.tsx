@@ -959,7 +959,7 @@ export default function PlanDetailPage() {
           <>
             <div className="flex flex-col gap-4">
               <SectionHeading eyebrow="Thu chi" title="Dòng tiền kế hoạch" />
-              <div className="grid gap-3 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)]">
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)]">
                 <div className="grid grid-cols-3 gap-2 lg:hidden">
                   <Button className="min-w-0 justify-center px-3" onClick={() => setShowStatisticSheet(true)} variant="secondary">
                     <BarChart3 className="size-4" />
@@ -1087,7 +1087,7 @@ export default function PlanDetailPage() {
                 {isMilestonesLoading ? (
                   <Skeleton className="h-48 rounded-[28px]" />
                 ) : (
-                  <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+                  <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
                     <MilestoneTimelineBoard
                       canManagePlan={permissions.canManagePlan}
                       isMilestoneSubmitting={isMilestoneSubmitting}

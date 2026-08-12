@@ -174,7 +174,7 @@ function EditableMemberRow({
         placeholder="Biệt danh"
         value={nickname}
       />
-      <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
         <DropdownSelect
           onValueChange={(value) => setRole(value as Exclude<PlanRole, 'owner'>)}
           options={[

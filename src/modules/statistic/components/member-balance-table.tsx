@@ -14,7 +14,7 @@ export function MemberBalanceTable({ statistic }: MemberBalanceTableProps) {
         {statistic.memberBalances.map((row) => (
           <div
             key={row.memberId}
-            className="grid gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm sm:grid-cols-[1.2fr_1fr_1fr_1fr_1fr_1fr]"
+            className="grid grid-cols-1 gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm sm:grid-cols-[1.2fr_1fr_1fr_1fr_1fr_1fr]"
           >
             <div className="font-semibold text-slate-900">{row.nickname}</div>
             <div className="text-slate-600">Đã trả: {formatCurrency(row.paid)}</div>
