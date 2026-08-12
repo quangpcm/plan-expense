@@ -624,12 +624,11 @@ export function MilestoneTimelineBoard({
                 {canManagePlan ? (
                   <div className="flex flex-wrap justify-end gap-2 lg:hidden">
                     <Button
-                      className={isSelected ? tone.action : ''}
                       onClick={(event) => {
                         event.stopPropagation();
                         onEditMilestone(milestone);
                       }}
-                      variant={isSelected ? 'ghost' : 'secondary'}
+                      variant="secondary"
                     >
                       <PencilLine className="size-4" />
                     </Button>
