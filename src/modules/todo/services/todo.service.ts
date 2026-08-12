@@ -1,5 +1,6 @@
 import type { TodoRepository } from '@/modules/todo/repositories/todo.repository';
 import type { AddTodoVendorSchema } from '@/modules/todo/schemas/add-todo-vendor.schema';
+import type { UpdateTodoVendorSchema } from '@/modules/todo/schemas/update-todo-vendor.schema';
 import type {
   CreateTodoInput,
   MoveTodoToMilestoneInput,
@@ -141,6 +142,42 @@ export class TodoService {
 
     await this.todoRepository.addVendor(plan.id, input.todoId, {
       id: vendorId,
+      name,
+      description: input.description?.trim() || null,
+      link: input.link?.trim() || null,
+      price: input.price,
+      attachments,
+    });
+  }
+
+  async updateVendor(
+    plan: PlanDocument,
+    todo: TodoDocument,
+    input: UpdateTodoVendorSchema,
+    currentUser: AuthUser,
+    currentMember: PlanMemberDocument | null,
+  ) {
+    void currentUser;
+    this.assertEditablePlan(plan);
+    this.assertManagePlanPermission(currentMember);
+
+    const name = input.name.trim();
+
+    if (!name) {
+      throw new AppError('Vendor name is required.', 'TODO_VENDOR_NAME_REQUIRED', 400);
+    }
+
+    if (!todo.vendors.some((vendor) => vendor.id === input.vendorId)) {
+      throw new AppError('Vendor không tồn tại trong công việc này.', 'TODO_VENDOR_NOT_FOUND', 400);
+    }
+
+    const attachments = await resolveAttachmentDrafts(
+      { mediaType: 'todo-vendor-attachment', planId: plan.id, todoId: todo.id, vendorId: input.vendorId },
+      input.attachments,
+    );
+
+    await this.todoRepository.updateVendor(plan.id, todo.id, {
+      vendorId: input.vendorId,
       name,
       description: input.description?.trim() || null,
       link: input.link?.trim() || null,

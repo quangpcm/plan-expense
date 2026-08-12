@@ -32,6 +32,15 @@ export type AddTodoVendorPersistenceInput = {
   attachments: TodoDocument['attachments'];
 };
 
+export type UpdateTodoVendorPersistenceInput = {
+  vendorId: string;
+  name: string;
+  description: string | null;
+  link: string | null;
+  price: number;
+  attachments?: TodoDocument['attachments'] | undefined;
+};
+
 export interface TodoRepository {
   generateTodoId(planId: string): string;
   createTodo(input: CreateTodoPersistenceInput): Promise<{ todoId: string }>;
@@ -39,6 +48,7 @@ export interface TodoRepository {
   reorderTodosWithinMilestone(planId: string, input: ReorderTodosWithinMilestoneInput): Promise<void>;
   moveTodoToMilestone(planId: string, input: MoveTodoToMilestoneInput): Promise<void>;
   addVendor(planId: string, todoId: string, vendor: AddTodoVendorPersistenceInput): Promise<void>;
+  updateVendor(planId: string, todoId: string, input: UpdateTodoVendorPersistenceInput): Promise<void>;
   selectVendor(planId: string, todoId: string, vendorId: string | null): Promise<void>;
   deleteTodo(planId: string, todoId: string): Promise<void>;
   watchTodos(

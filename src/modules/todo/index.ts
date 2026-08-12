@@ -19,3 +19,4 @@ export type {
 export { createTodoSchema, type CreateTodoSchema } from './schemas/create-todo.schema';
 export { updateTodoSchema, type UpdateTodoSchema } from './schemas/update-todo.schema';
 export { addTodoVendorSchema, type AddTodoVendorSchema } from './schemas/add-todo-vendor.schema';
+export { updateTodoVendorSchema, type UpdateTodoVendorSchema } from './schemas/update-todo-vendor.schema';

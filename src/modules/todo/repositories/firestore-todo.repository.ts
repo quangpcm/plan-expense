@@ -20,6 +20,7 @@ import type {
   CreateTodoPersistenceInput,
   TodoRepository,
   UpdateTodoPersistenceInput,
+  UpdateTodoVendorPersistenceInput,
 } from '@/modules/todo/repositories/todo.repository';
 import type {
   MoveTodoToMilestoneInput,
@@ -270,6 +271,42 @@ export class FirestoreTodoRepository implements TodoRepository {
 
       transaction.update(todoRef, {
         vendors: [...(previousTodo.vendors ?? []).map(normalizeVendor), newVendor],
+        updatedAt: now,
+      });
+    });
+  }
+
+  async updateVendor(planId: string, todoId: string, input: UpdateTodoVendorPersistenceInput) {
+    const db = getFirebaseFirestore();
+    const todoRef = doc(db, 'plans', planId, 'todos', todoId);
+    const now = Timestamp.now();
+
+    await runTransaction(db, async (transaction) => {
+      const todoSnapshot = await transaction.get(todoRef);
+
+      if (!todoSnapshot.exists()) {
+        throw new Error('Todo not found.');
+      }
+
+      const previousTodo = todoSnapshot.data() as TodoDocument;
+      const previousVendors = (previousTodo.vendors ?? []).map(normalizeVendor);
+      const targetVendor = previousVendors.find((vendor) => vendor.id === input.vendorId);
+
+      if (!targetVendor) {
+        throw new Error('Vendor not found.');
+      }
+
+      const updatedVendor: TodoVendor = {
+        ...targetVendor,
+        name: input.name,
+        description: input.description,
+        link: input.link,
+        price: input.price,
+        attachments: input.attachments !== undefined ? input.attachments : targetVendor.attachments,
+      };
+
+      transaction.update(todoRef, {
+        vendors: previousVendors.map((vendor) => (vendor.id === input.vendorId ? updatedVendor : vendor)),
         updatedAt: now,
       });
     });

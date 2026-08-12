@@ -143,6 +143,7 @@ export default function PlanDetailPage() {
   const [isTodoSubmitting, setIsTodoSubmitting] = useState(false);
   const [todoActionError, setTodoActionError] = useState<string | null>(null);
   const [vendorFormTodo, setVendorFormTodo] = useState<TodoDocument | null>(null);
+  const [editingVendorId, setEditingVendorId] = useState<string | null>(null);
   const [detailTodo, setDetailTodo] = useState<TodoDocument | null>(null);
   const [todoToRestoreAfterVendor, setTodoToRestoreAfterVendor] = useState<TodoDocument | null>(null);
   const [expenseSheetMilestoneId, setExpenseSheetMilestoneId] = useState<string | null>(null);
@@ -665,9 +666,12 @@ export default function PlanDetailPage() {
 
   function closeVendorForm() {
     setVendorFormTodo(null);
+    setEditingVendorId(null);
     setDetailTodo(todoToRestoreAfterVendor);
     setTodoToRestoreAfterVendor(null);
   }
+
+  const editingVendor = vendorFormTodo?.vendors.find((vendor) => vendor.id === editingVendorId);
 
   async function handleSelectTodoVendor(todo: TodoDocument, vendorId: string) {
     if (!user) {
@@ -999,7 +1003,10 @@ export default function PlanDetailPage() {
                   members={members}
                   milestones={milestones}
                   preserveOrder
-                  onAddVendor={setVendorFormTodo}
+                  onAddVendor={(todo) => {
+                    setEditingVendorId(null);
+                    setVendorFormTodo(todo);
+                  }}
                   onChangeStatus={handleChangeTodoStatus}
                   onDeleteTodo={handleDeleteTodo}
                   onEdit={(todo) => {
@@ -1247,7 +1254,10 @@ export default function PlanDetailPage() {
                     isSubmitting={isTodoSubmitting}
                     members={members}
                     milestones={milestones}
-                    onAddVendor={setVendorFormTodo}
+                    onAddVendor={(todo) => {
+                      setEditingVendorId(null);
+                      setVendorFormTodo(todo);
+                    }}
                     onChangeStatus={handleChangeTodoStatus}
                     onDeleteTodo={handleDeleteTodo}
                     onEdit={(todo) => {
@@ -1409,6 +1419,7 @@ export default function PlanDetailPage() {
                   onAddVendor={(todo) => {
                     setDetailTodo(null);
                     setTodoToRestoreAfterVendor(todo);
+                    setEditingVendorId(null);
                     setVendorFormTodo(todo);
                   }}
                   onChangeStatus={handleChangeTodoStatus}
@@ -1422,6 +1433,12 @@ export default function PlanDetailPage() {
                     setSelectedMilestoneId(todo.milestoneId);
                     setEditingTodo(todo);
                     setShowTodoForm(true);
+                  }}
+                  onEditVendor={(todo, vendorId) => {
+                    setDetailTodo(null);
+                    setTodoToRestoreAfterVendor(todo);
+                    setEditingVendorId(vendorId);
+                    setVendorFormTodo(todo);
                   }}
                   onMoveToMilestone={handleMoveTodoToMilestone}
                   onSelectVendor={handleSelectTodoVendor}
@@ -1439,6 +1456,7 @@ export default function PlanDetailPage() {
                   onAddVendor={(todo) => {
                     setDetailTodo(null);
                     setTodoToRestoreAfterVendor(todo);
+                    setEditingVendorId(null);
                     setVendorFormTodo(todo);
                   }}
                   onChangeStatus={handleChangeTodoStatus}
@@ -1452,6 +1470,12 @@ export default function PlanDetailPage() {
                     setSelectedMilestoneId(todo.milestoneId);
                     setEditingTodo(todo);
                     setShowTodoForm(true);
+                  }}
+                  onEditVendor={(todo, vendorId) => {
+                    setDetailTodo(null);
+                    setTodoToRestoreAfterVendor(todo);
+                    setEditingVendorId(vendorId);
+                    setVendorFormTodo(todo);
                   }}
                   onMoveToMilestone={handleMoveTodoToMilestone}
                   onSelectVendor={handleSelectTodoVendor}
@@ -1472,8 +1496,12 @@ export default function PlanDetailPage() {
               />
               <Dialog
                 className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto"
-                description={`Thêm nhà cung cấp tham khảo cho "${vendorFormTodo.title}".`}
-                title="Thêm nhà cung cấp"
+                description={
+                  editingVendor
+                    ? `Cập nhật thông tin nhà cung cấp cho "${vendorFormTodo.title}".`
+                    : `Thêm nhà cung cấp tham khảo cho "${vendorFormTodo.title}".`
+                }
+                title={editingVendor ? 'Sửa nhà cung cấp' : 'Thêm nhà cung cấp'}
               >
                 <TodoVendorForm
                   currentMember={currentMember}
@@ -1482,15 +1510,20 @@ export default function PlanDetailPage() {
                   onSuccess={closeVendorForm}
                   plan={ensuredPlan}
                   todo={vendorFormTodo}
+                  {...(editingVendor ? { vendor: editingVendor } : {})}
                 />
               </Dialog>
             </div>
             <div className="md:hidden">
               <BottomSheet
-                description={`Thêm nhà cung cấp tham khảo cho "${vendorFormTodo.title}".`}
+                description={
+                  editingVendor
+                    ? `Cập nhật thông tin nhà cung cấp cho "${vendorFormTodo.title}".`
+                    : `Thêm nhà cung cấp tham khảo cho "${vendorFormTodo.title}".`
+                }
                 onClose={closeVendorForm}
                 open={Boolean(vendorFormTodo)}
-                title="Thêm nhà cung cấp"
+                title={editingVendor ? 'Sửa nhà cung cấp' : 'Thêm nhà cung cấp'}
               >
                 <TodoVendorForm
                   currentMember={currentMember}
@@ -1499,6 +1532,7 @@ export default function PlanDetailPage() {
                   onSuccess={closeVendorForm}
                   plan={ensuredPlan}
                   todo={vendorFormTodo}
+                  {...(editingVendor ? { vendor: editingVendor } : {})}
                 />
               </BottomSheet>
             </div>

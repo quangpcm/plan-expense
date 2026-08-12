@@ -5,8 +5,9 @@ import { ZodError } from 'zod';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { addTodoVendorSchema } from '@/modules/todo/schemas/add-todo-vendor.schema';
+import { updateTodoVendorSchema } from '@/modules/todo/schemas/update-todo-vendor.schema';
 import { todoService } from '@/modules/todo/services';
-import type { TodoDocument } from '@/modules/todo/types/todo';
+import type { TodoDocument, TodoVendor } from '@/modules/todo/types/todo';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import type { AuthUser } from '@/modules/auth/types/auth';
@@ -19,18 +20,29 @@ import { Textarea } from '@/shared/components/ui/textarea';
 type TodoVendorFormProps = {
   plan: PlanDocument;
   todo: TodoDocument;
+  vendor?: TodoVendor;
   currentMember: PlanMemberDocument | null;
   currentUser: AuthUser | null;
   onSuccess?: () => void;
   onClose?: () => void;
 };
 
-export function TodoVendorForm({ plan, todo, currentMember, currentUser, onSuccess, onClose }: TodoVendorFormProps) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [link, setLink] = useState('');
-  const [price, setPrice] = useState(0);
-  const [attachmentDrafts, setAttachmentDrafts] = useState<AttachmentDraft[]>([]);
+export function TodoVendorForm({
+  plan,
+  todo,
+  vendor,
+  currentMember,
+  currentUser,
+  onSuccess,
+  onClose,
+}: TodoVendorFormProps) {
+  const [name, setName] = useState(vendor?.name ?? '');
+  const [description, setDescription] = useState(vendor?.description ?? '');
+  const [link, setLink] = useState(vendor?.link ?? '');
+  const [price, setPrice] = useState(vendor?.price ?? 0);
+  const [attachmentDrafts, setAttachmentDrafts] = useState<AttachmentDraft[]>(
+    (vendor?.attachments ?? []).map((attachment) => ({ kind: 'existing', id: attachment.id, attachment })),
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const errorRef = useRef<HTMLDivElement | null>(null);
@@ -53,21 +65,36 @@ export function TodoVendorForm({ plan, todo, currentMember, currentUser, onSucce
     setErrorMessage(null);
 
     try {
-      const parsed = addTodoVendorSchema.parse({
-        todoId: todo.id,
-        name,
-        description,
-        link,
-        price,
-        attachments: attachmentDrafts,
-      });
+      if (vendor) {
+        const parsed = updateTodoVendorSchema.parse({
+          todoId: todo.id,
+          vendorId: vendor.id,
+          name,
+          description,
+          link,
+          price,
+          attachments: attachmentDrafts,
+        });
 
-      await todoService.addVendor(plan, parsed, currentUser, currentMember);
-      setName('');
-      setDescription('');
-      setLink('');
-      setPrice(0);
-      setAttachmentDrafts([]);
+        await todoService.updateVendor(plan, todo, parsed, currentUser, currentMember);
+      } else {
+        const parsed = addTodoVendorSchema.parse({
+          todoId: todo.id,
+          name,
+          description,
+          link,
+          price,
+          attachments: attachmentDrafts,
+        });
+
+        await todoService.addVendor(plan, parsed, currentUser, currentMember);
+        setName('');
+        setDescription('');
+        setLink('');
+        setPrice(0);
+        setAttachmentDrafts([]);
+      }
+
       onSuccess?.();
     } catch (error) {
       if (error instanceof ZodError) {
@@ -122,7 +149,7 @@ export function TodoVendorForm({ plan, todo, currentMember, currentUser, onSucce
           </Button>
         ) : null}
         <Button disabled={isSubmitting} type="submit">
-          {isSubmitting ? 'Đang lưu...' : 'Thêm nhà cung cấp'}
+          {isSubmitting ? 'Đang lưu...' : vendor ? 'Lưu thay đổi' : 'Thêm nhà cung cấp'}
         </Button>
       </div>
     </form>

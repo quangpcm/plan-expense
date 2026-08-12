@@ -22,6 +22,7 @@ type TodoDetailViewProps = {
   milestoneOptions: DropdownOption[];
   onEdit: (todo: TodoDocument) => void;
   onAddVendor: (todo: TodoDocument) => void;
+  onEditVendor: (todo: TodoDocument, vendorId: string) => void;
   onSelectVendor: (todo: TodoDocument, vendorId: string) => void;
   onMoveToMilestone: (todo: TodoDocument, milestoneId: string) => void;
   onChangeStatus: (todo: TodoDocument, status: TodoDocument['status']) => void;
@@ -37,6 +38,7 @@ export function TodoDetailView({
   milestoneOptions,
   onEdit,
   onAddVendor,
+  onEditVendor,
   onSelectVendor,
   onMoveToMilestone,
   onChangeStatus,
@@ -146,9 +148,24 @@ export function TodoDetailView({
                       )}
                     </span>
                   </div>
-                  <span className={cn('shrink-0 font-medium', vendor.id === todo.selectedTodoVendorId ? 'text-[#1d4ed8]' : 'text-slate-600')}>
-                    {formatCurrency(vendor.price)}
-                  </span>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <span className={cn('font-medium', vendor.id === todo.selectedTodoVendorId ? 'text-[#1d4ed8]' : 'text-slate-600')}>
+                      {formatCurrency(vendor.price)}
+                    </span>
+                    {canManagePlan ? (
+                      <button
+                        aria-label={`Sửa nhà cung cấp ${vendor.name}`}
+                        className="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-white hover:text-slate-700"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onEditVendor(todo, vendor.id);
+                        }}
+                        type="button"
+                      >
+                        <PencilLine className="size-3.5" />
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
                 {vendor.description ? (
                   <p className="line-clamp-2 text-xs leading-5 text-slate-500">{vendor.description}</p>
