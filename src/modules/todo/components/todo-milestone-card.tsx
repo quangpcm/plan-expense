@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { CalendarDays, CheckCircle2, Circle, Store, Wallet } from 'lucide-react';
 
 import type { TodoDocument } from '@/modules/todo/types/todo';
@@ -16,6 +17,8 @@ type TodoMilestoneCardProps = {
   assignee: PlanMemberDocument | null;
   canToggle: boolean;
   isSubmitting: boolean;
+  dragHandle?: ReactNode;
+  isPreview?: boolean;
   onView: (todo: TodoDocument) => void;
   onChangeStatus: (todo: TodoDocument, status: TodoDocument['status']) => void;
 };
@@ -25,6 +28,8 @@ export function TodoMilestoneCard({
   assignee,
   canToggle,
   isSubmitting,
+  dragHandle,
+  isPreview = false,
   onView,
   onChangeStatus,
 }: TodoMilestoneCardProps) {
@@ -35,10 +40,17 @@ export function TodoMilestoneCard({
 
   return (
     <div
-      className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-3.5 py-2.5 sm:gap-3 sm:rounded-[24px] sm:px-4 sm:py-3.5"
-      onClick={() => onView(todo)}
+      className={cn(
+        'flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-3.5 py-2.5 transition-[transform,box-shadow,opacity] duration-200 sm:gap-3 sm:rounded-[24px] sm:px-4 sm:py-3.5',
+        isPreview ? 'pointer-events-none scale-[1.03] shadow-[0_24px_54px_rgba(15,23,42,0.24)] ring-1 ring-[#dbe5f7]' : '',
+      )}
+      onClick={() => {
+        if (!isPreview) {
+          onView(todo);
+        }
+      }}
       onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
+        if (!isPreview && (event.key === 'Enter' || event.key === ' ')) {
           event.preventDefault();
           onView(todo);
         }
@@ -64,15 +76,16 @@ export function TodoMilestoneCard({
           </span>
         </div>
         {selectedVendor ? (
-          <div className="inline-flex max-w-full items-center gap-2 self-start rounded-full border border-[#d9e5f7] bg-[#f3f7fd] px-2.5 py-1 text-[11px] font-medium text-[#52627f] sm:px-3 sm:text-xs">
-            <Store className="size-3 shrink-0 text-[#6f86ab]" />
-            <span className="truncate text-[#41516d]">{selectedVendor.name}</span>
+          <div className="inline-flex max-w-full items-center gap-2 self-start rounded-full border border-[#bfd6ff] bg-[#eef5ff] px-2.5 py-1 text-[11px] font-medium text-[#4f6792] sm:px-3 sm:text-xs">
+            <Store className="size-3 shrink-0 text-[#5e7fb8]" />
+            <span className="truncate text-[#2f518f]">{selectedVendor.name}</span>
             {displayedBudget != null ? (
-              <span className="shrink-0 text-[#64748b]">· {formatCompactCurrency(displayedBudget)}</span>
+              <span className="shrink-0 text-[#6b84b1]">· {formatCompactCurrency(displayedBudget)}</span>
             ) : null}
           </div>
         ) : null}
       </div>
+      {dragHandle ? <div className="shrink-0">{dragHandle}</div> : null}
       <button
         aria-label={isDone ? 'Đánh dấu đang làm lại' : 'Đánh dấu hoàn thành'}
         className={cn(
@@ -81,7 +94,7 @@ export function TodoMilestoneCard({
             ? 'border-emerald-500 bg-emerald-500 text-white'
             : 'border-[#c4cbe0] text-slate-500 hover:border-[#0050cb]',
         )}
-        disabled={!canToggle || isSubmitting}
+        disabled={!canToggle || isSubmitting || isPreview}
         onClick={(event) => {
           event.stopPropagation();
           onChangeStatus(todo, isDone ? 'in_progress' : 'done');

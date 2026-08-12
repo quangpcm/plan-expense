@@ -626,6 +626,58 @@ export default function PlanDetailPage() {
     }
   }
 
+  async function handleMoveTodoToMilestone(todo: TodoDocument, targetMilestoneId: string) {
+    if (!user || !targetMilestoneId || todo.milestoneId === targetMilestoneId) {
+      return;
+    }
+
+    setIsTodoSubmitting(true);
+    setTodoActionError(null);
+
+    try {
+      await todoService.moveTodoToMilestone(
+        ensuredPlan,
+        {
+          todoId: todo.id,
+          targetMilestoneId,
+        },
+        user,
+        currentMember,
+      );
+      setSelectedMilestoneId(targetMilestoneId);
+    } catch (error) {
+      setTodoActionError(error instanceof Error ? error.message : 'Hiện chưa thể chuyển công việc sang milestone khác.');
+    } finally {
+      setIsTodoSubmitting(false);
+    }
+  }
+
+  async function handleReorderTodosWithinMilestone(milestoneId: string, orderedTodoIds: string[]) {
+    if (!user || orderedTodoIds.length === 0) {
+      return;
+    }
+
+    setIsTodoSubmitting(true);
+    setTodoActionError(null);
+
+    try {
+      await todoService.reorderTodosWithinMilestone(
+        ensuredPlan,
+        {
+          milestoneId,
+          orderedTodoIds,
+        },
+        user,
+        currentMember,
+      );
+    } catch (error) {
+      setTodoActionError(error instanceof Error ? error.message : 'Hiện chưa thể sắp xếp lại công việc.');
+      throw error;
+    } finally {
+      setIsTodoSubmitting(false);
+    }
+  }
+
   async function handleDeleteTodo(todo: TodoDocument) {
     if (!user) {
       return;
@@ -1048,6 +1100,7 @@ export default function PlanDetailPage() {
                         setEditingTodo(null);
                         setShowTodoForm(true);
                       }}
+                      onReorderTodos={handleReorderTodosWithinMilestone}
                       onChangeTodoStatus={handleChangeTodoStatus}
                       onEditMilestone={(milestone) => {
                         setEditingMilestone(milestone);
@@ -1285,6 +1338,7 @@ export default function PlanDetailPage() {
                   assignee={members.find((member) => member.id === detailTodo.assigneeMemberId) ?? null}
                   canManagePlan={permissions.canManagePlan && plan.status !== 'closed'}
                   isSubmitting={isTodoSubmitting}
+                  milestoneOptions={sortedWorkMilestones.map((milestone) => ({ value: milestone.id, label: milestone.title }))}
                   onAddVendor={(todo) => {
                     setDetailTodo(null);
                     setTodoToRestoreAfterVendor(todo);
@@ -1302,6 +1356,7 @@ export default function PlanDetailPage() {
                     setEditingTodo(todo);
                     setShowTodoForm(true);
                   }}
+                  onMoveToMilestone={handleMoveTodoToMilestone}
                   onSelectVendor={handleSelectTodoVendor}
                   todo={detailTodo}
                 />
@@ -1313,6 +1368,7 @@ export default function PlanDetailPage() {
                   assignee={members.find((member) => member.id === detailTodo.assigneeMemberId) ?? null}
                   canManagePlan={permissions.canManagePlan && plan.status !== 'closed'}
                   isSubmitting={isTodoSubmitting}
+                  milestoneOptions={sortedWorkMilestones.map((milestone) => ({ value: milestone.id, label: milestone.title }))}
                   onAddVendor={(todo) => {
                     setDetailTodo(null);
                     setTodoToRestoreAfterVendor(todo);
@@ -1330,6 +1386,7 @@ export default function PlanDetailPage() {
                     setEditingTodo(todo);
                     setShowTodoForm(true);
                   }}
+                  onMoveToMilestone={handleMoveTodoToMilestone}
                   onSelectVendor={handleSelectTodoVendor}
                   todo={detailTodo}
                 />

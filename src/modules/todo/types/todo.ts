@@ -14,6 +14,7 @@ export type TodoDocument = {
   id: string;
   planId: string;
   milestoneId: string;
+  orderIndex: number;
   title: string;
   description: string | null;
   assigneeMemberId: string | null;
@@ -51,4 +52,14 @@ export type UpdateTodoInput = {
   status: TodoStatus;
   budget?: number | undefined;
   selectedTodoVendorId?: string | undefined;
+};
+
+export type ReorderTodosWithinMilestoneInput = {
+  milestoneId: string;
+  orderedTodoIds: string[];
+};
+
+export type MoveTodoToMilestoneInput = {
+  todoId: string;
+  targetMilestoneId: string;
 };

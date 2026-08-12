@@ -1,6 +1,12 @@
 import type { TodoRepository } from '@/modules/todo/repositories/todo.repository';
 import type { AddTodoVendorSchema } from '@/modules/todo/schemas/add-todo-vendor.schema';
-import type { CreateTodoInput, TodoDocument, UpdateTodoInput } from '@/modules/todo/types/todo';
+import type {
+  CreateTodoInput,
+  MoveTodoToMilestoneInput,
+  ReorderTodosWithinMilestoneInput,
+  TodoDocument,
+  UpdateTodoInput,
+} from '@/modules/todo/types/todo';
 import type { AuthUser } from '@/modules/auth/types/auth';
 import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
@@ -114,6 +120,40 @@ export class TodoService {
       link: input.link?.trim() || null,
       price: input.price,
     });
+  }
+
+  async reorderTodosWithinMilestone(
+    plan: PlanDocument,
+    input: ReorderTodosWithinMilestoneInput,
+    currentUser: AuthUser,
+    currentMember: PlanMemberDocument | null,
+  ) {
+    void currentUser;
+    this.assertEditablePlan(plan);
+    this.assertManagePlanPermission(currentMember);
+
+    if (!input.milestoneId.trim() || input.orderedTodoIds.length === 0) {
+      throw new AppError('Danh sách công việc để sắp xếp không hợp lệ.', 'TODO_REORDER_INVALID_INPUT', 400);
+    }
+
+    await this.todoRepository.reorderTodosWithinMilestone(plan.id, input);
+  }
+
+  async moveTodoToMilestone(
+    plan: PlanDocument,
+    input: MoveTodoToMilestoneInput,
+    currentUser: AuthUser,
+    currentMember: PlanMemberDocument | null,
+  ) {
+    void currentUser;
+    this.assertEditablePlan(plan);
+    this.assertManagePlanPermission(currentMember);
+
+    if (!input.targetMilestoneId.trim()) {
+      throw new AppError('Cần chọn milestone đích hợp lệ.', 'TODO_MOVE_TARGET_REQUIRED', 400);
+    }
+
+    await this.todoRepository.moveTodoToMilestone(plan.id, input);
   }
 
   async selectVendor(

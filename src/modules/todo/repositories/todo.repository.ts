@@ -1,4 +1,9 @@
-import type { TodoDocument, UpdateTodoInput } from '@/modules/todo/types/todo';
+import type {
+  MoveTodoToMilestoneInput,
+  ReorderTodosWithinMilestoneInput,
+  TodoDocument,
+  UpdateTodoInput,
+} from '@/modules/todo/types/todo';
 
 export type CreateTodoPersistenceInput = {
   planId: string;
@@ -21,6 +26,8 @@ export type AddTodoVendorPersistenceInput = {
 export interface TodoRepository {
   createTodo(input: CreateTodoPersistenceInput): Promise<{ todoId: string }>;
   updateTodo(planId: string, input: UpdateTodoInput): Promise<void>;
+  reorderTodosWithinMilestone(planId: string, input: ReorderTodosWithinMilestoneInput): Promise<void>;
+  moveTodoToMilestone(planId: string, input: MoveTodoToMilestoneInput): Promise<void>;
   addVendor(planId: string, todoId: string, vendor: AddTodoVendorPersistenceInput): Promise<void>;
   selectVendor(planId: string, todoId: string, vendorId: string | null): Promise<void>;
   deleteTodo(planId: string, todoId: string): Promise<void>;

@@ -8,6 +8,8 @@ export { TodoMilestoneCard } from './components/todo-milestone-card';
 export { TodoVendorForm } from './components/todo-vendor-form';
 export type {
   CreateTodoInput,
+  MoveTodoToMilestoneInput,
+  ReorderTodosWithinMilestoneInput,
   TodoDocument,
   TodoPriority,
   TodoStatus,

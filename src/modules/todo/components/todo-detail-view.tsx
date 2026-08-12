@@ -7,6 +7,7 @@ import type { PlanMemberDocument } from '@/modules/member/types/member';
 import { Avatar } from '@/shared/components/ui/avatar';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
+import { DropdownSelect, type DropdownOption } from '@/shared/components/ui/dropdown-select';
 import { cn } from '@/shared/utils/cn';
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDate } from '@/shared/utils/date';
@@ -17,9 +18,11 @@ type TodoDetailViewProps = {
   assignee: PlanMemberDocument | null;
   canManagePlan: boolean;
   isSubmitting: boolean;
+  milestoneOptions: DropdownOption[];
   onEdit: (todo: TodoDocument) => void;
   onAddVendor: (todo: TodoDocument) => void;
   onSelectVendor: (todo: TodoDocument, vendorId: string) => void;
+  onMoveToMilestone: (todo: TodoDocument, milestoneId: string) => void;
   onChangeStatus: (todo: TodoDocument, status: TodoDocument['status']) => void;
   onDeleteTodo: (todo: TodoDocument) => void;
   onClose: () => void;
@@ -30,9 +33,11 @@ export function TodoDetailView({
   assignee,
   canManagePlan,
   isSubmitting,
+  milestoneOptions,
   onEdit,
   onAddVendor,
   onSelectVendor,
+  onMoveToMilestone,
   onChangeStatus,
   onDeleteTodo,
   onClose,
@@ -155,6 +160,19 @@ export function TodoDetailView({
           </Button>
         ) : null}
       </div>
+
+      {canManagePlan ? (
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Chuyển sang mốc khác</p>
+          <DropdownSelect
+            disabled={isSubmitting}
+            onValueChange={(value) => onMoveToMilestone(todo, value)}
+            options={milestoneOptions}
+            placeholder="Chọn milestone đích"
+            value={todo.milestoneId}
+          />
+        </div>
+      ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Button onClick={onClose} variant="ghost">

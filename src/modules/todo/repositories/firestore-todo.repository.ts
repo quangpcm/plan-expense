@@ -4,11 +4,14 @@ import {
   Timestamp,
   collection,
   doc,
+  getDocs,
   increment,
   onSnapshot,
   orderBy,
   query,
   runTransaction,
+  writeBatch,
+  where,
 } from 'firebase/firestore';
 
 import { getFirebaseFirestore } from '@/config/firebase.config';
@@ -17,12 +20,20 @@ import type {
   CreateTodoPersistenceInput,
   TodoRepository,
 } from '@/modules/todo/repositories/todo.repository';
-import type { TodoDocument, TodoVendor, UpdateTodoInput } from '@/modules/todo/types/todo';
+import type {
+  MoveTodoToMilestoneInput,
+  ReorderTodosWithinMilestoneInput,
+  TodoDocument,
+  TodoVendor,
+  UpdateTodoInput,
+} from '@/modules/todo/types/todo';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
+import { getFallbackTodoOrderIndex, sortTodosByMilestoneOrder, TODO_ORDER_INDEX_STEP } from '@/modules/todo/utils/todo-order';
 
 function normalizeTodo(raw: TodoDocument): TodoDocument {
   return {
     ...raw,
+    orderIndex: Number.isFinite(raw.orderIndex) ? raw.orderIndex : getFallbackTodoOrderIndex(raw),
     budget: raw.budget ?? null,
     vendors: raw.vendors ?? [],
     selectedTodoVendorId: raw.selectedTodoVendorId ?? null,
@@ -42,6 +53,7 @@ export class FirestoreTodoRepository implements TodoRepository {
         id: todoRef.id,
         planId: input.planId,
         milestoneId: input.milestoneId,
+        orderIndex: now.toMillis(),
         title: input.title,
         description: input.description,
         assigneeMemberId: input.assigneeMemberId,
@@ -87,6 +99,11 @@ export class FirestoreTodoRepository implements TodoRepository {
       }
 
       const previousTodo = todoSnapshot.data() as TodoDocument;
+
+      if (input.milestoneId !== previousTodo.milestoneId) {
+        throw new Error('Use moveTodoToMilestone() to move a todo between milestones.');
+      }
+
       const completedDelta =
         previousTodo.status !== 'done' && input.status === 'done'
           ? 1
@@ -117,6 +134,98 @@ export class FirestoreTodoRepository implements TodoRepository {
 
       transaction.update(milestoneRef, {
         completedTodoCount: increment(completedDelta),
+        updatedAt: now,
+      });
+    });
+  }
+
+  async reorderTodosWithinMilestone(planId: string, input: ReorderTodosWithinMilestoneInput) {
+    const db = getFirebaseFirestore();
+    const now = Timestamp.now();
+    const todosSnapshot = await getDocs(
+      query(collection(db, 'plans', planId, 'todos'), where('milestoneId', '==', input.milestoneId)),
+    );
+    const todos = sortTodosByMilestoneOrder(
+      todosSnapshot.docs.map((snapshot) => normalizeTodo(snapshot.data() as TodoDocument)),
+    );
+    const existingTodoIds = new Set(todos.map((todo) => todo.id));
+
+    if (
+      todos.length !== input.orderedTodoIds.length ||
+      input.orderedTodoIds.some((todoId) => !existingTodoIds.has(todoId))
+    ) {
+      throw new Error('Ordered todo ids do not match this milestone.');
+    }
+
+    const batch = writeBatch(db);
+
+    input.orderedTodoIds.forEach((todoId, index) => {
+      batch.update(doc(db, 'plans', planId, 'todos', todoId), {
+        orderIndex: (index + 1) * TODO_ORDER_INDEX_STEP,
+        updatedAt: now,
+      });
+    });
+
+    batch.update(doc(db, 'plans', planId), {
+      updatedAt: now,
+    });
+
+    batch.update(doc(db, 'plans', planId, 'milestones', input.milestoneId), {
+      updatedAt: now,
+    });
+
+    await batch.commit();
+  }
+
+  async moveTodoToMilestone(planId: string, input: MoveTodoToMilestoneInput) {
+    const db = getFirebaseFirestore();
+    const now = Timestamp.now();
+    const todoRef = doc(db, 'plans', planId, 'todos', input.todoId);
+    const planRef = doc(db, 'plans', planId);
+
+    await runTransaction(db, async (transaction) => {
+      const todoSnapshot = await transaction.get(todoRef);
+
+      if (!todoSnapshot.exists()) {
+        throw new Error('Todo not found.');
+      }
+
+      const todo = normalizeTodo(todoSnapshot.data() as TodoDocument);
+
+      if (todo.milestoneId === input.targetMilestoneId) {
+        return;
+      }
+
+      const sourceMilestoneRef = doc(db, 'plans', planId, 'milestones', todo.milestoneId);
+      const targetMilestoneRef = doc(db, 'plans', planId, 'milestones', input.targetMilestoneId);
+      const [sourceMilestoneSnapshot, targetMilestoneSnapshot] = await Promise.all([
+        transaction.get(sourceMilestoneRef),
+        transaction.get(targetMilestoneRef),
+      ]);
+
+      if (!sourceMilestoneSnapshot.exists() || !targetMilestoneSnapshot.exists()) {
+        throw new Error('Milestone not found.');
+      }
+
+      transaction.update(todoRef, {
+        milestoneId: input.targetMilestoneId,
+        orderIndex: now.toMillis(),
+        updatedAt: now,
+      });
+
+      transaction.update(sourceMilestoneRef, {
+        todoCount: increment(-1),
+        completedTodoCount: increment(todo.status === 'done' ? -1 : 0),
+        updatedAt: now,
+      });
+
+      transaction.update(targetMilestoneRef, {
+        todoCount: increment(1),
+        completedTodoCount: increment(todo.status === 'done' ? 1 : 0),
+        updatedAt: now,
+      });
+
+      transaction.update(planRef, {
         updatedAt: now,
       });
     });
@@ -234,17 +343,13 @@ export class FirestoreTodoRepository implements TodoRepository {
   ) {
     const todosQuery = query(
       collection(getFirebaseFirestore(), 'plans', planId, 'todos'),
-      orderBy('createdAt', 'desc'),
+      where('milestoneId', '==', milestoneId),
     );
 
     return onSnapshot(
       todosQuery,
       (snapshot) => {
-        callback(
-          snapshot.docs
-            .map((item) => normalizeTodo(item.data() as TodoDocument))
-            .filter((todo) => todo.milestoneId === milestoneId),
-        );
+        callback(sortTodosByMilestoneOrder(snapshot.docs.map((item) => normalizeTodo(item.data() as TodoDocument))));
       },
       (error) => {
         onError?.(mapFirebaseError(error, 'Unable to load todos for this milestone.', 'TODO_BY_MILESTONE_WATCH_FAILED'));

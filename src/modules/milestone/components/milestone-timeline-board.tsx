@@ -1,4 +1,6 @@
-import { CalendarDays, CircleDollarSign, PencilLine, Plus } from 'lucide-react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { CalendarDays, CircleDollarSign, GripVertical, PencilLine, Plus } from 'lucide-react';
 
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
@@ -12,6 +14,7 @@ import { formatDate } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 import { cn } from '@/shared/utils/cn';
 import { getTodoBudgetAmount } from '@/modules/todo/utils/todo-budget';
+import { sortTodosByMilestoneOrder } from '@/modules/todo/utils/todo-order';
 
 type MilestoneTimelineBoardProps = {
   milestones: MilestoneDocument[];
@@ -25,9 +28,27 @@ type MilestoneTimelineBoardProps = {
   onSelect: (milestoneId: string) => void;
   onEditMilestone: (milestone: MilestoneDocument) => void;
   onAddTodo: (milestone: MilestoneDocument) => void;
+  onReorderTodos: (milestoneId: string, orderedTodoIds: string[]) => Promise<void>;
   onViewTodo: (todo: TodoDocument) => void;
   onChangeTodoStatus: (todo: TodoDocument, status: TodoDocument['status']) => void;
   onOpenExpenseSheet: (milestone: MilestoneDocument) => void;
+};
+
+type ActiveDragState = {
+  milestoneId: string;
+  todoId: string;
+  originalOrder: string[];
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  pointerOffsetY: number;
+  hasLifted: boolean;
+};
+
+type PendingDragState = {
+  milestoneId: string;
+  todoId: string;
 };
 
 const milestoneStatusLabel: Record<MilestoneDocument['status'], string> = {
@@ -137,10 +158,19 @@ export function MilestoneTimelineBoard({
   onSelect,
   onEditMilestone,
   onAddTodo,
+  onReorderTodos,
   onViewTodo,
   onChangeTodoStatus,
   onOpenExpenseSheet,
 }: MilestoneTimelineBoardProps) {
+  const AUTO_SCROLL_EDGE_PX = 112;
+  const AUTO_SCROLL_SPEED = 12;
+  const [optimisticOrders, setOptimisticOrders] = useState<Record<string, string[]>>({});
+  const [pendingDrag, setPendingDrag] = useState<PendingDragState | null>(null);
+  const [activeDrag, setActiveDrag] = useState<ActiveDragState | null>(null);
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
   if (milestones.length === 0) {
     return (
       <Card className="border-slate-200 bg-slate-50 shadow-none">
@@ -154,12 +184,232 @@ export function MilestoneTimelineBoard({
   let previousMonthLabel: string | null = null;
   const selectedMilestone = milestones.find((milestone) => milestone.id === selectedMilestoneId) ?? null;
   const selectedMonthLabel = selectedMilestone ? formatMonthLabel(getMilestoneAnchorDate(selectedMilestone)) : null;
+  const todosByMilestone = useMemo(
+    () =>
+      Object.fromEntries(
+        milestones.map((milestone) => [
+          milestone.id,
+          sortTodosByMilestoneOrder(todos.filter((todo) => todo.milestoneId === milestone.id)),
+        ]),
+      ) as Record<string, TodoDocument[]>,
+    [milestones, todos],
+  );
+
+  useEffect(() => {
+    function clearPendingDrag() {
+      if (holdTimerRef.current) {
+        clearTimeout(holdTimerRef.current);
+        holdTimerRef.current = null;
+      }
+      setPendingDrag(null);
+    }
+
+    function handlePointerMove(event: PointerEvent) {
+      if (!activeDrag) {
+        return;
+      }
+
+      event.preventDefault();
+
+      if (event.clientY < AUTO_SCROLL_EDGE_PX) {
+        window.scrollBy({ top: -AUTO_SCROLL_SPEED, behavior: 'auto' });
+      } else if (window.innerHeight - event.clientY < AUTO_SCROLL_EDGE_PX) {
+        window.scrollBy({ top: AUTO_SCROLL_SPEED, behavior: 'auto' });
+      }
+
+      const currentOrder = optimisticOrders[activeDrag.milestoneId] ?? activeDrag.originalOrder;
+      const otherTodoIds = currentOrder.filter((todoId) => todoId !== activeDrag.todoId);
+      let insertAt = otherTodoIds.length;
+
+      for (let index = 0; index < otherTodoIds.length; index += 1) {
+        const candidateTodoId = otherTodoIds[index];
+
+        if (!candidateTodoId) {
+          continue;
+        }
+
+        const rect = itemRefs.current[candidateTodoId]?.getBoundingClientRect();
+
+        if (rect && event.clientY < rect.top + rect.height / 2) {
+          insertAt = index;
+          break;
+        }
+      }
+
+      const nextOrder = [...otherTodoIds];
+      nextOrder.splice(insertAt, 0, activeDrag.todoId);
+
+      setOptimisticOrders((current) => ({
+        ...current,
+        [activeDrag.milestoneId]: nextOrder,
+      }));
+      setActiveDrag((current) =>
+        current
+          ? {
+              ...current,
+              y: event.clientY - current.pointerOffsetY,
+              hasLifted: true,
+            }
+          : current,
+      );
+    }
+
+    function handlePointerUp() {
+      clearPendingDrag();
+
+      if (!activeDrag) {
+        return;
+      }
+
+      const finalOrder = optimisticOrders[activeDrag.milestoneId] ?? activeDrag.originalOrder;
+      const hasOrderChanged = finalOrder.join('|') !== activeDrag.originalOrder.join('|');
+      const nextMilestoneId = activeDrag.milestoneId;
+      const originalOrder = activeDrag.originalOrder;
+
+      setActiveDrag(null);
+
+      if (!hasOrderChanged) {
+        setOptimisticOrders((current) => {
+          const next = { ...current };
+          delete next[nextMilestoneId];
+          return next;
+        });
+        return;
+      }
+
+      void onReorderTodos(nextMilestoneId, finalOrder).catch(() => {
+        setOptimisticOrders((current) => ({
+          ...current,
+          [nextMilestoneId]: originalOrder,
+        }));
+      });
+    }
+
+    window.addEventListener('pointermove', handlePointerMove, { passive: false });
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
+    };
+  }, [activeDrag, onReorderTodos, optimisticOrders]);
+
+  useEffect(() => {
+    return () => {
+      if (holdTimerRef.current) {
+        clearTimeout(holdTimerRef.current);
+      }
+    };
+  }, []);
+
+  function getDisplayedMilestoneTodos(milestoneId: string) {
+    const milestoneTodos = todosByMilestone[milestoneId] ?? [];
+    const orderIds = optimisticOrders[milestoneId];
+
+    if (!orderIds) {
+      return milestoneTodos;
+    }
+
+    const todoMap = new Map(milestoneTodos.map((todo) => [todo.id, todo]));
+    const orderedTodos = orderIds.map((todoId) => todoMap.get(todoId)).filter((todo): todo is TodoDocument => Boolean(todo));
+    const seenIds = new Set(orderIds);
+
+    return [...orderedTodos, ...milestoneTodos.filter((todo) => !seenIds.has(todo.id))];
+  }
+
+  function handleDragHandlePointerDown(event: ReactPointerEvent<HTMLButtonElement>, milestoneId: string, todoId: string) {
+    if (!canManagePlan || isPlanClosed || isTodoSubmitting) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    const clientY = event.clientY;
+
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+    }
+
+    const originalOrder = getDisplayedMilestoneTodos(milestoneId).map((todo) => todo.id);
+
+    setPendingDrag({
+      milestoneId,
+      todoId,
+    });
+
+    holdTimerRef.current = setTimeout(() => {
+      const element = itemRefs.current[todoId];
+
+      if (!element) {
+        setPendingDrag(null);
+        return;
+      }
+
+      const rect = element.getBoundingClientRect();
+
+      setOptimisticOrders((current) => ({
+        ...current,
+        [milestoneId]: originalOrder,
+      }));
+      setActiveDrag({
+        milestoneId,
+        todoId,
+        originalOrder,
+        width: rect.width,
+        height: rect.height,
+        x: rect.left,
+        y: rect.top,
+        pointerOffsetY: clientY - rect.top,
+        hasLifted: false,
+      });
+      setPendingDrag(null);
+      holdTimerRef.current = null;
+
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate(18);
+      }
+    }, 180);
+  }
 
   return (
     <div className="space-y-6">
+      {(() => {
+        const draggedTodo = activeDrag ? todos.find((todo) => todo.id === activeDrag.todoId) ?? null : null;
+
+        return draggedTodo && activeDrag ? (
+          <div
+            className={cn(
+              'pointer-events-none fixed z-50 opacity-95 transition-transform duration-150',
+              activeDrag.hasLifted ? 'scale-[1.03]' : 'scale-[0.99]',
+            )}
+            style={{
+              left: activeDrag.x,
+              top: activeDrag.y,
+              width: activeDrag.width,
+            }}
+          >
+            <TodoMilestoneCard
+              assignee={members.find((member) => member.id === draggedTodo.assigneeMemberId) ?? null}
+              canToggle={false}
+              dragHandle={
+                <div className="flex size-8 items-center justify-center rounded-full border border-[#bfd0ee] bg-[#eef4ff] text-[#335b9c] sm:size-9">
+                  <GripVertical className="size-4" />
+                </div>
+              }
+              isPreview
+              isSubmitting
+              onChangeStatus={() => undefined}
+              onView={() => undefined}
+              todo={draggedTodo}
+            />
+          </div>
+        ) : null;
+      })()}
       {milestones.map((milestone) => {
         const isSelected = milestone.id === selectedMilestoneId;
-        const milestoneTodos = todos.filter((todo) => todo.milestoneId === milestone.id);
+        const milestoneTodos = getDisplayedMilestoneTodos(milestone.id);
         const estimatedBudget = milestoneTodos.reduce((total, todoItem) => total + (getTodoBudgetAmount(todoItem) ?? 0), 0);
         const startDate = timestampToDate(milestone.startDate);
         const endDate = timestampToDate(milestone.endDate);
@@ -320,18 +570,58 @@ export function MilestoneTimelineBoard({
                   milestoneTodos.map((todo) => {
                     const assignee = members.find((member) => member.id === todo.assigneeMemberId) ?? null;
                     const canToggle = canManagePlan && !isPlanClosed;
+                    const isDraggingTodo = activeDrag?.todoId === todo.id && activeDrag.milestoneId === milestone.id;
+                    const isPendingTodo = pendingDrag?.todoId === todo.id && pendingDrag.milestoneId === milestone.id;
 
                     return (
-                      <div className="relative" key={todo.id} onClick={(event) => event.stopPropagation()}>
+                      <div
+                        className="relative"
+                        key={todo.id}
+                        onClick={(event) => event.stopPropagation()}
+                        ref={(element) => {
+                          itemRefs.current[todo.id] = element;
+                        }}
+                      >
                         <span className="absolute -left-[23px] top-1/2 size-3 -translate-y-1/2 rounded-full bg-[#c8d1e4] sm:-left-[35px] sm:size-4" />
-                        <TodoMilestoneCard
-                          assignee={assignee}
-                          canToggle={canToggle}
-                          isSubmitting={isTodoSubmitting}
-                          onChangeStatus={onChangeTodoStatus}
-                          onView={onViewTodo}
-                          todo={todo}
-                        />
+                        {isDraggingTodo && activeDrag ? (
+                          <div
+                            className="rounded-2xl border border-dashed border-[#c9d8f2] bg-[#f6f9ff] shadow-inner transition-all duration-200 animate-pulse sm:rounded-[24px]"
+                            style={{ height: activeDrag.height }}
+                          />
+                        ) : (
+                          <div
+                            className={cn(
+                              'transition duration-150',
+                              isPendingTodo ? 'scale-[1.02] opacity-80' : '',
+                            )}
+                          >
+                            <TodoMilestoneCard
+                              assignee={assignee}
+                              canToggle={canToggle}
+                              dragHandle={
+                                canManagePlan && !isPlanClosed ? (
+                                  <button
+                                    aria-label="Giữ để kéo sắp xếp công việc"
+                                    className={cn(
+                                      'flex size-8 items-center justify-center rounded-full border border-[#d8e0ef] bg-white/80 text-[#7c8ba5] transition hover:border-[#bfd0ee] hover:text-[#335b9c] touch-none sm:size-9',
+                                      isPendingTodo ? 'border-[#bfd0ee] bg-[#eef4ff] text-[#335b9c] shadow-[0_0_0_6px_rgba(0,80,203,0.08)]' : '',
+                                    )}
+                                    onClick={(event) => event.stopPropagation()}
+                                    onContextMenu={(event) => event.preventDefault()}
+                                    onPointerDown={(event) => handleDragHandlePointerDown(event, milestone.id, todo.id)}
+                                    type="button"
+                                  >
+                                    <GripVertical className="size-4" />
+                                  </button>
+                                ) : null
+                              }
+                              isSubmitting={isTodoSubmitting}
+                              onChangeStatus={onChangeTodoStatus}
+                              onView={onViewTodo}
+                              todo={todo}
+                            />
+                          </div>
+                        )}
                       </div>
                     );
                   })
