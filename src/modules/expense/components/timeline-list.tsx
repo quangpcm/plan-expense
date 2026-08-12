@@ -7,6 +7,7 @@ import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDate, formatTime } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
+import { cn } from '@/shared/utils/cn';
 import { categoryIcons } from '@/modules/category/utils/category-icon';
 import type { Category } from '@/modules/category/types/category';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
@@ -195,6 +196,7 @@ function ExpenseTimelineCard({ planId, expense, members, categories, milestones 
   const milestone = milestones.find((item) => item.id === expense.milestoneId);
   const spentAt = timestampToDate(expense.spentAt);
   const CategoryIcon = category?.icon ? categoryIcons[category.icon] ?? Tag : Tag;
+  const iconColor = category?.iconColor ?? 'text-slate-600';
 
   return (
     <div className="relative flex items-start gap-3">
@@ -207,7 +209,7 @@ function ExpenseTimelineCard({ planId, expense, members, categories, milestones 
       >
         <Card className="gap-2 border-[var(--color-danger-soft)] bg-[var(--color-surface)] p-4 transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
           <div className="flex items-center gap-2">
-            <CategoryIcon className="size-4 shrink-0 text-[var(--color-expense)]" />
+            <CategoryIcon className={cn('size-4 shrink-0', iconColor)} />
             <h3 className="text-base font-semibold text-[var(--color-foreground)]">{expense.title}</h3>
           </div>
           <p className="text-sm text-[var(--color-subtle)]">
@@ -260,6 +262,7 @@ function IncomeTimelineCard({ planId, income, members, categories }: IncomeTimel
   const category = categories.find((item) => item.id === income.categoryId);
   const receivedAt = timestampToDate(income.receivedAt);
   const CategoryIcon = category?.icon ? categoryIcons[category.icon] ?? Tag : Tag;
+  const iconColor = category?.iconColor ?? 'text-slate-600';
 
   return (
     <div className="relative flex items-start gap-3">
@@ -272,7 +275,7 @@ function IncomeTimelineCard({ planId, income, members, categories }: IncomeTimel
       >
         <Card className="gap-2 border-[var(--color-income-soft)] bg-[var(--color-income-soft)]/40 p-4 transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
           <div className="flex items-center gap-2">
-            <CategoryIcon className="size-4 shrink-0 text-[var(--color-income)]" />
+            <CategoryIcon className={cn('size-4 shrink-0', iconColor)} />
             <h3 className="text-base font-semibold text-[var(--color-foreground)]">{income.title}</h3>
           </div>
           <p className="text-sm text-[var(--color-subtle)]">

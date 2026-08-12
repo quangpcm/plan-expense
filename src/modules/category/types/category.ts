@@ -5,5 +5,7 @@ export type Category = {
   name: string;
   categoryType: CategoryType;
   icon: string | null;
+  iconColor: string;
+  iconBgColor: string;
 };
 

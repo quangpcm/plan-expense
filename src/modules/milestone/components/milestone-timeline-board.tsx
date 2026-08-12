@@ -469,7 +469,7 @@ export function MilestoneTimelineBoard({
                   <div className="flex items-start justify-between gap-2 sm:gap-3">
                     <div className="min-w-0 space-y-2 sm:space-y-3">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="truncate text-xl font-semibold sm:text-2xl">{milestone.title}</h3>
+                        <h3 className="truncate text-[19px] font-semibold sm:text-2xl">{milestone.title}</h3>
                         <Badge className={getMilestoneBadgeClass(displayedStatus)}>
                           {milestoneStatusLabel[displayedStatus]}
                         </Badge>
@@ -487,7 +487,7 @@ export function MilestoneTimelineBoard({
 
                     <div className="flex shrink-0 items-start gap-2">
                       <Button
-                        className="size-9 min-h-9 justify-center px-0 lg:hidden"
+                        className="size-8 min-h-8 justify-center px-0 sm:size-9 sm:min-h-9 lg:hidden"
                         onClick={(event) => {
                           event.stopPropagation();
                           onOpenExpenseSheet(milestone);
@@ -518,7 +518,7 @@ export function MilestoneTimelineBoard({
                       <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', tone.titleMuted)}>
                         Đã chi
                       </p>
-                      <p className={cn('mt-1 text-lg font-semibold sm:mt-2 sm:text-2xl', tone.valueStrong)}>
+                      <p className={cn('mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl', tone.valueStrong)}>
                         {formatCompactCurrency(milestone.totalExpense)}
                       </p>
                     </div>
@@ -526,7 +526,7 @@ export function MilestoneTimelineBoard({
                       <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', tone.titleMuted)}>
                         Dự kiến chi
                       </p>
-                      <p className={cn('mt-1 text-lg font-semibold sm:mt-2 sm:text-2xl', tone.valueSoft)}>
+                      <p className={cn('mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl', tone.valueSoft)}>
                         {formatCompactCurrency(estimatedBudget)}
                       </p>
                     </div>
@@ -534,7 +534,7 @@ export function MilestoneTimelineBoard({
                       <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', tone.titleMuted)}>
                         Công việc
                       </p>
-                      <p className="mt-1 text-lg font-semibold sm:mt-2 sm:text-2xl">
+                      <p className="mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl">
                         {milestone.completedTodoCount}/{milestone.todoCount}
                       </p>
                     </div>

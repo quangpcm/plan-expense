@@ -1,7 +1,16 @@
+import { getCategoryIconTone } from '@/modules/category/utils/category-icon';
 import type { Category } from '@/modules/category/types/category';
 import type { PlanType } from '@/modules/plan/types/plan';
 
-export const categoryPresetsByPlanType: Record<PlanType, Category[]> = {
+type CategoryPreset = Pick<Category, 'id' | 'name' | 'categoryType' | 'icon'>;
+
+function withTone(preset: CategoryPreset): Category {
+  const tone = getCategoryIconTone(preset.icon);
+
+  return { ...preset, iconColor: tone.iconColor, iconBgColor: tone.iconBgColor };
+}
+
+const rawCategoryPresetsByPlanType: Record<PlanType, CategoryPreset[]> = {
   travel: [
     { id: 'travel_food', name: 'Ăn uống', categoryType: 'expense', icon: 'Utensils' },
     { id: 'travel_transport', name: 'Di chuyển', categoryType: 'expense', icon: 'Car' },
@@ -125,6 +134,10 @@ export const categoryPresetsByPlanType: Record<PlanType, Category[]> = {
     { id: 'general_other_income', name: 'Khác', categoryType: 'income', icon: 'CircleEllipsis' },
   ],
 };
+
+export const categoryPresetsByPlanType: Record<PlanType, Category[]> = Object.fromEntries(
+  Object.entries(rawCategoryPresetsByPlanType).map(([planType, presets]) => [planType, presets.map(withTone)]),
+) as Record<PlanType, Category[]>;
 
 export function getExpenseCategories(planType: PlanType): Category[] {
   return categoryPresetsByPlanType[planType].filter((category) => category.categoryType === 'expense');

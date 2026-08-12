@@ -66,7 +66,7 @@ export function TodoMilestoneCard({
         src={assignee?.avatarUrl ?? null}
       />
       <div className="min-w-0 flex-1 space-y-1">
-        <p className="truncate text-base font-semibold text-slate-950 sm:text-lg">{todo.title}</p>
+        <p className="truncate text-[15px] font-semibold text-slate-950 sm:text-lg">{todo.title}</p>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-600 sm:gap-x-4 sm:text-base">
           <span className="inline-flex shrink-0 items-center gap-1">
             <CalendarDays className="size-3 text-slate-400 sm:size-5" />
@@ -92,10 +92,10 @@ export function TodoMilestoneCard({
       <button
         aria-label={isDone ? 'Đánh dấu đang làm lại' : 'Đánh dấu hoàn thành'}
         className={cn(
-          'flex size-8 shrink-0 items-center justify-center rounded-full border transition sm:size-9',
+          'flex shrink-0 items-center justify-center rounded-full border transition',
           isDone
-            ? 'border-emerald-500 bg-emerald-500 text-white'
-            : 'border-[#c4cbe0] text-slate-500 hover:border-[#0050cb]',
+            ? 'size-8 border-emerald-500 bg-emerald-500 text-white sm:size-9'
+            : 'size-7 border-[#c4cbe0] text-slate-500 hover:border-[#0050cb] sm:size-8',
         )}
         disabled={!canToggle || isSubmitting || isPreview}
         onClick={(event) => {

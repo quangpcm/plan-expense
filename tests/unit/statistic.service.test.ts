@@ -146,6 +146,8 @@ describe('StatisticService', () => {
       name: 'Food',
       icon: 'utensils',
       categoryType: 'expense',
+      iconColor: 'text-orange-600',
+      iconBgColor: 'bg-orange-100',
     },
   ];
 
