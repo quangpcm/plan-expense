@@ -20,9 +20,13 @@ import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
 export class FirestoreExpenseRepository implements ExpenseRepository {
+  generateExpenseId(planId: string): string {
+    return doc(collection(getFirebaseFirestore(), 'plans', planId, 'expenses')).id;
+  }
+
   async createExpense(input: CreateExpensePersistenceInput) {
     const db = getFirebaseFirestore();
-    const expenseRef = doc(collection(db, 'plans', input.planId, 'expenses'));
+    const expenseRef = doc(db, 'plans', input.planId, 'expenses', input.expenseId);
     const planRef = doc(db, 'plans', input.planId);
     const milestoneRef = doc(db, 'plans', input.planId, 'milestones', input.milestoneId);
     const now = Timestamp.now();

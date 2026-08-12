@@ -41,7 +41,7 @@ export function TodoMilestoneCard({
   return (
     <div
       className={cn(
-        'flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-3.5 py-2.5 transition-[transform,box-shadow,opacity] duration-200 sm:gap-3 sm:rounded-[24px] sm:px-4 sm:py-3.5',
+        'flex items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 px-3.5 py-2.5 transition-[transform,box-shadow,opacity] duration-200 sm:gap-3 sm:rounded-[24px] sm:px-4 sm:py-3.5',
         isPreview ? 'pointer-events-none scale-[1.03] shadow-[0_24px_54px_rgba(15,23,42,0.24)] ring-1 ring-[#dbe5f7]' : '',
       )}
       onClick={() => {
@@ -59,19 +59,19 @@ export function TodoMilestoneCard({
       tabIndex={0}
     >
       <Avatar
-        className="size-9 text-sm sm:size-10"
+        className="size-8 text-xs sm:size-9 sm:text-sm"
         initials={assignee?.nickname.slice(0, 2).toUpperCase() ?? 'PE'}
         src={assignee?.avatarUrl ?? null}
       />
       <div className="min-w-0 flex-1 space-y-1">
         <p className="truncate text-base font-semibold text-slate-950 sm:text-lg">{todo.title}</p>
-        <div className="flex flex-nowrap items-center gap-4 text-sm text-slate-600 sm:gap-5 sm:text-base">
-          <span className="inline-flex shrink-0 items-center gap-1.5">
-            <CalendarDays className="size-4 text-slate-400 sm:size-5" />
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-600 sm:gap-x-4 sm:text-base">
+          <span className="inline-flex shrink-0 items-center gap-1">
+            <CalendarDays className="size-3.5 text-slate-400 sm:size-5" />
             {dueDate ? formatDate(dueDate) : 'Chưa đặt'}
           </span>
-          <span className="inline-flex shrink-0 items-center gap-1.5">
-            <Wallet className="size-4 text-slate-400 sm:size-5" />
+          <span className="inline-flex shrink-0 items-center gap-1">
+            <Wallet className="size-3.5 text-slate-400 sm:size-5" />
             {displayedBudget != null ? formatCompactCurrency(displayedBudget) : 'Chưa đặt'}
           </span>
         </div>

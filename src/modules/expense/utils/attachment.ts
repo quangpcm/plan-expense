@@ -1,10 +1,9 @@
 'use client';
 
 import { Timestamp } from 'firebase/firestore';
-import { ref, uploadBytes } from 'firebase/storage';
 
-import { getFirebaseStorage } from '@/config/firebase.config';
 import type { ExpenseAttachment } from '@/modules/expense/types/expense';
+import { storageRepository } from '@/modules/storage/services';
 import { AppError } from '@/shared/errors/app-error';
 
 async function readImageSize(file: File) {
@@ -38,42 +37,30 @@ export async function uploadExpenseAttachments(
   const attachments: ExpenseAttachment[] = [];
 
   for (const file of files) {
-    const attachmentId = crypto.randomUUID();
-    const storagePath = `plans/${planId}/expenses/${expenseId}/${attachmentId}-${file.name}`;
-    const storageRef = ref(getFirebaseStorage(), storagePath);
-    try {
-      await uploadBytes(storageRef, file, {
-        contentType: file.type,
-      });
-    } catch (error) {
-      console.error('uploadExpenseAttachments failed', error);
+    const { storagePath, uploadUrl } = await storageRepository.requestUploadUrl({
+      mediaType: 'expense-attachment',
+      planId,
+      expenseId,
+      fileName: file.name,
+      contentType: file.type,
+      size: file.size,
+    });
 
-      if (error && typeof error === 'object' && 'code' in error) {
-        const code = String(error.code);
-
-        if (code === 'storage/unauthorized') {
-          throw new AppError(
-            'Firebase Storage rejected the upload. Please check Storage rules or App Check.',
-            'EXPENSE_ATTACHMENT_UNAUTHORIZED',
-            403,
-          );
-        }
-
-        if (code === 'storage/unknown' || code === 'storage/retry-limit-exceeded') {
-          throw new AppError(
-            'Attachment upload failed. Please verify Firebase Storage is enabled and the storage bucket is configured correctly.',
-            'EXPENSE_ATTACHMENT_UPLOAD_FAILED',
-            500,
-          );
-        }
-      }
-
-      if (error instanceof Error) {
-        throw new AppError(error.message, 'EXPENSE_ATTACHMENT_UPLOAD_FAILED', 500);
-      }
-
+    const uploadResponse = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type },
+      body: file,
+    }).catch((error) => {
       throw new AppError(
-        'Attachment upload failed. Please verify Firebase Storage configuration.',
+        error instanceof Error ? error.message : 'Attachment upload failed.',
+        'EXPENSE_ATTACHMENT_UPLOAD_FAILED',
+        500,
+      );
+    });
+
+    if (!uploadResponse.ok) {
+      throw new AppError(
+        'Attachment upload failed. Please verify the R2 bucket and credentials are configured correctly.',
         'EXPENSE_ATTACHMENT_UPLOAD_FAILED',
         500,
       );
@@ -84,7 +71,7 @@ export async function uploadExpenseAttachments(
       : { width: null, height: null };
 
     attachments.push({
-      id: attachmentId,
+      id: crypto.randomUUID(),
       fileName: file.name,
       storagePath,
       mimeType: file.type,

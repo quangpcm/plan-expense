@@ -9,6 +9,7 @@ import type {
 
 export type CreateExpensePersistenceInput = {
   planId: string;
+  expenseId: string;
   milestoneId: string;
   title: string;
   categoryId: string | null;
@@ -26,6 +27,7 @@ export type CreateExpensePersistenceInput = {
 };
 
 export interface ExpenseRepository {
+  generateExpenseId(planId: string): string;
   createExpense(input: CreateExpensePersistenceInput): Promise<{ expenseId: string }>;
   updateExpense(planId: string, input: UpdateExpenseInput, participants: ExpenseParticipant[]): Promise<void>;
   softDeleteExpense(planId: string, expenseId: string, actor: AuthUser): Promise<void>;

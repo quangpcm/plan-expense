@@ -23,7 +23,7 @@ export function PlanCard({ plan }: PlanCardProps) {
       <Card className="gap-4 transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
         <div className="flex items-center justify-between gap-3">
           {plan.coverImageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- external Firebase Storage URL, next/image domain not configured yet
+            // eslint-disable-next-line @next/next/no-img-element -- external Cloudflare R2 URL, next/image domain not configured yet
             <img
               alt=""
               className="size-11 shrink-0 rounded-full object-cover"

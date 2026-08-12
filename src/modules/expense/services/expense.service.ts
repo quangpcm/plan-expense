@@ -108,11 +108,12 @@ export class ExpenseService {
     }
 
     const participants = this.buildParticipants(input, participantIds);
-    const tempExpenseId = crypto.randomUUID();
-    const attachments = await uploadExpenseAttachments(context.plan.id, tempExpenseId, input.attachments);
+    const expenseId = this.expenseRepository.generateExpenseId(context.plan.id);
+    const attachments = await uploadExpenseAttachments(context.plan.id, expenseId, input.attachments);
 
     return this.expenseRepository.createExpense({
       planId: context.plan.id,
+      expenseId,
       milestoneId: milestone.id,
       title: input.title.trim(),
       categoryId: input.categoryId || context.categories[0]?.id || null,

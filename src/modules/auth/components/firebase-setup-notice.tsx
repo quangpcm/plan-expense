@@ -19,8 +19,6 @@ export function FirebaseSetupNotice() {
           <br />
           NEXT_PUBLIC_FIREBASE_PROJECT_ID
           <br />
-          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-          <br />
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
           <br />
           NEXT_PUBLIC_FIREBASE_APP_ID
