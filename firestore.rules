@@ -128,6 +128,42 @@ service cloud.firestore {
         request.resource.data.totalIncome == resource.data.totalIncome;
     }
 
+    function planCountersUnchanged() {
+      return request.resource.data.memberCount == resource.data.memberCount &&
+        request.resource.data.milestoneCount == resource.data.milestoneCount &&
+        request.resource.data.completedMilestoneCount == resource.data.completedMilestoneCount &&
+        request.resource.data.todoCount == resource.data.todoCount &&
+        request.resource.data.completedTodoCount == resource.data.completedTodoCount &&
+        request.resource.data.expenseCount == resource.data.expenseCount &&
+        request.resource.data.incomeCount == resource.data.incomeCount &&
+        request.resource.data.settlementCount == resource.data.settlementCount &&
+        request.resource.data.totalExpense == resource.data.totalExpense &&
+        request.resource.data.totalIncome == resource.data.totalIncome;
+    }
+
+    // The owner-facing "edit plan" form: name/description/planType/dates/
+    // budget fields are all editable here, unlike isAggregatePlanUpdate() /
+    // isClosePlanUpdate() above which deliberately keep them locked. Identity,
+    // ownership, currency/timezone, cover image, lifecycle status and every
+    // rollup counter stay untouched — only plan METADATA moves through here.
+    function isEditPlanDetailsUpdate() {
+      return request.resource.data.id == resource.data.id &&
+        request.resource.data.ownerUserId == resource.data.ownerUserId &&
+        request.resource.data.ownerMemberId == resource.data.ownerMemberId &&
+        request.resource.data.currency == resource.data.currency &&
+        request.resource.data.timezone == resource.data.timezone &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.archivedAt == resource.data.archivedAt &&
+        request.resource.data.coverImageUrl == resource.data.coverImageUrl &&
+        request.resource.data.coverImageStoragePath == resource.data.coverImageStoragePath &&
+        request.resource.data.status == resource.data.status &&
+        request.resource.data.closedAt == resource.data.closedAt &&
+        request.resource.data.name is string &&
+        request.resource.data.planType in
+          ['travel', 'wedding', 'saving', 'birthday', 'event', 'shared_living', 'project', 'general'] &&
+        planCountersUnchanged();
+    }
+
     function userPlanCreateValid(userId) {
       return request.resource.data.id == request.resource.data.planId &&
         request.resource.data.userId == userId;
@@ -151,7 +187,10 @@ service cloud.firestore {
         request.resource.data.ownerMemberId is string &&
         request.resource.data.status == 'active' &&
         request.resource.data.memberCount == 1 &&
-        request.resource.data.milestoneCount == 0 &&
+        // Not `== 0`: createPlanGraph() seeds a handful of default milestones
+        // in the same batch as the plan doc (see milestoneTemplatesByPlanType),
+        // so milestoneCount starts non-zero for most plan types.
+        request.resource.data.milestoneCount is int &&
         request.resource.data.todoCount == 0 &&
         request.resource.data.expenseCount == 0 &&
         request.resource.data.incomeCount == 0 &&
@@ -167,6 +206,10 @@ service cloud.firestore {
         ) || (
           isPlanOwner(planId) &&
           isClosePlanUpdate()
+        ) || (
+          isPlanOwner(planId) &&
+          isPlanActive(planId) &&
+          isEditPlanDetailsUpdate()
         );
       // Full teardown: the owner can delete the plan doc itself regardless of
       // status (active or closed). isPlanOwner() only reads the owner's own
@@ -326,17 +369,35 @@ service cloud.firestore {
 
     match /plans/{planId}/milestones/{milestoneId} {
       allow read: if isPlanVisible(planId);
-      allow create: if isPlanOwner(planId) &&
-        isPlanActive(planId) &&
-        request.resource.data.id == milestoneId &&
-        request.resource.data.planId == planId &&
-        request.resource.data.createdByUserId == request.auth.uid &&
-        request.resource.data.title is string &&
-        request.resource.data.status in ['upcoming', 'in_progress', 'completed', 'cancelled'] &&
-        request.resource.data.orderIndex is int &&
-        request.resource.data.totalExpense is int &&
-        request.resource.data.todoCount is int &&
-        request.resource.data.completedTodoCount is int;
+      allow create: if (
+          isPlanOwner(planId) &&
+          isPlanActive(planId) &&
+          request.resource.data.id == milestoneId &&
+          request.resource.data.planId == planId &&
+          request.resource.data.createdByUserId == request.auth.uid &&
+          request.resource.data.title is string &&
+          request.resource.data.status in ['upcoming', 'in_progress', 'completed', 'cancelled'] &&
+          request.resource.data.orderIndex is int &&
+          request.resource.data.totalExpense is int &&
+          request.resource.data.todoCount is int &&
+          request.resource.data.completedTodoCount is int
+        ) || (
+          // Bootstrap: createPlanGraph() seeds default milestones in the same
+          // batch as the brand-new plan doc, before the owner's userPlans doc
+          // (which isPlanOwner() reads) exists — so check the plan's
+          // ownerUserId via getAfter() instead, same trick the owner-member
+          // create rule above already uses for this exact race.
+          getAfter(/databases/$(database)/documents/plans/$(planId)).data.ownerUserId == request.auth.uid &&
+          request.resource.data.id == milestoneId &&
+          request.resource.data.planId == planId &&
+          request.resource.data.createdByUserId == request.auth.uid &&
+          request.resource.data.title is string &&
+          request.resource.data.status in ['upcoming', 'in_progress', 'completed', 'cancelled'] &&
+          request.resource.data.orderIndex is int &&
+          request.resource.data.totalExpense is int &&
+          request.resource.data.todoCount is int &&
+          request.resource.data.completedTodoCount is int
+        );
       allow update: if isPlanOwner(planId) &&
         isPlanActive(planId) &&
         request.resource.data.id == resource.data.id &&

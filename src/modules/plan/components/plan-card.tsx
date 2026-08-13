@@ -126,7 +126,7 @@ export function PlanCard({ plan }: PlanCardProps) {
 
               {viewModel.progress ? (
                 <div className="space-y-2">
-                  <div className={cn('h-1.5 overflow-hidden rounded-full', visual.progressTrackClassName)}>
+                  <div className={cn('h-2 overflow-hidden rounded-full', visual.progressTrackClassName)}>
                     <div
                       className={cn('h-full rounded-full transition-[width]', progressToneClassName)}
                       style={{ width: `${progressPercent}%` }}

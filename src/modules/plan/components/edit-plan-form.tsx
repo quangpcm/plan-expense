@@ -5,12 +5,15 @@ import { useForm } from 'react-hook-form';
 import { ZodError } from 'zod';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
+import { planCardVisualsByType } from '@/modules/plan/constants/plan-card-visuals';
+import { planTypeOptions } from '@/modules/plan/constants/plan.constants';
 import { useUpdatePlan } from '@/modules/plan/hooks/use-update-plan';
 import { updatePlanSchema, type UpdatePlanSchema } from '@/modules/plan/schemas/update-plan.schema';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import { Button } from '@/shared/components/ui/button';
 import { DateField } from '@/shared/components/ui/date-field';
+import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { timestampToDate } from '@/shared/utils/firebase';
@@ -37,10 +40,11 @@ export function EditPlanForm({ plan, currentMember, onClose }: EditPlanFormProps
   const { updatePlan, isSubmitting } = useUpdatePlan();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const { register, handleSubmit } = useForm<UpdatePlanSchema>({
+  const { register, handleSubmit, setValue, watch } = useForm<UpdatePlanSchema>({
     defaultValues: {
       name: plan.name,
       description: plan.description || '',
+      planType: plan.planType,
       startDate: toDateInputValue(timestampToDate(plan.startDate)),
       endDate: toDateInputValue(timestampToDate(plan.endDate)),
       budgetAmount: plan.budgetAmount ?? undefined,
@@ -48,8 +52,13 @@ export function EditPlanForm({ plan, currentMember, onClose }: EditPlanFormProps
       savingTargetDate: toDateInputValue(timestampToDate(plan.savingTargetDate)),
     },
   });
-  const planType = plan.planType;
-  const showsBudgetField = ['travel', 'wedding', 'birthday', 'event'].includes(planType);
+  const selectedPlanType = watch('planType');
+  const showsBudgetField = ['travel', 'wedding', 'birthday', 'event'].includes(selectedPlanType);
+  const planTypeDropdownOptions = planTypeOptions.map((option) => ({
+    value: option.value,
+    label: option.label,
+    icon: planCardVisualsByType[option.value].icon,
+  }));
 
   const onSubmit = handleSubmit(async (values) => {
     setErrorMessage(null);
@@ -79,6 +88,21 @@ export function EditPlanForm({ plan, currentMember, onClose }: EditPlanFormProps
         <Input id="edit-plan-name" {...register('name')} />
       </div>
 
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700" htmlFor="edit-plan-planType">
+          Loại kế hoạch
+        </label>
+        <input type="hidden" {...register('planType')} />
+        <DropdownSelect
+          id="edit-plan-planType"
+          onValueChange={(value) =>
+            setValue('planType', value as UpdatePlanSchema['planType'], { shouldDirty: true, shouldValidate: true })
+          }
+          options={planTypeDropdownOptions}
+          value={selectedPlanType}
+        />
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="edit-plan-startDate">
@@ -103,7 +127,7 @@ export function EditPlanForm({ plan, currentMember, onClose }: EditPlanFormProps
         </div>
       ) : null}
 
-      {planType === 'saving' ? (
+      {selectedPlanType === 'saving' ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700" htmlFor="edit-plan-savingGoalAmount">

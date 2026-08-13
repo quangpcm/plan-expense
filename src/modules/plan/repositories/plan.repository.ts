@@ -17,6 +17,7 @@ export type CreatePlanPersistenceInput = {
 export type UpdatePlanPersistenceInput = {
   name: string;
   description: string | null;
+  planType: PlanDocument['planType'];
   startDate: Date | null;
   endDate: Date | null;
   budgetAmount: number | null;

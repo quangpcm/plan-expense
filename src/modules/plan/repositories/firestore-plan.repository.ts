@@ -204,6 +204,7 @@ export class FirestorePlanRepository implements PlanRepository {
       await updateDoc(planRef, {
         name: input.name,
         description: input.description,
+        planType: input.planType,
         startDate: input.startDate ? Timestamp.fromDate(input.startDate) : null,
         endDate: input.endDate ? Timestamp.fromDate(input.endDate) : null,
         budgetAmount: input.budgetAmount,
@@ -213,6 +214,7 @@ export class FirestorePlanRepository implements PlanRepository {
       });
       await syncUserPlansAggregate(planId, {
         planName: input.name,
+        planType: input.planType,
         startDate: input.startDate ? Timestamp.fromDate(input.startDate) : null,
         endDate: input.endDate ? Timestamp.fromDate(input.endDate) : null,
         budgetAmount: input.budgetAmount,

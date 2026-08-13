@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 import { cn } from '@/shared/utils/cn';
 
 export type DropdownOption = {
   value: string;
   label: string;
+  icon?: LucideIcon;
 };
 
 type DropdownSelectProps = {
@@ -65,7 +67,10 @@ export function DropdownSelect({
         onClick={() => setIsOpen((current) => !current)}
         type="button"
       >
-        <span className="truncate">{selectedOption?.label ?? placeholder}</span>
+        <span className="flex min-w-0 items-center gap-2">
+          {selectedOption?.icon ? <selectedOption.icon className="size-4 shrink-0" /> : null}
+          <span className="truncate">{selectedOption?.label ?? placeholder}</span>
+        </span>
         <ChevronDown className={cn('size-4 shrink-0 text-[var(--color-subtle)] transition', isOpen ? 'rotate-180' : '')} />
       </button>
 
@@ -74,12 +79,14 @@ export function DropdownSelect({
           <ul className="max-h-72 overflow-y-auto py-1" role="listbox">
             {options.map((option) => {
               const isSelected = option.value === value;
+              const OptionIcon = option.icon;
 
               return (
                 <li key={option.value}>
                   <button
+                    aria-selected={isSelected}
                     className={cn(
-                      'flex min-h-11 w-full items-center justify-between px-4 py-2 text-left text-sm transition hover:bg-[var(--color-accent-soft)]',
+                      'flex min-h-11 w-full items-center justify-between gap-2 px-4 py-2 text-left text-sm transition hover:bg-[var(--color-accent-soft)]',
                       isSelected ? 'text-[var(--color-primary)]' : 'text-[var(--color-foreground)]',
                     )}
                     onClick={() => {
@@ -89,7 +96,10 @@ export function DropdownSelect({
                     role="option"
                     type="button"
                   >
-                    <span className="truncate">{option.label}</span>
+                    <span className="flex min-w-0 items-center gap-2">
+                      {OptionIcon ? <OptionIcon className="size-4 shrink-0" /> : null}
+                      <span className="truncate">{option.label}</span>
+                    </span>
                     {isSelected ? <Check className="size-4 shrink-0" /> : null}
                   </button>
                 </li>

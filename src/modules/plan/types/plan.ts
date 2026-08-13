@@ -93,6 +93,7 @@ export type CreatePlanInput = {
 export type UpdatePlanInput = {
   name: string;
   description?: string | undefined;
+  planType: PlanType;
   startDate?: string | undefined;
   endDate?: string | undefined;
   budgetAmount?: number | undefined;
