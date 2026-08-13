@@ -420,7 +420,7 @@ export function MilestoneTimelineBoard({
                   )}
                 >
                   {isMonthSelected ? (
-                    <span className="absolute size-2.5 animate-ping rounded-full bg-[#0050cb]/60 sm:size-3" />
+                    <span className="absolute size-2.5 animate-ping-lg rounded-full bg-[#0050cb]/60 sm:size-3" />
                   ) : null}
                   <span
                     className={cn(
@@ -480,9 +480,9 @@ export function MilestoneTimelineBoard({
                       <CircleDollarSign className="size-4" />
                     </Button>
                     {canManagePlan ? (
-                      <div className="hidden flex-wrap justify-end gap-2 lg:flex">
+                      <div className="flex flex-wrap justify-end gap-2">
                         <Button
-                          className={tone.action}
+                          className={cn('size-8 min-h-8 justify-center px-0 sm:size-9 sm:min-h-9', tone.action)}
                           onClick={(event) => {
                             event.stopPropagation();
                             onEditMilestone(milestone);
@@ -613,20 +613,6 @@ export function MilestoneTimelineBoard({
                   <Plus className="size-5" />
                   Thêm công việc
                 </button>
-
-                {canManagePlan ? (
-                  <div className="flex flex-wrap justify-end gap-2 lg:hidden">
-                    <Button
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onEditMilestone(milestone);
-                      }}
-                      variant="secondary"
-                    >
-                      <PencilLine className="size-4" />
-                    </Button>
-                  </div>
-                ) : null}
               </div>
             </div>
           </div>
