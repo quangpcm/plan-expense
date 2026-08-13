@@ -5,11 +5,7 @@ export { MilestoneExpensePanel } from './components/milestone-expense-panel';
 export { MilestoneForm } from './components/milestone-form';
 export { MilestoneList } from './components/milestone-list';
 export { MilestoneTimelineBoard } from './components/milestone-timeline-board';
-export {
-  getDisplayedMilestoneStatus,
-  getMilestoneAnchorDate,
-  milestoneStatusLabel,
-} from './utils/milestone-status';
+export { getMilestoneAnchorDate, milestoneStatusLabel } from './utils/milestone-status';
 export type {
   CreateMilestoneInput,
   MilestoneDocument,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CalendarDays, CheckCircle2, Clock3, PencilLine, Plus, Trash2, Wallet } from 'lucide-react';
+import { CheckCircle2, CircleAlert, Clock3, PencilLine, Plus, Trash2, Wallet } from 'lucide-react';
 import type { MouseEvent } from 'react';
 
 import type { TodoDocument } from '@/modules/todo/types/todo';
@@ -14,8 +14,9 @@ import { Avatar } from '@/shared/components/ui/avatar';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
+import { cn } from '@/shared/utils/cn';
 import { formatCurrency } from '@/shared/utils/currency';
-import { formatDateTime } from '@/shared/utils/date';
+import { formatDueCountdown, getDueUrgency } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 
 type TodoCardProps = {
@@ -47,6 +48,7 @@ export function TodoCard({
 }: TodoCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const dueDate = timestampToDate(todo.dueDate);
+  const dueUrgency = dueDate ? getDueUrgency(dueDate) : null;
   const selectedVendor = getSelectedTodoVendor(todo);
   const displayedBudget = getTodoBudgetAmount(todo);
 
@@ -101,9 +103,28 @@ export function TodoCard({
       ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600">
-        <span className="inline-flex items-center gap-1.5">
-          <CalendarDays className="size-4 text-slate-400" />
-          {dueDate ? formatDateTime(dueDate) : 'Chưa đặt'}
+        <span
+          className={cn(
+            'inline-flex items-center gap-1.5',
+            (dueUrgency === 'overdue' || dueUrgency === 'danger') && 'font-medium text-[color:var(--color-danger)]',
+            dueUrgency === 'warning' && 'font-medium text-[color:var(--color-warning)]',
+          )}
+        >
+          {dueUrgency === 'overdue' ? (
+            <CircleAlert className="size-4 text-[color:var(--color-danger)]" />
+          ) : (
+            <Clock3
+              className={cn(
+                'size-4',
+                dueUrgency === 'danger'
+                  ? 'text-[color:var(--color-danger)]'
+                  : dueUrgency === 'warning'
+                    ? 'text-[color:var(--color-warning)]'
+                    : 'text-slate-400',
+              )}
+            />
+          )}
+          {dueDate ? formatDueCountdown(dueDate) : 'Chưa đặt'}
         </span>
         {displayedBudget != null ? (
           <span className="inline-flex items-center gap-1.5">
@@ -115,7 +136,7 @@ export function TodoCard({
 
       {selectedVendor ? (
         <p className="text-sm text-slate-600">
-          Đã chọn nhà cung cấp: <span className="font-medium text-slate-900">{selectedVendor.name}</span>
+          Đã chọn dịch vụ: <span className="font-medium text-slate-900">{selectedVendor.name}</span>
           {displayedBudget != null ? ` · ${formatCurrency(displayedBudget)}` : ''}
         </p>
       ) : null}

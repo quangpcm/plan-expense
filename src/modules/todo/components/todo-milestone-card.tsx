@@ -1,13 +1,13 @@
 'use client';
 
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import { CalendarDays, CheckCircle2, Circle, Store, Wallet } from 'lucide-react';
+import { CheckCircle2, Circle, CircleAlert, Clock3, Store, Wallet } from 'lucide-react';
 
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import { Avatar } from '@/shared/components/ui/avatar';
 import { formatCompactCurrency } from '@/shared/utils/currency';
-import { formatDate } from '@/shared/utils/date';
+import { formatDueCountdown, getDueUrgency } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 import { cn } from '@/shared/utils/cn';
 import { getSelectedTodoVendor, getTodoBudgetAmount } from '@/modules/todo/utils/todo-budget';
@@ -35,6 +35,7 @@ export function TodoMilestoneCard({
 }: TodoMilestoneCardProps) {
   const dueDate = timestampToDate(todo.dueDate);
   const isDone = todo.status === 'done';
+  const dueUrgency = dueDate ? getDueUrgency(dueDate) : null;
   const selectedVendor = getSelectedTodoVendor(todo);
   const displayedBudget = getTodoBudgetAmount(todo);
 
@@ -68,10 +69,36 @@ export function TodoMilestoneCard({
       <div className="min-w-0 flex-1 space-y-1">
         <p className="truncate text-[15px] font-semibold text-slate-950 sm:text-lg">{todo.title}</p>
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-600 sm:gap-x-4 sm:text-base">
-          <span className="inline-flex shrink-0 items-center gap-1">
-            <CalendarDays className="size-3 text-slate-400 sm:size-5" />
-            {dueDate ? formatDate(dueDate) : 'Chưa đặt'}
-          </span>
+          {isDone ? (
+            <span className="inline-flex shrink-0 items-center gap-1 font-medium text-[color:var(--color-success)]">
+              Đã xong
+            </span>
+          ) : (
+            <span
+              className={cn(
+                'inline-flex shrink-0 items-center gap-1',
+                (dueUrgency === 'overdue' || dueUrgency === 'danger') &&
+                  'font-medium text-[color:var(--color-danger)]',
+                dueUrgency === 'warning' && 'font-medium text-[color:var(--color-warning)]',
+              )}
+            >
+              {dueUrgency === 'overdue' ? (
+                <CircleAlert className="size-3 text-[color:var(--color-danger)] sm:size-5" />
+              ) : (
+                <Clock3
+                  className={cn(
+                    'size-3 sm:size-5',
+                    dueUrgency === 'danger'
+                      ? 'text-[color:var(--color-danger)]'
+                      : dueUrgency === 'warning'
+                        ? 'text-[color:var(--color-warning)]'
+                        : 'text-slate-400',
+                  )}
+                />
+              )}
+              {dueDate ? formatDueCountdown(dueDate) : 'Chưa đặt'}
+            </span>
+          )}
           {displayedBudget != null ? (
             <span className="inline-flex shrink-0 items-center gap-1">
               <Wallet className="size-3 text-slate-400 sm:size-5" />

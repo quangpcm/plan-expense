@@ -4,11 +4,7 @@ import { CalendarDays, CircleDollarSign, PencilLine, Plus } from 'lucide-react';
 
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
-import {
-  getDisplayedMilestoneStatus,
-  getMilestoneAnchorDate,
-  milestoneStatusLabel,
-} from '@/modules/milestone/utils/milestone-status';
+import { getMilestoneAnchorDate, milestoneStatusLabel } from '@/modules/milestone/utils/milestone-status';
 import { TodoMilestoneCard } from '@/modules/todo/components/todo-milestone-card';
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import { Badge } from '@/shared/components/ui/badge';
@@ -98,6 +94,10 @@ function getMilestoneBadgeClass(displayedStatus: MilestoneDocument['status']) {
 
   if (displayedStatus === 'cancelled') {
     return 'bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)]';
+  }
+
+  if (displayedStatus === 'in_progress') {
+    return 'bg-[var(--color-warning-soft)] text-[var(--color-warning)]';
   }
 
   return 'bg-[var(--color-info-soft)] text-[var(--color-info)]';
@@ -400,7 +400,7 @@ export function MilestoneTimelineBoard({
         const estimatedBudget = milestoneTodos.reduce((total, todoItem) => total + (getTodoBudgetAmount(todoItem) ?? 0), 0);
         const startDate = timestampToDate(milestone.startDate);
         const endDate = timestampToDate(milestone.endDate);
-        const displayedStatus = getDisplayedMilestoneStatus(milestone);
+        const displayedStatus = milestone.status;
         const anchorDate = getMilestoneAnchorDate(milestone);
         const monthLabel = formatMonthLabel(anchorDate);
         const shouldShowMonthLabel = monthLabel !== previousMonthLabel;

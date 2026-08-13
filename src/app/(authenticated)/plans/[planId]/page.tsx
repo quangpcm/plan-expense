@@ -44,7 +44,6 @@ import {
   MilestoneForm,
   MilestoneList,
   MilestoneTimelineBoard,
-  getDisplayedMilestoneStatus,
   getMilestoneAnchorDate,
   milestoneService,
   useMilestones,
@@ -266,10 +265,9 @@ export default function PlanDetailPage() {
     [milestones],
   );
   const defaultWorkMilestone = useMemo(() => {
-    const eligible = sortedWorkMilestones.filter((milestone) => {
-      const displayedStatus = getDisplayedMilestoneStatus(milestone);
-      return displayedStatus === 'in_progress' || displayedStatus === 'upcoming';
-    });
+    const eligible = sortedWorkMilestones.filter(
+      (milestone) => milestone.status === 'in_progress' || milestone.status === 'upcoming',
+    );
 
     return eligible[0] ?? sortedWorkMilestones[0] ?? null;
   }, [sortedWorkMilestones]);
@@ -302,12 +300,9 @@ export default function PlanDetailPage() {
   );
   const upcomingMilestones = useMemo(() => {
     return milestones
-      .filter((milestone) => {
-        const displayedStatus = getDisplayedMilestoneStatus(milestone);
-        return displayedStatus === 'in_progress' || displayedStatus === 'upcoming';
-      })
+      .filter((milestone) => milestone.status === 'in_progress' || milestone.status === 'upcoming')
       .sort((a, b) => getMilestoneWorkSortTime(a) - getMilestoneWorkSortTime(b))
-      .slice(0, 3);
+      .slice(0, 2);
   }, [milestones]);
   const upcomingTodos = useMemo(() => {
     return todos

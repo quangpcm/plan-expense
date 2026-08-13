@@ -62,3 +62,48 @@ export function formatRelativeTime(input: DateInput, locale = 'vi-VN') {
 
   return '';
 }
+
+export type DueUrgency = 'normal' | 'warning' | 'danger' | 'overdue';
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function getDueDayDiff(input: DateInput) {
+  return Math.round((startOfDay(new Date(input)).getTime() - startOfDay(new Date()).getTime()) / ONE_DAY_MS);
+}
+
+export function getDueUrgency(input: DateInput): DueUrgency {
+  if (new Date(input).getTime() < Date.now()) return 'overdue';
+
+  const dayDiff = getDueDayDiff(input);
+  if (dayDiff <= 0) return 'danger';
+  if (dayDiff <= 2) return 'warning';
+  return 'normal';
+}
+
+export function formatDueCountdown(input: DateInput) {
+  const diffMs = new Date(input).getTime() - Date.now();
+
+  if (diffMs < 0) {
+    const overdueMinutes = Math.floor(Math.abs(diffMs) / (60 * 1000));
+    const overdueDays = Math.floor(overdueMinutes / (24 * 60));
+    const overdueHours = Math.floor(overdueMinutes / 60);
+
+    if (overdueDays > 0) return `Trễ ${overdueDays} ngày`;
+    if (overdueHours > 0) return `Trễ ${overdueHours} giờ`;
+    return `Trễ ${Math.max(overdueMinutes, 1)} phút`;
+  }
+
+  const dayDiff = getDueDayDiff(input);
+  if (dayDiff >= 2) return `Còn ${dayDiff} ngày`;
+  if (dayDiff === 1) return 'Ngày mai';
+
+  const totalMinutes = Math.floor(diffMs / (60 * 1000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return hours > 0 ? `Còn ${hours} giờ` : `Còn ${Math.max(minutes, 1)} phút`;
+}

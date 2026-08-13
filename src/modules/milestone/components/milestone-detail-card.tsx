@@ -33,7 +33,17 @@ export function MilestoneDetailCard({ milestone }: MilestoneDetailCardProps) {
             {milestone.description || 'Chưa có mô tả cho mốc kế hoạch này.'}
           </p>
         </div>
-        <Badge variant={milestone.status === 'completed' ? 'success' : milestone.status === 'cancelled' ? 'neutral' : 'info'}>
+        <Badge
+          variant={
+            milestone.status === 'completed'
+              ? 'success'
+              : milestone.status === 'cancelled'
+                ? 'neutral'
+                : milestone.status === 'in_progress'
+                  ? 'warning'
+                  : 'info'
+          }
+        >
           {milestoneStatusLabel[milestone.status]}
         </Badge>
       </div>

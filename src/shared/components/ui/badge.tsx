@@ -6,6 +6,7 @@ const badgeVariants = {
   neutral: 'bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)]',
   info: 'bg-[var(--color-info-soft)] text-[var(--color-info)]',
   success: 'bg-[var(--color-success-soft)] text-[var(--color-success)]',
+  warning: 'bg-[var(--color-warning-soft)] text-[color:var(--color-warning)]',
   danger: 'bg-[var(--color-danger-soft)] text-[color:var(--color-danger)]',
 } as const;
 
