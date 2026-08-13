@@ -4,8 +4,10 @@ import {
   Timestamp,
   doc,
   getDoc,
+  onSnapshot,
   serverTimestamp,
   setDoc,
+  updateDoc,
 } from 'firebase/firestore';
 
 import { getFirebaseFirestore } from '@/config/firebase.config';
@@ -41,6 +43,7 @@ export class FirestoreUserRepository implements UserRepository {
       await setDoc(reference, {
         id: input.id,
         ...payload,
+        secretNumberHash: null,
         createdAt: serverTimestamp(),
       });
 
@@ -48,6 +51,32 @@ export class FirestoreUserRepository implements UserRepository {
     }
 
     await setDoc(reference, payload, { merge: true });
+  }
+
+  watchUser(userId: string, callback: (user: UserDocument | null) => void, onError?: (error: Error) => void) {
+    return onSnapshot(
+      doc(getFirebaseFirestore(), 'users', userId),
+      (snapshot) => {
+        callback(snapshot.exists() ? (snapshot.data() as UserDocument) : null);
+      },
+      (error) => {
+        onError?.(error);
+      },
+    );
+  }
+
+  async setPasscode(userId: string, secretNumberHash: string) {
+    await updateDoc(doc(getFirebaseFirestore(), 'users', userId), {
+      secretNumberHash,
+      updatedAt: serverTimestamp(),
+    });
+  }
+
+  async clearPasscode(userId: string) {
+    await updateDoc(doc(getFirebaseFirestore(), 'users', userId), {
+      secretNumberHash: null,
+      updatedAt: serverTimestamp(),
+    });
   }
 }
 

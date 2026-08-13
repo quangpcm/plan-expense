@@ -9,6 +9,7 @@ export type UserDocument = {
   avatarUrl: string | null;
   avatarStoragePath: string | null;
   status: UserStatus;
+  secretNumberHash: string | null;
   createdAt: Timestamp;
   updatedAt: Timestamp;
   lastActiveAt: Timestamp | null;

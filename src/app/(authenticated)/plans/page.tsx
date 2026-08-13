@@ -56,7 +56,7 @@ export default function PlansPage() {
           <ArrowUpDown className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-subtle)]" />
           <select
             aria-label="Sắp xếp kế hoạch"
-            className="h-11 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] pl-9 pr-3 text-sm text-[var(--color-foreground)] outline-none transition focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent-soft)]"
+            className="h-11 appearance-none rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] pl-9 pr-3 text-sm text-[var(--color-foreground)] outline-none transition focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent-soft)]"
             value={sortBy}
             onChange={(event) => setSortBy(event.target.value as SortOption)}
           >

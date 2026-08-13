@@ -8,6 +8,7 @@ import {
   Clock,
   Flag,
   LayoutDashboard,
+  Lock,
   LogOut,
   MoreVertical,
   PencilLine,
@@ -35,10 +36,15 @@ import { memberService } from '@/modules/member/services';
 import type { PlanMemberDocument, PlanRole } from '@/modules/member/types/member';
 import { buildLinkedMemberIdSet } from '@/modules/member/utils/member-linkage';
 import { EditPlanForm } from '@/modules/plan/components/edit-plan-form';
+import { PlanUnlockGate } from '@/modules/plan/components/plan-unlock-gate';
 import { planTypeOptions } from '@/modules/plan/constants/plan.constants';
 import { planService } from '@/modules/plan/services';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
+import { useUserPlans } from '@/modules/plan/hooks/use-user-plans';
 import type { PlanStatus } from '@/modules/plan/types/plan';
+import { PasscodeForm } from '@/modules/user/components/passcode-form';
+import { useCurrentUserProfile } from '@/modules/user/hooks/use-current-user-profile';
+import { Switch } from '@/shared/components/ui/switch';
 import {
   MilestoneExpensePanel,
   MilestoneForm,
@@ -108,7 +114,7 @@ function getMilestoneWorkSortTime(milestone: MilestoneDocument) {
   return getMilestoneAnchorDate(milestone)?.getTime() ?? 0;
 }
 
-type HeaderModal = 'edit-plan' | 'plan-settings' | 'leave-or-delete' | null;
+type HeaderModal = 'edit-plan' | 'plan-settings' | 'plan-lock' | 'leave-or-delete' | null;
 type HeaderMenuItem = { key: string; label: string; icon: LucideIcon; destructive?: boolean; onSelect: () => void };
 
 const planStatusLabel: Record<PlanStatus, string> = {
@@ -142,6 +148,11 @@ export default function PlanDetailPage() {
   const [isSettlementSubmitting, setIsSettlementSubmitting] = useState(false);
   const [closingError, setClosingError] = useState<string | null>(null);
   const [isClosingPlan, setIsClosingPlan] = useState(false);
+  const [isPlanUnlocked, setIsPlanUnlocked] = useState(false);
+  const [securityActionError, setSecurityActionError] = useState<string | null>(null);
+  const [isSecurityActionSubmitting, setIsSecurityActionSubmitting] = useState(false);
+  const { plans: myPlanSummaries, isLoading: isUserPlansLoading } = useUserPlans();
+  const { userProfile, isLoading: isUserProfileLoading } = useCurrentUserProfile();
   const [deletingError, setDeletingError] = useState<string | null>(null);
   const [isDeletingPlan, setIsDeletingPlan] = useState(false);
   const [showDeletePlanConfirm, setShowDeletePlanConfirm] = useState(false);
@@ -376,7 +387,7 @@ export default function PlanDetailPage() {
     notFound();
   }
 
-  if (isLoading) {
+  if (isLoading || isUserPlansLoading || isUserProfileLoading) {
     return (
       <main className="flex flex-col gap-5">
         <Skeleton className="h-44 rounded-[32px]" />
@@ -391,6 +402,12 @@ export default function PlanDetailPage() {
   }
 
   const ensuredPlan = currentPlan;
+  const mySummary = myPlanSummaries.find((summary) => summary.planId === planId);
+  const isPlanSecuredForMe = Boolean(mySummary?.isLocked && userProfile?.secretNumberHash);
+
+  if (isPlanSecuredForMe && userProfile?.secretNumberHash && !isPlanUnlocked) {
+    return <PlanUnlockGate onUnlock={() => setIsPlanUnlocked(true)} secretNumberHash={userProfile.secretNumberHash} />;
+  }
 
   async function handleUpdateMember(
     member: PlanMemberDocument,
@@ -606,6 +623,46 @@ export default function PlanDetailPage() {
       setClosingError(error instanceof Error ? error.message : 'Hiện chưa thể đóng kế hoạch này.');
     } finally {
       setIsClosingPlan(false);
+    }
+  }
+
+  async function handlePasscodeCreated() {
+    if (!user) {
+      return;
+    }
+
+    setSecurityActionError(null);
+    setIsSecurityActionSubmitting(true);
+
+    try {
+      await planService.setPlanSecurity(user.uid, planId, true);
+      setHeaderModal('plan-settings');
+    } catch (error) {
+      setSecurityActionError(error instanceof Error ? error.message : 'Hiện chưa thể cập nhật bảo mật cho kế hoạch này.');
+    } finally {
+      setIsSecurityActionSubmitting(false);
+    }
+  }
+
+  async function handleToggleSecurity(nextEnabled: boolean) {
+    if (!user) {
+      return;
+    }
+
+    if (nextEnabled && !userProfile?.secretNumberHash) {
+      setHeaderModal('plan-lock');
+      return;
+    }
+
+    setSecurityActionError(null);
+    setIsSecurityActionSubmitting(true);
+
+    try {
+      await planService.setPlanSecurity(user.uid, planId, nextEnabled);
+    } catch (error) {
+      setSecurityActionError(error instanceof Error ? error.message : 'Hiện chưa thể cập nhật bảo mật cho kế hoạch này.');
+    } finally {
+      setIsSecurityActionSubmitting(false);
     }
   }
 
@@ -1734,6 +1791,30 @@ export default function PlanDetailPage() {
                   <br />
                   Thời điểm đóng: {plan.closedAt ? formatDate(timestampToDate(plan.closedAt) ?? new Date()) : 'Chưa đóng'}
                 </div>
+
+                <div className="mt-4 rounded-[24px] border border-slate-200 bg-white p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                      <Lock className="size-4 shrink-0" />
+                      Bật bảo mật cho tôi
+                    </div>
+                    <Switch
+                      aria-label="Bật bảo mật cho tôi"
+                      checked={Boolean(mySummary?.isLocked)}
+                      disabled={isSecurityActionSubmitting}
+                      onCheckedChange={handleToggleSecurity}
+                    />
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-slate-500">
+                    Yêu cầu mã bảo mật của bạn mỗi khi bạn mở lại kế hoạch này. Không ảnh hưởng tới thành viên khác.
+                  </p>
+                  {securityActionError ? (
+                    <div className="mt-3">
+                      <AuthFormMessage message={securityActionError} type="error" />
+                    </div>
+                  ) : null}
+                </div>
+
                 <div className="mt-4 flex flex-wrap justify-end gap-2">
                   {permissions.canManagePlan ? (
                     <Button
@@ -1770,6 +1851,30 @@ export default function PlanDetailPage() {
                   <br />
                   Thời điểm đóng: {plan.closedAt ? formatDate(timestampToDate(plan.closedAt) ?? new Date()) : 'Chưa đóng'}
                 </div>
+
+                <div className="mt-4 rounded-[24px] border border-slate-200 bg-white p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                      <Lock className="size-4 shrink-0" />
+                      Bật bảo mật cho tôi
+                    </div>
+                    <Switch
+                      aria-label="Bật bảo mật cho tôi"
+                      checked={Boolean(mySummary?.isLocked)}
+                      disabled={isSecurityActionSubmitting}
+                      onCheckedChange={handleToggleSecurity}
+                    />
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-slate-500">
+                    Yêu cầu mã bảo mật của bạn mỗi khi bạn mở lại kế hoạch này. Không ảnh hưởng tới thành viên khác.
+                  </p>
+                  {securityActionError ? (
+                    <div className="mt-3">
+                      <AuthFormMessage message={securityActionError} type="error" />
+                    </div>
+                  ) : null}
+                </div>
+
                 <div className="mt-4 flex flex-wrap justify-end gap-2">
                   {permissions.canManagePlan ? (
                     <Button
@@ -1787,6 +1892,43 @@ export default function PlanDetailPage() {
                     Đóng
                   </Button>
                 </div>
+              </BottomSheet>
+            </div>
+          </>
+        ) : null}
+        {headerModal === 'plan-lock' && user ? (
+          <>
+            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
+              <button
+                aria-label="Đóng form đặt mã bảo mật"
+                className="absolute inset-0"
+                onClick={() => setHeaderModal('plan-settings')}
+                type="button"
+              />
+              <Dialog
+                className="relative z-10 w-full max-w-md"
+                description="Mã này thuộc về tài khoản của bạn — sẽ cần nhập lại mỗi khi bạn mở lại kế hoạch này."
+                title="Đặt mã bảo mật"
+              >
+                <PasscodeForm
+                  onClose={() => setHeaderModal('plan-settings')}
+                  onSuccess={() => void handlePasscodeCreated()}
+                  userId={user.uid}
+                />
+              </Dialog>
+            </div>
+            <div className="md:hidden">
+              <BottomSheet
+                description="Mã này thuộc về tài khoản của bạn — sẽ cần nhập lại mỗi khi bạn mở lại kế hoạch này."
+                onClose={() => setHeaderModal('plan-settings')}
+                open={headerModal === 'plan-lock'}
+                title="Đặt mã bảo mật"
+              >
+                <PasscodeForm
+                  onClose={() => setHeaderModal('plan-settings')}
+                  onSuccess={() => void handlePasscodeCreated()}
+                  userId={user.uid}
+                />
               </BottomSheet>
             </div>
           </>

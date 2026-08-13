@@ -9,6 +9,7 @@ import {
   orderBy,
   query,
   updateDoc,
+  where,
   writeBatch,
 } from 'firebase/firestore';
 import type { DocumentReference } from 'firebase/firestore';
@@ -136,6 +137,8 @@ export class FirestorePlanRepository implements PlanRepository {
       planStatus: 'active',
       coverImageUrl: null,
       totalExpense: 0,
+      totalIncome: 0,
+      isLocked: false,
       memberCount: 1,
       joinedAt: now,
       lastActivityAt: now,
@@ -209,6 +212,36 @@ export class FirestorePlanRepository implements PlanRepository {
       updatedAt: now,
     });
     await syncUserPlansAggregate(planId, { planStatus: 'closed', updatedAt: now });
+  }
+
+  async setPlanSecurityForUser(userId: string, planId: string, isLocked: boolean) {
+    const db = getFirebaseFirestore();
+    const now = Timestamp.now();
+    const userPlanRef = doc(db, 'userPlans', userId, 'plans', planId);
+
+    await updateDoc(userPlanRef, { isLocked, updatedAt: now });
+  }
+
+  async clearAllPlanSecurityForUser(userId: string) {
+    const db = getFirebaseFirestore();
+    const now = Timestamp.now();
+    const lockedPlansQuery = query(
+      collection(db, 'userPlans', userId, 'plans'),
+      where('isLocked', '==', true),
+    );
+    const snapshot = await getDocs(lockedPlansQuery);
+
+    if (snapshot.empty) {
+      return;
+    }
+
+    const batch = writeBatch(db);
+
+    snapshot.docs.forEach((docSnapshot) => {
+      batch.update(docSnapshot.ref, { isLocked: false, updatedAt: now });
+    });
+
+    await batch.commit();
   }
 
   async deletePlan(planId: string, ownerUserId: string) {

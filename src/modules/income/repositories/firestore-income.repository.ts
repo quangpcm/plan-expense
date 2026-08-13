@@ -16,6 +16,7 @@ import type {
   IncomeRepository,
 } from '@/modules/income/repositories/income.repository';
 import type { IncomeDocument, UpdateIncomeInput } from '@/modules/income/types/income';
+import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
 export class FirestoreIncomeRepository implements IncomeRepository {
@@ -55,6 +56,8 @@ export class FirestoreIncomeRepository implements IncomeRepository {
       });
     });
 
+    await syncUserPlansAggregate(input.planId, { totalIncome: increment(input.amount), updatedAt: now });
+
     return { incomeId: incomeRef.id };
   }
 
@@ -64,15 +67,15 @@ export class FirestoreIncomeRepository implements IncomeRepository {
     const planRef = doc(db, 'plans', planId);
     const now = Timestamp.now();
 
-    await runTransaction(db, async (transaction) => {
+    const delta = await runTransaction(db, async (transaction) => {
       const incomeSnapshot = await transaction.get(incomeRef);
 
       if (!incomeSnapshot.exists()) {
-        return;
+        return null;
       }
 
       const previousIncome = incomeSnapshot.data() as IncomeDocument;
-      const delta = input.amount - previousIncome.amount;
+      const amountDelta = input.amount - previousIncome.amount;
 
       transaction.update(incomeRef, {
         title: input.title,
@@ -87,10 +90,16 @@ export class FirestoreIncomeRepository implements IncomeRepository {
       });
 
       transaction.update(planRef, {
-        totalIncome: increment(delta),
+        totalIncome: increment(amountDelta),
         updatedAt: now,
       });
+
+      return amountDelta;
     });
+
+    if (delta !== null) {
+      await syncUserPlansAggregate(planId, { totalIncome: increment(delta), updatedAt: now });
+    }
   }
 
   async softDeleteIncome(planId: string, incomeId: string, actor: AuthUser) {
@@ -99,17 +108,17 @@ export class FirestoreIncomeRepository implements IncomeRepository {
     const planRef = doc(db, 'plans', planId);
     const now = Timestamp.now();
 
-    await runTransaction(db, async (transaction) => {
+    const deletedAmount = await runTransaction(db, async (transaction) => {
       const incomeSnapshot = await transaction.get(incomeRef);
 
       if (!incomeSnapshot.exists()) {
-        return;
+        return null;
       }
 
       const income = incomeSnapshot.data() as IncomeDocument;
 
       if (income.status === 'deleted') {
-        return;
+        return null;
       }
 
       transaction.update(incomeRef, {
@@ -125,7 +134,13 @@ export class FirestoreIncomeRepository implements IncomeRepository {
         totalIncome: increment(-income.amount),
         updatedAt: now,
       });
+
+      return income.amount;
     });
+
+    if (deletedAmount !== null) {
+      await syncUserPlansAggregate(planId, { totalIncome: increment(-deletedAmount), updatedAt: now });
+    }
   }
 
   watchIncomes(planId: string, callback: (incomes: IncomeDocument[]) => void, onError?: (error: Error) => void) {

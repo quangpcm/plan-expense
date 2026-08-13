@@ -56,6 +56,8 @@ export type UserPlanDocument = {
   planStatus: PlanStatus;
   coverImageUrl: string | null;
   totalExpense: number;
+  totalIncome: number;
+  isLocked: boolean;
   memberCount: number;
   joinedAt: Timestamp | null;
   lastActivityAt: Timestamp;
@@ -88,6 +90,8 @@ export type PlanSummary = {
   planStatus: PlanStatus;
   coverImageUrl: string | null;
   totalExpense: number;
+  totalIncome: number;
+  isLocked: boolean;
   memberCount: number;
   joinedAt: Timestamp | null;
   lastActivityAt: Timestamp;

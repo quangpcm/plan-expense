@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { CalendarPlus } from 'lucide-react';
+import { ArrowDown, ArrowUp, MoveUp, MoveDown, BanknoteArrowDown, BanknoteArrowUp, CalendarPlus, Lock } from 'lucide-react';
 
 import { planTypeBadgeColors, planTypeIcons } from '@/modules/plan/constants/plan.constants';
 import type { PlanSummary } from '@/modules/plan/types/plan';
@@ -53,7 +53,25 @@ export function PlanCard({ plan }: PlanCardProps) {
         </div>
         <div className="space-y-1">
           <h2 className="truncate text-lg font-semibold text-[var(--color-foreground)]">{plan.planName}</h2>
-          <p className="text-2xl font-bold text-[var(--color-primary)]">{formatCurrency(plan.totalExpense)}</p>
+          {plan.isLocked ? (
+            <div className="flex items-center gap-2 text-lg font-semibold text-[var(--color-muted)]">
+              <Lock className="size-4 shrink-0" />
+              Đã khóa
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+              <p className="flex items-center gap-1 text-2xl font-bold text-[var(--color-primary)]">
+                <MoveUp className="size-5 shrink-0 text-[var(--color-danger)]" />
+                {formatCurrency(plan.totalExpense)}
+              </p>
+              {plan.totalIncome > 0 ? (
+                <p className="flex items-center gap-1 text-base font-semibold text-[var(--color-muted)]">
+                  <MoveDown className="size-4 shrink-0 text-[var(--color-success)]" />
+                  {formatCurrency(plan.totalIncome)}
+                </p>
+              ) : null}
+            </div>
+          )}
         </div>
         <div className="flex items-center justify-between gap-3 border-t border-[var(--color-border)] pt-3 text-xs text-[var(--color-subtle)]">
           <span className="inline-flex items-center gap-1">

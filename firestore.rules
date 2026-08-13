@@ -539,10 +539,11 @@ service cloud.firestore {
           request.resource.data.planId == resource.data.planId &&
           request.resource.data.planStatus in ['active', 'closed', 'archived']
         ) || (
-          // Any active member of the same plan may push a totalExpense/memberCount
-          // aggregate refresh into every member's dashboard index entry (e.g. an
-          // editor creating an expense must be able to update the owner's copy too).
-          // Every other field must stay unchanged.
+          // Any active member of the same plan may push a
+          // totalExpense/totalIncome/memberCount aggregate refresh into every
+          // member's dashboard index entry (e.g. an editor creating an expense
+          // must be able to update the owner's copy too). Every other field
+          // must stay unchanged.
           isSignedIn() &&
           isPlanVisible(resource.data.planId) &&
           request.resource.data.userId == resource.data.userId &&
@@ -558,6 +559,10 @@ service cloud.firestore {
           request.resource.data.lastActivityAt == resource.data.lastActivityAt &&
           request.resource.data.createdAt == resource.data.createdAt &&
           request.resource.data.totalExpense is int &&
+          // totalIncome is backfilled by the first income sync after this
+          // field shipped, so older userPlans docs may still lack it — only
+          // enforce the type once it's actually present.
+          (!('totalIncome' in request.resource.data) || request.resource.data.totalIncome is int) &&
           request.resource.data.memberCount is int
         );
       allow delete: if isSignedIn() && isPlanOwner(planId);

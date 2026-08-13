@@ -141,6 +141,8 @@ export class FirestoreInvitationRepository implements InvitationRepository {
       planStatus: 'active',
       coverImageUrl: invitation.coverImageUrl,
       totalExpense: 0,
+      totalIncome: 0,
+      isLocked: false,
       memberCount: 1,
       joinedAt: now,
       lastActivityAt: now,
@@ -167,7 +169,12 @@ export class FirestoreInvitationRepository implements InvitationRepository {
       const planSnapshot = await getDoc(doc(db, 'plans', planId));
 
       if (planSnapshot.exists()) {
-        const plan = planSnapshot.data() as { totalExpense: number; memberCount: number };
+        const plan = planSnapshot.data() as {
+          totalExpense: number;
+          totalIncome: number;
+          secretNumberHash: string | null;
+          memberCount: number;
+        };
 
         // A claim links an account to an EXISTING member — no new member was
         // added, so plan.memberCount must not change. Only a brand-new join
@@ -176,6 +183,8 @@ export class FirestoreInvitationRepository implements InvitationRepository {
 
         await updateDoc(userPlanRef, {
           totalExpense: plan.totalExpense,
+          totalIncome: plan.totalIncome,
+          isLocked: plan.secretNumberHash != null,
           memberCount: nextMemberCount,
           updatedAt: Timestamp.now(),
         });

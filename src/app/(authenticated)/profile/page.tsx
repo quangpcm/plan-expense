@@ -12,6 +12,11 @@ import {
   type UpdateDisplayNameSchema,
 } from '@/modules/auth/schemas/update-display-name.schema';
 import { memberService } from '@/modules/member/services';
+import { planService } from '@/modules/plan/services';
+import { useUserPlans } from '@/modules/plan/hooks/use-user-plans';
+import { PasscodeForm } from '@/modules/user/components/passcode-form';
+import { useCurrentUserProfile } from '@/modules/user/hooks/use-current-user-profile';
+import { userService } from '@/modules/user/services';
 import { Avatar } from '@/shared/components/ui/avatar';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
@@ -21,12 +26,41 @@ import { SectionHeading } from '@/shared/components/ui/section-heading';
 export default function ProfilePage() {
   const { user } = useAuthSession();
   const { logout, updateDisplayName } = useAuthActions();
+  const { userProfile } = useCurrentUserProfile();
+  const { plans } = useUserPlans();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isSavingName, setIsSavingName] = useState(false);
   const [nameMessage, setNameMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isEditingPasscode, setIsEditingPasscode] = useState(false);
+  const [showClearPasscodeConfirm, setShowClearPasscodeConfirm] = useState(false);
+  const [isClearingPasscode, setIsClearingPasscode] = useState(false);
+  const [passcodeMessage, setPasscodeMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const lockedPlanCount = plans.filter((plan) => plan.isLocked).length;
   const form = useForm<UpdateDisplayNameSchema>({
     defaultValues: { displayName: user?.displayName || '' },
   });
+
+  async function handleClearPasscode() {
+    if (!user) {
+      return;
+    }
+
+    setIsClearingPasscode(true);
+    setPasscodeMessage(null);
+
+    try {
+      await Promise.all([userService.clearPasscode(user.uid), planService.clearAllPlanSecurity(user.uid)]);
+      setShowClearPasscodeConfirm(false);
+      setPasscodeMessage({ type: 'success', text: 'Đã xóa mã bảo mật.' });
+    } catch (error) {
+      setPasscodeMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Hiện chưa thể xóa mã bảo mật.',
+      });
+    } finally {
+      setIsClearingPasscode(false);
+    }
+  }
 
   async function handleLogout() {
     setIsLoggingOut(true);
@@ -89,6 +123,69 @@ export default function ProfilePage() {
             {isSavingName ? 'Đang lưu...' : 'Lưu tên hiển thị'}
           </Button>
         </form>
+      </Card>
+
+      <Card>
+        <SectionHeading
+          eyebrow="Bảo mật"
+          title="Mã bảo mật"
+          description="Mã 4 số này thuộc về tài khoản của bạn — dùng để khóa riêng tư cho từng kế hoạch bạn chọn, không ảnh hưởng tới thành viên khác."
+        />
+
+        {passcodeMessage ? <AuthFormMessage message={passcodeMessage.text} type={passcodeMessage.type} /> : null}
+
+        {isEditingPasscode && user ? (
+          <PasscodeForm
+            onClose={() => setIsEditingPasscode(false)}
+            onSuccess={() => {
+              setIsEditingPasscode(false);
+              setPasscodeMessage({ type: 'success', text: 'Đã lưu mã bảo mật.' });
+            }}
+            userId={user.uid}
+          />
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-slate-600">
+              {userProfile?.secretNumberHash ? 'Đã đặt mã bảo mật.' : 'Chưa đặt mã bảo mật.'}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => setIsEditingPasscode(true)} variant="secondary">
+                {userProfile?.secretNumberHash ? 'Đổi mã bảo mật' : 'Đặt mã bảo mật'}
+              </Button>
+              {userProfile?.secretNumberHash ? (
+                <Button
+                  className="border border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
+                  onClick={() => setShowClearPasscodeConfirm(true)}
+                  variant="secondary"
+                >
+                  Xóa mã bảo mật
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        )}
+
+        {showClearPasscodeConfirm ? (
+          <div className="space-y-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <p>
+              {lockedPlanCount > 0
+                ? `Bạn đang bật bảo mật ở ${lockedPlanCount} kế hoạch bằng mã này. Xóa mã sẽ tắt bảo mật ở tất cả các kế hoạch đó.`
+                : 'Bạn có chắc muốn xóa mã bảo mật này?'}
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button onClick={() => setShowClearPasscodeConfirm(false)} variant="ghost">
+                Hủy
+              </Button>
+              <Button
+                className="bg-red-600 text-white hover:bg-red-700"
+                disabled={isClearingPasscode}
+                onClick={handleClearPasscode}
+              >
+                {isClearingPasscode ? 'Đang xóa...' : 'Xóa mã bảo mật'}
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </Card>
 
       <Card>

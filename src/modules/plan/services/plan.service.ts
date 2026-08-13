@@ -80,6 +80,14 @@ export class PlanService {
     await this.planRepository.closePlan(plan.id);
   }
 
+  async setPlanSecurity(userId: string, planId: string, isLocked: boolean) {
+    await this.planRepository.setPlanSecurityForUser(userId, planId, isLocked);
+  }
+
+  async clearAllPlanSecurity(userId: string) {
+    await this.planRepository.clearAllPlanSecurityForUser(userId);
+  }
+
   async deletePlan(plan: PlanDocument, currentMember: PlanMemberDocument | null) {
     if (!resolvePlanPermissions(currentMember).canManagePlan) {
       throw new AppError('Only the owner can delete this plan.', 'PLAN_DELETE_PERMISSION_DENIED', 403);
