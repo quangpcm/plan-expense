@@ -1,90 +1,152 @@
 import Link from 'next/link';
-import { ArrowDown, ArrowUp, MoveUp, MoveDown, BanknoteArrowDown, BanknoteArrowUp, CalendarPlus, Lock } from 'lucide-react';
+import { CalendarPlus, Lock, Users } from 'lucide-react';
 
-import { planTypeBadgeColors, planTypeIcons } from '@/modules/plan/constants/plan.constants';
+import { planCardVisualsByType } from '@/modules/plan/constants/plan-card-visuals';
 import type { PlanSummary } from '@/modules/plan/types/plan';
+import { buildPlanCardViewModel } from '@/modules/plan/utils/build-plan-card-view-model';
 import { Badge } from '@/shared/components/ui/badge';
 import { Card } from '@/shared/components/ui/card';
-import { formatCurrency } from '@/shared/utils/currency';
-import { formatDate, formatRelativeTime } from '@/shared/utils/date';
-import { timestampToDate } from '@/shared/utils/firebase';
+import { cn } from '@/shared/utils/cn';
 
 type PlanCardProps = {
   plan: PlanSummary;
 };
 
 export function PlanCard({ plan }: PlanCardProps) {
-  const lastActivityDate = timestampToDate(plan.updatedAt);
-  const createdDate = timestampToDate(plan.createdAt);
-  const PlanTypeIcon = planTypeIcons[plan.planType];
+  const visual = planCardVisualsByType[plan.planType];
+  const PlanTypeIcon = visual.icon;
+  const viewModel = buildPlanCardViewModel(plan);
+  const progressPercent = viewModel.progress
+    ? Math.min(Math.max((viewModel.progress.value / viewModel.progress.max) * 100, 0), 100)
+    : 0;
+
+  const progressToneClassName = viewModel.progress
+    ? {
+        primary: visual.progressFillClassName,
+        success: 'bg-[var(--color-success)]',
+        warning: 'bg-[color:var(--color-warning)]',
+        danger: 'bg-[color:var(--color-danger)]',
+      }[viewModel.progress.tone ?? 'primary']
+    : visual.progressFillClassName;
 
   return (
     <Link className="block" href={`/plans/${plan.planId}`}>
-      <Card className="gap-4 transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
+      <Card className="gap-4 rounded-[24px] border-[rgba(198,205,218,0.7)] bg-white shadow-[0_16px_40px_rgba(20,36,64,0.05)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
         <div className="flex items-center justify-between gap-3">
-          {plan.coverImageUrl ? (
+          {viewModel.coverImageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- external Cloudflare R2 URL, next/image domain not configured yet
             <img
               alt=""
               className="size-11 shrink-0 rounded-full object-cover"
-              src={plan.coverImageUrl}
+              src={viewModel.coverImageUrl}
             />
           ) : (
             <div
-              className={`flex size-11 shrink-0 items-center justify-center rounded-full text-white ${planTypeBadgeColors[plan.planType]}`}
+              className={cn(
+                'flex size-11 shrink-0 items-center justify-center rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.28)]',
+                visual.iconBgClassName,
+                visual.iconFgClassName,
+              )}
             >
               <PlanTypeIcon className="size-5" />
             </div>
           )}
           <div className="flex shrink-0 gap-2">
-            <Badge className="border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-secondary-foreground)]">
-              {plan.role}
-            </Badge>
-            <Badge
-              className={
-                plan.planStatus === 'active'
-                  ? 'bg-[var(--color-accent-soft)] text-[var(--color-info)]'
-                  : 'bg-[var(--color-secondary)] text-[var(--color-muted)]'
-              }
-            >
-              {plan.planStatus}
-            </Badge>
+            {plan.role === 'owner' ? null : (
+              <Badge className="border border-[var(--color-border)] bg-[var(--color-surface)] uppercase tracking-[0.08em] text-[var(--color-secondary-foreground)]">
+                {viewModel.roleLabel}
+              </Badge>
+            )}
+            {viewModel.statusTone === 'active' ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-success-soft)] px-3 py-1 text-xs font-semibold text-[var(--color-success)]">
+                <span className="size-2 rounded-full bg-[var(--color-success)]" />
+                Active
+              </span>
+            ) : (
+              <Badge className="bg-[var(--color-secondary)] text-[var(--color-muted)]">
+                {viewModel.statusLabel}
+              </Badge>
+            )}
           </div>
         </div>
-        <div className="space-y-1">
-          <h2 className="truncate text-lg font-semibold text-[var(--color-foreground)]">{plan.planName}</h2>
+        <div className="space-y-3">
+          <h2 className="truncate text-lg font-semibold text-[var(--color-foreground)]">{viewModel.title}</h2>
           {plan.isLocked ? (
             <div className="flex items-center gap-2 text-lg font-semibold text-[var(--color-muted)]">
               <Lock className="size-4 shrink-0" />
               Đã khóa
             </div>
           ) : (
-            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-              <p className="flex items-center gap-1 text-2xl font-bold text-[var(--color-primary)]">
-                <MoveUp className="size-5 shrink-0 text-[var(--color-danger)]" />
-                {formatCurrency(plan.totalExpense)}
-              </p>
-              {plan.totalIncome > 0 ? (
-                <p className="flex items-center gap-1 text-base font-semibold text-[var(--color-muted)]">
-                  <MoveDown className="size-4 shrink-0 text-[var(--color-success)]" />
-                  {formatCurrency(plan.totalIncome)}
-                </p>
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="min-w-0 space-y-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-subtle)]">
+                    {viewModel.primaryMetric.label}
+                  </p>
+                  <p
+                    className={cn('truncate text-2xl font-bold text-[var(--color-foreground)]', {
+                      [visual.accentTextClassName]: (viewModel.primaryMetric.tone ?? 'default') === 'primary',
+                      'text-[var(--color-success)]': viewModel.primaryMetric.tone === 'success',
+                      'text-[color:var(--color-warning)]': viewModel.primaryMetric.tone === 'warning',
+                      'text-[color:var(--color-danger)]': viewModel.primaryMetric.tone === 'danger',
+                    })}
+                  >
+                    {viewModel.primaryMetric.value}
+                  </p>
+                  {viewModel.primaryMetric.detail ? (
+                    <p className="truncate text-xs text-[var(--color-muted)]">{viewModel.primaryMetric.detail}</p>
+                  ) : null}
+                </div>
+                <div className="min-w-0 space-y-1 text-right">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-subtle)]">
+                    {viewModel.secondaryMetric.label}
+                  </p>
+                  <p
+                    className={cn('truncate text-lg font-semibold text-[var(--color-foreground)]', {
+                      [visual.accentTextClassName]: (viewModel.secondaryMetric.tone ?? 'default') === 'primary',
+                      'text-[var(--color-success)]': viewModel.secondaryMetric.tone === 'success',
+                      'text-[color:var(--color-warning)]': viewModel.secondaryMetric.tone === 'warning',
+                      'text-[color:var(--color-danger)]': viewModel.secondaryMetric.tone === 'danger',
+                    })}
+                  >
+                    {viewModel.secondaryMetric.value}
+                  </p>
+                  {viewModel.secondaryMetric.detail ? (
+                    <p className="truncate text-xs text-[var(--color-muted)]">{viewModel.secondaryMetric.detail}</p>
+                  ) : (
+                    <p className="inline-flex justify-end text-xs text-[var(--color-muted)]">
+                      <span className="inline-flex items-center gap-1">
+                        <Users className="size-3.5" />
+                        {plan.memberCount} thành viên
+                      </span>
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {viewModel.progress ? (
+                <div className="space-y-2">
+                  <div className={cn('h-1.5 overflow-hidden rounded-full', visual.progressTrackClassName)}>
+                    <div
+                      className={cn('h-full rounded-full transition-[width]', progressToneClassName)}
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-[var(--color-muted)]">{viewModel.progress.label}</p>
+                </div>
               ) : null}
-            </div>
+            </>
           )}
         </div>
         <div className="flex items-center justify-between gap-3 border-t border-[var(--color-border)] pt-3 text-xs text-[var(--color-subtle)]">
           <span className="inline-flex items-center gap-1">
             <CalendarPlus className="size-3.5" />
-            <span className="font-medium text-[var(--color-muted)]">
-              {createdDate ? formatDate(createdDate) : 'Đang đồng bộ...'}
-            </span>
+            <span>{viewModel.footerLeft.label}</span>
+            <span className="font-medium text-[var(--color-muted)]">{viewModel.footerLeft.value}</span>
           </span>
           <span>
-            Cập nhật{' '}
-            <span className="font-medium text-[var(--color-muted)]">
-              {lastActivityDate ? formatRelativeTime(lastActivityDate) : 'vừa xong'}
-            </span>
+            {viewModel.footerRight.label}{' '}
+            <span className="font-medium text-[var(--color-muted)]">{viewModel.footerRight.value}</span>
           </span>
         </div>
       </Card>

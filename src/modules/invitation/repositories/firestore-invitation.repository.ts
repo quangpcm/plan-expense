@@ -140,6 +140,15 @@ export class FirestoreInvitationRepository implements InvitationRepository {
       memberStatus: 'active',
       planStatus: 'active',
       coverImageUrl: invitation.coverImageUrl,
+      startDate: null,
+      endDate: null,
+      budgetAmount: null,
+      savingGoalAmount: null,
+      savingTargetDate: null,
+      milestoneCount: 0,
+      completedMilestoneCount: 0,
+      todoCount: 0,
+      completedTodoCount: 0,
       totalExpense: 0,
       totalIncome: 0,
       isLocked: false,
@@ -170,6 +179,15 @@ export class FirestoreInvitationRepository implements InvitationRepository {
 
       if (planSnapshot.exists()) {
         const plan = planSnapshot.data() as {
+          startDate: Timestamp | null;
+          endDate: Timestamp | null;
+          budgetAmount: number | null;
+          savingGoalAmount: number | null;
+          savingTargetDate: Timestamp | null;
+          milestoneCount: number;
+          completedMilestoneCount: number;
+          todoCount: number;
+          completedTodoCount: number;
           totalExpense: number;
           totalIncome: number;
           secretNumberHash: string | null;
@@ -182,6 +200,15 @@ export class FirestoreInvitationRepository implements InvitationRepository {
         const nextMemberCount = invitation.targetMemberId ? plan.memberCount : plan.memberCount + 1;
 
         await updateDoc(userPlanRef, {
+          startDate: plan.startDate ?? null,
+          endDate: plan.endDate ?? null,
+          budgetAmount: plan.budgetAmount ?? null,
+          savingGoalAmount: plan.savingGoalAmount ?? null,
+          savingTargetDate: plan.savingTargetDate ?? null,
+          milestoneCount: plan.milestoneCount ?? 0,
+          completedMilestoneCount: plan.completedMilestoneCount ?? 0,
+          todoCount: plan.todoCount ?? 0,
+          completedTodoCount: plan.completedTodoCount ?? 0,
           totalExpense: plan.totalExpense,
           totalIncome: plan.totalIncome,
           isLocked: plan.secretNumberHash != null,

@@ -43,8 +43,13 @@ export function EditPlanForm({ plan, currentMember, onClose }: EditPlanFormProps
       description: plan.description || '',
       startDate: toDateInputValue(timestampToDate(plan.startDate)),
       endDate: toDateInputValue(timestampToDate(plan.endDate)),
+      budgetAmount: plan.budgetAmount ?? undefined,
+      savingGoalAmount: plan.savingGoalAmount ?? undefined,
+      savingTargetDate: toDateInputValue(timestampToDate(plan.savingTargetDate)),
     },
   });
+  const planType = plan.planType;
+  const showsBudgetField = ['travel', 'wedding', 'birthday', 'event'].includes(planType);
 
   const onSubmit = handleSubmit(async (values) => {
     setErrorMessage(null);
@@ -88,6 +93,32 @@ export function EditPlanForm({ plan, currentMember, onClose }: EditPlanFormProps
           <DateField id="edit-plan-endDate" {...register('endDate')} />
         </div>
       </div>
+
+      {showsBudgetField ? (
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700" htmlFor="edit-plan-budgetAmount">
+            Ngân sách dự kiến
+          </label>
+          <Input id="edit-plan-budgetAmount" min={0} type="number" {...register('budgetAmount')} />
+        </div>
+      ) : null}
+
+      {planType === 'saving' ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700" htmlFor="edit-plan-savingGoalAmount">
+              Mục tiêu tích lũy
+            </label>
+            <Input id="edit-plan-savingGoalAmount" min={0} type="number" {...register('savingGoalAmount')} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700" htmlFor="edit-plan-savingTargetDate">
+              Mốc mục tiêu
+            </label>
+            <DateField id="edit-plan-savingTargetDate" {...register('savingTargetDate')} />
+          </div>
+        </div>
+      ) : null}
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700" htmlFor="edit-plan-description">

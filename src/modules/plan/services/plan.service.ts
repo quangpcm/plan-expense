@@ -9,6 +9,14 @@ import { AppError } from '@/shared/errors/app-error';
 export class PlanService {
   constructor(private readonly planRepository: PlanRepository) {}
 
+  private normalizePlanMetrics(input: Pick<CreatePlanInput, 'budgetAmount' | 'savingGoalAmount' | 'savingTargetDate'>) {
+    return {
+      budgetAmount: input.budgetAmount && input.budgetAmount > 0 ? input.budgetAmount : null,
+      savingGoalAmount: input.savingGoalAmount && input.savingGoalAmount > 0 ? input.savingGoalAmount : null,
+      savingTargetDate: input.savingTargetDate ? new Date(input.savingTargetDate) : null,
+    };
+  }
+
   async createPlan(input: CreatePlanInput, owner: AuthUser) {
     if (!owner.uid) {
       throw new AppError('You need to be authenticated to create a plan.', 'AUTH_REQUIRED', 401);
@@ -22,6 +30,7 @@ export class PlanService {
 
     const startDate = input.startDate ? new Date(input.startDate) : null;
     const endDate = input.endDate ? new Date(input.endDate) : null;
+    const { budgetAmount, savingGoalAmount, savingTargetDate } = this.normalizePlanMetrics(input);
 
     return this.planRepository.createPlanGraph({
       name: normalizedName,
@@ -29,6 +38,9 @@ export class PlanService {
       planType: input.planType,
       startDate,
       endDate,
+      budgetAmount,
+      savingGoalAmount,
+      savingTargetDate,
       owner,
       timezone: appConfig.defaultTimezone,
     });
@@ -55,6 +67,7 @@ export class PlanService {
 
     const startDate = input.startDate ? new Date(input.startDate) : null;
     const endDate = input.endDate ? new Date(input.endDate) : null;
+    const { budgetAmount, savingGoalAmount, savingTargetDate } = this.normalizePlanMetrics(input);
 
     if (startDate && endDate && startDate.getTime() > endDate.getTime()) {
       throw new AppError('End date must be on or after the start date.', 'PLAN_DATE_RANGE_INVALID', 400);
@@ -65,6 +78,9 @@ export class PlanService {
       description: input.description?.trim() || null,
       startDate,
       endDate,
+      budgetAmount,
+      savingGoalAmount,
+      savingTargetDate,
     });
   }
 

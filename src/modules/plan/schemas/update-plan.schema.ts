@@ -6,6 +6,9 @@ export const updatePlanSchema = z
     description: z.string().trim().max(1000).optional().or(z.literal('')),
     startDate: z.string().optional().or(z.literal('')),
     endDate: z.string().optional().or(z.literal('')),
+    budgetAmount: z.coerce.number().int().nonnegative().optional(),
+    savingGoalAmount: z.coerce.number().int().nonnegative().optional(),
+    savingTargetDate: z.string().optional().or(z.literal('')),
   })
   .refine(
     (value) => {

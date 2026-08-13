@@ -7,6 +7,9 @@ export type CreatePlanPersistenceInput = {
   planType: PlanDocument['planType'];
   startDate: Date | null;
   endDate: Date | null;
+  budgetAmount: number | null;
+  savingGoalAmount: number | null;
+  savingTargetDate: Date | null;
   owner: AuthUser;
   timezone: string;
 };
@@ -16,6 +19,9 @@ export type UpdatePlanPersistenceInput = {
   description: string | null;
   startDate: Date | null;
   endDate: Date | null;
+  budgetAmount: number | null;
+  savingGoalAmount: number | null;
+  savingTargetDate: Date | null;
 };
 
 export interface PlanRepository {

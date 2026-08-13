@@ -18,6 +18,7 @@ import type {
   MilestoneRepository,
 } from '@/modules/milestone/repositories/milestone.repository';
 import type { MilestoneDocument, ReorderMilestoneInput, UpdateMilestoneInput } from '@/modules/milestone/types/milestone';
+import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
 export class FirestoreMilestoneRepository implements MilestoneRepository {
@@ -64,6 +65,11 @@ export class FirestoreMilestoneRepository implements MilestoneRepository {
       });
     });
 
+    await syncUserPlansAggregate(input.planId, {
+      milestoneCount: increment(1),
+      updatedAt: now,
+    });
+
     return { milestoneId: milestoneRef.id };
   }
 
@@ -73,7 +79,7 @@ export class FirestoreMilestoneRepository implements MilestoneRepository {
     const planRef = doc(db, 'plans', planId);
     const now = Timestamp.now();
 
-    await runTransaction(db, async (transaction) => {
+    const completedDelta = await runTransaction(db, async (transaction) => {
       const snapshot = await transaction.get(milestoneRef);
 
       if (!snapshot.exists()) {
@@ -89,6 +95,12 @@ export class FirestoreMilestoneRepository implements MilestoneRepository {
         input.status === 'cancelled'
           ? previous.cancelledAt ?? now
           : null;
+      const completedDelta =
+        previous.status !== 'completed' && input.status === 'completed'
+          ? 1
+          : previous.status === 'completed' && input.status !== 'completed'
+            ? -1
+            : 0;
 
       transaction.update(milestoneRef, {
         title: input.title,
@@ -104,9 +116,19 @@ export class FirestoreMilestoneRepository implements MilestoneRepository {
       });
 
       transaction.update(planRef, {
+        completedMilestoneCount: increment(completedDelta),
         updatedAt: now,
       });
+
+      return completedDelta;
     });
+
+    if (completedDelta !== 0) {
+      await syncUserPlansAggregate(planId, {
+        completedMilestoneCount: increment(completedDelta),
+        updatedAt: now,
+      });
+    }
   }
 
   async reorderMilestones(planId: string, input: ReorderMilestoneInput[]) {

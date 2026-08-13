@@ -87,10 +87,15 @@ export class FirestorePlanRepository implements PlanRepository {
       coverImageStoragePath: null,
       startDate: input.startDate ? Timestamp.fromDate(input.startDate) : null,
       endDate: input.endDate ? Timestamp.fromDate(input.endDate) : null,
+      budgetAmount: input.budgetAmount,
+      savingGoalAmount: input.savingGoalAmount,
+      savingTargetDate: input.savingTargetDate ? Timestamp.fromDate(input.savingTargetDate) : null,
       status: 'active',
       memberCount: 1,
       milestoneCount: milestoneTemplates.length,
+      completedMilestoneCount: 0,
       todoCount: 0,
+      completedTodoCount: 0,
       expenseCount: 0,
       incomeCount: 0,
       settlementCount: 0,
@@ -136,6 +141,15 @@ export class FirestorePlanRepository implements PlanRepository {
       memberStatus: 'active',
       planStatus: 'active',
       coverImageUrl: null,
+      startDate: input.startDate ? Timestamp.fromDate(input.startDate) : null,
+      endDate: input.endDate ? Timestamp.fromDate(input.endDate) : null,
+      budgetAmount: input.budgetAmount,
+      savingGoalAmount: input.savingGoalAmount,
+      savingTargetDate: input.savingTargetDate ? Timestamp.fromDate(input.savingTargetDate) : null,
+      milestoneCount: milestoneTemplates.length,
+      completedMilestoneCount: 0,
+      todoCount: 0,
+      completedTodoCount: 0,
       totalExpense: 0,
       totalIncome: 0,
       isLocked: false,
@@ -192,9 +206,20 @@ export class FirestorePlanRepository implements PlanRepository {
         description: input.description,
         startDate: input.startDate ? Timestamp.fromDate(input.startDate) : null,
         endDate: input.endDate ? Timestamp.fromDate(input.endDate) : null,
+        budgetAmount: input.budgetAmount,
+        savingGoalAmount: input.savingGoalAmount,
+        savingTargetDate: input.savingTargetDate ? Timestamp.fromDate(input.savingTargetDate) : null,
         updatedAt: now,
       });
-      await syncUserPlansAggregate(planId, { planName: input.name, updatedAt: now });
+      await syncUserPlansAggregate(planId, {
+        planName: input.name,
+        startDate: input.startDate ? Timestamp.fromDate(input.startDate) : null,
+        endDate: input.endDate ? Timestamp.fromDate(input.endDate) : null,
+        budgetAmount: input.budgetAmount,
+        savingGoalAmount: input.savingGoalAmount,
+        savingTargetDate: input.savingTargetDate ? Timestamp.fromDate(input.savingTargetDate) : null,
+        updatedAt: now,
+      });
     } catch (error) {
       console.error('updatePlan failed', error);
       throw mapPlanWriteError(error);

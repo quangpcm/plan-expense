@@ -28,6 +28,7 @@ import type {
   TodoDocument,
   TodoVendor,
 } from '@/modules/todo/types/todo';
+import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
 import { getFallbackTodoOrderIndex, sortTodosByMilestoneOrder, TODO_ORDER_INDEX_STEP } from '@/modules/todo/utils/todo-order';
 
@@ -96,6 +97,11 @@ export class FirestoreTodoRepository implements TodoRepository {
       });
     });
 
+    await syncUserPlansAggregate(input.planId, {
+      todoCount: increment(1),
+      updatedAt: now,
+    });
+
     return { todoId: todoRef.id };
   }
 
@@ -106,7 +112,7 @@ export class FirestoreTodoRepository implements TodoRepository {
     const milestoneRef = doc(db, 'plans', planId, 'milestones', input.milestoneId);
     const now = Timestamp.now();
 
-    await runTransaction(db, async (transaction) => {
+    const completedDelta = await runTransaction(db, async (transaction) => {
       const todoSnapshot = await transaction.get(todoRef);
 
       if (!todoSnapshot.exists()) {
@@ -145,6 +151,7 @@ export class FirestoreTodoRepository implements TodoRepository {
       });
 
       transaction.update(planRef, {
+        completedTodoCount: increment(completedDelta),
         updatedAt: now,
       });
 
@@ -152,7 +159,16 @@ export class FirestoreTodoRepository implements TodoRepository {
         completedTodoCount: increment(completedDelta),
         updatedAt: now,
       });
+
+      return completedDelta;
     });
+
+    if (completedDelta !== 0) {
+      await syncUserPlansAggregate(planId, {
+        completedTodoCount: increment(completedDelta),
+        updatedAt: now,
+      });
+    }
   }
 
   async reorderTodosWithinMilestone(planId: string, input: ReorderTodosWithinMilestoneInput) {
@@ -343,11 +359,11 @@ export class FirestoreTodoRepository implements TodoRepository {
     const planRef = doc(db, 'plans', planId);
     const now = Timestamp.now();
 
-    await runTransaction(db, async (transaction) => {
+    const deletedTodo = await runTransaction(db, async (transaction) => {
       const todoSnapshot = await transaction.get(todoRef);
 
       if (!todoSnapshot.exists()) {
-        return;
+        return null;
       }
 
       const previousTodo = todoSnapshot.data() as TodoDocument;
@@ -357,6 +373,7 @@ export class FirestoreTodoRepository implements TodoRepository {
 
       transaction.update(planRef, {
         todoCount: increment(-1),
+        completedTodoCount: increment(previousTodo.status === 'done' ? -1 : 0),
         updatedAt: now,
       });
 
@@ -365,7 +382,17 @@ export class FirestoreTodoRepository implements TodoRepository {
         completedTodoCount: increment(previousTodo.status === 'done' ? -1 : 0),
         updatedAt: now,
       });
+
+      return previousTodo;
     });
+
+    if (deletedTodo) {
+      await syncUserPlansAggregate(planId, {
+        todoCount: increment(-1),
+        completedTodoCount: increment(deletedTodo.status === 'done' ? -1 : 0),
+        updatedAt: now,
+      });
+    }
   }
 
   watchTodos(

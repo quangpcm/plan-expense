@@ -26,9 +26,13 @@ export function CreatePlanForm() {
       planType: 'general',
       startDate: '',
       endDate: '',
+      budgetAmount: undefined,
+      savingGoalAmount: undefined,
+      savingTargetDate: '',
     },
   });
   const selectedPlanType = watch('planType');
+  const showsBudgetField = ['travel', 'wedding', 'birthday', 'event'].includes(selectedPlanType);
 
   const onSubmit = handleSubmit(async (values) => {
     setErrorMessage(null);
@@ -107,6 +111,48 @@ export function CreatePlanForm() {
           </div>
         </div>
       </div>
+
+      {showsBudgetField ? (
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700" htmlFor="budgetAmount">
+            Ngân sách dự kiến
+          </label>
+          <Input id="budgetAmount" min={0} placeholder="Ví dụ: 12000000" type="number" {...register('budgetAmount')} />
+        </div>
+      ) : null}
+
+      {selectedPlanType === 'saving' ? (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700" htmlFor="savingGoalAmount">
+              Mục tiêu tích lũy
+            </label>
+            <Input
+              id="savingGoalAmount"
+              min={0}
+              placeholder="Ví dụ: 50000000"
+              type="number"
+              {...register('savingGoalAmount')}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700" htmlFor="savingTargetDate">
+              Mốc mục tiêu
+            </label>
+            <div className="relative">
+              <Input
+                className="pr-11 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-11 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
+                id="savingTargetDate"
+                type="date"
+                {...register('savingTargetDate')}
+              />
+              <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-[var(--color-subtle)]">
+                <CalendarDays className="size-4" />
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700" htmlFor="description">

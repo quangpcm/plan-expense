@@ -29,10 +29,15 @@ export type PlanDocument = {
   coverImageStoragePath: string | null;
   startDate: Timestamp | null;
   endDate: Timestamp | null;
+  budgetAmount: number | null;
+  savingGoalAmount: number | null;
+  savingTargetDate: Timestamp | null;
   status: PlanStatus;
   memberCount: number;
   milestoneCount: number;
+  completedMilestoneCount: number;
   todoCount: number;
+  completedTodoCount: number;
   expenseCount: number;
   incomeCount: number;
   settlementCount: number;
@@ -55,6 +60,15 @@ export type UserPlanDocument = {
   memberStatus: PlanMemberStatus;
   planStatus: PlanStatus;
   coverImageUrl: string | null;
+  startDate: Timestamp | null;
+  endDate: Timestamp | null;
+  budgetAmount: number | null;
+  savingGoalAmount: number | null;
+  savingTargetDate: Timestamp | null;
+  milestoneCount: number;
+  completedMilestoneCount: number;
+  todoCount: number;
+  completedTodoCount: number;
   totalExpense: number;
   totalIncome: number;
   isLocked: boolean;
@@ -71,6 +85,9 @@ export type CreatePlanInput = {
   planType: PlanType;
   startDate?: string | undefined;
   endDate?: string | undefined;
+  budgetAmount?: number | undefined;
+  savingGoalAmount?: number | undefined;
+  savingTargetDate?: string | undefined;
 };
 
 export type UpdatePlanInput = {
@@ -78,6 +95,9 @@ export type UpdatePlanInput = {
   description?: string | undefined;
   startDate?: string | undefined;
   endDate?: string | undefined;
+  budgetAmount?: number | undefined;
+  savingGoalAmount?: number | undefined;
+  savingTargetDate?: string | undefined;
 };
 
 export type PlanSummary = {
@@ -89,6 +109,15 @@ export type PlanSummary = {
   memberStatus: PlanMemberStatus;
   planStatus: PlanStatus;
   coverImageUrl: string | null;
+  startDate: Timestamp | null;
+  endDate: Timestamp | null;
+  budgetAmount: number | null;
+  savingGoalAmount: number | null;
+  savingTargetDate: Timestamp | null;
+  milestoneCount: number;
+  completedMilestoneCount: number;
+  todoCount: number;
+  completedTodoCount: number;
   totalExpense: number;
   totalIncome: number;
   isLocked: boolean;
