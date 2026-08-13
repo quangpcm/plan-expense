@@ -410,16 +410,24 @@ export function MilestoneTimelineBoard({
         previousMonthLabel = monthLabel;
 
         return (
-          <div className="relative pl-8 sm:pl-12" key={milestone.id}>
+          <div className="relative" key={milestone.id}>
             {shouldShowMonthLabel ? (
-              <div className="relative mb-3 flex items-center gap-2 sm:mb-4 sm:gap-3">
+              <div className="mb-3 flex items-center gap-2 sm:mb-4 sm:gap-3">
                 <span
                   className={cn(
-                    'absolute -left-8 top-1/2 z-10 flex size-6 -translate-y-1/2 items-center justify-center rounded-full bg-white ring-2 sm:-left-11 sm:size-7 sm:ring-4',
+                    'relative flex size-6 shrink-0 items-center justify-center rounded-full bg-white ring-2 sm:size-7 sm:ring-4',
                     isMonthSelected ? 'ring-[#0050cb]/10' : 'ring-slate-100',
                   )}
                 >
-                  <span className={cn('size-2.5 rounded-full sm:size-3', isMonthSelected ? 'bg-[#0050cb]' : 'bg-slate-300')} />
+                  {isMonthSelected ? (
+                    <span className="absolute size-2.5 animate-ping rounded-full bg-[#0050cb]/60 sm:size-3" />
+                  ) : null}
+                  <span
+                    className={cn(
+                      'relative size-2.5 rounded-full sm:size-3',
+                      isMonthSelected ? 'bg-[#0050cb]' : 'bg-slate-300',
+                    )}
+                  />
                 </span>
                 <p
                   className={cn(
@@ -432,116 +440,90 @@ export function MilestoneTimelineBoard({
               </div>
             ) : null}
 
-            <span className="absolute left-[11px] top-0 bottom-0 z-0 w-px bg-[#e8edf7] sm:left-4" />
-
-            <div className="relative">
-              <span
-                className={cn(
-                  'absolute -left-[27px] top-1/2 z-10 flex size-3 -translate-y-1/2 items-center justify-center rounded-full border-[3px] bg-white sm:-left-[41px] sm:size-[18px] sm:border-4',
-                  isSelected
-                    ? 'border-[var(--color-primary)]'
-                    : displayedStatus === 'completed'
-                      ? 'border-[var(--color-milestone-completed-border)]'
-                      : 'border-[#cfd8ea]',
-                )}
-              >
-                <span
-                  className={cn(
-                    'size-1.5 rounded-full sm:size-2',
-                    isSelected
-                      ? 'bg-[var(--color-primary)]'
-                      : displayedStatus === 'completed'
-                        ? 'bg-[var(--color-success)]'
-                        : 'bg-[#8c97ad]',
-                  )}
-                />
-              </span>
-
-              <button
-                className={cn(
-                  'group relative z-[1] w-full rounded-[20px] border p-0 text-left transition sm:rounded-[32px]',
-                  tone.card,
-                )}
-                onClick={() => onSelect(milestone.id)}
-                type="button"
-              >
-                <div className="space-y-3 p-4 sm:space-y-5 sm:p-6">
-                  <div className="flex items-start justify-between gap-2 sm:gap-3">
-                    <div className="min-w-0 space-y-2 sm:space-y-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="truncate text-[19px] font-semibold sm:text-2xl">{milestone.title}</h3>
-                        <Badge className={getMilestoneBadgeClass(displayedStatus)}>
-                          {milestoneStatusLabel[displayedStatus]}
-                        </Badge>
-                      </div>
-                      <p className={cn('hidden text-sm leading-6 md:block', tone.titleMuted)}>
-                        {milestone.description || 'Chưa có mô tả cho milestone này.'}
-                      </p>
-                      <div className={cn('hidden items-center gap-2 text-sm md:inline-flex', tone.titleMuted)}>
-                        <CalendarDays className="size-4 shrink-0" />
-                        <span>
-                          {startDate ? formatDate(startDate) : 'Chưa đặt'} - {endDate ? formatDate(endDate) : 'Chưa đặt'}
-                        </span>
-                      </div>
+            <button
+              className={cn(
+                'group relative z-[1] w-full rounded-[20px] border p-0 text-left transition sm:rounded-[32px]',
+                tone.card,
+              )}
+              onClick={() => onSelect(milestone.id)}
+              type="button"
+            >
+              <div className="space-y-3 p-4 sm:space-y-5 sm:p-6">
+                <div className="flex items-start justify-between gap-2 sm:gap-3">
+                  <div className="min-w-0 space-y-2 sm:space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="truncate text-[19px] font-semibold sm:text-2xl">{milestone.title}</h3>
+                      <Badge className={getMilestoneBadgeClass(displayedStatus)}>
+                        {milestoneStatusLabel[displayedStatus]}
+                      </Badge>
                     </div>
-
-                    <div className="flex shrink-0 items-start gap-2">
-                      <Button
-                        className="size-8 min-h-8 justify-center px-0 sm:size-9 sm:min-h-9 lg:hidden"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onOpenExpenseSheet(milestone);
-                        }}
-                        variant={tone.mobileExpenseAction}
-                      >
-                        <CircleDollarSign className="size-4" />
-                      </Button>
-                      {canManagePlan ? (
-                        <div className="hidden flex-wrap justify-end gap-2 lg:flex">
-                          <Button
-                            className={tone.action}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              onEditMilestone(milestone);
-                            }}
-                            variant={isSelected ? 'ghost' : 'secondary'}
-                          >
-                            <PencilLine className="size-4" />
-                          </Button>
-                        </div>
-                      ) : null}
+                    <p className={cn('hidden text-sm leading-6 md:block', tone.titleMuted)}>
+                      {milestone.description || 'Chưa có mô tả cho milestone này.'}
+                    </p>
+                    <div className={cn('hidden items-center gap-2 text-sm md:inline-flex', tone.titleMuted)}>
+                      <CalendarDays className="size-4 shrink-0" />
+                      <span>
+                        {startDate ? formatDate(startDate) : 'Chưa đặt'} - {endDate ? formatDate(endDate) : 'Chưa đặt'}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 text-sm sm:gap-3">
-                    <div>
-                      <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', tone.titleMuted)}>
-                        Đã chi
-                      </p>
-                      <p className={cn('mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl', tone.valueStrong)}>
-                        {formatCompactCurrency(milestone.totalExpense)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', tone.titleMuted)}>
-                        Dự kiến chi
-                      </p>
-                      <p className={cn('mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl', tone.valueSoft)}>
-                        {formatCompactCurrency(estimatedBudget)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', tone.titleMuted)}>
-                        Công việc
-                      </p>
-                      <p className="mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl">
-                        {milestone.completedTodoCount}/{milestone.todoCount}
-                      </p>
-                    </div>
+                  <div className="flex shrink-0 items-start gap-2">
+                    <Button
+                      className="size-8 min-h-8 justify-center px-0 sm:size-9 sm:min-h-9 lg:hidden"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onOpenExpenseSheet(milestone);
+                      }}
+                      variant={tone.mobileExpenseAction}
+                    >
+                      <CircleDollarSign className="size-4" />
+                    </Button>
+                    {canManagePlan ? (
+                      <div className="hidden flex-wrap justify-end gap-2 lg:flex">
+                        <Button
+                          className={tone.action}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onEditMilestone(milestone);
+                          }}
+                          variant={isSelected ? 'ghost' : 'secondary'}
+                        >
+                          <PencilLine className="size-4" />
+                        </Button>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
-              </button>
-            </div>
+
+                <div className="grid grid-cols-3 gap-2 text-sm sm:gap-3">
+                  <div>
+                    <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', tone.titleMuted)}>
+                      Đã chi
+                    </p>
+                    <p className={cn('mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl', tone.valueStrong)}>
+                      {formatCompactCurrency(milestone.totalExpense)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', tone.titleMuted)}>
+                      Dự kiến chi
+                    </p>
+                    <p className={cn('mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl', tone.valueSoft)}>
+                      {formatCompactCurrency(estimatedBudget)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', tone.titleMuted)}>
+                      Công việc
+                    </p>
+                    <p className="mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl">
+                      {milestone.completedTodoCount}/{milestone.todoCount}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </button>
 
             <div
               aria-hidden={!shouldExpandDetails}
@@ -553,57 +535,66 @@ export function MilestoneTimelineBoard({
               )}
             >
               <div className="space-y-2 pl-2 sm:space-y-3 sm:pl-3">
-                {milestoneTodos.length > 0 ? (
-                  milestoneTodos.map((todo) => {
-                    const assignee = members.find((member) => member.id === todo.assigneeMemberId) ?? null;
-                    const canToggle = canManagePlan && !isPlanClosed;
-                    const isDraggingTodo = activeDrag?.todoId === todo.id && activeDrag.milestoneId === milestone.id;
-                    const isPendingTodo = pendingDrag?.todoId === todo.id && pendingDrag.milestoneId === milestone.id;
+                <div className="relative">
+                  {milestoneTodos.length > 0 ? (
+                    <>
+                      <span className="absolute left-3 top-0 bottom-0 z-0 w-px bg-[#e8edf7] sm:left-4" />
+                      {milestoneTodos.map((todo) => {
+                        const assignee = members.find((member) => member.id === todo.assigneeMemberId) ?? null;
+                        const canToggle = canManagePlan && !isPlanClosed;
+                        const isDraggingTodo = activeDrag?.todoId === todo.id && activeDrag.milestoneId === milestone.id;
+                        const isPendingTodo = pendingDrag?.todoId === todo.id && pendingDrag.milestoneId === milestone.id;
 
-                    return (
-                      <div
-                        key={todo.id}
-                        className="relative"
-                        onClick={(event) => event.stopPropagation()}
-                        ref={(element) => {
-                          itemRefs.current[todo.id] = element;
-                        }}
-                      >
-                        <span className="absolute -left-[43px] top-1/2 z-10 size-1.5 -translate-y-1/2 rounded-full bg-slate-300 sm:-left-[64px] sm:size-2" />
-                        {isDraggingTodo && activeDrag ? (
+                        return (
                           <div
-                            className="rounded-2xl border border-dashed border-[#c9d8f2] bg-[#f6f9ff] shadow-inner transition-all duration-200 animate-pulse sm:rounded-[24px]"
-                            style={{ height: activeDrag.height }}
-                          />
-                        ) : (
-                          <div
-                            className={cn(
-                              'transition duration-150',
-                              isPendingTodo ? 'scale-[1.02] opacity-80' : '',
-                            )}
+                            key={todo.id}
+                            className="mb-2 flex gap-2 last:mb-0 sm:mb-3 sm:gap-3"
+                            onClick={(event) => event.stopPropagation()}
+                            ref={(element) => {
+                              itemRefs.current[todo.id] = element;
+                            }}
                           >
-                            <TodoMilestoneCard
-                              assignee={assignee}
-                              canToggle={canToggle}
-                              isSubmitting={isTodoSubmitting}
-                              onChangeStatus={onChangeTodoStatus}
-                              onView={handleViewTodo}
-                              todo={todo}
-                              {...(canManagePlan && !isPlanClosed
-                                ? {
-                                    onHoldPointerDown: (event: ReactPointerEvent<HTMLDivElement>) =>
-                                      handleTodoPointerDown(event, milestone.id, todo.id),
-                                  }
-                                : {})}
-                            />
+                            <div className="relative w-6 shrink-0 sm:w-8">
+                              <span className="absolute left-1/2 top-1/2 z-10 size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-300 sm:size-2" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              {isDraggingTodo && activeDrag ? (
+                                <div
+                                  className="rounded-2xl border border-dashed border-[#c9d8f2] bg-[#f6f9ff] shadow-inner transition-all duration-200 animate-pulse sm:rounded-[24px]"
+                                  style={{ height: activeDrag.height }}
+                                />
+                              ) : (
+                                <div
+                                  className={cn(
+                                    'transition duration-150',
+                                    isPendingTodo ? 'scale-[1.02] opacity-80' : '',
+                                  )}
+                                >
+                                  <TodoMilestoneCard
+                                    assignee={assignee}
+                                    canToggle={canToggle}
+                                    isSubmitting={isTodoSubmitting}
+                                    onChangeStatus={onChangeTodoStatus}
+                                    onView={handleViewTodo}
+                                    todo={todo}
+                                    {...(canManagePlan && !isPlanClosed
+                                      ? {
+                                          onHoldPointerDown: (event: ReactPointerEvent<HTMLDivElement>) =>
+                                            handleTodoPointerDown(event, milestone.id, todo.id),
+                                        }
+                                      : {})}
+                                  />
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        )}
-                      </div>
-                    );
-                  })
-                ) : (
-                  <p className="px-1 text-sm text-slate-500">Milestone này chưa có todo nào.</p>
-                )}
+                        );
+                      })}
+                    </>
+                  ) : (
+                    <p className="px-1 text-sm text-slate-500">Milestone này chưa có todo nào.</p>
+                  )}
+                </div>
 
                 <button
                   className={cn(
