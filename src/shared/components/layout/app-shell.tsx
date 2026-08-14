@@ -14,6 +14,8 @@ type AppShellProps = {
 };
 
 export function AppShell({ children }: AppShellProps) {
+  const ROUTE_LOADING_DELAY_MS = 240;
+  const ROUTE_LOADING_MIN_VISIBLE_MS = 360;
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const routeKey = useMemo(() => `${pathname}?${searchParams.toString()}`, [pathname, searchParams]);
@@ -21,6 +23,7 @@ export function AppShell({ children }: AppShellProps) {
   const navigationStartedAtRef = useRef<number | null>(null);
   const pendingRouteKeyRef = useRef<string | null>(null);
   const hideTimeoutRef = useRef<number | null>(null);
+  const showTimeoutRef = useRef<number | null>(null);
 
   const navigationItems = [
     { href: appRoutes.plans, label: 'Kế hoạch', icon: FolderKanban, active: pathname.startsWith(appRoutes.plans) },
@@ -34,10 +37,15 @@ export function AppShell({ children }: AppShellProps) {
 
     if (pendingRouteKeyRef.current === routeKey) {
       const elapsed = navigationStartedAtRef.current ? Date.now() - navigationStartedAtRef.current : 0;
-      const remaining = Math.max(360 - elapsed, 0);
+      const remaining = Math.max(ROUTE_LOADING_MIN_VISIBLE_MS - elapsed, 0);
 
       if (hideTimeoutRef.current) {
         window.clearTimeout(hideTimeoutRef.current);
+      }
+
+      if (showTimeoutRef.current) {
+        window.clearTimeout(showTimeoutRef.current);
+        showTimeoutRef.current = null;
       }
 
       hideTimeoutRef.current = window.setTimeout(() => {
@@ -54,8 +62,12 @@ export function AppShell({ children }: AppShellProps) {
       if (hideTimeoutRef.current) {
         window.clearTimeout(hideTimeoutRef.current);
       }
+
+      if (showTimeoutRef.current) {
+        window.clearTimeout(showTimeoutRef.current);
+      }
     };
-  }, []);
+  }, [ROUTE_LOADING_MIN_VISIBLE_MS]);
 
   function handleNavigationIntent(event: MouseEvent<HTMLDivElement>) {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
@@ -95,7 +107,18 @@ export function AppShell({ children }: AppShellProps) {
 
     navigationStartedAtRef.current = Date.now();
     pendingRouteKeyRef.current = nextRouteKey;
-    setIsRouteTransitionVisible(true);
+
+    if (showTimeoutRef.current) {
+      window.clearTimeout(showTimeoutRef.current);
+    }
+
+    showTimeoutRef.current = window.setTimeout(() => {
+      if (pendingRouteKeyRef.current === nextRouteKey) {
+        setIsRouteTransitionVisible(true);
+      }
+
+      showTimeoutRef.current = null;
+    }, ROUTE_LOADING_DELAY_MS);
   }
 
   return (
