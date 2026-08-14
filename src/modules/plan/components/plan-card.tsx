@@ -66,7 +66,7 @@ export function PlanCard({ plan }: PlanCardProps) {
           {plan.isLocked ? (
             <div className="flex items-center gap-2 text-lg font-semibold text-[var(--color-muted)]">
               <Lock className="size-4 shrink-0" />
-              Đã khóa
+              Đã khóa cho tôi
             </div>
           ) : (
             <>

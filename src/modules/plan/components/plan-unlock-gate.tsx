@@ -46,8 +46,8 @@ export function PlanUnlockGate({ secretNumberHash, onUnlock }: PlanUnlockGatePro
       </div>
 
       <div className="space-y-1 text-center">
-        <h1 className="text-xl font-semibold text-[var(--color-foreground)]">Kế hoạch này đã được khóa</h1>
-        <p className="text-sm leading-6 text-[var(--color-muted)]">Nhập mã bảo mật của bạn để tiếp tục.</p>
+        <h1 className="text-xl font-semibold text-[var(--color-foreground)]">Kế hoạch này đã được khóa cho bạn</h1>
+        <p className="text-sm leading-6 text-[var(--color-muted)]">Nhập mã bảo mật cá nhân của bạn để tiếp tục.</p>
       </div>
 
       <PinCodeInput

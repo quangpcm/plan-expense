@@ -51,11 +51,11 @@ export default function ProfilePage() {
     try {
       await Promise.all([userService.clearPasscode(user.uid), planService.clearAllPlanSecurity(user.uid)]);
       setShowClearPasscodeConfirm(false);
-      setPasscodeMessage({ type: 'success', text: 'Đã xóa mã bảo mật.' });
+      setPasscodeMessage({ type: 'success', text: 'Đã xóa mã bảo mật cá nhân.' });
     } catch (error) {
       setPasscodeMessage({
         type: 'error',
-        text: error instanceof Error ? error.message : 'Hiện chưa thể xóa mã bảo mật.',
+        text: error instanceof Error ? error.message : 'Hiện chưa thể xóa mã bảo mật cá nhân.',
       });
     } finally {
       setIsClearingPasscode(false);
@@ -128,8 +128,8 @@ export default function ProfilePage() {
       <Card>
         <SectionHeading
           eyebrow="Bảo mật"
-          title="Mã bảo mật"
-          description="Mã 4 số này thuộc về tài khoản của bạn — dùng để khóa riêng tư cho từng kế hoạch bạn chọn, không ảnh hưởng tới thành viên khác."
+          title="Mã bảo mật cá nhân"
+          description="Mã 4 số này thuộc về tài khoản của bạn. Dùng để khóa riêng các kế hoạch bạn tự bật, không ảnh hưởng tới thành viên khác."
         />
 
         {passcodeMessage ? <AuthFormMessage message={passcodeMessage.text} type={passcodeMessage.type} /> : null}
@@ -139,18 +139,18 @@ export default function ProfilePage() {
             onClose={() => setIsEditingPasscode(false)}
             onSuccess={() => {
               setIsEditingPasscode(false);
-              setPasscodeMessage({ type: 'success', text: 'Đã lưu mã bảo mật.' });
+              setPasscodeMessage({ type: 'success', text: 'Đã lưu mã bảo mật cá nhân.' });
             }}
             userId={user.uid}
           />
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-slate-600">
-              {userProfile?.secretNumberHash ? 'Đã đặt mã bảo mật.' : 'Chưa đặt mã bảo mật.'}
+              {userProfile?.secretNumberHash ? 'Đã đặt mã bảo mật cá nhân.' : 'Chưa đặt mã bảo mật cá nhân.'}
             </p>
             <div className="flex flex-wrap gap-2">
               <Button onClick={() => setIsEditingPasscode(true)} variant="secondary">
-                {userProfile?.secretNumberHash ? 'Đổi mã bảo mật' : 'Đặt mã bảo mật'}
+                {userProfile?.secretNumberHash ? 'Đổi mã bảo mật cá nhân' : 'Đặt mã bảo mật cá nhân'}
               </Button>
               {userProfile?.secretNumberHash ? (
                 <Button
@@ -158,7 +158,7 @@ export default function ProfilePage() {
                   onClick={() => setShowClearPasscodeConfirm(true)}
                   variant="secondary"
                 >
-                  Xóa mã bảo mật
+                  Xóa mã bảo mật cá nhân
                 </Button>
               ) : null}
             </div>
@@ -169,8 +169,8 @@ export default function ProfilePage() {
           <div className="space-y-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             <p>
               {lockedPlanCount > 0
-                ? `Bạn đang bật bảo mật ở ${lockedPlanCount} kế hoạch bằng mã này. Xóa mã sẽ tắt bảo mật ở tất cả các kế hoạch đó.`
-                : 'Bạn có chắc muốn xóa mã bảo mật này?'}
+                ? `Bạn đang khóa ${lockedPlanCount} kế hoạch cho riêng mình bằng mã này. Xóa mã sẽ tắt khóa ở tất cả các kế hoạch đó.`
+                : 'Bạn có chắc muốn xóa mã bảo mật cá nhân này?'}
             </p>
             <div className="flex justify-end gap-2">
               <Button onClick={() => setShowClearPasscodeConfirm(false)} variant="ghost">
@@ -181,7 +181,7 @@ export default function ProfilePage() {
                 disabled={isClearingPasscode}
                 onClick={handleClearPasscode}
               >
-                {isClearingPasscode ? 'Đang xóa...' : 'Xóa mã bảo mật'}
+                {isClearingPasscode ? 'Đang xóa...' : 'Xóa mã bảo mật cá nhân'}
               </Button>
             </div>
           </div>
@@ -201,4 +201,3 @@ export default function ProfilePage() {
     </main>
   );
 }
-

@@ -664,7 +664,7 @@ export default function PlanDetailPage() {
       await planService.setPlanSecurity(user.uid, planId, true);
       setHeaderModal('plan-settings');
     } catch (error) {
-      setSecurityActionError(error instanceof Error ? error.message : 'Hiện chưa thể cập nhật bảo mật cho kế hoạch này.');
+      setSecurityActionError(error instanceof Error ? error.message : 'Hiện chưa thể cập nhật khóa cá nhân cho kế hoạch này.');
     } finally {
       setIsSecurityActionSubmitting(false);
     }
@@ -686,7 +686,7 @@ export default function PlanDetailPage() {
     try {
       await planService.setPlanSecurity(user.uid, planId, nextEnabled);
     } catch (error) {
-      setSecurityActionError(error instanceof Error ? error.message : 'Hiện chưa thể cập nhật bảo mật cho kế hoạch này.');
+      setSecurityActionError(error instanceof Error ? error.message : 'Hiện chưa thể cập nhật khóa cá nhân cho kế hoạch này.');
     } finally {
       setIsSecurityActionSubmitting(false);
     }
@@ -1903,17 +1903,17 @@ export default function PlanDetailPage() {
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
                       <Lock className="size-4 shrink-0" />
-                      Bật bảo mật cho tôi
+                      Khóa kế hoạch cho tôi
                     </div>
                     <Switch
-                      aria-label="Bật bảo mật cho tôi"
+                      aria-label="Khóa kế hoạch cho tôi"
                       checked={Boolean(mySummary?.isLocked)}
                       disabled={isSecurityActionSubmitting}
                       onCheckedChange={handleToggleSecurity}
                     />
                   </div>
                   <p className="mt-2 text-xs leading-5 text-slate-500">
-                    Yêu cầu mã bảo mật của bạn mỗi khi bạn mở lại kế hoạch này. Không ảnh hưởng tới thành viên khác.
+                    Chỉ khóa kế hoạch này trên tài khoản của bạn. Khi mở lại, bạn sẽ nhập mã bảo mật cá nhân của mình. Không ảnh hưởng tới thành viên khác.
                   </p>
                   {securityActionError ? (
                     <div className="mt-3">
@@ -1972,17 +1972,17 @@ export default function PlanDetailPage() {
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
                       <Lock className="size-4 shrink-0" />
-                      Bật bảo mật cho tôi
+                      Khóa kế hoạch cho tôi
                     </div>
                     <Switch
-                      aria-label="Bật bảo mật cho tôi"
+                      aria-label="Khóa kế hoạch cho tôi"
                       checked={Boolean(mySummary?.isLocked)}
                       disabled={isSecurityActionSubmitting}
                       onCheckedChange={handleToggleSecurity}
                     />
                   </div>
                   <p className="mt-2 text-xs leading-5 text-slate-500">
-                    Yêu cầu mã bảo mật của bạn mỗi khi bạn mở lại kế hoạch này. Không ảnh hưởng tới thành viên khác.
+                    Chỉ khóa kế hoạch này trên tài khoản của bạn. Khi mở lại, bạn sẽ nhập mã bảo mật cá nhân của mình. Không ảnh hưởng tới thành viên khác.
                   </p>
                   {securityActionError ? (
                     <div className="mt-3">
@@ -2024,15 +2024,15 @@ export default function PlanDetailPage() {
           <>
             <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
               <button
-                aria-label="Đóng form đặt mã bảo mật"
+                aria-label="Đóng form đặt mã bảo mật cá nhân"
                 className="absolute inset-0"
                 onClick={() => setHeaderModal('plan-settings')}
                 type="button"
               />
               <Dialog
                 className="relative z-10 w-full max-w-md"
-                description="Mã này thuộc về tài khoản của bạn — sẽ cần nhập lại mỗi khi bạn mở lại kế hoạch này."
-                title="Đặt mã bảo mật"
+                description="Mã này thuộc về tài khoản của bạn và chỉ dùng để khóa riêng các kế hoạch bạn tự bật."
+                title="Đặt mã bảo mật cá nhân"
               >
                 <PasscodeForm
                   onClose={() => setHeaderModal('plan-settings')}
@@ -2043,10 +2043,10 @@ export default function PlanDetailPage() {
             </div>
             <div className="md:hidden">
               <BottomSheet
-                description="Mã này thuộc về tài khoản của bạn — sẽ cần nhập lại mỗi khi bạn mở lại kế hoạch này."
+                description="Mã này thuộc về tài khoản của bạn và chỉ dùng để khóa riêng các kế hoạch bạn tự bật."
                 onClose={() => setHeaderModal('plan-settings')}
                 open={headerModal === 'plan-lock'}
-                title="Đặt mã bảo mật"
+                title="Đặt mã bảo mật cá nhân"
               >
                 <PasscodeForm
                   onClose={() => setHeaderModal('plan-settings')}

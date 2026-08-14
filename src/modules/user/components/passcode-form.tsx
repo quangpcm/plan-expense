@@ -44,7 +44,7 @@ export function PasscodeForm({ userId, onClose, onSuccess }: PasscodeFormProps) 
       await userService.setPasscode(userId, pin);
       onSuccess?.();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Hiện chưa thể đặt mã bảo mật.');
+      setErrorMessage(error instanceof Error ? error.message : 'Hiện chưa thể đặt mã bảo mật cá nhân.');
       setFirstPin('');
       setCurrentValue('');
       setStep('enter');
@@ -56,7 +56,7 @@ export function PasscodeForm({ userId, onClose, onSuccess }: PasscodeFormProps) 
   return (
     <div className="space-y-5">
       <p className="text-center text-sm font-medium text-[var(--color-muted)]">
-        {step === 'enter' ? 'Nhập mã mới' : 'Nhập lại để xác nhận'}
+        {step === 'enter' ? 'Nhập mã bảo mật cá nhân mới' : 'Nhập lại mã để xác nhận'}
       </p>
 
       <PinCodeInput

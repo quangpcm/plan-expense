@@ -21,16 +21,16 @@ function getSettlementSummary(statistic: StatisticResult) {
 
   if (unsettledRows.length === 0 || totalReceivable === 0) {
     return {
-      title: 'Da doi soat hoan tat',
-      description: 'Khong con khoan thanh toan giua cac thanh vien.',
+      title: 'Đã đối soát hoàn tất',
+      description: 'Không còn khoản thanh toán giữa các thành viên.',
       tone: 'success' as const,
       totalLabel: null,
     };
   }
 
   return {
-    title: `Con ${unsettledRows.length} thanh vien can thanh toan`,
-    description: 'Cac khoan can tra va can nhan van chua duoc xu ly het.',
+    title: `Còn ${unsettledRows.length} thành viên cần thanh toán`,
+    description: 'Các khoản cần trả và nhận vẫn chưa được xử lý hết.',
     tone: 'warning' as const,
     totalLabel: formatCurrency(totalReceivable),
   };
