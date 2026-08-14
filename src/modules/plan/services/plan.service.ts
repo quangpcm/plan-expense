@@ -9,6 +9,19 @@ import { AppError } from '@/shared/errors/app-error';
 export class PlanService {
   constructor(private readonly planRepository: PlanRepository) {}
 
+  private isEndedPlan(plan: PlanDocument) {
+    return plan.status === 'completed' || plan.status === 'closed';
+  }
+
+  private resolveStatusDates(plan: PlanDocument, nextStatus: UpdatePlanInput['status']) {
+    const now = new Date();
+
+    return {
+      closedAt: nextStatus === 'closed' ? (plan.closedAt ? plan.closedAt.toDate() : now) : null,
+      archivedAt: nextStatus === 'archived' ? (plan.archivedAt ? plan.archivedAt.toDate() : now) : null,
+    };
+  }
+
   private normalizePlanMetrics(input: Pick<CreatePlanInput, 'budgetAmount' | 'savingGoalAmount' | 'savingTargetDate'>) {
     return {
       budgetAmount: input.budgetAmount && input.budgetAmount > 0 ? input.budgetAmount : null,
@@ -68,6 +81,7 @@ export class PlanService {
     const startDate = input.startDate ? new Date(input.startDate) : null;
     const endDate = input.endDate ? new Date(input.endDate) : null;
     const { budgetAmount, savingGoalAmount, savingTargetDate } = this.normalizePlanMetrics(input);
+    const { closedAt, archivedAt } = this.resolveStatusDates(plan, input.status);
 
     if (startDate && endDate && startDate.getTime() > endDate.getTime()) {
       throw new AppError('End date must be on or after the start date.', 'PLAN_DATE_RANGE_INVALID', 400);
@@ -77,11 +91,14 @@ export class PlanService {
       name: normalizedName,
       description: input.description?.trim() || null,
       planType: input.planType,
+      status: input.status,
       startDate,
       endDate,
       budgetAmount,
       savingGoalAmount,
       savingTargetDate,
+      closedAt,
+      archivedAt,
     });
   }
 
@@ -90,11 +107,23 @@ export class PlanService {
       throw new AppError('Only the owner can close this plan.', 'PLAN_CLOSE_PERMISSION_DENIED', 403);
     }
 
-    if (plan.status === 'closed') {
-      throw new AppError('This plan is already closed.', 'PLAN_ALREADY_CLOSED', 400);
+    if (this.isEndedPlan(plan)) {
+      throw new AppError('This plan is already ended.', 'PLAN_ALREADY_ENDED', 400);
     }
 
     await this.planRepository.closePlan(plan.id);
+  }
+
+  async completePlan(plan: PlanDocument, currentMember: PlanMemberDocument | null) {
+    if (!resolvePlanPermissions(currentMember).canManagePlan) {
+      throw new AppError('Only the owner can complete this plan.', 'PLAN_COMPLETE_PERMISSION_DENIED', 403);
+    }
+
+    if (this.isEndedPlan(plan)) {
+      throw new AppError('This plan is already ended.', 'PLAN_ALREADY_ENDED', 400);
+    }
+
+    await this.planRepository.completePlan(plan.id);
   }
 
   async setPlanSecurity(userId: string, planId: string, isLocked: boolean) {

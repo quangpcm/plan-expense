@@ -106,8 +106,8 @@ async function assertPermission(input: RequestUploadUrlInput, uid: string): Prom
 
   const plan = await resolvePlan(input.planId);
 
-  if (plan.status === 'closed') {
-    throw new AppError('This plan is closed and cannot be edited.', 'PLAN_CLOSED', 400);
+  if (plan.status !== 'active') {
+    throw new AppError('This plan has ended and cannot be edited.', 'PLAN_ENDED', 400);
   }
 
   if (input.mediaType === 'expense-attachment' && !permissions.canCreateExpense) {

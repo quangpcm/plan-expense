@@ -60,6 +60,7 @@ export class StatisticService {
         return {
           memberId: member.id,
           nickname: member.nickname,
+          avatarUrl: member.avatarUrl,
           paid,
           owed,
           balance,
@@ -76,14 +77,18 @@ export class StatisticService {
     const totals = new Map<string | null, number>();
 
     input.expenses.forEach((expense) => {
-      totals.set(expense.categoryId, (totals.get(expense.categoryId) || 0) + expense.amount);
+      const categoryId = expense.categoryId ?? null;
+      totals.set(categoryId, (totals.get(categoryId) || 0) + expense.amount);
     });
 
     return Array.from(totals.entries())
       .map(([categoryId, totalAmount]) => ({
         categoryId,
         categoryName:
-          input.categories.find((category) => category.id === categoryId)?.name || 'No category',
+          input.categories.find((category) => category.id === categoryId)?.name || 'Chưa phân loại',
+        icon: input.categories.find((category) => category.id === categoryId)?.icon || null,
+        iconColor: input.categories.find((category) => category.id === categoryId)?.iconColor || 'text-slate-600',
+        iconBgColor: input.categories.find((category) => category.id === categoryId)?.iconBgColor || 'bg-slate-100',
         totalAmount,
       }))
       .sort((a, b) => b.totalAmount - a.totalAmount);

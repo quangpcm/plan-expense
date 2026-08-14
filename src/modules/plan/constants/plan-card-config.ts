@@ -18,6 +18,10 @@ export type PlanCardTypeConfig = {
 
 const planTypeLabels = Object.fromEntries(planTypeOptions.map((option) => [option.value, option.label])) as Record<PlanType, string>;
 
+function isEndedPlan(plan: PlanSummary) {
+  return plan.planStatus === 'completed' || plan.planStatus === 'closed';
+}
+
 function getSafeNumber(value: number | null | undefined, fallback = 0) {
   return Number.isFinite(value) ? Number(value) : fallback;
 }
@@ -50,6 +54,15 @@ function buildUpdatedFooter(plan: PlanSummary): PlanCardFooterItem {
   return {
     label: 'Cập nhật',
     value: updatedDate ? formatRelativeTime(updatedDate) : 'vừa xong',
+  };
+}
+
+function buildEndedFooter(plan: PlanSummary): PlanCardFooterItem {
+  const endedDate = timestampToDate(plan.endDate) ?? timestampToDate(plan.updatedAt);
+
+  return {
+    label: plan.planStatus === 'completed' ? 'Hoàn tất' : 'Dừng theo dõi',
+    value: endedDate ? formatDate(endedDate) : 'Đã kết thúc',
   };
 }
 
@@ -226,6 +239,98 @@ function buildMilestoneProgress(plan: PlanSummary): PlanCardProgress | null {
   };
 }
 
+function buildEndedSummaryConfig(plan: PlanSummary) {
+  const balance = getSafeBalance(plan);
+  const hasBudget = getSafeNumber(plan.budgetAmount) > 0;
+  const hasSavingGoal = getSafeNumber(plan.savingGoalAmount) > 0;
+  const hasTodo = getSafeNumber(plan.todoCount) > 0;
+  const hasMilestone = getSafeNumber(plan.milestoneCount) > 0;
+
+  if (plan.planType === 'saving' || hasSavingGoal) {
+    return {
+      primaryMetric: {
+        label: 'Đã tích lũy',
+        value: getSafeCurrency(Math.max(balance, 0)),
+        tone: balance >= getSafeNumber(plan.savingGoalAmount) ? 'success' : 'primary',
+      } satisfies PlanCardMetric,
+      secondaryMetric: {
+        label: 'Mục tiêu',
+        value: getSafeCurrency(plan.savingGoalAmount),
+      } satisfies PlanCardMetric,
+      progress: buildSavingProgress(plan),
+      footerLeft: buildEndedFooter(plan),
+    };
+  }
+
+  if (plan.planType === 'project' || hasMilestone) {
+    return {
+      primaryMetric: {
+        label: 'Mốc hoàn tất',
+        value: `${getSafeNumber(plan.completedMilestoneCount)}/${getSafeNumber(plan.milestoneCount)}`,
+        tone: getSafeNumber(plan.completedMilestoneCount) >= getSafeNumber(plan.milestoneCount) ? 'success' : 'primary',
+      } satisfies PlanCardMetric,
+      secondaryMetric: {
+        label: 'Công việc xong',
+        value: `${getSafeNumber(plan.completedTodoCount)}/${getSafeNumber(plan.todoCount)}`,
+        detail: getSafeCountLabel(plan.memberCount, 'người tham gia'),
+      } satisfies PlanCardMetric,
+      progress: buildMilestoneProgress(plan) ?? buildTaskProgress(plan),
+      footerLeft: buildEndedFooter(plan),
+    };
+  }
+
+  if (plan.planType === 'birthday' || plan.planType === 'event' || hasTodo) {
+    return {
+      primaryMetric: {
+        label: 'Tổng chi',
+        value: getSafeCurrency(plan.totalExpense),
+        tone: hasBudget && getSafeNumber(plan.totalExpense) <= getSafeNumber(plan.budgetAmount) ? 'primary' : 'danger',
+      } satisfies PlanCardMetric,
+      secondaryMetric: {
+        label: 'Công việc xong',
+        value: `${getSafeNumber(plan.completedTodoCount)}/${getSafeNumber(plan.todoCount)}`,
+        detail: getSafeCountLabel(plan.memberCount, 'người tham gia'),
+      } satisfies PlanCardMetric,
+      progress: buildTaskProgress(plan) ?? buildBudgetProgress(plan),
+      footerLeft: buildEndedFooter(plan),
+    };
+  }
+
+  if (plan.planType === 'shared_living') {
+    return {
+      primaryMetric: {
+        label: 'Tổng thu',
+        value: getSafeCurrency(plan.totalIncome),
+        tone: 'success',
+      } satisfies PlanCardMetric,
+      secondaryMetric: {
+        label: 'Tổng chi',
+        value: getSafeCurrency(plan.totalExpense),
+        tone: balance >= 0 ? 'default' : 'danger',
+        detail: `Số dư ${getSafeCurrency(balance)}`,
+      } satisfies PlanCardMetric,
+      progress: buildSharedBalanceProgress(plan) ?? buildGeneralProgress(plan),
+      footerLeft: buildEndedFooter(plan),
+    };
+  }
+
+  return {
+    primaryMetric: {
+      label: hasBudget ? 'Ngân sách' : 'Tổng thu',
+      value: hasBudget ? getSafeCurrency(plan.budgetAmount) : getSafeCurrency(plan.totalIncome),
+      tone: hasBudget ? 'primary' : 'success',
+    } satisfies PlanCardMetric,
+    secondaryMetric: {
+      label: 'Tổng chi',
+      value: getSafeCurrency(plan.totalExpense),
+      tone: hasBudget && getSafeNumber(plan.totalExpense) > getSafeNumber(plan.budgetAmount) ? 'danger' : 'default',
+      detail: plan.planType === 'travel' || plan.planType === 'wedding' ? getSafeCountLabel(plan.memberCount, 'người tham gia') : `Số dư ${getSafeCurrency(balance)}`,
+    } satisfies PlanCardMetric,
+    progress: hasBudget ? buildBudgetProgress(plan) : buildGeneralProgress(plan),
+    footerLeft: buildEndedFooter(plan),
+  };
+}
+
 export const planCardConfigByType: Record<PlanType, PlanCardTypeConfig> = {
   travel: {
     primaryMetric: ({ plan }) => ({
@@ -335,6 +440,13 @@ export const planCardConfigByType: Record<PlanType, PlanCardTypeConfig> = {
 };
 
 export function buildPlanCardConfig(plan: PlanSummary) {
+  if (isEndedPlan(plan)) {
+    return {
+      ...buildEndedSummaryConfig(plan),
+      footerRight: buildUpdatedFooter(plan),
+    };
+  }
+
   const config = planCardConfigByType[plan.planType];
 
   return {

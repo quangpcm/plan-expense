@@ -10,11 +10,11 @@ type MemberSpendingListProps = {
 };
 
 export function MemberSpendingList({ statistic, onSelectMember }: MemberSpendingListProps) {
-  const rows = [...statistic.memberBalances].sort((a, b) => b.paid - a.paid);
+  const rows = [...statistic.memberBalances].filter((row) => row.paid > 0).sort((a, b) => b.paid - a.paid);
 
   return (
     <Card>
-      <h3 className="text-lg font-semibold text-slate-950">Chi tiêu theo thành viên</h3>
+      <h3 className="text-lg font-semibold text-slate-950">Người thanh toán</h3>
       <div className="grid gap-3">
         {rows.map((row) => (
           <button

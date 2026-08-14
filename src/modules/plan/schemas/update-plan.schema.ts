@@ -1,5 +1,21 @@
 import { z } from 'zod';
 
+const optionalNonNegativeInt = z.preprocess(
+  (value) => {
+    if (
+      value === '' ||
+      value === null ||
+      value === undefined ||
+      (typeof value === 'number' && Number.isNaN(value))
+    ) {
+      return undefined;
+    }
+
+    return value;
+  },
+  z.coerce.number().int().nonnegative().optional(),
+);
+
 export const updatePlanSchema = z
   .object({
     name: z.string().trim().min(2).max(120),
@@ -14,10 +30,11 @@ export const updatePlanSchema = z
       'project',
       'general',
     ]),
+    status: z.enum(['active', 'completed', 'closed', 'archived']),
     startDate: z.string().optional().or(z.literal('')),
     endDate: z.string().optional().or(z.literal('')),
-    budgetAmount: z.coerce.number().int().nonnegative().optional(),
-    savingGoalAmount: z.coerce.number().int().nonnegative().optional(),
+    budgetAmount: optionalNonNegativeInt,
+    savingGoalAmount: optionalNonNegativeInt,
     savingTargetDate: z.string().optional().or(z.literal('')),
   })
   .refine(
@@ -30,7 +47,7 @@ export const updatePlanSchema = z
     },
     {
       path: ['endDate'],
-      message: 'End date must be on or after the start date.',
+      message: 'Ngày kết thúc phải sau hoặc trùng ngày bắt đầu.',
     },
   )
   .refine(
@@ -52,11 +69,11 @@ export const updatePlanSchema = z
         return true;
       }
 
-      return value.savingGoalAmount === undefined || value.savingGoalAmount > 0;
+      return value.savingGoalAmount !== undefined && value.savingGoalAmount > 0;
     },
     {
       path: ['savingGoalAmount'],
-      message: 'Saving plan nên có mục tiêu tích lũy lớn hơn 0.',
+      message: 'Cần nhập số tiền mục tiêu.',
     },
   );
 

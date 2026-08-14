@@ -20,7 +20,7 @@ export function MilestoneBreakdown({ statistic, onSelectMilestoneMember }: Miles
             key={row.milestoneId}
             className="grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm"
           >
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.4fr_1fr_1fr]">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.5fr_1fr]">
               <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold text-slate-900">{row.milestoneTitle}</span>
@@ -35,19 +35,9 @@ export function MilestoneBreakdown({ statistic, onSelectMilestoneMember }: Miles
               <div>
                 <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Đã chi</p>
                 <p className="mt-1 font-semibold text-slate-950">{formatCurrency(row.totalAmount)}</p>
-                <p className="mt-1 text-xs text-slate-500">
-                  {row.budgetAmount != null ? `Ngân sách ${formatCurrency(row.budgetAmount)}` : 'Chưa đặt ngân sách'}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Tiến độ</p>
-                <p className="mt-1 font-semibold text-slate-950">{row.progress}%</p>
-                <div className="mt-2 h-2 rounded-full bg-slate-100">
-                  <div
-                    className="h-2 rounded-full bg-sky-500 transition-[width]"
-                    style={{ width: `${Math.min(row.progress, 100)}%` }}
-                  />
-                </div>
+                {row.budgetAmount != null ? (
+                  <p className="mt-1 text-xs text-slate-500">Ngân sách {formatCurrency(row.budgetAmount)}</p>
+                ) : null}
               </div>
             </div>
             {row.memberBreakdown.length > 0 ? (

@@ -69,6 +69,7 @@ import {
 import type { TodoDueSortOrder, TodoStatusFilter } from '@/modules/todo';
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import { CategoryBreakdown } from '@/modules/statistic/components/category-breakdown';
+import { CompletedPlanOverview } from '@/modules/statistic/components/completed-plan-overview';
 import { ExpenseTimelineChart } from '@/modules/statistic/components/expense-timeline-chart';
 import { MemberBalanceTable } from '@/modules/statistic/components/member-balance-table';
 import { MemberSpendingList } from '@/modules/statistic/components/member-spending-list';
@@ -119,7 +120,8 @@ type HeaderMenuItem = { key: string; label: string; icon: LucideIcon; destructiv
 
 const planStatusLabel: Record<PlanStatus, string> = {
   active: 'Đang diễn ra',
-  closed: 'Đã đóng',
+  completed: 'Hoàn thành',
+  closed: 'Đã dừng',
   archived: 'Đã lưu trữ',
 };
 
@@ -147,7 +149,9 @@ export default function PlanDetailPage() {
   const [settlementMessage, setSettlementMessage] = useState<string | null>(null);
   const [isSettlementSubmitting, setIsSettlementSubmitting] = useState(false);
   const [closingError, setClosingError] = useState<string | null>(null);
+  const [completionError, setCompletionError] = useState<string | null>(null);
   const [isClosingPlan, setIsClosingPlan] = useState(false);
+  const [isCompletingPlan, setIsCompletingPlan] = useState(false);
   const [isPlanUnlocked, setIsPlanUnlocked] = useState(false);
   const [securityActionError, setSecurityActionError] = useState<string | null>(null);
   const [isSecurityActionSubmitting, setIsSecurityActionSubmitting] = useState(false);
@@ -177,6 +181,7 @@ export default function PlanDetailPage() {
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const [headerModal, setHeaderModal] = useState<HeaderModal>(null);
   const [showClosePlanConfirm, setShowClosePlanConfirm] = useState(false);
+  const [showCompletePlanConfirm, setShowCompletePlanConfirm] = useState(false);
   const [showStatisticSheet, setShowStatisticSheet] = useState(false);
   const [statisticMemberDrilldown, setStatisticMemberDrilldown] = useState<{ memberId: string } | null>(null);
   const [statisticMilestoneMemberDrilldown, setStatisticMilestoneMemberDrilldown] = useState<{
@@ -204,6 +209,7 @@ export default function PlanDetailPage() {
   }, [planId, searchParams]);
 
   const currentPlan = plan;
+  const isPlanEnded = plan?.status === 'completed' || plan?.status === 'closed';
   const statistic = useMemo(
     () =>
       statisticService.calculate({
@@ -321,6 +327,12 @@ export default function PlanDetailPage() {
       .sort((a, b) => a.dueDate!.toMillis() - b.dueDate!.toMillis())
       .slice(0, 5);
   }, [todos]);
+  const endedPlanDate = useMemo(
+    () =>
+      timestampToDate(plan?.endDate ?? null) ??
+      (plan?.status === 'closed' ? timestampToDate(plan.closedAt) : timestampToDate(plan?.updatedAt ?? null)),
+    [plan],
+  );
   const allTodosFilteredAndSorted = useMemo(
     () => sortTodosByDueDate(filterTodosByStatus(todos, todoStatusFilter), todoDueSortOrder),
     [todos, todoStatusFilter, todoDueSortOrder],
@@ -623,6 +635,20 @@ export default function PlanDetailPage() {
       setClosingError(error instanceof Error ? error.message : 'Hiện chưa thể đóng kế hoạch này.');
     } finally {
       setIsClosingPlan(false);
+    }
+  }
+
+  async function handleCompletePlan() {
+    setIsCompletingPlan(true);
+    setCompletionError(null);
+
+    try {
+      await planService.completePlan(ensuredPlan, currentMember);
+      setShowCompletePlanConfirm(false);
+    } catch (error) {
+      setCompletionError(error instanceof Error ? error.message : 'Hiện chưa thể hoàn thành kế hoạch này.');
+    } finally {
+      setIsCompletingPlan(false);
     }
   }
 
@@ -1041,73 +1067,96 @@ export default function PlanDetailPage() {
         </div>
         {activeTab === 'Tổng quan' ? (
           <div className="space-y-6">
-            <div className="space-y-3">
-              <SectionHeading eyebrow="Mốc kế hoạch" title="Mốc sắp tới" />
-              {milestoneActionError ? <AuthFormMessage message={milestoneActionError} type="error" /> : null}
-              {isMilestonesLoading ? (
-                <Skeleton className="h-32 rounded-[28px]" />
-              ) : (
-                <MilestoneList
-                  canManagePlan={false}
-                  emptyLabel="Không có mốc nào đang diễn ra hoặc sắp diễn ra."
-                  isSubmitting={false}
-                  milestones={upcomingMilestones}
-                  onEdit={() => setActiveTab('Công việc')}
-                  onMoveDown={() => {}}
-                  onMoveUp={() => {}}
-                  onSelect={(milestoneId) => {
-                    setSelectedMilestoneId(milestoneId);
-                    setActiveTab('Công việc');
-                  }}
-                  selectedMilestoneId={selectedMilestone?.id ?? null}
+            {isPlanEnded ? (
+              <>
+                <CompletedPlanOverview
+                  endedAtLabel={endedPlanDate ? formatDate(endedPlanDate) : 'Đã kết thúc'}
+                  onSelectMember={(memberId) => setStatisticMemberDrilldown({ memberId })}
+                  planStatus={plan.status}
+                  statistic={statistic}
                 />
-              )}
-              <Button className="w-full justify-center" onClick={() => setActiveTab('Công việc')} variant="ghost">
-                Xem tất cả mốc
-              </Button>
-            </div>
 
-            <div className="space-y-3">
-              <SectionHeading
-                eyebrow="Công việc"
-                title="Việc sắp đến hạn"
-                description="5 việc chưa hoàn thành"
-              />
-              {todoActionError ? <AuthFormMessage message={todoActionError} type="error" /> : null}
-              {isTodosLoading ? (
-                <Skeleton className="h-32 rounded-[28px]" />
-              ) : (
-                <TodoList
-                  canManagePlan={permissions.canManagePlan && plan.status !== 'closed'}
-                  emptyMessage="Không có công việc nào sắp đến hạn."
-                  isSubmitting={isTodoSubmitting}
-                  members={members}
-                  milestones={milestones}
-                  preserveOrder
-                  onAddVendor={(todo) => {
-                    setEditingVendorId(null);
-                    setVendorFormTodo(todo);
-                  }}
-                  onChangeStatus={handleChangeTodoStatus}
-                  onDeleteTodo={handleDeleteTodo}
-                  onEdit={(todo) => {
-                    setSelectedMilestoneId(todo.milestoneId);
-                    setEditingTodo(todo);
-                    setShowTodoForm(true);
-                    setActiveTab('Công việc');
-                  }}
-                  todos={upcomingTodos}
-                />
-              )}
-              <Button className="w-full justify-center" onClick={() => setActiveTab('Công việc')} variant="ghost">
-                Xem tất cả công việc
-              </Button>
-            </div>
+                <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                  <CategoryBreakdown statistic={statistic} />
+                  <MilestoneBreakdown
+                    onSelectMilestoneMember={(milestoneId, memberId) =>
+                      setStatisticMilestoneMemberDrilldown({ milestoneId, memberId })
+                    }
+                    statistic={statistic}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-3">
+                  <SectionHeading eyebrow="Mốc kế hoạch" title="Mốc sắp tới" />
+                  {milestoneActionError ? <AuthFormMessage message={milestoneActionError} type="error" /> : null}
+                  {isMilestonesLoading ? (
+                    <Skeleton className="h-32 rounded-[28px]" />
+                  ) : (
+                    <MilestoneList
+                      canManagePlan={false}
+                      emptyLabel="Không có mốc nào đang diễn ra hoặc sắp diễn ra."
+                      isSubmitting={false}
+                      milestones={upcomingMilestones}
+                      onEdit={() => setActiveTab('Công việc')}
+                      onMoveDown={() => {}}
+                      onMoveUp={() => {}}
+                      onSelect={(milestoneId) => {
+                        setSelectedMilestoneId(milestoneId);
+                        setActiveTab('Công việc');
+                      }}
+                      selectedMilestoneId={selectedMilestone?.id ?? null}
+                    />
+                  )}
+                  <Button className="w-full justify-center" onClick={() => setActiveTab('Công việc')} variant="ghost">
+                    Xem tất cả mốc
+                  </Button>
+                </div>
 
-            <div className="space-y-3">
-              <SectionHeading eyebrow="Tài chính" title="Thu chi kế hoạch" />
-              <StatisticOverview statistic={statistic} />
-            </div>
+                <div className="space-y-3">
+                  <SectionHeading
+                    eyebrow="Công việc"
+                    title="Việc sắp đến hạn"
+                    description="5 việc chưa hoàn thành"
+                  />
+                  {todoActionError ? <AuthFormMessage message={todoActionError} type="error" /> : null}
+                  {isTodosLoading ? (
+                    <Skeleton className="h-32 rounded-[28px]" />
+                  ) : (
+                    <TodoList
+                      canManagePlan={permissions.canManagePlan && !isPlanEnded}
+                      emptyMessage="Không có công việc nào sắp đến hạn."
+                      isSubmitting={isTodoSubmitting}
+                      members={members}
+                      milestones={milestones}
+                      preserveOrder
+                      onAddVendor={(todo) => {
+                        setEditingVendorId(null);
+                        setVendorFormTodo(todo);
+                      }}
+                      onChangeStatus={handleChangeTodoStatus}
+                      onDeleteTodo={handleDeleteTodo}
+                      onEdit={(todo) => {
+                        setSelectedMilestoneId(todo.milestoneId);
+                        setEditingTodo(todo);
+                        setShowTodoForm(true);
+                        setActiveTab('Công việc');
+                      }}
+                      todos={upcomingTodos}
+                    />
+                  )}
+                  <Button className="w-full justify-center" onClick={() => setActiveTab('Công việc')} variant="ghost">
+                    Xem tất cả công việc
+                  </Button>
+                </div>
+
+                <div className="space-y-3">
+                  <SectionHeading eyebrow="Tài chính" title="Thu chi kế hoạch" />
+                  <StatisticOverview statistic={statistic} />
+                </div>
+              </>
+            )}
           </div>
         ) : null}
         {activeTab === 'Tài chính' ? (
@@ -1120,7 +1169,7 @@ export default function PlanDetailPage() {
                     <BarChart3 className="size-4" />
                     Thống kê
                   </Button>
-                  {plan.status === 'closed' ? (
+                  {isPlanEnded ? (
                     <Button className="min-w-0 px-3" disabled variant="secondary">
                       + Khoản Thu
                     </Button>
@@ -1133,7 +1182,7 @@ export default function PlanDetailPage() {
                       + Khoản Thu
                     </Button>
                   )}
-                  {plan.status === 'closed' ? (
+                  {isPlanEnded ? (
                     <Button className="min-w-0 px-3" disabled>
                       + Khoản Chi
                     </Button>
@@ -1155,7 +1204,7 @@ export default function PlanDetailPage() {
                 </div>
                 <div className="hidden space-y-2 lg:block">
                   <div className="grid grid-cols-2 gap-2">
-                    {plan.status === 'closed' ? (
+                    {isPlanEnded ? (
                       <Button className="min-w-0 px-3" disabled variant="secondary">
                         + Khoản Thu
                       </Button>
@@ -1168,7 +1217,7 @@ export default function PlanDetailPage() {
                         + Khoản Thu
                       </Button>
                     )}
-                    {plan.status === 'closed' ? (
+                    {isPlanEnded ? (
                       <Button className="min-w-0 px-3" disabled>
                         + Khoản Chi
                       </Button>
@@ -1184,9 +1233,13 @@ export default function PlanDetailPage() {
                 </div>
               </div>
             </div>
-            {plan.status === 'closed' ? (
+            {isPlanEnded ? (
               <AuthFormMessage
-                message="Kế hoạch này đã đóng. Bạn vẫn xem được dữ liệu, nhưng không thể thêm hoặc sửa khoản chi mới."
+                message={
+                  plan.status === 'completed'
+                    ? 'Kế hoạch này đã hoàn thành. Bạn vẫn xem được dữ liệu và báo cáo tổng kết, nhưng không thể thêm hay sửa giao dịch mới.'
+                    : 'Kế hoạch này đã dừng theo dõi. Bạn vẫn xem được dữ liệu và báo cáo tổng kết, nhưng không thể thêm hay sửa giao dịch mới.'
+                }
                 type="success"
               />
             ) : null}
@@ -1256,7 +1309,7 @@ export default function PlanDetailPage() {
                     <MilestoneTimelineBoard
                       canManagePlan={permissions.canManagePlan}
                       isMilestoneSubmitting={isMilestoneSubmitting}
-                      isPlanClosed={plan.status === 'closed'}
+                      isPlanClosed={Boolean(isPlanEnded)}
                       isTodoSubmitting={isTodoSubmitting}
                       milestones={sortedWorkMilestones}
                       members={members}
@@ -1767,6 +1820,59 @@ export default function PlanDetailPage() {
             </div>
           </>
         ) : null}
+        {showCompletePlanConfirm ? (
+          <>
+            <div className="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
+              <button
+                aria-label="Đóng xác nhận hoàn thành kế hoạch"
+                className="absolute inset-0"
+                onClick={() => setShowCompletePlanConfirm(false)}
+                type="button"
+              />
+              <Dialog
+                className="relative z-10 w-full max-w-md"
+                description="Khi đánh dấu hoàn thành, kế hoạch sẽ chuyển sang chế độ tổng kết và khóa các thao tác tạo hoặc chỉnh sửa mới."
+                title="Hoàn thành kế hoạch này?"
+              >
+                {completionError ? <AuthFormMessage message={completionError} type="error" /> : null}
+                <div className="flex justify-end gap-2">
+                  <Button onClick={() => setShowCompletePlanConfirm(false)} variant="secondary">
+                    Hủy
+                  </Button>
+                  <Button
+                    className="bg-emerald-600 text-white hover:bg-emerald-700"
+                    disabled={isCompletingPlan}
+                    onClick={handleCompletePlan}
+                  >
+                    {isCompletingPlan ? 'Đang hoàn thành...' : 'Xác nhận hoàn thành'}
+                  </Button>
+                </div>
+              </Dialog>
+            </div>
+            <div className="md:hidden">
+              <BottomSheet
+                description="Khi đánh dấu hoàn thành, kế hoạch sẽ chuyển sang chế độ tổng kết và khóa các thao tác tạo hoặc chỉnh sửa mới."
+                onClose={() => setShowCompletePlanConfirm(false)}
+                open={showCompletePlanConfirm}
+                title="Hoàn thành kế hoạch này?"
+              >
+                {completionError ? <AuthFormMessage message={completionError} type="error" /> : null}
+                <div className="flex justify-end gap-2">
+                  <Button onClick={() => setShowCompletePlanConfirm(false)} variant="secondary">
+                    Hủy
+                  </Button>
+                  <Button
+                    className="bg-emerald-600 text-white hover:bg-emerald-700"
+                    disabled={isCompletingPlan}
+                    onClick={handleCompletePlan}
+                  >
+                    {isCompletingPlan ? 'Đang hoàn thành...' : 'Xác nhận hoàn thành'}
+                  </Button>
+                </div>
+              </BottomSheet>
+            </div>
+          </>
+        ) : null}
         {headerModal === 'plan-settings' ? (
           <>
             <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
@@ -1782,6 +1888,7 @@ export default function PlanDetailPage() {
                 title="Cài đặt kế hoạch"
               >
                 {closingError ? <AuthFormMessage message={closingError} type="error" /> : null}
+                {completionError ? <AuthFormMessage message={completionError} type="error" /> : null}
                 <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
                   Múi giờ hiện tại: {plan.timezone}
                   <br />
@@ -1818,14 +1925,22 @@ export default function PlanDetailPage() {
                 <div className="mt-4 flex flex-wrap justify-end gap-2">
                   {permissions.canManagePlan ? (
                     <Button
+                      className="border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                      disabled={isCompletingPlan || Boolean(isPlanEnded)}
+                      onClick={() => setShowCompletePlanConfirm(true)}
+                      variant="secondary"
+                    >
+                      {plan.status === 'completed' ? 'Đã hoàn thành kế hoạch' : 'Hoàn thành kế hoạch'}
+                    </Button>
+                  ) : null}
+                  {permissions.canManagePlan ? (
+                    <Button
                       className="border border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
-                      disabled={isClosingPlan || plan.status === 'closed'}
+                      disabled={isClosingPlan || Boolean(isPlanEnded)}
                       onClick={() => setShowClosePlanConfirm(true)}
                       variant="secondary"
                     >
-                      {plan.status === 'closed'
-                        ? 'Đã đóng kế hoạch'
-                          : 'Đóng kế hoạch'}
+                      {isPlanEnded ? 'Kế hoạch đã kết thúc' : 'Đóng kế hoạch'}
                     </Button>
                   ) : null}
                   <Button onClick={() => setHeaderModal(null)} variant="ghost">
@@ -1842,6 +1957,7 @@ export default function PlanDetailPage() {
                 title="Cài đặt kế hoạch"
               >
                 {closingError ? <AuthFormMessage message={closingError} type="error" /> : null}
+                {completionError ? <AuthFormMessage message={completionError} type="error" /> : null}
                 <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
                   Múi giờ hiện tại: {plan.timezone}
                   <br />
@@ -1878,14 +1994,22 @@ export default function PlanDetailPage() {
                 <div className="mt-4 flex flex-wrap justify-end gap-2">
                   {permissions.canManagePlan ? (
                     <Button
+                      className="border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                      disabled={isCompletingPlan || Boolean(isPlanEnded)}
+                      onClick={() => setShowCompletePlanConfirm(true)}
+                      variant="secondary"
+                    >
+                      {plan.status === 'completed' ? 'Đã hoàn thành kế hoạch' : 'Hoàn thành kế hoạch'}
+                    </Button>
+                  ) : null}
+                  {permissions.canManagePlan ? (
+                    <Button
                       className="border border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
-                      disabled={isClosingPlan || plan.status === 'closed'}
+                      disabled={isClosingPlan || Boolean(isPlanEnded)}
                       onClick={() => setShowClosePlanConfirm(true)}
                       variant="secondary"
                     >
-                      {plan.status === 'closed'
-                        ? 'Đã đóng kế hoạch'
-                          : 'Đóng kế hoạch'}
+                      {isPlanEnded ? 'Kế hoạch đã kết thúc' : 'Đóng kế hoạch'}
                     </Button>
                   ) : null}
                   <Button onClick={() => setHeaderModal(null)} variant="ghost">

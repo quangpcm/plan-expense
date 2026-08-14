@@ -2,19 +2,39 @@
 
 import { useRouter } from 'next/navigation';
 import { startTransition, useState } from 'react';
-import { CalendarDays, FolderPlus } from 'lucide-react';
+import { FolderPlus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { ZodError } from 'zod';
 
+import { planCardVisualsByType } from '@/modules/plan/constants/plan-card-visuals';
 import { useCreatePlan } from '@/modules/plan/hooks/use-create-plan';
 import { createPlanSchema, type CreatePlanSchema } from '@/modules/plan/schemas/create-plan.schema';
 import { planTypeOptions } from '@/modules/plan/constants/plan.constants';
+import { AmountInput } from '@/shared/components/ui/amount-input';
 import { Button } from '@/shared/components/ui/button';
-import { CurrencyField } from '@/shared/components/ui/currency-field';
+import { DateField } from '@/shared/components/ui/date-field';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
+
+function RequiredMark() {
+  return <span className="ml-1 text-red-500">*</span>;
+}
+
+function resolvePlanFormErrorMessage(error: ZodError, planType: CreatePlanSchema['planType']) {
+  if (planType === 'saving') {
+    const hasSavingFieldIssue = error.issues.some((issue) =>
+      issue.path.some((segment) => segment === 'savingGoalAmount' || segment === 'savingTargetDate'),
+    );
+
+    if (hasSavingFieldIssue) {
+      return 'Bạn cần nhập số tiền mục tiêu và ngày đến hạn.';
+    }
+  }
+
+  return error.issues[0]?.message || 'Vui lòng kiểm tra lại thông tin đã nhập.';
+}
 
 export function CreatePlanForm() {
   const router = useRouter();
@@ -36,6 +56,12 @@ export function CreatePlanForm() {
   const budgetAmount = watch('budgetAmount') ?? 0;
   const savingGoalAmount = watch('savingGoalAmount') ?? 0;
   const showsBudgetField = ['travel', 'wedding', 'birthday', 'event'].includes(selectedPlanType);
+  const moneyFieldLabel = selectedPlanType === 'saving' ? 'Mục tiêu tích lũy' : 'Ngân sách dự kiến';
+  const planTypeDropdownOptions = planTypeOptions.map((option) => ({
+    value: option.value,
+    label: option.label,
+    icon: planCardVisualsByType[option.value].icon,
+  }));
 
   const onSubmit = handleSubmit(async (values) => {
     setErrorMessage(null);
@@ -48,7 +74,7 @@ export function CreatePlanForm() {
       });
     } catch (error) {
       if (error instanceof ZodError) {
-        setErrorMessage(error.issues[0]?.message || 'Vui lòng kiểm tra lại thông tin đã nhập.');
+        setErrorMessage(resolvePlanFormErrorMessage(error, values.planType));
       } else if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
@@ -59,9 +85,41 @@ export function CreatePlanForm() {
 
   return (
     <form className="space-y-5" onSubmit={onSubmit}>
+      {showsBudgetField || selectedPlanType === 'saving' ? (
+        <div className="space-y-1 text-center">
+          <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#727687]">
+            {moneyFieldLabel}
+            {selectedPlanType === 'saving' ? <RequiredMark /> : null}
+          </label>
+          {showsBudgetField ? (
+            <>
+              <input type="hidden" {...register('budgetAmount', { valueAsNumber: true })} />
+              <AmountInput
+                id="budgetAmount"
+                onChange={(value) => setValue('budgetAmount', value > 0 ? value : undefined, { shouldDirty: true, shouldValidate: true })}
+                placeholder="0"
+                value={budgetAmount}
+              />
+            </>
+          ) : null}
+          {selectedPlanType === 'saving' ? (
+            <>
+              <input type="hidden" {...register('savingGoalAmount', { valueAsNumber: true })} />
+              <AmountInput
+                id="savingGoalAmount"
+                onChange={(value) => setValue('savingGoalAmount', value > 0 ? value : undefined, { shouldDirty: true, shouldValidate: true })}
+                placeholder="0"
+                value={savingGoalAmount}
+              />
+            </>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700" htmlFor="name">
           Tên kế hoạch
+          <RequiredMark />
         </label>
         <Input id="name" placeholder="Ví dụ: Đi Huế, Đám cưới, Quỹ nhóm..." {...register('name')} />
       </div>
@@ -69,97 +127,40 @@ export function CreatePlanForm() {
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700" htmlFor="planType">
           Loại kế hoạch
+          <RequiredMark />
         </label>
         <input type="hidden" {...register('planType')} />
         <DropdownSelect
           id="planType"
           onValueChange={(value) => setValue('planType', value as CreatePlanSchema['planType'], { shouldDirty: true, shouldValidate: true })}
-          options={planTypeOptions.map((option) => ({ value: option.value, label: option.label }))}
+          options={planTypeDropdownOptions}
           value={selectedPlanType}
         />
       </div>
 
-      {showsBudgetField ? (
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="budgetAmount">
-            Ngân sách dự kiến
-          </label>
-          <input type="hidden" {...register('budgetAmount', { valueAsNumber: true })} />
-          <CurrencyField
-            id="budgetAmount"
-            onChange={(value) => setValue('budgetAmount', value > 0 ? value : undefined, { shouldDirty: true, shouldValidate: true })}
-            placeholder="Ví dụ: 12.000.000"
-            value={budgetAmount}
-          />
-        </div>
-      ) : null}
-
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="startDate">
             Bắt đầu
           </label>
-          <div className="relative">
-            <Input
-              className="pr-11 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-11 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
-              id="startDate"
-              type="date"
-              {...register('startDate')}
-            />
-            <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-[var(--color-subtle)]">
-              <CalendarDays className="size-4" />
-            </span>
-          </div>
+          <DateField id="startDate" {...register('startDate')} />
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="endDate">
             Kết thúc
             <span className="ml-1 text-xs font-normal text-slate-500">(không bắt buộc)</span>
           </label>
-          <div className="relative">
-            <Input
-              className="pr-11 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-11 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
-              id="endDate"
-              type="date"
-              {...register('endDate')}
-            />
-            <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-[var(--color-subtle)]">
-              <CalendarDays className="size-4" />
-            </span>
-          </div>
+          <DateField id="endDate" {...register('endDate')} />
         </div>
       </div>
 
       {selectedPlanType === 'saving' ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700" htmlFor="savingGoalAmount">
-              Mục tiêu tích lũy
-            </label>
-            <input type="hidden" {...register('savingGoalAmount', { valueAsNumber: true })} />
-            <CurrencyField
-              id="savingGoalAmount"
-              onChange={(value) => setValue('savingGoalAmount', value > 0 ? value : undefined, { shouldDirty: true, shouldValidate: true })}
-              placeholder="Ví dụ: 50.000.000"
-              value={savingGoalAmount}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700" htmlFor="savingTargetDate">
-              Mốc mục tiêu
-            </label>
-            <div className="relative">
-              <Input
-                className="pr-11 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-11 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0"
-                id="savingTargetDate"
-                type="date"
-                {...register('savingTargetDate')}
-              />
-              <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-[var(--color-subtle)]">
-                <CalendarDays className="size-4" />
-              </span>
-            </div>
-          </div>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700" htmlFor="savingTargetDate">
+            Mốc mục tiêu
+            <RequiredMark />
+          </label>
+          <DateField id="savingTargetDate" {...register('savingTargetDate')} />
         </div>
       ) : null}
 

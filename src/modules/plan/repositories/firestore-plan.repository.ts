@@ -205,16 +205,20 @@ export class FirestorePlanRepository implements PlanRepository {
         name: input.name,
         description: input.description,
         planType: input.planType,
+        status: input.status,
         startDate: input.startDate ? Timestamp.fromDate(input.startDate) : null,
         endDate: input.endDate ? Timestamp.fromDate(input.endDate) : null,
         budgetAmount: input.budgetAmount,
         savingGoalAmount: input.savingGoalAmount,
         savingTargetDate: input.savingTargetDate ? Timestamp.fromDate(input.savingTargetDate) : null,
+        closedAt: input.closedAt ? Timestamp.fromDate(input.closedAt) : null,
+        archivedAt: input.archivedAt ? Timestamp.fromDate(input.archivedAt) : null,
         updatedAt: now,
       });
       await syncUserPlansAggregate(planId, {
         planName: input.name,
         planType: input.planType,
+        planStatus: input.status,
         startDate: input.startDate ? Timestamp.fromDate(input.startDate) : null,
         endDate: input.endDate ? Timestamp.fromDate(input.endDate) : null,
         budgetAmount: input.budgetAmount,
@@ -226,6 +230,20 @@ export class FirestorePlanRepository implements PlanRepository {
       console.error('updatePlan failed', error);
       throw mapPlanWriteError(error);
     }
+  }
+
+  async completePlan(planId: string) {
+    const db = getFirebaseFirestore();
+    const now = Timestamp.now();
+    const planRef = doc(db, 'plans', planId);
+
+    await updateDoc(planRef, {
+      status: 'completed',
+      closedAt: null,
+      archivedAt: null,
+      updatedAt: now,
+    });
+    await syncUserPlansAggregate(planId, { planStatus: 'completed', updatedAt: now });
   }
 
   async closePlan(planId: string) {

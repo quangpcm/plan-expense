@@ -19,8 +19,10 @@ function getStatusLabel(status: PlanSummary['planStatus']) {
   switch (status) {
     case 'active':
       return 'Đang hoạt động';
+    case 'completed':
+      return 'Hoàn thành';
     case 'closed':
-      return 'Đã đóng';
+      return 'Đã dừng';
     case 'archived':
       return 'Lưu trữ';
     default:

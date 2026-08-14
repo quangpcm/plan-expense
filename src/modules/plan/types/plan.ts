@@ -2,7 +2,7 @@ import type { Timestamp } from 'firebase/firestore';
 
 import type { PlanMemberStatus, PlanRole } from '@/modules/member/types/member';
 
-export type PlanStatus = 'active' | 'closed' | 'archived';
+export type PlanStatus = 'active' | 'completed' | 'closed' | 'archived';
 
 export type PlanType =
   | 'travel'
@@ -94,6 +94,7 @@ export type UpdatePlanInput = {
   name: string;
   description?: string | undefined;
   planType: PlanType;
+  status: PlanStatus;
   startDate?: string | undefined;
   endDate?: string | undefined;
   budgetAmount?: number | undefined;

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { CalendarPlus, Lock, Users } from 'lucide-react';
+import { CalendarPlus, Lock } from 'lucide-react';
 
 import { planCardVisualsByType } from '@/modules/plan/constants/plan-card-visuals';
 import type { PlanSummary } from '@/modules/plan/types/plan';
@@ -16,10 +16,10 @@ export function PlanCard({ plan }: PlanCardProps) {
   const visual = planCardVisualsByType[plan.planType];
   const PlanTypeIcon = visual.icon;
   const viewModel = buildPlanCardViewModel(plan);
-  const safeMemberCount = Number.isFinite(plan.memberCount) ? Number(plan.memberCount) : 0;
   const progressPercent = viewModel.progress
     ? Math.min(Math.max((viewModel.progress.value / viewModel.progress.max) * 100, 0), 100)
     : 0;
+  const secondaryDetail = viewModel.secondaryMetric.detail;
 
   return (
     <Link className="block" href={`/plans/${plan.planId}`}>
@@ -103,16 +103,6 @@ export function PlanCard({ plan }: PlanCardProps) {
                   >
                     {viewModel.secondaryMetric.value}
                   </p>
-                  {viewModel.secondaryMetric.detail ? (
-                    <p className="truncate text-xs text-[var(--color-muted)]">{viewModel.secondaryMetric.detail}</p>
-                  ) : (
-                    <p className="inline-flex justify-end text-xs text-[var(--color-muted)]">
-                      <span className="inline-flex items-center gap-1">
-                        <Users className="size-3.5" />
-                        {safeMemberCount} thành viên
-                      </span>
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -124,9 +114,12 @@ export function PlanCard({ plan }: PlanCardProps) {
                       style={{ width: `${progressPercent}%` }}
                     />
                   </div>
-                  <p className="text-xs text-[var(--color-muted)]">{viewModel.progress.label}</p>
+                  <div className="flex items-center justify-between gap-3 text-xs text-[var(--color-muted)]">
+                    <p className="min-w-0 truncate">{viewModel.progress.label}</p>
+                    {secondaryDetail ? <p className="shrink-0 text-right">{secondaryDetail}</p> : null}
+                  </div>
                 </div>
-              ) : null}
+              ) : secondaryDetail ? <p className="text-xs text-[var(--color-muted)]">{secondaryDetail}</p> : null}
             </>
           )}
         </div>

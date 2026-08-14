@@ -8,6 +8,7 @@ import type { SettlementDocument } from '@/modules/settlement/types/settlement';
 export type MemberBalanceRow = {
   memberId: string;
   nickname: string;
+  avatarUrl?: string | null;
   paid: number;
   owed: number;
   balance: number;
@@ -20,6 +21,9 @@ export type MemberBalanceRow = {
 export type CategoryStatisticRow = {
   categoryId: string | null;
   categoryName: string;
+  icon: string | null;
+  iconColor: string;
+  iconBgColor: string;
   totalAmount: number;
 };
 

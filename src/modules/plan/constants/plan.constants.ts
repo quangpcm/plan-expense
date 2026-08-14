@@ -1,7 +1,7 @@
-import { Briefcase, Cake, Gem, Home, LayoutGrid, PartyPopper, PiggyBank, Plane } from 'lucide-react';
+import { Archive, Briefcase, Cake, CheckCircle2, Gem, Home, LayoutGrid, PartyPopper, PiggyBank, Plane, Radio, PauseCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-import type { PlanType } from '@/modules/plan/types/plan';
+import type { PlanStatus, PlanType } from '@/modules/plan/types/plan';
 
 export const planTypeOptions: Array<{ value: PlanType; label: string }> = [
   { value: 'travel', label: 'Du lịch' },
@@ -46,3 +46,10 @@ export const planTypeBadgeColors: Record<PlanType, string> = {
   project: 'bg-[#3f5f8f]',
   general: 'bg-[#5c677d]',
 };
+
+export const planStatusOptions: Array<{ value: PlanStatus; label: string; icon: LucideIcon }> = [
+  { value: 'active', label: 'Đang chạy', icon: Radio },
+  { value: 'completed', label: 'Hoàn thành', icon: CheckCircle2 },
+  { value: 'closed', label: 'Dừng theo dõi', icon: PauseCircle },
+  { value: 'archived', label: 'Lưu trữ', icon: Archive },
+];
