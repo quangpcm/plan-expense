@@ -52,10 +52,7 @@ export default function PlansPage() {
 
   return (
     <main className="relative flex flex-col gap-4 bg-[var(--color-background)]">
-      <section
-        className="space-y-4 px-1"
-        style={{ paddingTop: 'max(0.25rem, env(safe-area-inset-top))' }}
-      >
+      <section className="space-y-4 px-1">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 space-y-1">
             <h1 className="truncate text-[2rem] font-bold leading-tight text-[var(--color-foreground)]">{greeting}</h1>
@@ -76,7 +73,7 @@ export default function PlansPage() {
               ) : null}
             </button>
             <Avatar
-              className="size-11 text-base shadow-[0_10px_24px_rgba(43,94,242,0.2)]"
+              className="size-11 shadow-[0_10px_24px_rgba(43,94,242,0.2)]"
               initials={userInitials}
               src={userProfile?.avatarUrl ?? user?.photoURL ?? null}
             />

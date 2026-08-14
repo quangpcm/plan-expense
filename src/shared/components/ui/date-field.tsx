@@ -3,21 +3,50 @@
 import { CalendarDays } from 'lucide-react';
 import type { InputHTMLAttributes } from 'react';
 
-import { Input } from '@/shared/components/ui/input';
+import { cn } from '@/shared/utils/cn';
+import { formatDate } from '@/shared/utils/date';
 
-type DateFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>;
+type DateFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & {
+  value?: string;
+  placeholder?: string;
+};
 
-export function DateField({ className, ...props }: DateFieldProps) {
+function parseDateInputValue(value?: string) {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = new Date(`${value}T00:00:00`);
+
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+export function DateField({ className, value, placeholder = 'Chọn ngày', disabled, id, ...props }: DateFieldProps) {
+  const parsedDate = parseDateInputValue(value);
+  const displayValue = parsedDate ? formatDate(parsedDate) : placeholder;
+
   return (
-    <div className="relative">
-      <Input
-        className={`min-h-11 pr-11 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-11 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 ${className ?? ''}`}
+    <div
+      className={cn(
+        'relative min-h-11 w-full overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[color:var(--color-surface)]',
+        disabled ? 'opacity-60' : '',
+        className,
+      )}
+    >
+      <div className="pointer-events-none flex min-h-11 items-center justify-between gap-3 px-4 py-2.5 text-sm">
+        <span className={cn('truncate text-[var(--color-foreground)]', !parsedDate ? 'text-[var(--color-subtle)]' : '')}>
+          {displayValue}
+        </span>
+        <CalendarDays className="size-4 shrink-0 text-[var(--color-subtle)]" />
+      </div>
+      <input
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0 outline-none"
+        disabled={disabled}
+        id={id}
         type="date"
+        value={value}
         {...props}
       />
-      <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-[var(--color-subtle)]">
-        <CalendarDays className="size-4" />
-      </span>
     </div>
   );
 }

@@ -143,14 +143,14 @@ export function CreatePlanForm() {
           <label className="text-sm font-medium text-slate-700" htmlFor="startDate">
             Bắt đầu
           </label>
-          <DateField id="startDate" {...register('startDate')} />
+          <DateField id="startDate" value={watch('startDate') || ''} {...register('startDate')} />
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="endDate">
             Kết thúc
             <span className="ml-1 text-xs font-normal text-slate-500">(không bắt buộc)</span>
           </label>
-          <DateField id="endDate" {...register('endDate')} />
+          <DateField id="endDate" value={watch('endDate') || ''} {...register('endDate')} />
         </div>
       </div>
 
@@ -160,7 +160,7 @@ export function CreatePlanForm() {
             Mốc mục tiêu
             <RequiredMark />
           </label>
-          <DateField id="savingTargetDate" {...register('savingTargetDate')} />
+          <DateField id="savingTargetDate" value={watch('savingTargetDate') || ''} {...register('savingTargetDate')} />
         </div>
       ) : null}
 

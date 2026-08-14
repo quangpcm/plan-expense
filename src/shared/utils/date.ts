@@ -12,6 +12,7 @@ export function formatTime(input: DateInput, locale = 'vi-VN') {
   return new Intl.DateTimeFormat(locale, {
     hour: '2-digit',
     minute: '2-digit',
+    hour12: false,
   }).format(new Date(input));
 }
 
@@ -48,21 +49,7 @@ export function parseDateTimeLocalInput(input: string | null | undefined) {
 export function formatDateTimePickerDisplay(input: DateInput, locale = 'vi-VN') {
   const date = new Date(input);
 
-  const time = new Intl.DateTimeFormat(locale, {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(date);
-
-  const dateLabel = new Intl.DateTimeFormat(locale, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
-    .format(date)
-    .replace(/\./g, '');
-
-  return `${time} ${dateLabel}`;
+  return `${formatTime(date, locale)} ${formatDate(date, locale)}`;
 }
 
 const RELATIVE_TIME_DIVISIONS: { amount: number; unit: Intl.RelativeTimeFormatUnit }[] = [

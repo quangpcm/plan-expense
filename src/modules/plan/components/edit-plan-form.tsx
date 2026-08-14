@@ -185,13 +185,13 @@ export function EditPlanForm({ plan, currentMember, onClose }: EditPlanFormProps
           <label className="text-sm font-medium text-slate-700" htmlFor="edit-plan-startDate">
             Ngày bắt đầu
           </label>
-          <DateField id="edit-plan-startDate" {...register('startDate')} />
+          <DateField id="edit-plan-startDate" value={watch('startDate') || ''} {...register('startDate')} />
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="edit-plan-endDate">
             Ngày kết thúc
           </label>
-          <DateField id="edit-plan-endDate" {...register('endDate')} />
+          <DateField id="edit-plan-endDate" value={watch('endDate') || ''} {...register('endDate')} />
         </div>
       </div>
 
@@ -202,7 +202,11 @@ export function EditPlanForm({ plan, currentMember, onClose }: EditPlanFormProps
               Mốc mục tiêu
               <RequiredMark />
             </label>
-            <DateField id="edit-plan-savingTargetDate" {...register('savingTargetDate')} />
+            <DateField
+              id="edit-plan-savingTargetDate"
+              value={watch('savingTargetDate') || ''}
+              {...register('savingTargetDate')}
+            />
           </div>
         </div>
       ) : null}
