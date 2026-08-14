@@ -12,6 +12,28 @@ type PlanCardProps = {
   plan: PlanSummary;
 };
 
+const MASKED_MONEY_VALUE = '•••••••';
+
+function getMaskedValue(value: string, shouldMask: boolean) {
+  return shouldMask ? MASKED_MONEY_VALUE : value;
+}
+
+function getMaskedMoneyClassName(shouldMask: boolean, size: 'primary' | 'secondary' | 'detail' = 'secondary') {
+  if (!shouldMask) {
+    return null;
+  }
+
+  if (size === 'primary') {
+    return 'tracking-[0.18em] text-slate-400/95';
+  }
+
+  if (size === 'secondary') {
+    return 'tracking-[0.16em] text-slate-400/90';
+  }
+
+  return 'tracking-[0.14em] text-slate-400/85';
+}
+
 export function PlanCard({ plan }: PlanCardProps) {
   const visual = planCardVisualsByType[plan.planType];
   const PlanTypeIcon = visual.icon;
@@ -20,6 +42,7 @@ export function PlanCard({ plan }: PlanCardProps) {
     ? Math.min(Math.max((viewModel.progress.value / viewModel.progress.max) * 100, 0), 100)
     : 0;
   const secondaryDetail = viewModel.secondaryMetric.detail;
+  const isMoneyMasked = plan.isLocked;
 
   return (
     <Link className="block" href={`/plans/${plan.planId}`}>
@@ -49,13 +72,18 @@ export function PlanCard({ plan }: PlanCardProps) {
                 {viewModel.roleLabel}
               </Badge>
             )}
+            {plan.isLocked ? (
+              <span className="inline-flex size-6 items-center justify-center rounded-full bg-[var(--color-secondary)] text-[var(--color-muted)]">
+                <Lock className="size-3.5" />
+              </span>
+            ) : null}
             {viewModel.statusTone === 'active' ? (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-success-soft)] px-3 py-1 text-xs font-semibold text-[var(--color-success)]">
                 <span className="size-2 rounded-full bg-[var(--color-success)]" />
-                Active
+                Đang chạy
               </span>
             ) : (
-              <Badge className="bg-[var(--color-secondary)] text-[var(--color-muted)]">
+              <Badge className="inline-flex items-center gap-1.5 bg-[var(--color-secondary)] text-[var(--color-muted)]">
                 {viewModel.statusLabel}
               </Badge>
             )}
@@ -63,65 +91,97 @@ export function PlanCard({ plan }: PlanCardProps) {
         </div>
         <div className="space-y-3">
           <h2 className="truncate text-lg font-semibold text-[var(--color-foreground)]">{viewModel.title}</h2>
-          {plan.isLocked ? (
-            <div className="flex items-center gap-2 text-lg font-semibold text-[var(--color-muted)]">
-              <Lock className="size-4 shrink-0" />
-              Đã khóa cho tôi
+          <div className="grid grid-cols-2 gap-3">
+            <div className="min-w-0 space-y-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-subtle)]">
+                {viewModel.primaryMetric.label}
+              </p>
+              <p
+                className={cn('truncate text-2xl font-bold text-[var(--color-foreground)]', {
+                  [visual.accentTextClassName]: (viewModel.primaryMetric.tone ?? 'default') === 'primary',
+                  'text-[var(--color-success)]': viewModel.primaryMetric.tone === 'success',
+                  'text-[color:var(--color-warning)]': viewModel.primaryMetric.tone === 'warning',
+                  'text-[color:var(--color-danger)]': viewModel.primaryMetric.tone === 'danger',
+                }, getMaskedMoneyClassName(isMoneyMasked && Boolean(viewModel.primaryMetric.isMonetary), 'primary'))}
+              >
+                {getMaskedValue(viewModel.primaryMetric.value, isMoneyMasked && Boolean(viewModel.primaryMetric.isMonetary))}
+              </p>
+              {viewModel.primaryMetric.detail ? (
+                <p
+                  className={cn(
+                    'truncate text-xs text-[var(--color-muted)]',
+                    getMaskedMoneyClassName(isMoneyMasked && Boolean(viewModel.primaryMetric.detailIsMonetary), 'detail'),
+                  )}
+                >
+                  {getMaskedValue(
+                    viewModel.primaryMetric.detail,
+                    isMoneyMasked && Boolean(viewModel.primaryMetric.detailIsMonetary),
+                  )}
+                </p>
+              ) : null}
             </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="min-w-0 space-y-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-subtle)]">
-                    {viewModel.primaryMetric.label}
-                  </p>
-                  <p
-                    className={cn('truncate text-2xl font-bold text-[var(--color-foreground)]', {
-                      [visual.accentTextClassName]: (viewModel.primaryMetric.tone ?? 'default') === 'primary',
-                      'text-[var(--color-success)]': viewModel.primaryMetric.tone === 'success',
-                      'text-[color:var(--color-warning)]': viewModel.primaryMetric.tone === 'warning',
-                      'text-[color:var(--color-danger)]': viewModel.primaryMetric.tone === 'danger',
-                    })}
-                  >
-                    {viewModel.primaryMetric.value}
-                  </p>
-                  {viewModel.primaryMetric.detail ? (
-                    <p className="truncate text-xs text-[var(--color-muted)]">{viewModel.primaryMetric.detail}</p>
-                  ) : null}
-                </div>
-                <div className="min-w-0 space-y-1 text-right">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-subtle)]">
-                    {viewModel.secondaryMetric.label}
-                  </p>
-                  <p
-                    className={cn('truncate text-lg font-semibold text-[var(--color-foreground)]', {
-                      [visual.accentTextClassName]: (viewModel.secondaryMetric.tone ?? 'default') === 'primary',
-                      'text-[var(--color-success)]': viewModel.secondaryMetric.tone === 'success',
-                      'text-[color:var(--color-warning)]': viewModel.secondaryMetric.tone === 'warning',
-                      'text-[color:var(--color-danger)]': viewModel.secondaryMetric.tone === 'danger',
-                    })}
-                  >
-                    {viewModel.secondaryMetric.value}
-                  </p>
-                </div>
-              </div>
+            <div className="min-w-0 space-y-1 text-right">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-subtle)]">
+                {viewModel.secondaryMetric.label}
+              </p>
+              <p
+                className={cn('truncate text-lg font-semibold text-[var(--color-foreground)]', {
+                  [visual.accentTextClassName]: (viewModel.secondaryMetric.tone ?? 'default') === 'primary',
+                  'text-[var(--color-success)]': viewModel.secondaryMetric.tone === 'success',
+                  'text-[color:var(--color-warning)]': viewModel.secondaryMetric.tone === 'warning',
+                  'text-[color:var(--color-danger)]': viewModel.secondaryMetric.tone === 'danger',
+                }, getMaskedMoneyClassName(isMoneyMasked && Boolean(viewModel.secondaryMetric.isMonetary), 'secondary'))}
+              >
+                {getMaskedValue(
+                  viewModel.secondaryMetric.value,
+                  isMoneyMasked && Boolean(viewModel.secondaryMetric.isMonetary),
+                )}
+              </p>
+            </div>
+          </div>
 
-              {viewModel.progress ? (
-                <div className="space-y-2">
-                  <div className={cn('h-2 overflow-hidden rounded-full', visual.progressTrackClassName)}>
-                    <div
-                      className={cn('h-full rounded-full transition-[width]', visual.progressFillClassName)}
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between gap-3 text-xs text-[var(--color-muted)]">
-                    <p className="min-w-0 truncate">{viewModel.progress.label}</p>
-                    {secondaryDetail ? <p className="shrink-0 text-right">{secondaryDetail}</p> : null}
-                  </div>
-                </div>
-              ) : secondaryDetail ? <p className="text-xs text-[var(--color-muted)]">{secondaryDetail}</p> : null}
-            </>
-          )}
+          {viewModel.progress ? (
+            <div className="space-y-2">
+              <div className={cn('h-2 overflow-hidden rounded-full', visual.progressTrackClassName)}>
+                <div
+                  className={cn('h-full rounded-full transition-[width]', visual.progressFillClassName)}
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-3 text-xs text-[var(--color-muted)]">
+                <p
+                  className={cn(
+                    'min-w-0 truncate',
+                    getMaskedMoneyClassName(isMoneyMasked && Boolean(viewModel.progress.isMonetary), 'detail'),
+                  )}
+                >
+                  {getMaskedValue(viewModel.progress.label, isMoneyMasked && Boolean(viewModel.progress.isMonetary))}
+                </p>
+                {secondaryDetail ? (
+                  <p
+                    className={cn(
+                      'shrink-0 text-right',
+                      getMaskedMoneyClassName(isMoneyMasked && Boolean(viewModel.secondaryMetric.detailIsMonetary), 'detail'),
+                    )}
+                  >
+                    {getMaskedValue(
+                      secondaryDetail,
+                      isMoneyMasked && Boolean(viewModel.secondaryMetric.detailIsMonetary),
+                    )}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          ) : secondaryDetail ? (
+            <p
+              className={cn(
+                'text-xs text-[var(--color-muted)]',
+                getMaskedMoneyClassName(isMoneyMasked && Boolean(viewModel.secondaryMetric.detailIsMonetary), 'detail'),
+              )}
+            >
+              {getMaskedValue(secondaryDetail, isMoneyMasked && Boolean(viewModel.secondaryMetric.detailIsMonetary))}
+            </p>
+          ) : null}
         </div>
         <div className="flex items-center justify-between gap-3 border-t border-[var(--color-border)] pt-3 text-xs text-[var(--color-subtle)]">
           <span className="inline-flex items-center gap-1">

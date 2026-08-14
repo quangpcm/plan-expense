@@ -5,6 +5,8 @@ export type PlanCardMetric = {
   value: string;
   tone?: PlanCardMetricTone;
   detail?: string;
+  isMonetary?: boolean;
+  detailIsMonetary?: boolean;
 };
 
 export type PlanCardProgress = {
@@ -12,6 +14,7 @@ export type PlanCardProgress = {
   max: number;
   label: string;
   tone?: 'primary' | 'success' | 'warning' | 'danger';
+  isMonetary?: boolean;
 };
 
 export type PlanCardFooterItem = {
