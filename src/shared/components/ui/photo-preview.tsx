@@ -285,11 +285,13 @@ export function PhotoPreview({ items, initialIndex = 0, onClose }: PhotoPreviewP
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black/90 backdrop-blur-md">
-      <div className="flex items-center justify-between gap-3 px-4 py-3 text-white sm:px-6">
+      <div
+        className="flex items-center justify-between gap-3 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] text-white sm:px-6"
+      >
         <span className="text-sm font-medium text-white/70">{total > 1 ? `${index + 1}/${total}` : ''}</span>
         <button
           aria-label="Đóng"
-          className="flex size-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+          className="mt-1 flex size-11 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
           onClick={onClose}
           type="button"
         >

@@ -13,6 +13,7 @@ type PinCodeInputProps = {
   error?: boolean;
   disabled?: boolean;
   autoFocus?: boolean;
+  masked?: boolean;
 };
 
 export function PinCodeInput({
@@ -23,6 +24,7 @@ export function PinCodeInput({
   error = false,
   disabled = false,
   autoFocus = false,
+  masked = true,
 }: PinCodeInputProps) {
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
@@ -115,7 +117,7 @@ export function PinCodeInput({
           ref={(element) => {
             inputRefs.current[index] = element;
           }}
-          type="text"
+          type={masked ? 'password' : 'text'}
           value={value[index] ?? ''}
         />
       ))}

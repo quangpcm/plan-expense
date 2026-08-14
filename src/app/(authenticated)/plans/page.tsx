@@ -10,6 +10,9 @@ import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { useUserPlans } from '@/modules/plan/hooks/use-user-plans';
 import { CreatePlanCard } from '@/modules/plan/components/create-plan-card';
 import { PlanCard } from '@/modules/plan/components/plan-card';
+import { TodoNotificationScreen } from '@/modules/todo/components/todo-notification-screen';
+import { TodoAttentionSection } from '@/modules/todo/components/todo-attention-section';
+import { useAttentionTodos, type AttentionBellTone } from '@/modules/todo/hooks/use-attention-todos';
 import { useCurrentUserProfile } from '@/modules/user/hooks/use-current-user-profile';
 import { Avatar } from '@/shared/components/ui/avatar';
 import { Input } from '@/shared/components/ui/input';
@@ -17,14 +20,28 @@ import { Skeleton } from '@/shared/components/ui/skeleton';
 
 type SortOption = 'updatedAt' | 'createdAt';
 
+function getBellToneClass(tone: AttentionBellTone) {
+  if (tone === 'urgent') {
+    return 'border-rose-200 bg-rose-50 text-rose-600 hover:border-rose-300 hover:text-rose-700';
+  }
+
+  if (tone === 'warning') {
+    return 'border-amber-200 bg-amber-50 text-amber-600 hover:border-amber-300 hover:text-amber-700';
+  }
+
+  return 'border-[var(--color-border)] bg-white text-[var(--color-muted)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]';
+}
+
 export default function PlansPage() {
   const { user } = useAuthSession();
   const { userProfile } = useCurrentUserProfile();
   const { plans, isLoading, errorMessage } = useUserPlans();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('updatedAt');
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const greeting = `Xin chào, ${user?.displayName || user?.email?.split('@')[0] || 'bạn'} 👋`;
   const userInitials = (user?.displayName || user?.email?.split('@')[0] || 'PE').slice(0, 2).toUpperCase();
+  const { todayAttentionCount, bellTone } = useAttentionTodos(plans);
 
   const filteredPlans = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -47,10 +64,16 @@ export default function PlansPage() {
           <div className="flex shrink-0 items-center gap-3 pt-1">
             <button
               aria-label="Thông báo"
-              className="inline-flex size-11 items-center justify-center rounded-full border border-[var(--color-border)] bg-white text-[var(--color-muted)] shadow-[0_8px_24px_rgba(15,23,42,0.06)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+              className={`relative inline-flex size-11 items-center justify-center rounded-full border shadow-[0_8px_24px_rgba(15,23,42,0.06)] transition ${getBellToneClass(bellTone)}`}
+              onClick={() => setIsNotificationOpen(true)}
               type="button"
             >
               <Bell className="size-5" />
+              {todayAttentionCount > 0 ? (
+                <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold leading-none text-white shadow-[0_8px_18px_rgba(244,63,94,0.35)]">
+                  {todayAttentionCount > 9 ? '9+' : todayAttentionCount}
+                </span>
+              ) : null}
             </button>
             <Avatar
               className="size-11 text-base shadow-[0_10px_24px_rgba(43,94,242,0.2)]"
@@ -94,6 +117,7 @@ export default function PlansPage() {
         </div>
       ) : filteredPlans.length > 0 ? (
         <div className="grid gap-4 pb-24">
+          <TodoAttentionSection plans={plans} />
           {filteredPlans.map((plan) => (
             <PlanCard key={plan.id} plan={plan} />
           ))}
@@ -116,6 +140,8 @@ export default function PlansPage() {
       >
         <Plus className="size-6" />
       </Link>
+
+      <TodoNotificationScreen open={isNotificationOpen} onClose={() => setIsNotificationOpen(false)} plans={plans} />
     </main>
   );
 }

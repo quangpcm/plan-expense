@@ -347,6 +347,25 @@ export default function PlanDetailPage() {
   }, [milestones, searchParams]);
 
   useEffect(() => {
+    const todoIdParam = searchParams.get('todoId');
+
+    if (!todoIdParam) {
+      return;
+    }
+
+    const matchedTodo = todos.find((todo) => todo.id === todoIdParam);
+
+    if (!matchedTodo) {
+      return;
+    }
+
+    setActiveTab('Công việc');
+    setWorkViewMode('todos');
+    setSelectedMilestoneId(matchedTodo.milestoneId);
+    setDetailTodo((current) => (current?.id === matchedTodo.id ? current : matchedTodo));
+  }, [searchParams, todos]);
+
+  useEffect(() => {
     if (!selectedMilestoneId && defaultWorkMilestone) {
       setSelectedMilestoneId(defaultWorkMilestone.id);
       return;
