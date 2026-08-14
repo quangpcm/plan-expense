@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { FolderKanban, UserCircle2 } from 'lucide-react';
 
+import { RouteLoadingScreen } from '@/shared/components/layout/route-loading-screen';
 import { appRoutes } from '@/shared/constants';
 import { cn } from '@/shared/utils/cn';
 
@@ -14,17 +15,106 @@ type AppShellProps = {
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const routeKey = useMemo(() => `${pathname}?${searchParams.toString()}`, [pathname, searchParams]);
+  const [isRouteTransitionVisible, setIsRouteTransitionVisible] = useState(false);
+  const navigationStartedAtRef = useRef<number | null>(null);
+  const pendingRouteKeyRef = useRef<string | null>(null);
+  const hideTimeoutRef = useRef<number | null>(null);
 
   const navigationItems = [
     { href: appRoutes.plans, label: 'Kế hoạch', icon: FolderKanban, active: pathname.startsWith(appRoutes.plans) },
     { href: appRoutes.profile, label: 'Cá nhân', icon: UserCircle2, active: pathname === appRoutes.profile },
   ];
 
+  useEffect(() => {
+    if (!isRouteTransitionVisible || pendingRouteKeyRef.current === null) {
+      return;
+    }
+
+    if (pendingRouteKeyRef.current === routeKey) {
+      const elapsed = navigationStartedAtRef.current ? Date.now() - navigationStartedAtRef.current : 0;
+      const remaining = Math.max(360 - elapsed, 0);
+
+      if (hideTimeoutRef.current) {
+        window.clearTimeout(hideTimeoutRef.current);
+      }
+
+      hideTimeoutRef.current = window.setTimeout(() => {
+        setIsRouteTransitionVisible(false);
+        pendingRouteKeyRef.current = null;
+        navigationStartedAtRef.current = null;
+        hideTimeoutRef.current = null;
+      }, remaining);
+    }
+  }, [isRouteTransitionVisible, routeKey]);
+
+  useEffect(() => {
+    return () => {
+      if (hideTimeoutRef.current) {
+        window.clearTimeout(hideTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  function handleNavigationIntent(event: MouseEvent<HTMLDivElement>) {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      return;
+    }
+
+    const target = event.target as HTMLElement | null;
+    const anchor = target?.closest('a');
+
+    if (!anchor) {
+      return;
+    }
+
+    const href = anchor.getAttribute('href');
+
+    if (!href || href.startsWith('#') || anchor.target === '_blank' || anchor.hasAttribute('download')) {
+      return;
+    }
+
+    let nextUrl: URL;
+
+    try {
+      nextUrl = new URL(href, window.location.href);
+    } catch {
+      return;
+    }
+
+    if (nextUrl.origin !== window.location.origin) {
+      return;
+    }
+
+    const nextRouteKey = `${nextUrl.pathname}?${nextUrl.searchParams.toString()}`;
+
+    if (nextRouteKey === routeKey) {
+      return;
+    }
+
+    navigationStartedAtRef.current = Date.now();
+    pendingRouteKeyRef.current = nextRouteKey;
+    setIsRouteTransitionVisible(true);
+  }
+
   return (
     <div
+      onClickCapture={handleNavigationIntent}
       className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 pb-28 sm:px-6 lg:px-8"
       style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top))' }}
     >
+      {isRouteTransitionVisible ? (
+        <div className="pointer-events-none fixed inset-0 z-50 bg-[rgba(246,248,252,0.74)] backdrop-blur-[6px]">
+          <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-center px-4 pb-28 sm:px-6 lg:px-8">
+            <RouteLoadingScreen
+              eyebrow="Đang chuyển màn"
+              title="Sắp vào trang tiếp theo"
+              description="Nội dung mới đang được mở ra để bạn không bị cảm giác chờ đợi trống."
+            />
+          </div>
+        </div>
+      ) : null}
       <div className="flex-1">{children}</div>
       <nav
         className="pointer-events-none fixed inset-x-0 bottom-0 z-20 mx-auto max-w-3xl px-3 pt-3 sm:px-4 sm:pt-4"

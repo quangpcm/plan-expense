@@ -16,18 +16,10 @@ export function PlanCard({ plan }: PlanCardProps) {
   const visual = planCardVisualsByType[plan.planType];
   const PlanTypeIcon = visual.icon;
   const viewModel = buildPlanCardViewModel(plan);
+  const safeMemberCount = Number.isFinite(plan.memberCount) ? Number(plan.memberCount) : 0;
   const progressPercent = viewModel.progress
     ? Math.min(Math.max((viewModel.progress.value / viewModel.progress.max) * 100, 0), 100)
     : 0;
-
-  const progressToneClassName = viewModel.progress
-    ? {
-        primary: visual.progressFillClassName,
-        success: 'bg-[var(--color-success)]',
-        warning: 'bg-[color:var(--color-warning)]',
-        danger: 'bg-[color:var(--color-danger)]',
-      }[viewModel.progress.tone ?? 'primary']
-    : visual.progressFillClassName;
 
   return (
     <Link className="block" href={`/plans/${plan.planId}`}>
@@ -117,7 +109,7 @@ export function PlanCard({ plan }: PlanCardProps) {
                     <p className="inline-flex justify-end text-xs text-[var(--color-muted)]">
                       <span className="inline-flex items-center gap-1">
                         <Users className="size-3.5" />
-                        {plan.memberCount} thành viên
+                        {safeMemberCount} thành viên
                       </span>
                     </p>
                   )}
@@ -128,7 +120,7 @@ export function PlanCard({ plan }: PlanCardProps) {
                 <div className="space-y-2">
                   <div className={cn('h-2 overflow-hidden rounded-full', visual.progressTrackClassName)}>
                     <div
-                      className={cn('h-full rounded-full transition-[width]', progressToneClassName)}
+                      className={cn('h-full rounded-full transition-[width]', visual.progressFillClassName)}
                       style={{ width: `${progressPercent}%` }}
                     />
                   </div>

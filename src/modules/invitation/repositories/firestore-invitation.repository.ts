@@ -5,7 +5,6 @@ import {
   collection,
   doc,
   getDoc,
-  increment,
   onSnapshot,
   orderBy,
   query,
@@ -20,6 +19,7 @@ import type {
   InvitationRepository,
 } from '@/modules/invitation/repositories/invitation.repository';
 import type { InvitationDocument } from '@/modules/invitation/types/invitation';
+import { syncPlanMemberCountAggregate } from '@/shared/lib/firestore/sync-user-plans';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
 const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -197,8 +197,6 @@ export class FirestoreInvitationRepository implements InvitationRepository {
         // A claim links an account to an EXISTING member — no new member was
         // added, so plan.memberCount must not change. Only a brand-new join
         // (targetMemberId null) actually grows the plan's member count.
-        const nextMemberCount = invitation.targetMemberId ? plan.memberCount : plan.memberCount + 1;
-
         await updateDoc(userPlanRef, {
           startDate: plan.startDate ?? null,
           endDate: plan.endDate ?? null,
@@ -212,17 +210,12 @@ export class FirestoreInvitationRepository implements InvitationRepository {
           totalExpense: plan.totalExpense,
           totalIncome: plan.totalIncome,
           isLocked: plan.secretNumberHash != null,
-          memberCount: nextMemberCount,
+          memberCount: plan.memberCount,
           updatedAt: Timestamp.now(),
         });
-
-        if (!invitation.targetMemberId) {
-          await updateDoc(doc(db, 'plans', planId), {
-            memberCount: increment(1),
-            updatedAt: Timestamp.now(),
-          });
-        }
       }
+
+      await syncPlanMemberCountAggregate(planId, Timestamp.now());
     } catch {
       // Non-critical — the next expense/member mutation on this plan will
       // self-heal these two fields for every member anyway.

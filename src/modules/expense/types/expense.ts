@@ -3,7 +3,7 @@ import type { Timestamp } from 'firebase/firestore';
 import type { AttachmentDraft, MediaAttachment } from '@/modules/storage/types/attachment';
 import type { CurrencyCode } from '@/modules/plan/types/plan';
 
-export type SplitMethod = 'equal' | 'exact' | 'percentage' | 'shares';
+export type SplitMethod = 'self' | 'equal' | 'exact' | 'percentage' | 'shares';
 
 export type ExpenseStatus = 'active' | 'deleted';
 

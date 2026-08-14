@@ -8,7 +8,7 @@ type SplitValuesInput = {
 };
 
 export function validateSplitValues(value: SplitValuesInput, ctx: RefinementCtx) {
-  if (value.splitMethod === 'equal') {
+  if (value.splitMethod === 'equal' || value.splitMethod === 'self') {
     return;
   }
 

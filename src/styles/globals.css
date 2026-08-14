@@ -43,6 +43,10 @@
   --color-milestone-upcoming-muted: #68738a;
   --radius-card: 1.5rem;
   --animate-ping-lg: ping-lg 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-float-slow: float-slow 8s ease-in-out infinite;
+  --animate-float-delayed: float-delayed 10s ease-in-out infinite;
+  --animate-float-slower: float-slower 12s ease-in-out infinite;
+  --animate-loading-bar: loading-bar 1.8s ease-in-out infinite;
 }
 
 @keyframes ping-lg {
@@ -50,6 +54,48 @@
   100% {
     transform: scale(4);
     opacity: 0;
+  }
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(18px, 14px, 0) scale(1.06);
+  }
+}
+
+@keyframes float-delayed {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-16px, 20px, 0) scale(1.08);
+  }
+}
+
+@keyframes float-slower {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(10px, -16px, 0) scale(1.04);
+  }
+}
+
+@keyframes loading-bar {
+  0% {
+    transform: translateX(-130%);
+  }
+  55% {
+    transform: translateX(110%);
+  }
+  100% {
+    transform: translateX(110%);
   }
 }
 

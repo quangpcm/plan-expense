@@ -67,6 +67,13 @@ export class ExpenseService {
     const values = input.splitValues ?? {};
 
     switch (input.splitMethod) {
+      case 'self':
+        return participantIds.slice(0, 1).map((memberId) => ({
+          memberId,
+          amount: input.amount,
+          percentage: null,
+          shares: null,
+        }));
       case 'equal':
         return this.splitService.equal(input.amount, participantIds);
       case 'exact':

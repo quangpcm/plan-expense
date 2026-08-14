@@ -30,9 +30,9 @@ export function AmountInput({ id, value, onChange, placeholder = '0' }: AmountIn
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className="flex items-baseline justify-center gap-1 border-b-2 border-[var(--color-border-strong)] pb-1 focus-within:border-[var(--color-primary)]">
+      <div className="flex items-end justify-center gap-0.5 border-b-2 border-[var(--color-border-strong)] pb-0.5 focus-within:border-[var(--color-primary)]">
         <input
-          className="border-0 bg-transparent text-right text-4xl font-bold text-[var(--color-primary)] outline-none placeholder:text-[var(--color-border-strong)]"
+          className="border-0 bg-transparent text-right text-[clamp(2.2rem,10vw,3rem)] font-bold leading-[0.92] text-[var(--color-primary)] outline-none placeholder:text-[var(--color-border-strong)]"
           id={id}
           inputMode="numeric"
           onBlur={() => setIsFocused(false)}
@@ -45,7 +45,7 @@ export function AmountInput({ id, value, onChange, placeholder = '0' }: AmountIn
           style={{ width: `${inputWidth}ch` }}
           value={displayValue}
         />
-        <span className="text-2xl font-semibold text-[var(--color-muted)]">đ</span>
+        <span className="mb-0.5 text-sm font-medium leading-none text-[var(--color-muted)] sm:text-base">đ</span>
       </div>
       {showSuggestions ? (
         <div className="flex flex-wrap items-center justify-center gap-2">

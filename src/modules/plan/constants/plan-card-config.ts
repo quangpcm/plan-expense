@@ -18,8 +18,30 @@ export type PlanCardTypeConfig = {
 
 const planTypeLabels = Object.fromEntries(planTypeOptions.map((option) => [option.value, option.label])) as Record<PlanType, string>;
 
-function formatCount(value: number, noun: string) {
-  return `${value} ${noun}`;
+function getSafeNumber(value: number | null | undefined, fallback = 0) {
+  return Number.isFinite(value) ? Number(value) : fallback;
+}
+
+function getSafeCountLabel(value: number | null | undefined, noun: string) {
+  return `${getSafeNumber(value)} ${noun}`;
+}
+
+function getSafeCurrency(value: number | null | undefined) {
+  return formatCurrency(getSafeNumber(value));
+}
+
+function getSafeBalance(plan: PlanSummary) {
+  return getSafeNumber(plan.totalIncome) - getSafeNumber(plan.totalExpense);
+}
+
+function getSafeRatioLabel(
+  completedValue: number | null | undefined,
+  totalValue: number | null | undefined,
+  noun: string,
+) {
+  const completed = getSafeNumber(completedValue);
+  const total = getSafeNumber(totalValue);
+  return `${completed}/${total} ${noun}`;
 }
 
 function buildUpdatedFooter(plan: PlanSummary): PlanCardFooterItem {
@@ -91,97 +113,116 @@ function buildSharedLivingFooter(plan: PlanSummary): PlanCardFooterItem {
 }
 
 function buildBudgetProgress(plan: PlanSummary): PlanCardProgress | null {
-  if (!plan.budgetAmount || plan.budgetAmount <= 0) {
+  const budgetAmount = getSafeNumber(plan.budgetAmount);
+  const totalExpense = getSafeNumber(plan.totalExpense);
+
+  if (budgetAmount <= 0) {
     return null;
   }
 
-  const tone = plan.totalExpense > plan.budgetAmount ? 'danger' : plan.totalExpense >= plan.budgetAmount * 0.8 ? 'warning' : 'primary';
+  const tone = totalExpense > budgetAmount ? 'danger' : totalExpense >= budgetAmount * 0.8 ? 'warning' : 'primary';
 
   return {
-    value: Math.min(plan.totalExpense, plan.budgetAmount),
-    max: plan.budgetAmount,
-    label: `${formatCurrency(plan.totalExpense)} / ${formatCurrency(plan.budgetAmount)}`,
+    value: Math.min(totalExpense, budgetAmount),
+    max: budgetAmount,
+    label: `${getSafeCurrency(totalExpense)} / ${getSafeCurrency(budgetAmount)}`,
     tone,
   };
 }
 
 function buildSharedBalanceProgress(plan: PlanSummary): PlanCardProgress | null {
-  if (plan.totalExpense <= 0 || plan.totalIncome <= 0) {
+  const totalExpense = getSafeNumber(plan.totalExpense);
+  const totalIncome = getSafeNumber(plan.totalIncome);
+
+  if (totalExpense <= 0 || totalIncome <= 0) {
     return null;
   }
 
   return {
-    value: Math.min(plan.totalIncome, plan.totalExpense),
-    max: plan.totalExpense,
-    label: `${formatCurrency(plan.totalIncome)} / ${formatCurrency(plan.totalExpense)}`,
-    tone: plan.totalIncome >= plan.totalExpense ? 'success' : 'warning',
+    value: Math.min(totalIncome, totalExpense),
+    max: totalExpense,
+    label: `${getSafeCurrency(totalIncome)} / ${getSafeCurrency(totalExpense)}`,
+    tone: totalIncome >= totalExpense ? 'success' : 'warning',
   };
 }
 
 function buildBalanceProgress(plan: PlanSummary): PlanCardProgress | null {
-  if (plan.totalIncome <= 0) {
+  const totalIncome = getSafeNumber(plan.totalIncome);
+  const balance = getSafeBalance(plan);
+
+  if (totalIncome <= 0) {
     return null;
   }
 
   return {
-    value: Math.max(plan.totalIncome - plan.totalExpense, 0),
-    max: plan.totalIncome,
-    label: `Số dư ${formatCurrency(plan.totalIncome - plan.totalExpense)}`,
-    tone: plan.totalIncome >= plan.totalExpense ? 'success' : 'danger',
+    value: Math.max(balance, 0),
+    max: totalIncome,
+    label: `Số dư ${getSafeCurrency(balance)}`,
+    tone: balance >= 0 ? 'success' : 'danger',
   };
 }
 
 function buildSavingProgress(plan: PlanSummary): PlanCardProgress | null {
-  const savedAmount = Math.max(plan.totalIncome - plan.totalExpense, 0);
+  const savingGoalAmount = getSafeNumber(plan.savingGoalAmount);
+  const savedAmount = Math.max(getSafeBalance(plan), 0);
 
-  if (!plan.savingGoalAmount || plan.savingGoalAmount <= 0) {
+  if (savingGoalAmount <= 0) {
     return null;
   }
 
   return {
-    value: Math.min(savedAmount, plan.savingGoalAmount),
-    max: plan.savingGoalAmount,
-    label: `${formatCurrency(savedAmount)} / ${formatCurrency(plan.savingGoalAmount)}`,
-    tone: savedAmount >= plan.savingGoalAmount ? 'success' : 'primary',
+    value: Math.min(savedAmount, savingGoalAmount),
+    max: savingGoalAmount,
+    label: `${getSafeCurrency(savedAmount)} / ${getSafeCurrency(savingGoalAmount)}`,
+    tone: savedAmount >= savingGoalAmount ? 'success' : 'primary',
   };
 }
 
 function buildGeneralProgress(plan: PlanSummary): PlanCardProgress | null {
-  if (plan.totalIncome <= 0) {
+  const totalIncome = getSafeNumber(plan.totalIncome);
+  const balance = getSafeBalance(plan);
+
+  if (totalIncome <= 0) {
     return null;
   }
 
   return {
-    value: Math.max(plan.totalIncome - plan.totalExpense, 0),
-    max: plan.totalIncome,
-    label: `Số dư ${formatCurrency(plan.totalIncome - plan.totalExpense)}`,
-    tone: plan.totalIncome >= plan.totalExpense ? 'success' : 'danger',
+    value: Math.max(balance, 0),
+    max: totalIncome,
+    label: `Số dư ${getSafeCurrency(balance)}`,
+    tone: balance >= 0 ? 'success' : 'danger',
   };
 }
 
 function buildTaskProgress(plan: PlanSummary): PlanCardProgress | null {
-  if (plan.todoCount <= 0) {
+  const todoCount = getSafeNumber(plan.todoCount);
+  const completedTodoCount = getSafeNumber(plan.completedTodoCount);
+
+  if (todoCount <= 0) {
     return null;
   }
 
   return {
-    value: plan.completedTodoCount,
-    max: plan.todoCount,
-    label: `${plan.completedTodoCount}/${plan.todoCount} công việc hoàn thành`,
-    tone: plan.completedTodoCount >= plan.todoCount ? 'success' : 'primary',
+    value: completedTodoCount,
+    max: todoCount,
+    label: getSafeRatioLabel(completedTodoCount, todoCount, 'công việc hoàn thành'),
+    tone: completedTodoCount >= todoCount ? 'success' : 'primary',
   };
 }
 
 function buildMilestoneProgress(plan: PlanSummary): PlanCardProgress | null {
-  if (plan.milestoneCount <= 0) {
+  const milestoneCount = getSafeNumber(plan.milestoneCount);
+  const completedMilestoneCount = getSafeNumber(plan.completedMilestoneCount);
+
+  if (milestoneCount <= 0) {
     return null;
   }
 
   return {
-    value: plan.completedMilestoneCount,
-    max: plan.milestoneCount,
-    label: `${plan.completedMilestoneCount}/${plan.milestoneCount} cột mốc hoàn thành`,
-    tone: plan.completedMilestoneCount >= plan.milestoneCount ? 'success' : 'primary',
+    value: completedMilestoneCount,
+    max: milestoneCount,
+    label: getSafeRatioLabel(completedMilestoneCount, milestoneCount, 'cột mốc hoàn thành'),
+    tone: completedMilestoneCount >= milestoneCount ? 'success' : 'primary',
   };
 }
 
@@ -189,23 +230,27 @@ export const planCardConfigByType: Record<PlanType, PlanCardTypeConfig> = {
   travel: {
     primaryMetric: ({ plan }) => ({
       label: 'Ngân sách',
-      value: plan.budgetAmount != null ? formatCurrency(plan.budgetAmount) : 'Chưa đặt',
+      value: getSafeCurrency(plan.budgetAmount),
       tone: 'primary',
     }),
-    secondaryMetric: ({ plan }) => ({ label: 'Đã chi', value: formatCurrency(plan.totalExpense), detail: formatCount(plan.memberCount, 'người tham gia') }),
+    secondaryMetric: ({ plan }) => ({
+      label: 'Đã chi',
+      value: getSafeCurrency(plan.totalExpense),
+      detail: getSafeCountLabel(plan.memberCount, 'người tham gia'),
+    }),
     progress: ({ plan }) => buildBudgetProgress(plan),
     footerLeft: ({ plan }) => buildTravelFooter(plan),
   },
   wedding: {
     primaryMetric: ({ plan }) => ({
       label: 'Ngân sách',
-      value: plan.budgetAmount != null ? formatCurrency(plan.budgetAmount) : 'Chưa đặt',
+      value: getSafeCurrency(plan.budgetAmount),
       tone: 'primary',
     }),
     secondaryMetric: ({ plan }) => ({
       label: 'Đã chi',
-      value: formatCurrency(plan.totalExpense),
-      detail: formatCount(plan.memberCount, 'khách / thành viên'),
+      value: getSafeCurrency(plan.totalExpense),
+      detail: getSafeCountLabel(plan.memberCount, 'khách / thành viên'),
     }),
     progress: ({ plan }) => buildBudgetProgress(plan),
     footerLeft: ({ plan }) => buildCountdownFooter('Ngày cưới', timestampToDate(plan.endDate), 'Chưa đặt ngày'),
@@ -213,12 +258,12 @@ export const planCardConfigByType: Record<PlanType, PlanCardTypeConfig> = {
   saving: {
     primaryMetric: ({ plan }) => ({
       label: 'Đã tích lũy',
-      value: formatCurrency(plan.totalIncome - plan.totalExpense),
-      tone: plan.totalIncome >= plan.totalExpense ? 'success' : 'warning',
+      value: getSafeCurrency(getSafeBalance(plan)),
+      tone: getSafeBalance(plan) >= 0 ? 'success' : 'warning',
     }),
     secondaryMetric: ({ plan }) => ({
       label: 'Mục tiêu',
-      value: plan.savingGoalAmount != null ? formatCurrency(plan.savingGoalAmount) : 'Chưa đặt',
+      value: getSafeCurrency(plan.savingGoalAmount),
       tone: 'primary',
     }),
     progress: ({ plan }) => buildSavingProgress(plan),
@@ -227,13 +272,13 @@ export const planCardConfigByType: Record<PlanType, PlanCardTypeConfig> = {
   birthday: {
     primaryMetric: ({ plan }) => ({
       label: 'Ngân sách',
-      value: plan.budgetAmount != null ? formatCurrency(plan.budgetAmount) : 'Chưa đặt',
+      value: getSafeCurrency(plan.budgetAmount),
       tone: 'primary',
     }),
     secondaryMetric: ({ plan }) => ({
       label: 'Công việc',
-      value: `${plan.completedTodoCount}/${plan.todoCount}`,
-      detail: formatCount(plan.memberCount, 'người tham gia'),
+      value: `${getSafeNumber(plan.completedTodoCount)}/${getSafeNumber(plan.todoCount)}`,
+      detail: getSafeCountLabel(plan.memberCount, 'người tham gia'),
     }),
     progress: ({ plan }) => buildTaskProgress(plan),
     footerLeft: ({ plan }) => buildCountdownFooter('Sinh nhật', timestampToDate(plan.endDate), 'Chưa đặt ngày'),
@@ -241,23 +286,23 @@ export const planCardConfigByType: Record<PlanType, PlanCardTypeConfig> = {
   event: {
     primaryMetric: ({ plan }) => ({
       label: 'Ngân sách',
-      value: plan.budgetAmount != null ? formatCurrency(plan.budgetAmount) : 'Chưa đặt',
+      value: getSafeCurrency(plan.budgetAmount),
       tone: 'primary',
     }),
     secondaryMetric: ({ plan }) => ({
       label: 'Khách mời',
-      value: String(plan.memberCount),
-      detail: formatCount(plan.memberCount, 'người tham gia'),
+      value: String(getSafeNumber(plan.memberCount)),
+      detail: getSafeCountLabel(plan.memberCount, 'người tham gia'),
     }),
     progress: ({ plan }) => buildTaskProgress(plan),
     footerLeft: ({ plan }) => buildCountdownFooter('Sự kiện', timestampToDate(plan.endDate), 'Chưa đặt ngày'),
   },
   shared_living: {
-    primaryMetric: ({ plan }) => ({ label: 'Tổng chi', value: formatCurrency(plan.totalExpense), tone: 'primary' }),
+    primaryMetric: ({ plan }) => ({ label: 'Tổng chi', value: getSafeCurrency(plan.totalExpense), tone: 'primary' }),
     secondaryMetric: ({ plan }) => ({
       label: 'Đã đóng',
-      value: formatCurrency(plan.totalIncome),
-      tone: plan.totalIncome >= plan.totalExpense ? 'success' : 'default',
+      value: getSafeCurrency(plan.totalIncome),
+      tone: getSafeNumber(plan.totalIncome) >= getSafeNumber(plan.totalExpense) ? 'success' : 'default',
     }),
     progress: ({ plan }) => buildSharedBalanceProgress(plan),
     footerLeft: ({ plan }) => buildSharedLivingFooter(plan),
@@ -270,19 +315,19 @@ export const planCardConfigByType: Record<PlanType, PlanCardTypeConfig> = {
     }),
     secondaryMetric: ({ plan }) => ({
       label: 'Mốc',
-      value: `${plan.completedMilestoneCount}/${plan.milestoneCount}`,
-      detail: formatCount(plan.memberCount, 'người tham gia'),
+      value: `${getSafeNumber(plan.completedMilestoneCount)}/${getSafeNumber(plan.milestoneCount)}`,
+      detail: getSafeCountLabel(plan.memberCount, 'người tham gia'),
     }),
     progress: ({ plan }) => buildMilestoneProgress(plan),
     footerLeft: ({ plan }) => buildCountdownFooter('Tiến độ', timestampToDate(plan.endDate), 'Đang theo dõi'),
   },
   general: {
-    primaryMetric: ({ plan }) => ({ label: 'Tổng thu', value: formatCurrency(plan.totalIncome), tone: 'success' }),
+    primaryMetric: ({ plan }) => ({ label: 'Tổng thu', value: getSafeCurrency(plan.totalIncome), tone: 'success' }),
     secondaryMetric: ({ plan }) => ({
       label: 'Tổng chi',
-      value: formatCurrency(plan.totalExpense),
-      tone: plan.totalIncome >= plan.totalExpense ? 'default' : 'danger',
-      detail: `Số dư ${formatCurrency(plan.totalIncome - plan.totalExpense)}`,
+      value: getSafeCurrency(plan.totalExpense),
+      tone: getSafeNumber(plan.totalIncome) >= getSafeNumber(plan.totalExpense) ? 'default' : 'danger',
+      detail: `Số dư ${getSafeCurrency(getSafeBalance(plan))}`,
     }),
     progress: ({ plan }) => buildGeneralProgress(plan),
     footerLeft: ({ plan }) => buildGeneralFooter(plan),

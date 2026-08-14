@@ -68,13 +68,16 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
   );
   const defaultPaidByMemberId =
     expense?.paidByMemberId || currentMember?.id || activeMembers[0]?.id || '';
+  const creatorDefaultParticipantIds = defaultPaidByMemberId ? [defaultPaidByMemberId] : [];
   const defaultParticipantIds =
     expense?.participants.map((participant) => participant.memberId) ||
-    activeMembers.map((member) => member.id);
+    creatorDefaultParticipantIds;
+  const allActiveParticipantIds = activeMembers.map((member) => member.id);
   const defaultCategoryId = toSafeString(expense?.categoryId) || categories[0]?.id || '';
   const milestoneIdFromQuery = searchParams.get('milestoneId') || '';
   const returnTab = searchParams.get('returnTab');
   const defaultMilestoneId = expense?.milestoneId || milestoneIdFromQuery || milestones[0]?.id || '';
+  const defaultSpentAt = expense ? formatDateTimeLocalInput(expense.spentAt.toDate()) : formatDateTimeLocalInput(new Date());
   const defaultSplitValues: Record<string, number> = {};
 
   if (expense && expense.splitMethod !== 'equal') {
@@ -97,12 +100,12 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
       categoryId: defaultCategoryId,
       paidByMemberId: defaultPaidByMemberId,
       participantMemberIds: defaultParticipantIds,
-      splitMethod: expense?.splitMethod || 'equal',
+      splitMethod: expense?.splitMethod || splitMethods.self,
       splitValues: defaultSplitValues,
       merchantName: toSafeString(expense?.merchantName),
       locationName: toSafeString(expense?.locationName),
       note: toSafeString(expense?.note),
-      spentAt: expense ? formatDateTimeLocalInput(expense.spentAt.toDate()) : '',
+      spentAt: defaultSpentAt,
       attachments: (expense?.attachments ?? []).map(
         (attachment): AttachmentDraft => ({ kind: 'existing', id: attachment.id, attachment }),
       ),
@@ -118,7 +121,9 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
   const categoryIdWatched = useWatch({ control: form.control, name: 'categoryId' });
   const paidByMemberIdWatched = useWatch({ control: form.control, name: 'paidByMemberId' });
   const milestoneIdWatched = useWatch({ control: form.control, name: 'milestoneId' });
+  const spentAtWatched = useWatch({ control: form.control, name: 'spentAt' });
   const isFirstSplitMethodRender = useRef(true);
+  const previousSplitMethodRef = useRef<CreateExpenseSchema['splitMethod']>(expense?.splitMethod || splitMethods.self);
   const totalSplitValue = selectedMembers.reduce(
     (sum, memberId) => sum + (Number(splitValuesWatched[memberId]) || 0),
     0,
@@ -128,15 +133,26 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
     paidByMemberIdWatched && paidByMemberIdWatched === currentMember?.id
       ? 'Bạn (Mặc định)'
       : paidByMember?.nickname || 'Chọn người chi trả';
+  const selfSplitLabel = `${currentMember?.nickname || paidByMember?.nickname || 'Người tạo'}`;
 
   useEffect(() => {
     if (isFirstSplitMethodRender.current) {
       isFirstSplitMethodRender.current = false;
+      previousSplitMethodRef.current = selectedSplitMethod;
       return;
     }
 
     form.setValue('splitValues', {}, { shouldDirty: true });
-  }, [selectedSplitMethod, form]);
+    const previousSplitMethod = previousSplitMethodRef.current;
+
+    if (selectedSplitMethod === splitMethods.self) {
+      form.setValue('participantMemberIds', creatorDefaultParticipantIds, { shouldDirty: true, shouldValidate: true });
+    } else if (previousSplitMethod === splitMethods.self) {
+      form.setValue('participantMemberIds', allActiveParticipantIds, { shouldDirty: true, shouldValidate: true });
+    }
+
+    previousSplitMethodRef.current = selectedSplitMethod;
+  }, [allActiveParticipantIds, creatorDefaultParticipantIds, form, selectedSplitMethod]);
 
   useEffect(() => {
     if (!form.getValues('paidByMemberId') && defaultPaidByMemberId) {
@@ -154,7 +170,11 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
     if (!form.getValues('milestoneId') && defaultMilestoneId) {
       form.setValue('milestoneId', defaultMilestoneId, { shouldValidate: true });
     }
-  }, [defaultCategoryId, defaultMilestoneId, defaultPaidByMemberId, defaultParticipantIds, form]);
+
+    if (!form.getValues('spentAt') && defaultSpentAt) {
+      form.setValue('spentAt', defaultSpentAt, { shouldValidate: true });
+    }
+  }, [defaultCategoryId, defaultMilestoneId, defaultPaidByMemberId, defaultParticipantIds, defaultSpentAt, form]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     if (!plan || !user) {
@@ -269,32 +289,32 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
         />
       </div>
 
-      <div className="space-y-2">
-        <p className="text-sm font-medium text-slate-700">Danh mục</p>
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
-          {categories.map((category) => {
-            const CategoryIcon = getCategoryIcon(category.icon);
-            const isSelected = categoryIdWatched === category.id;
+      <div className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] gap-3">
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-slate-700">Danh mục</p>
+          <DropdownSelect
+            id="categoryId"
+            onValueChange={(value) => form.setValue('categoryId', value, { shouldValidate: true, shouldDirty: true })}
+            options={categories.map((category) => ({
+              value: category.id,
+              label: category.name,
+              icon: getCategoryIcon(category.icon),
+            }))}
+            placeholder="Chọn danh mục"
+            value={categoryIdWatched || ''}
+          />
+        </div>
 
-            return (
-              <button
-                key={category.id}
-                className={cn(
-                  'flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-medium transition',
-                  isSelected
-                    ? 'border-[#0050cb] bg-[#0050cb] text-white'
-                    : 'border-[#c2c6d8] bg-white text-[#424656]',
-                )}
-                onClick={() =>
-                  form.setValue('categoryId', category.id, { shouldValidate: true, shouldDirty: true })
-                }
-                type="button"
-              >
-                <CategoryIcon className="size-4" />
-                {category.name}
-              </button>
-            );
-          })}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700" htmlFor="spentAt">
+            Thời gian chi
+          </label>
+          <Input
+            id="spentAt"
+            type="datetime-local"
+            value={spentAtWatched || defaultSpentAt}
+            {...form.register('spentAt')}
+          />
         </div>
       </div>
 
@@ -352,33 +372,6 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
         <summary className="cursor-pointer text-sm font-semibold text-slate-800">Thiết lập nâng cao</summary>
         <div className="mt-4 space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Người tham gia</label>
-            <div className="grid gap-2">
-              {activeMembers.map((member) => {
-                const checked = selectedMembers.includes(member.id);
-
-                return (
-                  <label
-                    key={member.id}
-                    className="inline-flex min-h-11 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700"
-                  >
-                    <input
-                      checked={checked}
-                      onChange={(event) => {
-                        const nextValue = event.target.checked
-                          ? [...selectedMembers, member.id]
-                          : selectedMembers.filter((item) => item !== member.id);
-                        form.setValue('participantMemberIds', nextValue, { shouldDirty: true });
-                      }}
-                      type="checkbox"
-                    />
-                    {member.nickname}
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-          <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700" htmlFor="splitMethod">
               Chia tiền
             </label>
@@ -391,6 +384,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
                 })
               }
               options={[
+                { value: splitMethods.self, label: selfSplitLabel },
                 { value: splitMethods.equal, label: 'Chia đều' },
                 { value: splitMethods.exact, label: 'Số tiền cụ thể' },
                 { value: splitMethods.percentage, label: 'Theo phần trăm' },
@@ -399,7 +393,42 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
               value={selectedSplitMethod}
             />
           </div>
-          {selectedSplitMethod !== 'equal' ? (
+          {selectedSplitMethod === splitMethods.self ? (
+            <div className="px-1 py-1 text-sm italic text-[#7a8094]">
+              Khoản chi này mặc định được tính cho{' '}
+              <span className="font-medium text-amber-600 not-italic">{selfSplitLabel}</span>.
+            </div>
+          ) : null}
+          {selectedSplitMethod !== splitMethods.self ? (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Người tham gia</label>
+              <div className="grid gap-2">
+                {activeMembers.map((member) => {
+                  const checked = selectedMembers.includes(member.id);
+
+                  return (
+                    <label
+                      key={member.id}
+                      className="inline-flex min-h-11 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700"
+                    >
+                      <input
+                        checked={checked}
+                        onChange={(event) => {
+                          const nextValue = event.target.checked
+                            ? [...selectedMembers, member.id]
+                            : selectedMembers.filter((item) => item !== member.id);
+                          form.setValue('participantMemberIds', nextValue, { shouldDirty: true });
+                        }}
+                        type="checkbox"
+                      />
+                      {member.nickname}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+          {selectedSplitMethod !== splitMethods.self && selectedSplitMethod !== 'equal' ? (
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">
                 {selectedSplitMethod === 'exact'
@@ -448,12 +477,6 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
               </label>
               <Input id="locationName" placeholder="Nơi phát sinh khoản chi" {...form.register('locationName')} />
             </div>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700" htmlFor="spentAt">
-              Thời gian chi
-            </label>
-            <Input id="spentAt" type="datetime-local" {...form.register('spentAt')} />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700" htmlFor="note">

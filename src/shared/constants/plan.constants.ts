@@ -31,6 +31,7 @@ export const todoPriorities = {
 } as const;
 
 export const splitMethods = {
+  self: 'self',
   equal: 'equal',
   exact: 'exact',
   percentage: 'percentage',

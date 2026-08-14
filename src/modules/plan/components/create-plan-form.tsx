@@ -10,6 +10,7 @@ import { useCreatePlan } from '@/modules/plan/hooks/use-create-plan';
 import { createPlanSchema, type CreatePlanSchema } from '@/modules/plan/schemas/create-plan.schema';
 import { planTypeOptions } from '@/modules/plan/constants/plan.constants';
 import { Button } from '@/shared/components/ui/button';
+import { CurrencyField } from '@/shared/components/ui/currency-field';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
@@ -32,6 +33,8 @@ export function CreatePlanForm() {
     },
   });
   const selectedPlanType = watch('planType');
+  const budgetAmount = watch('budgetAmount') ?? 0;
+  const savingGoalAmount = watch('savingGoalAmount') ?? 0;
   const showsBudgetField = ['travel', 'wedding', 'birthday', 'event'].includes(selectedPlanType);
 
   const onSubmit = handleSubmit(async (values) => {
@@ -76,6 +79,21 @@ export function CreatePlanForm() {
         />
       </div>
 
+      {showsBudgetField ? (
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700" htmlFor="budgetAmount">
+            Ngân sách dự kiến
+          </label>
+          <input type="hidden" {...register('budgetAmount', { valueAsNumber: true })} />
+          <CurrencyField
+            id="budgetAmount"
+            onChange={(value) => setValue('budgetAmount', value > 0 ? value : undefined, { shouldDirty: true, shouldValidate: true })}
+            placeholder="Ví dụ: 12.000.000"
+            value={budgetAmount}
+          />
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="startDate">
@@ -112,27 +130,18 @@ export function CreatePlanForm() {
         </div>
       </div>
 
-      {showsBudgetField ? (
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="budgetAmount">
-            Ngân sách dự kiến
-          </label>
-          <Input id="budgetAmount" min={0} placeholder="Ví dụ: 12000000" type="number" {...register('budgetAmount')} />
-        </div>
-      ) : null}
-
       {selectedPlanType === 'saving' ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700" htmlFor="savingGoalAmount">
               Mục tiêu tích lũy
             </label>
-            <Input
+            <input type="hidden" {...register('savingGoalAmount', { valueAsNumber: true })} />
+            <CurrencyField
               id="savingGoalAmount"
-              min={0}
-              placeholder="Ví dụ: 50000000"
-              type="number"
-              {...register('savingGoalAmount')}
+              onChange={(value) => setValue('savingGoalAmount', value > 0 ? value : undefined, { shouldDirty: true, shouldValidate: true })}
+              placeholder="Ví dụ: 50.000.000"
+              value={savingGoalAmount}
             />
           </div>
           <div className="space-y-2">

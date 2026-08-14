@@ -12,6 +12,7 @@ import { updatePlanSchema, type UpdatePlanSchema } from '@/modules/plan/schemas/
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import { Button } from '@/shared/components/ui/button';
+import { CurrencyField } from '@/shared/components/ui/currency-field';
 import { DateField } from '@/shared/components/ui/date-field';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
@@ -53,6 +54,8 @@ export function EditPlanForm({ plan, currentMember, onClose }: EditPlanFormProps
     },
   });
   const selectedPlanType = watch('planType');
+  const budgetAmount = watch('budgetAmount') ?? 0;
+  const savingGoalAmount = watch('savingGoalAmount') ?? 0;
   const showsBudgetField = ['travel', 'wedding', 'birthday', 'event'].includes(selectedPlanType);
   const planTypeDropdownOptions = planTypeOptions.map((option) => ({
     value: option.value,
@@ -103,6 +106,21 @@ export function EditPlanForm({ plan, currentMember, onClose }: EditPlanFormProps
         />
       </div>
 
+      {showsBudgetField ? (
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700" htmlFor="edit-plan-budgetAmount">
+            Ngân sách dự kiến
+          </label>
+          <input type="hidden" {...register('budgetAmount', { valueAsNumber: true })} />
+          <CurrencyField
+            id="edit-plan-budgetAmount"
+            onChange={(value) => setValue('budgetAmount', value > 0 ? value : undefined, { shouldDirty: true, shouldValidate: true })}
+            placeholder="Ví dụ: 12.000.000"
+            value={budgetAmount}
+          />
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="edit-plan-startDate">
@@ -118,22 +136,19 @@ export function EditPlanForm({ plan, currentMember, onClose }: EditPlanFormProps
         </div>
       </div>
 
-      {showsBudgetField ? (
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="edit-plan-budgetAmount">
-            Ngân sách dự kiến
-          </label>
-          <Input id="edit-plan-budgetAmount" min={0} type="number" {...register('budgetAmount')} />
-        </div>
-      ) : null}
-
       {selectedPlanType === 'saving' ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700" htmlFor="edit-plan-savingGoalAmount">
               Mục tiêu tích lũy
             </label>
-            <Input id="edit-plan-savingGoalAmount" min={0} type="number" {...register('savingGoalAmount')} />
+            <input type="hidden" {...register('savingGoalAmount', { valueAsNumber: true })} />
+            <CurrencyField
+              id="edit-plan-savingGoalAmount"
+              onChange={(value) => setValue('savingGoalAmount', value > 0 ? value : undefined, { shouldDirty: true, shouldValidate: true })}
+              placeholder="Ví dụ: 50.000.000"
+              value={savingGoalAmount}
+            />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700" htmlFor="edit-plan-savingTargetDate">

@@ -5,7 +5,8 @@ const vndFormatter = new Intl.NumberFormat('vi-VN', {
 });
 
 export function formatCurrency(amount: number) {
-  return vndFormatter.format(amount);
+  const safeAmount = Number.isFinite(amount) ? amount : 0;
+  return vndFormatter.format(safeAmount);
 }
 
 export function formatAmountInputValue(value: number) {
@@ -28,19 +29,20 @@ function trimTrailingZero(value: number) {
 }
 
 export function formatCompactCurrency(amount: number) {
-  const abs = Math.abs(amount);
+  const safeAmount = Number.isFinite(amount) ? amount : 0;
+  const abs = Math.abs(safeAmount);
 
   if (abs >= 1_000_000_000) {
-    return `${trimTrailingZero(amount / 1_000_000_000)} tỷ`;
+    return `${trimTrailingZero(safeAmount / 1_000_000_000)} tỷ`;
   }
 
   if (abs >= 1_000_000) {
-    return `${trimTrailingZero(amount / 1_000_000)} triệu`;
+    return `${trimTrailingZero(safeAmount / 1_000_000)} triệu`;
   }
 
   if (abs >= 1_000) {
-    return `${trimTrailingZero(amount / 1_000)} nghìn`;
+    return `${trimTrailingZero(safeAmount / 1_000)} nghìn`;
   }
 
-  return formatCurrency(amount);
+  return formatCurrency(safeAmount);
 }
