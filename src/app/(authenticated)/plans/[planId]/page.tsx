@@ -928,7 +928,6 @@ export default function PlanDetailPage() {
     <main className="flex flex-col gap-5">
       <Breadcrumbs
         items={[
-          { label: 'Kế hoạch', href: '/plans' },
           { label: currentPlan.name },
         ]}
       />
@@ -1376,14 +1375,14 @@ export default function PlanDetailPage() {
                 {permissions.canManagePlan && plan.status !== 'closed' ? (
                   <button
                     aria-label="Tạo mốc kế hoạch"
-                    className="fixed right-4 bottom-24 z-30 flex size-16 items-center justify-center rounded-full bg-[#0050cb] text-white shadow-[0_18px_45px_rgba(0,80,203,0.35)] transition hover:bg-[#0047b4] md:right-8 md:bottom-8"
+                    className="fixed right-4 bottom-24 z-30 flex size-14 items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-[0_14px_34px_rgba(36,59,107,0.32)] transition hover:bg-[var(--color-primary-hover)] md:right-8 md:bottom-8"
                     onClick={() => {
                       setEditingMilestone(null);
                       setShowMilestoneForm(true);
                     }}
                     type="button"
                   >
-                    <Plus className="size-8" />
+                    <Plus className="size-6" />
                   </button>
                 ) : null}
               </>

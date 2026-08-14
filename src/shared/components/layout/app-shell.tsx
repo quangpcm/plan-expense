@@ -108,9 +108,8 @@ export function AppShell({ children }: AppShellProps) {
         <div className="pointer-events-none fixed inset-0 z-50 bg-[rgba(246,248,252,0.74)] backdrop-blur-[6px]">
           <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-center px-4 pb-28 sm:px-6 lg:px-8">
             <RouteLoadingScreen
-              eyebrow="Đang chuyển màn"
-              title="Sắp vào trang tiếp theo"
-              description="Nội dung mới đang được mở ra để bạn không bị cảm giác chờ đợi trống."
+              title="Đang tải nội dung..."
+              description="Chỉ mất một chút thời gian."
             />
           </div>
         </div>

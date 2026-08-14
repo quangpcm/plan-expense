@@ -36,6 +36,35 @@ export function formatDateTimeLocalInput(input: DateInput) {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
+export function parseDateTimeLocalInput(input: string | null | undefined) {
+  if (!input) {
+    return null;
+  }
+
+  const parsed = new Date(input);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+export function formatDateTimePickerDisplay(input: DateInput, locale = 'vi-VN') {
+  const date = new Date(input);
+
+  const time = new Intl.DateTimeFormat(locale, {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date);
+
+  const dateLabel = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+    .format(date)
+    .replace(/\./g, '');
+
+  return `${time} ${dateLabel}`;
+}
+
 const RELATIVE_TIME_DIVISIONS: { amount: number; unit: Intl.RelativeTimeFormatUnit }[] = [
   { amount: 60, unit: 'second' },
   { amount: 60, unit: 'minute' },

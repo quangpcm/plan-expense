@@ -19,6 +19,7 @@ import { incomeService } from '@/modules/income/services';
 import type { IncomeDocument } from '@/modules/income/types/income';
 import { AmountInput } from '@/shared/components/ui/amount-input';
 import { Button } from '@/shared/components/ui/button';
+import { DateTimeInput } from '@/shared/components/ui/date-time-input';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
@@ -228,7 +229,7 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
           value={contributedByMemberIdWatched || selectedContributor?.id || ''}
         />
       </div>
-      <Input type="datetime-local" {...form.register('receivedAt')} />
+      <DateTimeInput {...form.register('receivedAt')} />
       <Textarea placeholder="Ghi chú thêm (không bắt buộc)" {...form.register('note')} />
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">

@@ -76,7 +76,6 @@ export default function ExpenseDetailPage() {
     <main className="flex flex-col gap-5">
       <Breadcrumbs
         items={[
-          { label: 'Kế hoạch', href: '/plans' },
           { label: currentPlan.name, href: `/plans/${planId}` },
           { label: currentExpense.title },
         ]}

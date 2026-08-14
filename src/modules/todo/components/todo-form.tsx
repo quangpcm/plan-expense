@@ -15,6 +15,7 @@ import type { AuthUser } from '@/modules/auth/types/auth';
 import { AttachmentPicker, type AttachmentDraft } from '@/modules/storage';
 import { AmountInput } from '@/shared/components/ui/amount-input';
 import { Button } from '@/shared/components/ui/button';
+import { DateField } from '@/shared/components/ui/date-field';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
@@ -163,7 +164,7 @@ export function TodoForm({
         </div>
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700">Hạn hoàn thành</label>
-          <Input onChange={(event) => setDueDate(event.target.value)} type="date" value={dueDate} />
+          <DateField onChange={(event) => setDueDate(event.target.value)} value={dueDate} />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">

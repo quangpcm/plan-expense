@@ -31,7 +31,6 @@ export default function EditIncomePage() {
     <main className="flex flex-col gap-5">
       <Breadcrumbs
         items={[
-          { label: 'Kế hoạch', href: '/plans' },
           { label: plan?.name || 'Chi tiết kế hoạch', href: `/plans/${planId}` },
           { label: income.title, href: `/plans/${planId}/incomes/${incomeId}` },
           { label: 'Chỉnh sửa' },

@@ -15,7 +15,6 @@ export default function CreateExpensePage() {
     <main className="flex flex-col gap-5">
       <Breadcrumbs
         items={[
-          { label: 'Kế hoạch', href: '/plans' },
           { label: plan?.name || 'Chi tiết kế hoạch', href: `/plans/${planId}` },
           { label: 'Tạo khoản chi' },
         ]}

@@ -21,6 +21,7 @@ import { AttachmentPicker, type AttachmentDraft } from '@/modules/storage';
 import { AmountInput } from '@/shared/components/ui/amount-input';
 import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
+import { DateTimeInput } from '@/shared/components/ui/date-time-input';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
@@ -309,9 +310,8 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
           <label className="text-sm font-medium text-slate-700" htmlFor="spentAt">
             Thời gian chi
           </label>
-          <Input
+          <DateTimeInput
             id="spentAt"
-            type="datetime-local"
             value={spentAtWatched || defaultSpentAt}
             {...form.register('spentAt')}
           />

@@ -5,7 +5,7 @@ type RouteLoadingScreenProps = {
 };
 
 export function RouteLoadingScreen({
-  eyebrow = 'Plan Expense',
+  eyebrow,
   title = 'Đang chuyển trang',
   description = 'Chúng mình đang chuẩn bị màn tiếp theo để bạn tiếp tục thao tác mượt mà hơn.',
 }: RouteLoadingScreenProps) {
@@ -26,9 +26,11 @@ export function RouteLoadingScreen({
           </div>
         </div>
 
-        <span className="mb-3 inline-flex rounded-full border border-[rgba(140,156,183,0.24)] bg-white/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-subtle)] shadow-sm backdrop-blur">
-          {eyebrow}
-        </span>
+        {eyebrow ? (
+          <span className="mb-3 inline-flex rounded-full border border-[rgba(140,156,183,0.24)] bg-white/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-subtle)] shadow-sm backdrop-blur">
+            {eyebrow}
+          </span>
+        ) : null}
         <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--color-foreground)]">{title}</h1>
         <p className="mt-3 max-w-sm text-sm leading-6 text-[var(--color-muted)]">{description}</p>
 
