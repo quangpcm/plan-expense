@@ -23,6 +23,7 @@ type TodoDetailViewProps = {
   onEdit: (todo: TodoDocument) => void;
   onAddVendor: (todo: TodoDocument) => void;
   onEditVendor: (todo: TodoDocument, vendorId: string) => void;
+  onDeleteVendor: (todo: TodoDocument, vendorId: string) => void;
   onSelectVendor: (todo: TodoDocument, vendorId: string) => void;
   onMoveToMilestone: (todo: TodoDocument, milestoneId: string) => void;
   onChangeStatus: (todo: TodoDocument, status: TodoDocument['status']) => void;
@@ -39,6 +40,7 @@ export function TodoDetailView({
   onEdit,
   onAddVendor,
   onEditVendor,
+  onDeleteVendor,
   onSelectVendor,
   onMoveToMilestone,
   onChangeStatus,
@@ -163,6 +165,19 @@ export function TodoDetailView({
                         type="button"
                       >
                         <PencilLine className="size-3.5" />
+                      </button>
+                    ) : null}
+                    {canManagePlan ? (
+                      <button
+                        aria-label={`Xoá nhà cung cấp ${vendor.name}`}
+                        className="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onDeleteVendor(todo, vendor.id);
+                        }}
+                        type="button"
+                      >
+                        <Trash2 className="size-3.5" />
                       </button>
                     ) : null}
                   </div>

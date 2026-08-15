@@ -828,6 +828,30 @@ export default function PlanDetailPage() {
     }
   }
 
+  async function handleDeleteVendor(todo: TodoDocument, vendorId: string) {
+    if (!user) {
+      return;
+    }
+
+    const vendor = todo.vendors.find((item) => item.id === vendorId);
+    const confirmed = window.confirm(`Xoá nhà cung cấp "${vendor?.name ?? ''}"? Hành động này không thể hoàn tác.`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsTodoSubmitting(true);
+    setTodoActionError(null);
+
+    try {
+      await todoService.deleteVendor(ensuredPlan, todo, vendorId, user, currentMember);
+    } catch (error) {
+      setTodoActionError(error instanceof Error ? error.message : 'Hiện chưa thể xoá nhà cung cấp này.');
+    } finally {
+      setIsTodoSubmitting(false);
+    }
+  }
+
   async function handleMoveTodoToMilestone(todo: TodoDocument, targetMilestoneId: string) {
     if (!user || !targetMilestoneId || todo.milestoneId === targetMilestoneId) {
       return;
@@ -1613,6 +1637,7 @@ export default function PlanDetailPage() {
                     setEditingVendorId(vendorId);
                     setVendorFormTodo(todo);
                   }}
+                  onDeleteVendor={handleDeleteVendor}
                   onMoveToMilestone={handleMoveTodoToMilestone}
                   onSelectVendor={handleSelectTodoVendor}
                   todo={detailTodo}
@@ -1650,6 +1675,7 @@ export default function PlanDetailPage() {
                     setEditingVendorId(vendorId);
                     setVendorFormTodo(todo);
                   }}
+                  onDeleteVendor={handleDeleteVendor}
                   onMoveToMilestone={handleMoveTodoToMilestone}
                   onSelectVendor={handleSelectTodoVendor}
                   todo={detailTodo}

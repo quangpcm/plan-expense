@@ -49,6 +49,7 @@ export interface TodoRepository {
   moveTodoToMilestone(planId: string, input: MoveTodoToMilestoneInput): Promise<void>;
   addVendor(planId: string, todoId: string, vendor: AddTodoVendorPersistenceInput): Promise<void>;
   updateVendor(planId: string, todoId: string, input: UpdateTodoVendorPersistenceInput): Promise<void>;
+  deleteVendor(planId: string, todoId: string, vendorId: string): Promise<void>;
   selectVendor(planId: string, todoId: string, vendorId: string | null): Promise<void>;
   deleteTodo(planId: string, todoId: string): Promise<void>;
   watchTodos(

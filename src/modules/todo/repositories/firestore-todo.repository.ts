@@ -328,6 +328,33 @@ export class FirestoreTodoRepository implements TodoRepository {
     });
   }
 
+  async deleteVendor(planId: string, todoId: string, vendorId: string) {
+    const db = getFirebaseFirestore();
+    const todoRef = doc(db, 'plans', planId, 'todos', todoId);
+    const now = Timestamp.now();
+
+    await runTransaction(db, async (transaction) => {
+      const todoSnapshot = await transaction.get(todoRef);
+
+      if (!todoSnapshot.exists()) {
+        throw new Error('Todo not found.');
+      }
+
+      const previousTodo = todoSnapshot.data() as TodoDocument;
+      const previousVendors = (previousTodo.vendors ?? []).map(normalizeVendor);
+
+      if (!previousVendors.some((vendor) => vendor.id === vendorId)) {
+        throw new Error('Vendor not found.');
+      }
+
+      transaction.update(todoRef, {
+        vendors: previousVendors.filter((vendor) => vendor.id !== vendorId),
+        selectedTodoVendorId: previousTodo.selectedTodoVendorId === vendorId ? null : previousTodo.selectedTodoVendorId,
+        updatedAt: now,
+      });
+    });
+  }
+
   async selectVendor(planId: string, todoId: string, vendorId: string | null) {
     const db = getFirebaseFirestore();
     const todoRef = doc(db, 'plans', planId, 'todos', todoId);
