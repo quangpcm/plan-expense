@@ -5,7 +5,7 @@ import { milestoneStatusLabel } from '@/modules/milestone/utils/milestone-status
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
-import { formatCurrency } from '@/shared/utils/currency';
+import { formatCompactCurrency } from '@/shared/utils/currency';
 import { cn } from '@/shared/utils/cn';
 
 type MilestoneListProps = {
@@ -13,6 +13,7 @@ type MilestoneListProps = {
   selectedMilestoneId: string | null;
   canManagePlan: boolean;
   isSubmitting: boolean;
+  estimatedByMilestoneId: Record<string, number>;
   onSelect: (milestoneId: string) => void;
   onMoveUp: (milestone: MilestoneDocument) => void;
   onMoveDown: (milestone: MilestoneDocument) => void;
@@ -25,6 +26,7 @@ export function MilestoneList({
   selectedMilestoneId,
   canManagePlan,
   isSubmitting,
+  estimatedByMilestoneId,
   onSelect,
   onMoveUp,
   onMoveDown,
@@ -43,8 +45,7 @@ export function MilestoneList({
     <div className="grid gap-3">
       {milestones.map((milestone, index) => {
         const isSelected = milestone.id === selectedMilestoneId;
-        const progress =
-          milestone.todoCount > 0 ? Math.round((milestone.completedTodoCount / milestone.todoCount) * 100) : 0;
+        const estimatedTotal = estimatedByMilestoneId[milestone.id] ?? 0;
         const status = milestone.status;
 
         return (
@@ -88,7 +89,13 @@ export function MilestoneList({
                   <p className={cn('text-xs uppercase tracking-[0.16em]', isSelected ? 'text-slate-400' : 'text-slate-400')}>
                     Đã chi
                   </p>
-                  <p className="mt-1 font-medium">{formatCurrency(milestone.totalExpense)}</p>
+                  <p className="mt-1 font-medium">{formatCompactCurrency(milestone.totalExpense)}</p>
+                </div>
+                <div>
+                  <p className={cn('text-xs uppercase tracking-[0.16em]', isSelected ? 'text-slate-400' : 'text-slate-400')}>
+                    Dự kiến
+                  </p>
+                  <p className="mt-1 font-medium">{formatCompactCurrency(estimatedTotal)}</p>
                 </div>
                 <div>
                   <p className={cn('text-xs uppercase tracking-[0.16em]', isSelected ? 'text-slate-400' : 'text-slate-400')}>
@@ -97,12 +104,6 @@ export function MilestoneList({
                   <p className="mt-1 font-medium">
                     {milestone.completedTodoCount}/{milestone.todoCount}
                   </p>
-                </div>
-                <div>
-                  <p className={cn('text-xs uppercase tracking-[0.16em]', isSelected ? 'text-slate-400' : 'text-slate-400')}>
-                    Tiến độ
-                  </p>
-                  <p className="mt-1 font-medium">{progress}%</p>
                 </div>
               </div>
               {canManagePlan ? (

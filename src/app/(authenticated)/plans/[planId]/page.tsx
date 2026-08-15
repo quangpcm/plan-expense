@@ -144,6 +144,15 @@ export default function PlanDetailPage() {
     () => todos.reduce((total, todo) => total + (getTodoBudgetAmount(todo) ?? 0), 0),
     [todos],
   );
+  const estimatedByMilestoneId = useMemo(() => {
+    const totals: Record<string, number> = {};
+
+    for (const todo of todos) {
+      totals[todo.milestoneId] = (totals[todo.milestoneId] ?? 0) + (getTodoBudgetAmount(todo) ?? 0);
+    }
+
+    return totals;
+  }, [todos]);
   const categories = useMemo(() => (plan ? getExpenseCategories(plan.planType) : []), [plan]);
   const incomeCategories = useMemo(() => (plan ? getIncomeCategories(plan.planType) : []), [plan]);
   const { expenses, errorMessage: expenseError } = useExpenses(planId);
@@ -1190,6 +1199,7 @@ export default function PlanDetailPage() {
                     <MilestoneList
                       canManagePlan={false}
                       emptyLabel="Không có mốc nào đang diễn ra hoặc sắp diễn ra."
+                      estimatedByMilestoneId={estimatedByMilestoneId}
                       isSubmitting={false}
                       milestones={upcomingMilestones}
                       onEdit={() => setActiveTab('Công việc')}
