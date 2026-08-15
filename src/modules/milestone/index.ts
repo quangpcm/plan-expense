@@ -4,6 +4,7 @@ export { MilestoneDetailCard } from './components/milestone-detail-card';
 export { MilestoneExpensePanel } from './components/milestone-expense-panel';
 export { MilestoneForm } from './components/milestone-form';
 export { MilestoneList } from './components/milestone-list';
+export { MilestoneSearchControl } from './components/milestone-search-control';
 export { MilestoneTimelineBoard } from './components/milestone-timeline-board';
 export { getMilestoneAnchorDate, milestoneStatusLabel } from './utils/milestone-status';
 export type {

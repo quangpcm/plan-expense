@@ -49,6 +49,7 @@ import {
   MilestoneExpensePanel,
   MilestoneForm,
   MilestoneList,
+  MilestoneSearchControl,
   MilestoneTimelineBoard,
   getMilestoneAnchorDate,
   milestoneService,
@@ -176,6 +177,7 @@ export default function PlanDetailPage() {
   const [todoToRestoreAfterVendor, setTodoToRestoreAfterVendor] = useState<TodoDocument | null>(null);
   const [expenseSheetMilestoneId, setExpenseSheetMilestoneId] = useState<string | null>(null);
   const [workViewMode, setWorkViewMode] = useState<'milestones' | 'todos'>('milestones');
+  const [milestoneSearchQuery, setMilestoneSearchQuery] = useState('');
   const [todoStatusFilter, setTodoStatusFilter] = useState<TodoStatusFilter>('pending');
   const [todoDueSortOrder, setTodoDueSortOrder] = useState<TodoDueSortOrder>('oldest');
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
@@ -1314,7 +1316,9 @@ export default function PlanDetailPage() {
                   sortOrder={todoDueSortOrder}
                   statusFilter={todoStatusFilter}
                 />
-              ) : null}
+              ) : (
+                <MilestoneSearchControl onQueryChange={setMilestoneSearchQuery} query={milestoneSearchQuery} />
+              )}
             </div>
             {milestoneActionError ? <AuthFormMessage message={milestoneActionError} type="error" /> : null}
             {todoActionError ? <AuthFormMessage message={todoActionError} type="error" /> : null}
@@ -1326,6 +1330,7 @@ export default function PlanDetailPage() {
                   <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
                     <MilestoneTimelineBoard
                       canManagePlan={permissions.canManagePlan}
+                      defaultExpandedMilestoneId={defaultWorkMilestone?.id ?? null}
                       isMilestoneSubmitting={isMilestoneSubmitting}
                       isPlanClosed={Boolean(isPlanEnded)}
                       isTodoSubmitting={isTodoSubmitting}
@@ -1348,6 +1353,7 @@ export default function PlanDetailPage() {
                       }}
                       onSelect={(milestoneId) => setSelectedMilestoneId(milestoneId)}
                       onViewTodo={setDetailTodo}
+                      searchQuery={milestoneSearchQuery}
                       selectedMilestoneId={selectedMilestone?.id ?? null}
                       todos={todos}
                     />
