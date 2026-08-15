@@ -29,6 +29,7 @@ import { useIncomes } from '@/modules/income/hooks/use-incomes';
 import { getExpenseCategories, getIncomeCategories } from '@/modules/category/constants/category-presets';
 import { TimelineList } from '@/modules/expense/components/timeline-list';
 import { useExpenses } from '@/modules/expense/hooks/use-expenses';
+import { MemberAvatarStack } from '@/modules/member/components/member-avatar-stack';
 import { MemberList } from '@/modules/member/components/member-list';
 import { MemberManagementPanel } from '@/modules/member/components/member-management-panel';
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
@@ -90,6 +91,7 @@ import { Card } from '@/shared/components/ui/card';
 import { Dialog } from '@/shared/components/ui/dialog';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 import { Skeleton } from '@/shared/components/ui/skeleton';
+import { formatCompactCurrency } from '@/shared/utils/currency';
 import { formatDate } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 import { cn } from '@/shared/utils/cn';
@@ -138,6 +140,10 @@ export default function PlanDetailPage() {
   const { todos, isLoading: isTodosLoading, errorMessage: todoError } = useTodos(planId);
   const { members, currentMember, permissions, errorMessage: memberError } = usePlanMembers(planId);
   const { invitations, errorMessage: invitationError } = usePlanInvitations(planId);
+  const estimatedTotal = useMemo(
+    () => todos.reduce((total, todo) => total + (getTodoBudgetAmount(todo) ?? 0), 0),
+    [todos],
+  );
   const categories = useMemo(() => (plan ? getExpenseCategories(plan.planType) : []), [plan]);
   const incomeCategories = useMemo(() => (plan ? getIncomeCategories(plan.planType) : []), [plan]);
   const { expenses, errorMessage: expenseError } = useExpenses(planId);
@@ -1025,7 +1031,7 @@ export default function PlanDetailPage() {
         />
       ) : null}
       {activeTab === 'Tổng quan' ? (
-        <Card className={cn('gap-6')}>
+        <div className="flex flex-col gap-6">
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <h1 className="min-w-0 flex-1 truncate text-3xl font-semibold text-slate-950">{plan.name}</h1>
@@ -1100,7 +1106,25 @@ export default function PlanDetailPage() {
 
             {plan.description ? <p className="text-sm leading-6 text-slate-600">{plan.description}</p> : null}
           </div>
-        </Card>
+
+          <div className="flex items-end justify-between gap-4">
+            <div className="flex gap-8">
+              <div>
+                <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Tổng chi</p>
+                <p className="mt-1 text-2xl font-semibold text-slate-950">{formatCompactCurrency(plan.totalExpense)}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Dự kiến</p>
+                <p className="mt-1 text-2xl font-semibold text-slate-600">{formatCompactCurrency(estimatedTotal)}</p>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Thành viên</p>
+              <MemberAvatarStack members={members} />
+            </div>
+          </div>
+        </div>
       ) : null}
 
       <Card className="gap-4">
