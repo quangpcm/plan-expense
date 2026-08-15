@@ -1,6 +1,6 @@
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, CircleDollarSign, PencilLine, Plus } from 'lucide-react';
+import { CalendarDays, CircleDollarSign, PencilLine, Plus, Trash2 } from 'lucide-react';
 
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
@@ -30,6 +30,7 @@ type MilestoneTimelineBoardProps = {
   isTodoSubmitting: boolean;
   onSelect: (milestoneId: string) => void;
   onEditMilestone: (milestone: MilestoneDocument) => void;
+  onDeleteMilestone: (milestone: MilestoneDocument) => void;
   onAddTodo: (milestone: MilestoneDocument) => void;
   onReorderTodos: (milestoneId: string, orderedTodoIds: string[]) => Promise<void>;
   onViewTodo: (todo: TodoDocument) => void;
@@ -126,6 +127,7 @@ export function MilestoneTimelineBoard({
   isTodoSubmitting,
   onSelect,
   onEditMilestone,
+  onDeleteMilestone,
   onAddTodo,
   onReorderTodos,
   onViewTodo,
@@ -628,6 +630,20 @@ export function MilestoneTimelineBoard({
                           variant={isSelected ? 'ghost' : 'secondary'}
                         >
                           <PencilLine className="size-4" />
+                        </Button>
+                        <Button
+                          aria-label={`Xoá mốc ${milestone.title}`}
+                          className={cn(
+                            'size-8 min-h-8 justify-center px-0 hover:bg-rose-50 hover:text-rose-600 sm:size-9 sm:min-h-9',
+                            tone.action,
+                          )}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onDeleteMilestone(milestone);
+                          }}
+                          variant={isSelected ? 'ghost' : 'secondary'}
+                        >
+                          <Trash2 className="size-4" />
                         </Button>
                       </div>
                     ) : null}

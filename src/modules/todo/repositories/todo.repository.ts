@@ -1,9 +1,12 @@
+import type { MediaAttachment } from '@/modules/storage/types/attachment';
 import type {
   MoveTodoToMilestoneInput,
   ReorderTodosWithinMilestoneInput,
   TodoDocument,
   UpdateTodoInput,
 } from '@/modules/todo/types/todo';
+
+export type OrphanedAttachmentsResult = { orphanedAttachments: MediaAttachment[] };
 
 export type CreateTodoPersistenceInput = {
   planId: string;
@@ -44,14 +47,14 @@ export type UpdateTodoVendorPersistenceInput = {
 export interface TodoRepository {
   generateTodoId(planId: string): string;
   createTodo(input: CreateTodoPersistenceInput): Promise<{ todoId: string }>;
-  updateTodo(planId: string, input: UpdateTodoPersistenceInput): Promise<void>;
+  updateTodo(planId: string, input: UpdateTodoPersistenceInput): Promise<OrphanedAttachmentsResult>;
   reorderTodosWithinMilestone(planId: string, input: ReorderTodosWithinMilestoneInput): Promise<void>;
   moveTodoToMilestone(planId: string, input: MoveTodoToMilestoneInput): Promise<void>;
   addVendor(planId: string, todoId: string, vendor: AddTodoVendorPersistenceInput): Promise<void>;
-  updateVendor(planId: string, todoId: string, input: UpdateTodoVendorPersistenceInput): Promise<void>;
-  deleteVendor(planId: string, todoId: string, vendorId: string): Promise<void>;
+  updateVendor(planId: string, todoId: string, input: UpdateTodoVendorPersistenceInput): Promise<OrphanedAttachmentsResult>;
+  deleteVendor(planId: string, todoId: string, vendorId: string): Promise<OrphanedAttachmentsResult>;
   selectVendor(planId: string, todoId: string, vendorId: string | null): Promise<void>;
-  deleteTodo(planId: string, todoId: string): Promise<void>;
+  deleteTodo(planId: string, todoId: string): Promise<OrphanedAttachmentsResult>;
   watchTodos(
     planId: string,
     callback: (todos: TodoDocument[]) => void,

@@ -2,6 +2,8 @@ export { storageRepository } from './services';
 export { getMediaPublicUrl, resolveAttachmentUrl } from './utils/public-url';
 export { resolveAttachmentDrafts } from './utils/resolve-attachments';
 export { readImageDimensions } from './utils/read-image-dimensions';
+export { collectStoragePaths, deleteAttachmentsInBackground } from './utils/delete-attachments';
+export { diffRemovedAttachments } from './utils/diff-attachments';
 export { AttachmentPicker } from './components/attachment-picker';
 export { AttachmentGallery } from './components/attachment-gallery';
 export { attachmentDraftSchema } from './schemas/attachment-draft.schema';

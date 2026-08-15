@@ -28,6 +28,7 @@ import type {
   TodoDocument,
   TodoVendor,
 } from '@/modules/todo/types/todo';
+import { diffRemovedAttachments } from '@/modules/storage/utils/diff-attachments';
 import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
 import { getFallbackTodoOrderIndex, sortTodosByMilestoneOrder, TODO_ORDER_INDEX_STEP } from '@/modules/todo/utils/todo-order';
@@ -112,7 +113,7 @@ export class FirestoreTodoRepository implements TodoRepository {
     const milestoneRef = doc(db, 'plans', planId, 'milestones', input.milestoneId);
     const now = Timestamp.now();
 
-    const completedDelta = await runTransaction(db, async (transaction) => {
+    const { completedDelta, orphanedAttachments } = await runTransaction(db, async (transaction) => {
       const todoSnapshot = await transaction.get(todoRef);
 
       if (!todoSnapshot.exists()) {
@@ -131,6 +132,8 @@ export class FirestoreTodoRepository implements TodoRepository {
           : previousTodo.status === 'done' && input.status !== 'done'
             ? -1
             : 0;
+      const nextAttachments = input.attachments !== undefined ? input.attachments : previousTodo.attachments ?? [];
+      const orphanedAttachments = diffRemovedAttachments(previousTodo.attachments ?? [], nextAttachments);
 
       transaction.update(todoRef, {
         title: input.title,
@@ -144,7 +147,7 @@ export class FirestoreTodoRepository implements TodoRepository {
           input.selectedTodoVendorId !== undefined
             ? input.selectedTodoVendorId?.trim() || null
             : previousTodo.selectedTodoVendorId ?? null,
-        attachments: input.attachments !== undefined ? input.attachments : previousTodo.attachments ?? [],
+        attachments: nextAttachments,
         updatedAt: now,
         completedAt: input.status === 'done' ? previousTodo.completedAt ?? now : null,
         cancelledAt: input.status === 'cancelled' ? previousTodo.cancelledAt ?? now : null,
@@ -160,7 +163,7 @@ export class FirestoreTodoRepository implements TodoRepository {
         updatedAt: now,
       });
 
-      return completedDelta;
+      return { completedDelta, orphanedAttachments };
     });
 
     if (completedDelta !== 0) {
@@ -169,6 +172,8 @@ export class FirestoreTodoRepository implements TodoRepository {
         updatedAt: now,
       });
     }
+
+    return { orphanedAttachments };
   }
 
   async reorderTodosWithinMilestone(planId: string, input: ReorderTodosWithinMilestoneInput) {
@@ -297,7 +302,7 @@ export class FirestoreTodoRepository implements TodoRepository {
     const todoRef = doc(db, 'plans', planId, 'todos', todoId);
     const now = Timestamp.now();
 
-    await runTransaction(db, async (transaction) => {
+    const orphanedAttachments = await runTransaction(db, async (transaction) => {
       const todoSnapshot = await transaction.get(todoRef);
 
       if (!todoSnapshot.exists()) {
@@ -312,20 +317,25 @@ export class FirestoreTodoRepository implements TodoRepository {
         throw new Error('Vendor not found.');
       }
 
+      const nextAttachments = input.attachments !== undefined ? input.attachments : targetVendor.attachments;
       const updatedVendor: TodoVendor = {
         ...targetVendor,
         name: input.name,
         description: input.description,
         link: input.link,
         price: input.price,
-        attachments: input.attachments !== undefined ? input.attachments : targetVendor.attachments,
+        attachments: nextAttachments,
       };
 
       transaction.update(todoRef, {
         vendors: previousVendors.map((vendor) => (vendor.id === input.vendorId ? updatedVendor : vendor)),
         updatedAt: now,
       });
+
+      return diffRemovedAttachments(targetVendor.attachments, nextAttachments);
     });
+
+    return { orphanedAttachments };
   }
 
   async deleteVendor(planId: string, todoId: string, vendorId: string) {
@@ -333,7 +343,7 @@ export class FirestoreTodoRepository implements TodoRepository {
     const todoRef = doc(db, 'plans', planId, 'todos', todoId);
     const now = Timestamp.now();
 
-    await runTransaction(db, async (transaction) => {
+    const orphanedAttachments = await runTransaction(db, async (transaction) => {
       const todoSnapshot = await transaction.get(todoRef);
 
       if (!todoSnapshot.exists()) {
@@ -342,8 +352,9 @@ export class FirestoreTodoRepository implements TodoRepository {
 
       const previousTodo = todoSnapshot.data() as TodoDocument;
       const previousVendors = (previousTodo.vendors ?? []).map(normalizeVendor);
+      const targetVendor = previousVendors.find((vendor) => vendor.id === vendorId);
 
-      if (!previousVendors.some((vendor) => vendor.id === vendorId)) {
+      if (!targetVendor) {
         throw new Error('Vendor not found.');
       }
 
@@ -352,7 +363,11 @@ export class FirestoreTodoRepository implements TodoRepository {
         selectedTodoVendorId: previousTodo.selectedTodoVendorId === vendorId ? null : previousTodo.selectedTodoVendorId,
         updatedAt: now,
       });
+
+      return targetVendor.attachments;
     });
+
+    return { orphanedAttachments };
   }
 
   async selectVendor(planId: string, todoId: string, vendorId: string | null) {
@@ -420,6 +435,12 @@ export class FirestoreTodoRepository implements TodoRepository {
         updatedAt: now,
       });
     }
+
+    const orphanedAttachments = deletedTodo
+      ? [...(deletedTodo.attachments ?? []), ...(deletedTodo.vendors ?? []).flatMap((vendor) => vendor.attachments)]
+      : [];
+
+    return { orphanedAttachments };
   }
 
   watchTodos(

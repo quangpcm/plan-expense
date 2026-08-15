@@ -4,11 +4,14 @@ import {
   Timestamp,
   collection,
   doc,
+  getDoc,
+  getDocs,
   increment,
   onSnapshot,
   orderBy,
   query,
   runTransaction,
+  where,
   writeBatch,
 } from 'firebase/firestore';
 
@@ -18,6 +21,7 @@ import type {
   MilestoneRepository,
 } from '@/modules/milestone/repositories/milestone.repository';
 import type { MilestoneDocument, ReorderMilestoneInput, UpdateMilestoneInput } from '@/modules/milestone/types/milestone';
+import type { TodoDocument } from '@/modules/todo/types/todo';
 import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
@@ -148,6 +152,64 @@ export class FirestoreMilestoneRepository implements MilestoneRepository {
     });
 
     await batch.commit();
+  }
+
+  async deleteMilestone(planId: string, milestoneId: string) {
+    const db = getFirebaseFirestore();
+    const milestoneRef = doc(db, 'plans', planId, 'milestones', milestoneId);
+    const planRef = doc(db, 'plans', planId);
+    const now = Timestamp.now();
+
+    const milestoneSnapshot = await getDoc(milestoneRef);
+
+    if (!milestoneSnapshot.exists()) {
+      throw new Error('Milestone not found.');
+    }
+
+    const milestone = milestoneSnapshot.data() as MilestoneDocument;
+
+    const expensesSnapshot = await getDocs(
+      query(collection(db, 'plans', planId, 'expenses'), where('milestoneId', '==', milestoneId)),
+    );
+
+    if (!expensesSnapshot.empty) {
+      throw new Error('Milestone này vẫn còn khoản chi. Vui lòng chuyển hoặc xoá khoản chi trước khi xoá mốc này.');
+    }
+
+    const todosSnapshot = await getDocs(
+      query(collection(db, 'plans', planId, 'todos'), where('milestoneId', '==', milestoneId)),
+    );
+    const todos = todosSnapshot.docs.map((snapshot) => snapshot.data() as TodoDocument);
+    const orphanedAttachments = todos.flatMap((todo) => [
+      ...(todo.attachments ?? []),
+      ...(todo.vendors ?? []).flatMap((vendor) => vendor.attachments),
+    ]);
+    const completedTodoCount = todos.filter((todo) => todo.status === 'done').length;
+
+    const refsToDelete = [milestoneRef, ...todosSnapshot.docs.map((snapshot) => snapshot.ref)];
+    const CHUNK_SIZE = 450;
+
+    for (let index = 0; index < refsToDelete.length; index += CHUNK_SIZE) {
+      const batch = writeBatch(db);
+      refsToDelete.slice(index, index + CHUNK_SIZE).forEach((ref) => batch.delete(ref));
+      await batch.commit();
+    }
+
+    const planUpdate = {
+      milestoneCount: increment(-1),
+      completedMilestoneCount: increment(milestone.status === 'completed' ? -1 : 0),
+      todoCount: increment(-todos.length),
+      completedTodoCount: increment(-completedTodoCount),
+      updatedAt: now,
+    };
+
+    const finalBatch = writeBatch(db);
+    finalBatch.update(planRef, planUpdate);
+    await finalBatch.commit();
+
+    await syncUserPlansAggregate(planId, planUpdate);
+
+    return { orphanedAttachments };
   }
 
   watchMilestones(

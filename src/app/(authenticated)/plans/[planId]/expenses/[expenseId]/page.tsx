@@ -53,6 +53,12 @@ export default function ExpenseDetailPage() {
   const canDelete = permissions.canDeleteAllExpenses || currentExpense.createdByUserId === currentUser.uid;
 
   async function handleDelete() {
+    const confirmed = window.confirm(`Xoá khoản chi "${currentExpense.title}"? Hành động này không thể hoàn tác.`);
+
+    if (!confirmed) {
+      return;
+    }
+
     setIsDeleting(true);
     setErrorMessage(null);
 

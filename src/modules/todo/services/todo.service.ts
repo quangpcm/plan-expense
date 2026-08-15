@@ -12,6 +12,7 @@ import type { AuthUser } from '@/modules/auth/types/auth';
 import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
+import { deleteAttachmentsInBackground } from '@/modules/storage/utils/delete-attachments';
 import { resolveAttachmentDrafts } from '@/modules/storage/utils/resolve-attachments';
 import { AppError } from '@/shared/errors/app-error';
 
@@ -90,11 +91,12 @@ export class TodoService {
           )
         : undefined;
 
-    await this.todoRepository.updateTodo(plan.id, {
+    const { orphanedAttachments } = await this.todoRepository.updateTodo(plan.id, {
       ...input,
       title,
       attachments,
     });
+    deleteAttachmentsInBackground(plan.id, orphanedAttachments);
   }
 
   async completeTodo(
@@ -176,7 +178,7 @@ export class TodoService {
       input.attachments,
     );
 
-    await this.todoRepository.updateVendor(plan.id, todo.id, {
+    const { orphanedAttachments } = await this.todoRepository.updateVendor(plan.id, todo.id, {
       vendorId: input.vendorId,
       name,
       description: input.description?.trim() || null,
@@ -184,6 +186,7 @@ export class TodoService {
       price: input.price,
       attachments,
     });
+    deleteAttachmentsInBackground(plan.id, orphanedAttachments);
   }
 
   async deleteVendor(
@@ -201,7 +204,8 @@ export class TodoService {
       throw new AppError('Vendor không tồn tại trong công việc này.', 'TODO_VENDOR_NOT_FOUND', 400);
     }
 
-    await this.todoRepository.deleteVendor(plan.id, todo.id, vendorId);
+    const { orphanedAttachments } = await this.todoRepository.deleteVendor(plan.id, todo.id, vendorId);
+    deleteAttachmentsInBackground(plan.id, orphanedAttachments);
   }
 
   async reorderTodosWithinMilestone(
@@ -266,7 +270,8 @@ export class TodoService {
     this.assertEditablePlan(plan);
     this.assertManagePlanPermission(currentMember);
 
-    await this.todoRepository.deleteTodo(plan.id, todo.id);
+    const { orphanedAttachments } = await this.todoRepository.deleteTodo(plan.id, todo.id);
+    deleteAttachmentsInBackground(plan.id, orphanedAttachments);
   }
 
   watchTodos(

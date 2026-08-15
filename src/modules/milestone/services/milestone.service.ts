@@ -1,9 +1,15 @@
 import type { MilestoneRepository } from '@/modules/milestone/repositories/milestone.repository';
-import type { CreateMilestoneInput, ReorderMilestoneInput, UpdateMilestoneInput } from '@/modules/milestone/types/milestone';
+import type {
+  CreateMilestoneInput,
+  MilestoneDocument,
+  ReorderMilestoneInput,
+  UpdateMilestoneInput,
+} from '@/modules/milestone/types/milestone';
 import type { AuthUser } from '@/modules/auth/types/auth';
 import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
+import { deleteAttachmentsInBackground } from '@/modules/storage/utils/delete-attachments';
 import { AppError } from '@/shared/errors/app-error';
 
 export class MilestoneService {
@@ -93,6 +99,20 @@ export class MilestoneService {
     this.assertEditablePlan(plan);
     this.assertManagePlanPermission(currentMember);
     await this.milestoneRepository.reorderMilestones(plan.id, milestones);
+  }
+
+  async deleteMilestone(
+    plan: PlanDocument,
+    milestone: MilestoneDocument,
+    currentUser: AuthUser,
+    currentMember: PlanMemberDocument | null,
+  ) {
+    void currentUser;
+    this.assertEditablePlan(plan);
+    this.assertManagePlanPermission(currentMember);
+
+    const { orphanedAttachments } = await this.milestoneRepository.deleteMilestone(plan.id, milestone.id);
+    deleteAttachmentsInBackground(plan.id, orphanedAttachments);
   }
 
   watchMilestones(

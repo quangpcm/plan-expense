@@ -17,6 +17,7 @@ import type {
   UpdateExpensePersistenceInput,
 } from '@/modules/expense/repositories/expense.repository';
 import type { ExpenseDocument, ExpenseParticipant } from '@/modules/expense/types/expense';
+import { diffRemovedAttachments } from '@/modules/storage/utils/diff-attachments';
 import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
@@ -96,7 +97,7 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
     const planRef = doc(db, 'plans', planId);
     const now = Timestamp.now();
 
-    const nextTotalExpense = await runTransaction(db, async (transaction) => {
+    const result = await runTransaction(db, async (transaction) => {
       const expenseSnapshot = await transaction.get(expenseRef);
       const planSnapshot = await transaction.get(planRef);
 
@@ -105,6 +106,7 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
       }
 
       const previousExpense = expenseSnapshot.data() as ExpenseDocument;
+      const orphanedAttachments = diffRemovedAttachments(previousExpense.attachments ?? [], input.attachments);
       const previousMilestoneId =
         typeof previousExpense.milestoneId === 'string' && previousExpense.milestoneId.trim()
           ? previousExpense.milestoneId
@@ -166,21 +168,24 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
         });
       }
 
-      return updatedTotalExpense;
+      return { updatedTotalExpense, orphanedAttachments };
     });
 
-    if (nextTotalExpense !== null) {
-      await syncUserPlansAggregate(planId, { totalExpense: nextTotalExpense, updatedAt: now });
+    if (result !== null) {
+      await syncUserPlansAggregate(planId, { totalExpense: result.updatedTotalExpense, updatedAt: now });
     }
+
+    return { orphanedAttachments: result?.orphanedAttachments ?? [] };
   }
 
-  async softDeleteExpense(planId: string, expenseId: string, actor: AuthUser) {
+  async deleteExpense(planId: string, expenseId: string, actor: AuthUser) {
+    void actor;
     const db = getFirebaseFirestore();
     const expenseRef = doc(db, 'plans', planId, 'expenses', expenseId);
     const planRef = doc(db, 'plans', planId);
     const now = Timestamp.now();
 
-    const nextTotalExpense = await runTransaction(db, async (transaction) => {
+    const result = await runTransaction(db, async (transaction) => {
       const expenseSnapshot = await transaction.get(expenseRef);
       const planSnapshot = await transaction.get(planRef);
 
@@ -192,10 +197,6 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
       const milestoneRef = doc(db, 'plans', planId, 'milestones', expense.milestoneId);
       const milestoneSnapshot = await transaction.get(milestoneRef);
 
-      if (expense.status === 'deleted') {
-        return null;
-      }
-
       if (!milestoneSnapshot.exists()) {
         throw new Error('Milestone not found.');
       }
@@ -204,13 +205,7 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
       const updatedTotalExpense = currentTotalExpense - expense.amount;
       const currentMilestoneTotal = (milestoneSnapshot.data()?.totalExpense as number | undefined) ?? 0;
 
-      transaction.update(expenseRef, {
-        status: 'deleted',
-        deletedAt: now,
-        deletedByUserId: actor.uid,
-        updatedAt: now,
-        version: expense.version + 1,
-      });
+      transaction.delete(expenseRef);
 
       transaction.update(planRef, {
         expenseCount: increment(-1),
@@ -223,12 +218,14 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
         updatedAt: now,
       });
 
-      return updatedTotalExpense;
+      return { updatedTotalExpense, orphanedAttachments: expense.attachments ?? [] };
     });
 
-    if (nextTotalExpense !== null) {
-      await syncUserPlansAggregate(planId, { totalExpense: nextTotalExpense, updatedAt: now });
+    if (result !== null) {
+      await syncUserPlansAggregate(planId, { totalExpense: result.updatedTotalExpense, updatedAt: now });
     }
+
+    return { orphanedAttachments: result?.orphanedAttachments ?? [] };
   }
 
   watchExpenses(planId: string, callback: (expenses: ExpenseDocument[]) => void, onError?: (error: Error) => void) {

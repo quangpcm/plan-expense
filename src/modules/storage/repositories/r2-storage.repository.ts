@@ -40,4 +40,37 @@ export class R2StorageRepository implements StorageRepository {
 
     return payload as RequestUploadUrlResult;
   }
+
+  async deleteAttachments(input: { planId: string; storagePaths: string[] }): Promise<void> {
+    if (input.storagePaths.length === 0) {
+      return;
+    }
+
+    const currentUser = getFirebaseAuth().currentUser;
+
+    if (!currentUser) {
+      throw new AppError('You must be signed in to delete files.', 'STORAGE_NOT_AUTHENTICATED', 401);
+    }
+
+    const idToken = await getIdToken(currentUser);
+
+    const response = await fetch('/api/storage/delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify(input),
+    });
+
+    const payload: { error?: { code?: string; message?: string } } = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new AppError(
+        payload.error?.message ?? 'Failed to delete storage objects.',
+        payload.error?.code ?? 'STORAGE_DELETE_FAILED',
+        response.status,
+      );
+    }
+  }
 }

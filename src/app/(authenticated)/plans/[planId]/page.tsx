@@ -763,6 +763,31 @@ export default function PlanDetailPage() {
     }
   }
 
+  async function handleDeleteMilestone(milestone: MilestoneDocument) {
+    if (!user) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Xoá mốc "${milestone.title}"? Toàn bộ công việc thuộc mốc này sẽ bị xoá theo. Hành động này không thể hoàn tác.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsMilestoneSubmitting(true);
+    setMilestoneActionError(null);
+
+    try {
+      await milestoneService.deleteMilestone(ensuredPlan, milestone, user, currentMember);
+    } catch (error) {
+      setMilestoneActionError(error instanceof Error ? error.message : 'Hiện chưa thể xoá mốc kế hoạch này.');
+    } finally {
+      setIsMilestoneSubmitting(false);
+    }
+  }
+
   async function handleChangeTodoStatus(todo: TodoDocument, status: TodoDocument['status']) {
     if (!user) {
       return;
@@ -1371,6 +1396,7 @@ export default function PlanDetailPage() {
                         setEditingMilestone(milestone);
                         setShowMilestoneForm(true);
                       }}
+                      onDeleteMilestone={handleDeleteMilestone}
                       onOpenExpenseSheet={(milestone) => {
                         setSelectedMilestoneId(milestone.id);
                         setExpenseSheetMilestoneId(milestone.id);

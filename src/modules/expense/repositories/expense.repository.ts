@@ -1,5 +1,6 @@
 import type { AuthUser } from '@/modules/auth/types/auth';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
+import type { MediaAttachment } from '@/modules/storage/types/attachment';
 import type {
   ExpenseDocument,
   ExpenseParticipant,
@@ -33,8 +34,12 @@ export type UpdateExpensePersistenceInput = Omit<UpdateExpenseInput, 'attachment
 export interface ExpenseRepository {
   generateExpenseId(planId: string): string;
   createExpense(input: CreateExpensePersistenceInput): Promise<{ expenseId: string }>;
-  updateExpense(planId: string, input: UpdateExpensePersistenceInput, participants: ExpenseParticipant[]): Promise<void>;
-  softDeleteExpense(planId: string, expenseId: string, actor: AuthUser): Promise<void>;
+  updateExpense(
+    planId: string,
+    input: UpdateExpensePersistenceInput,
+    participants: ExpenseParticipant[],
+  ): Promise<{ orphanedAttachments: MediaAttachment[] }>;
+  deleteExpense(planId: string, expenseId: string, actor: AuthUser): Promise<{ orphanedAttachments: MediaAttachment[] }>;
   watchExpenses(
     planId: string,
     callback: (expenses: ExpenseDocument[]) => void,

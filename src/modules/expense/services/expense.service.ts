@@ -14,6 +14,7 @@ import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
+import { deleteAttachmentsInBackground } from '@/modules/storage/utils/delete-attachments';
 import { resolveAttachmentDrafts } from '@/modules/storage/utils/resolve-attachments';
 
 type ExpenseContext = {
@@ -161,11 +162,12 @@ export class ExpenseService {
       input.attachments,
     );
 
-    await this.expenseRepository.updateExpense(
+    const { orphanedAttachments } = await this.expenseRepository.updateExpense(
       context.plan.id,
       { ...input, milestoneId: milestone.id, attachments },
       participants,
     );
+    deleteAttachmentsInBackground(context.plan.id, orphanedAttachments);
   }
 
   async deleteExpense(
@@ -182,7 +184,8 @@ export class ExpenseService {
       throw new AppError('You do not have permission to delete this expense.', 'EXPENSE_DELETE_DENIED', 403);
     }
 
-    await this.expenseRepository.softDeleteExpense(plan.id, expense.id, currentUser);
+    const { orphanedAttachments } = await this.expenseRepository.deleteExpense(plan.id, expense.id, currentUser);
+    deleteAttachmentsInBackground(plan.id, orphanedAttachments);
   }
 
   watchExpenses(planId: string, callback: (expenses: ExpenseDocument[]) => void, onError?: (error: Error) => void) {

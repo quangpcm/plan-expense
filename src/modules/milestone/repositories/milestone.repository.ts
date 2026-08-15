@@ -1,3 +1,4 @@
+import type { MediaAttachment } from '@/modules/storage/types/attachment';
 import type { MilestoneDocument, ReorderMilestoneInput, UpdateMilestoneInput } from '@/modules/milestone/types/milestone';
 
 export type CreateMilestonePersistenceInput = {
@@ -16,6 +17,7 @@ export interface MilestoneRepository {
   createMilestone(input: CreateMilestonePersistenceInput): Promise<{ milestoneId: string }>;
   updateMilestone(planId: string, input: UpdateMilestoneInput): Promise<void>;
   reorderMilestones(planId: string, input: ReorderMilestoneInput[]): Promise<void>;
+  deleteMilestone(planId: string, milestoneId: string): Promise<{ orphanedAttachments: MediaAttachment[] }>;
   watchMilestones(
     planId: string,
     callback: (milestones: MilestoneDocument[]) => void,
