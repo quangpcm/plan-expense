@@ -78,6 +78,7 @@ function makeMilestone(overrides: Partial<MilestoneDocument> = {}): MilestoneDoc
     status: 'in_progress',
     orderIndex: 0,
     budgetAmount: 1000,
+    estimatedAmount: 1000,
     totalExpense: 300,
     todoCount: 2,
     completedTodoCount: 1,

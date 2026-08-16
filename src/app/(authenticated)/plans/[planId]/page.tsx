@@ -43,8 +43,10 @@ import { planService } from '@/modules/plan/services';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
 import { useUserPlans } from '@/modules/plan/hooks/use-user-plans';
 import type { PlanStatus } from '@/modules/plan/types/plan';
+import { getEffectiveBudgetAmount } from '@/modules/plan/utils/get-effective-budget-amount';
 import { PasscodeForm } from '@/modules/user/components/passcode-form';
 import { useCurrentUserProfile } from '@/modules/user/hooks/use-current-user-profile';
+import { recalculateEstimatedAmounts } from '@/shared/lib/firestore/recalculate-estimated-amounts';
 import { Switch } from '@/shared/components/ui/switch';
 import {
   MilestoneExpensePanel,
@@ -144,6 +146,14 @@ export default function PlanDetailPage() {
     () => todos.reduce((total, todo) => total + (getTodoBudgetAmount(todo) ?? 0), 0),
     [todos],
   );
+  const resolvedEstimatedTotal = useMemo(
+    () => Math.max(plan?.estimatedAmount ?? 0, estimatedTotal),
+    [estimatedTotal, plan?.estimatedAmount],
+  );
+  const effectiveEstimatedTotal = useMemo(
+    () => getEffectiveBudgetAmount(plan?.budgetAmount ?? null, resolvedEstimatedTotal),
+    [plan?.budgetAmount, resolvedEstimatedTotal],
+  );
   const estimatedByMilestoneId = useMemo(() => {
     const totals: Record<string, number> = {};
 
@@ -206,6 +216,24 @@ export default function PlanDetailPage() {
     memberId: string;
   } | null>(null);
   const previousPlanIdRef = useRef<string | undefined>(undefined);
+  const hasRequestedEstimateRepairRef = useRef(false);
+
+  useEffect(() => {
+    if (!plan) {
+      hasRequestedEstimateRepairRef.current = false;
+      return;
+    }
+
+    const storedEstimatedAmount = plan.estimatedAmount ?? 0;
+    const shouldRepair = storedEstimatedAmount < 0 || storedEstimatedAmount < estimatedTotal;
+
+    if (!shouldRepair || hasRequestedEstimateRepairRef.current) {
+      return;
+    }
+
+    hasRequestedEstimateRepairRef.current = true;
+    void recalculateEstimatedAmounts(plan.id);
+  }, [estimatedTotal, plan]);
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -1124,7 +1152,9 @@ export default function PlanDetailPage() {
               </div>
               <div>
                 <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Dự kiến</p>
-                <p className="mt-1 text-2xl font-semibold text-slate-600">{formatCompactCurrency(estimatedTotal)}</p>
+                <p className="mt-1 text-2xl font-semibold text-slate-600">
+                  {formatCompactCurrency(effectiveEstimatedTotal)}
+                </p>
               </div>
             </div>
 

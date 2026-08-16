@@ -39,6 +39,7 @@ async function seedBasePlan() {
       expenseCount: 1,
       incomeCount: 0,
       settlementCount: 0,
+      estimatedAmount: 1200,
       totalExpense: 300,
       totalIncome: 0,
       createdAt: now,
@@ -121,6 +122,7 @@ async function seedBasePlan() {
       memberStatus: 'active',
       planStatus: 'active',
       coverImageUrl: null,
+      estimatedAmount: 1200,
       totalExpense: 500,
       memberCount: 3,
       joinedAt: now,
@@ -140,6 +142,7 @@ async function seedBasePlan() {
       memberStatus: 'active',
       planStatus: 'active',
       coverImageUrl: null,
+      estimatedAmount: 1200,
       totalExpense: 500,
       memberCount: 3,
       joinedAt: now,
@@ -159,6 +162,7 @@ async function seedBasePlan() {
       memberStatus: 'active',
       planStatus: 'active',
       coverImageUrl: null,
+      estimatedAmount: 1200,
       totalExpense: 500,
       memberCount: 3,
       joinedAt: now,
@@ -842,6 +846,16 @@ describe('firestore rules', () => {
       updateDoc(doc(db, 'userPlans', 'owner-user', 'plans', 'plan-1'), {
         totalExpense: 700,
         memberCount: 3,
+        updatedAt: now,
+      }),
+    );
+  });
+
+  it('allows a non-owner plan member to sync estimatedAmount into another member userPlans doc', async () => {
+    const db = testEnv.authenticatedContext('editor-user').firestore();
+    await assertSucceeds(
+      updateDoc(doc(db, 'userPlans', 'owner-user', 'plans', 'plan-1'), {
+        estimatedAmount: 2500,
         updatedAt: now,
       }),
     );

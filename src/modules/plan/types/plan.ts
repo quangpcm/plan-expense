@@ -30,6 +30,7 @@ export type PlanDocument = {
   startDate: Timestamp | null;
   endDate: Timestamp | null;
   budgetAmount: number | null;
+  estimatedAmount: number | null;
   savingGoalAmount: number | null;
   savingTargetDate: Timestamp | null;
   status: PlanStatus;
@@ -63,6 +64,7 @@ export type UserPlanDocument = {
   startDate: Timestamp | null;
   endDate: Timestamp | null;
   budgetAmount: number | null;
+  estimatedAmount: number | null;
   savingGoalAmount: number | null;
   savingTargetDate: Timestamp | null;
   milestoneCount: number;
@@ -114,6 +116,7 @@ export type PlanSummary = {
   startDate: Timestamp | null;
   endDate: Timestamp | null;
   budgetAmount: number | null;
+  estimatedAmount: number | null;
   savingGoalAmount: number | null;
   savingTargetDate: Timestamp | null;
   milestoneCount: number;

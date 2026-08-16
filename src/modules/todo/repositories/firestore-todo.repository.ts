@@ -29,8 +29,10 @@ import type {
   TodoVendor,
 } from '@/modules/todo/types/todo';
 import { diffRemovedAttachments } from '@/modules/storage/utils/diff-attachments';
+import { recalculateEstimatedAmounts } from '@/shared/lib/firestore/recalculate-estimated-amounts';
 import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
+import { getTodoBudgetAmount } from '@/modules/todo/utils/todo-budget';
 import { getFallbackTodoOrderIndex, sortTodosByMilestoneOrder, TODO_ORDER_INDEX_STEP } from '@/modules/todo/utils/todo-order';
 
 function normalizeVendor(raw: TodoVendor): TodoVendor {
@@ -52,6 +54,10 @@ function normalizeTodo(raw: TodoDocument): TodoDocument {
   };
 }
 
+function getTodoEstimatedAmount(todo: TodoDocument) {
+  return getTodoBudgetAmount(todo) ?? 0;
+}
+
 export class FirestoreTodoRepository implements TodoRepository {
   generateTodoId(planId: string): string {
     return doc(collection(getFirebaseFirestore(), 'plans', planId, 'todos')).id;
@@ -63,6 +69,7 @@ export class FirestoreTodoRepository implements TodoRepository {
     const planRef = doc(db, 'plans', input.planId);
     const milestoneRef = doc(db, 'plans', input.planId, 'milestones', input.milestoneId);
     const now = Timestamp.now();
+    const estimatedAmount = input.budget ?? 0;
 
     await runTransaction(db, async (transaction) => {
       transaction.set(todoRef, {
@@ -89,19 +96,23 @@ export class FirestoreTodoRepository implements TodoRepository {
 
       transaction.update(planRef, {
         todoCount: increment(1),
+        estimatedAmount: increment(estimatedAmount),
         updatedAt: now,
       });
 
       transaction.update(milestoneRef, {
         todoCount: increment(1),
+        estimatedAmount: increment(estimatedAmount),
         updatedAt: now,
       });
     });
 
     await syncUserPlansAggregate(input.planId, {
       todoCount: increment(1),
+      estimatedAmount: increment(estimatedAmount),
       updatedAt: now,
     });
+    await recalculateEstimatedAmounts(input.planId);
 
     return { todoId: todoRef.id };
   }
@@ -113,14 +124,14 @@ export class FirestoreTodoRepository implements TodoRepository {
     const milestoneRef = doc(db, 'plans', planId, 'milestones', input.milestoneId);
     const now = Timestamp.now();
 
-    const { completedDelta, orphanedAttachments } = await runTransaction(db, async (transaction) => {
+    const { completedDelta, estimatedDelta, orphanedAttachments } = await runTransaction(db, async (transaction) => {
       const todoSnapshot = await transaction.get(todoRef);
 
       if (!todoSnapshot.exists()) {
         throw new Error('Todo not found.');
       }
 
-      const previousTodo = todoSnapshot.data() as TodoDocument;
+      const previousTodo = normalizeTodo(todoSnapshot.data() as TodoDocument);
 
       if (input.milestoneId !== previousTodo.milestoneId) {
         throw new Error('Use moveTodoToMilestone() to move a todo between milestones.');
@@ -134,6 +145,27 @@ export class FirestoreTodoRepository implements TodoRepository {
             : 0;
       const nextAttachments = input.attachments !== undefined ? input.attachments : previousTodo.attachments ?? [];
       const orphanedAttachments = diffRemovedAttachments(previousTodo.attachments ?? [], nextAttachments);
+      const nextSelectedTodoVendorId =
+        input.selectedTodoVendorId !== undefined
+          ? input.selectedTodoVendorId?.trim() || null
+          : previousTodo.selectedTodoVendorId ?? null;
+      const nextBudget = input.budget !== undefined ? input.budget : previousTodo.budget ?? null;
+      const nextTodo = normalizeTodo({
+        ...previousTodo,
+        title: input.title,
+        description: input.description?.trim() || null,
+        assigneeMemberId: input.assigneeMemberId?.trim() || null,
+        dueDate: input.dueDate ? Timestamp.fromDate(new Date(input.dueDate)) : null,
+        priority: input.priority,
+        status: input.status,
+        budget: nextBudget,
+        selectedTodoVendorId: nextSelectedTodoVendorId,
+        attachments: nextAttachments,
+        updatedAt: now,
+        completedAt: input.status === 'done' ? previousTodo.completedAt ?? now : null,
+        cancelledAt: input.status === 'cancelled' ? previousTodo.cancelledAt ?? now : null,
+      });
+      const estimatedDelta = getTodoEstimatedAmount(nextTodo) - getTodoEstimatedAmount(previousTodo);
 
       transaction.update(todoRef, {
         title: input.title,
@@ -142,11 +174,8 @@ export class FirestoreTodoRepository implements TodoRepository {
         dueDate: input.dueDate ? Timestamp.fromDate(new Date(input.dueDate)) : null,
         priority: input.priority,
         status: input.status,
-        budget: input.budget !== undefined ? input.budget : previousTodo.budget ?? null,
-        selectedTodoVendorId:
-          input.selectedTodoVendorId !== undefined
-            ? input.selectedTodoVendorId?.trim() || null
-            : previousTodo.selectedTodoVendorId ?? null,
+        budget: nextBudget,
+        selectedTodoVendorId: nextSelectedTodoVendorId,
         attachments: nextAttachments,
         updatedAt: now,
         completedAt: input.status === 'done' ? previousTodo.completedAt ?? now : null,
@@ -155,23 +184,27 @@ export class FirestoreTodoRepository implements TodoRepository {
 
       transaction.update(planRef, {
         completedTodoCount: increment(completedDelta),
+        estimatedAmount: increment(estimatedDelta),
         updatedAt: now,
       });
 
       transaction.update(milestoneRef, {
         completedTodoCount: increment(completedDelta),
+        estimatedAmount: increment(estimatedDelta),
         updatedAt: now,
       });
 
-      return { completedDelta, orphanedAttachments };
+      return { completedDelta, estimatedDelta, orphanedAttachments };
     });
 
-    if (completedDelta !== 0) {
+    if (completedDelta !== 0 || estimatedDelta !== 0) {
       await syncUserPlansAggregate(planId, {
-        completedTodoCount: increment(completedDelta),
+        ...(completedDelta !== 0 ? { completedTodoCount: increment(completedDelta) } : {}),
+        ...(estimatedDelta !== 0 ? { estimatedAmount: increment(estimatedDelta) } : {}),
         updatedAt: now,
       });
     }
+    await recalculateEstimatedAmounts(planId);
 
     return { orphanedAttachments };
   }
@@ -228,6 +261,7 @@ export class FirestoreTodoRepository implements TodoRepository {
       }
 
       const todo = normalizeTodo(todoSnapshot.data() as TodoDocument);
+      const estimatedAmount = getTodoEstimatedAmount(todo);
 
       if (todo.milestoneId === input.targetMilestoneId) {
         return;
@@ -253,12 +287,14 @@ export class FirestoreTodoRepository implements TodoRepository {
       transaction.update(sourceMilestoneRef, {
         todoCount: increment(-1),
         completedTodoCount: increment(todo.status === 'done' ? -1 : 0),
+        estimatedAmount: increment(-estimatedAmount),
         updatedAt: now,
       });
 
       transaction.update(targetMilestoneRef, {
         todoCount: increment(1),
         completedTodoCount: increment(todo.status === 'done' ? 1 : 0),
+        estimatedAmount: increment(estimatedAmount),
         updatedAt: now,
       });
 
@@ -266,6 +302,7 @@ export class FirestoreTodoRepository implements TodoRepository {
         updatedAt: now,
       });
     });
+    await recalculateEstimatedAmounts(planId);
   }
 
   async addVendor(planId: string, todoId: string, vendor: AddTodoVendorPersistenceInput) {
@@ -300,16 +337,17 @@ export class FirestoreTodoRepository implements TodoRepository {
   async updateVendor(planId: string, todoId: string, input: UpdateTodoVendorPersistenceInput) {
     const db = getFirebaseFirestore();
     const todoRef = doc(db, 'plans', planId, 'todos', todoId);
+    const planRef = doc(db, 'plans', planId);
     const now = Timestamp.now();
 
-    const orphanedAttachments = await runTransaction(db, async (transaction) => {
+    const { estimatedDelta, orphanedAttachments } = await runTransaction(db, async (transaction) => {
       const todoSnapshot = await transaction.get(todoRef);
 
       if (!todoSnapshot.exists()) {
         throw new Error('Todo not found.');
       }
 
-      const previousTodo = todoSnapshot.data() as TodoDocument;
+      const previousTodo = normalizeTodo(todoSnapshot.data() as TodoDocument);
       const previousVendors = (previousTodo.vendors ?? []).map(normalizeVendor);
       const targetVendor = previousVendors.find((vendor) => vendor.id === input.vendorId);
 
@@ -326,14 +364,42 @@ export class FirestoreTodoRepository implements TodoRepository {
         price: input.price,
         attachments: nextAttachments,
       };
+      const nextTodo = normalizeTodo({
+        ...previousTodo,
+        vendors: previousVendors.map((vendor) => (vendor.id === input.vendorId ? updatedVendor : vendor)),
+      });
+      const estimatedDelta = getTodoEstimatedAmount(nextTodo) - getTodoEstimatedAmount(previousTodo);
+      const milestoneRef = doc(db, 'plans', planId, 'milestones', previousTodo.milestoneId);
 
       transaction.update(todoRef, {
-        vendors: previousVendors.map((vendor) => (vendor.id === input.vendorId ? updatedVendor : vendor)),
+        vendors: nextTodo.vendors,
         updatedAt: now,
       });
 
-      return diffRemovedAttachments(targetVendor.attachments, nextAttachments);
+      if (estimatedDelta !== 0) {
+        transaction.update(planRef, {
+          estimatedAmount: increment(estimatedDelta),
+          updatedAt: now,
+        });
+        transaction.update(milestoneRef, {
+          estimatedAmount: increment(estimatedDelta),
+          updatedAt: now,
+        });
+      }
+
+      return {
+        estimatedDelta,
+        orphanedAttachments: diffRemovedAttachments(targetVendor.attachments, nextAttachments),
+      };
     });
+
+    if (estimatedDelta !== 0) {
+      await syncUserPlansAggregate(planId, {
+        estimatedAmount: increment(estimatedDelta),
+        updatedAt: now,
+      });
+    }
+    await recalculateEstimatedAmounts(planId);
 
     return { orphanedAttachments };
   }
@@ -341,16 +407,17 @@ export class FirestoreTodoRepository implements TodoRepository {
   async deleteVendor(planId: string, todoId: string, vendorId: string) {
     const db = getFirebaseFirestore();
     const todoRef = doc(db, 'plans', planId, 'todos', todoId);
+    const planRef = doc(db, 'plans', planId);
     const now = Timestamp.now();
 
-    const orphanedAttachments = await runTransaction(db, async (transaction) => {
+    const { estimatedDelta, orphanedAttachments } = await runTransaction(db, async (transaction) => {
       const todoSnapshot = await transaction.get(todoRef);
 
       if (!todoSnapshot.exists()) {
         throw new Error('Todo not found.');
       }
 
-      const previousTodo = todoSnapshot.data() as TodoDocument;
+      const previousTodo = normalizeTodo(todoSnapshot.data() as TodoDocument);
       const previousVendors = (previousTodo.vendors ?? []).map(normalizeVendor);
       const targetVendor = previousVendors.find((vendor) => vendor.id === vendorId);
 
@@ -358,14 +425,41 @@ export class FirestoreTodoRepository implements TodoRepository {
         throw new Error('Vendor not found.');
       }
 
-      transaction.update(todoRef, {
+      const nextTodo = normalizeTodo({
+        ...previousTodo,
         vendors: previousVendors.filter((vendor) => vendor.id !== vendorId),
         selectedTodoVendorId: previousTodo.selectedTodoVendorId === vendorId ? null : previousTodo.selectedTodoVendorId,
+      });
+      const estimatedDelta = getTodoEstimatedAmount(nextTodo) - getTodoEstimatedAmount(previousTodo);
+      const milestoneRef = doc(db, 'plans', planId, 'milestones', previousTodo.milestoneId);
+
+      transaction.update(todoRef, {
+        vendors: nextTodo.vendors,
+        selectedTodoVendorId: nextTodo.selectedTodoVendorId,
         updatedAt: now,
       });
 
-      return targetVendor.attachments;
+      if (estimatedDelta !== 0) {
+        transaction.update(planRef, {
+          estimatedAmount: increment(estimatedDelta),
+          updatedAt: now,
+        });
+        transaction.update(milestoneRef, {
+          estimatedAmount: increment(estimatedDelta),
+          updatedAt: now,
+        });
+      }
+
+      return { estimatedDelta, orphanedAttachments: targetVendor.attachments };
     });
+
+    if (estimatedDelta !== 0) {
+      await syncUserPlansAggregate(planId, {
+        estimatedAmount: increment(estimatedDelta),
+        updatedAt: now,
+      });
+    }
+    await recalculateEstimatedAmounts(planId);
 
     return { orphanedAttachments };
   }
@@ -373,9 +467,11 @@ export class FirestoreTodoRepository implements TodoRepository {
   async selectVendor(planId: string, todoId: string, vendorId: string | null) {
     const db = getFirebaseFirestore();
     const todoRef = doc(db, 'plans', planId, 'todos', todoId);
+    const planRef = doc(db, 'plans', planId);
     const now = Timestamp.now();
+    const normalizedVendorId = vendorId?.trim() || null;
 
-    await runTransaction(db, async (transaction) => {
+    const estimatedDelta = await runTransaction(db, async (transaction) => {
       const todoSnapshot = await transaction.get(todoRef);
 
       if (!todoSnapshot.exists()) {
@@ -384,15 +480,43 @@ export class FirestoreTodoRepository implements TodoRepository {
 
       const previousTodo = normalizeTodo(todoSnapshot.data() as TodoDocument);
 
-      if (vendorId && !previousTodo.vendors.some((vendor) => vendor.id === vendorId)) {
+      if (normalizedVendorId && !previousTodo.vendors.some((vendor) => vendor.id === normalizedVendorId)) {
         throw new Error('Vendor not found.');
       }
 
+      const nextTodo = normalizeTodo({
+        ...previousTodo,
+        selectedTodoVendorId: normalizedVendorId,
+      });
+      const estimatedDelta = getTodoEstimatedAmount(nextTodo) - getTodoEstimatedAmount(previousTodo);
+      const milestoneRef = doc(db, 'plans', planId, 'milestones', previousTodo.milestoneId);
+
       transaction.update(todoRef, {
-        selectedTodoVendorId: vendorId,
+        selectedTodoVendorId: normalizedVendorId,
         updatedAt: now,
       });
+
+      if (estimatedDelta !== 0) {
+        transaction.update(planRef, {
+          estimatedAmount: increment(estimatedDelta),
+          updatedAt: now,
+        });
+        transaction.update(milestoneRef, {
+          estimatedAmount: increment(estimatedDelta),
+          updatedAt: now,
+        });
+      }
+
+      return estimatedDelta;
     });
+
+    if (estimatedDelta !== 0) {
+      await syncUserPlansAggregate(planId, {
+        estimatedAmount: increment(estimatedDelta),
+        updatedAt: now,
+      });
+    }
+    await recalculateEstimatedAmounts(planId);
   }
 
   async deleteTodo(planId: string, todoId: string) {
@@ -408,20 +532,23 @@ export class FirestoreTodoRepository implements TodoRepository {
         return null;
       }
 
-      const previousTodo = todoSnapshot.data() as TodoDocument;
+      const previousTodo = normalizeTodo(todoSnapshot.data() as TodoDocument);
       const milestoneRef = doc(db, 'plans', planId, 'milestones', previousTodo.milestoneId);
+      const estimatedAmount = getTodoEstimatedAmount(previousTodo);
 
       transaction.delete(todoRef);
 
       transaction.update(planRef, {
         todoCount: increment(-1),
         completedTodoCount: increment(previousTodo.status === 'done' ? -1 : 0),
+        estimatedAmount: increment(-estimatedAmount),
         updatedAt: now,
       });
 
       transaction.update(milestoneRef, {
         todoCount: increment(-1),
         completedTodoCount: increment(previousTodo.status === 'done' ? -1 : 0),
+        estimatedAmount: increment(-estimatedAmount),
         updatedAt: now,
       });
 
@@ -432,9 +559,11 @@ export class FirestoreTodoRepository implements TodoRepository {
       await syncUserPlansAggregate(planId, {
         todoCount: increment(-1),
         completedTodoCount: increment(deletedTodo.status === 'done' ? -1 : 0),
+        estimatedAmount: increment(-getTodoEstimatedAmount(normalizeTodo(deletedTodo))),
         updatedAt: now,
       });
     }
+    await recalculateEstimatedAmounts(planId);
 
     const orphanedAttachments = deletedTodo
       ? [...(deletedTodo.attachments ?? []), ...(deletedTodo.vendors ?? []).flatMap((vendor) => vendor.attachments)]

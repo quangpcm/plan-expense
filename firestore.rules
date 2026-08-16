@@ -109,6 +109,7 @@ service cloud.firestore {
         request.resource.data.expenseCount is int &&
         request.resource.data.incomeCount is int &&
         request.resource.data.settlementCount is int &&
+        (!('estimatedAmount' in request.resource.data) || request.resource.data.estimatedAmount is int) &&
         request.resource.data.totalExpense is int &&
         request.resource.data.totalIncome is int;
     }
@@ -137,6 +138,7 @@ service cloud.firestore {
         request.resource.data.expenseCount == resource.data.expenseCount &&
         request.resource.data.incomeCount == resource.data.incomeCount &&
         request.resource.data.settlementCount == resource.data.settlementCount &&
+        request.resource.data.estimatedAmount == resource.data.estimatedAmount &&
         request.resource.data.totalExpense == resource.data.totalExpense &&
         request.resource.data.totalIncome == resource.data.totalIncome;
     }
@@ -195,6 +197,7 @@ service cloud.firestore {
         request.resource.data.expenseCount == 0 &&
         request.resource.data.incomeCount == 0 &&
         request.resource.data.settlementCount == 0 &&
+        request.resource.data.estimatedAmount == 0 &&
         request.resource.data.totalExpense == 0 &&
         request.resource.data.totalIncome == 0 &&
         request.resource.data.closedAt == null &&
@@ -619,6 +622,7 @@ service cloud.firestore {
           request.resource.data.joinedAt == resource.data.joinedAt &&
           request.resource.data.lastActivityAt == resource.data.lastActivityAt &&
           request.resource.data.createdAt == resource.data.createdAt &&
+          (!('estimatedAmount' in request.resource.data) || request.resource.data.estimatedAmount is int) &&
           request.resource.data.totalExpense is int &&
           // totalIncome is backfilled by the first income sync after this
           // field shipped, so older userPlans docs may still lack it — only

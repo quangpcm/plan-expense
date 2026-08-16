@@ -53,6 +53,7 @@ export class FirestoreMilestoneRepository implements MilestoneRepository {
         status: 'upcoming',
         orderIndex: nextOrderIndex,
         budgetAmount: input.budgetAmount,
+        estimatedAmount: 0,
         totalExpense: 0,
         todoCount: 0,
         completedTodoCount: 0,
@@ -200,6 +201,7 @@ export class FirestoreMilestoneRepository implements MilestoneRepository {
       completedMilestoneCount: increment(milestone.status === 'completed' ? -1 : 0),
       todoCount: increment(-todos.length),
       completedTodoCount: increment(-completedTodoCount),
+      estimatedAmount: increment(-(milestone.estimatedAmount ?? 0)),
       updatedAt: now,
     };
 

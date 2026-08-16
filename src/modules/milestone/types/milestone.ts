@@ -13,6 +13,7 @@ export type MilestoneDocument = {
   status: MilestoneStatus;
   orderIndex: number;
   budgetAmount: number | null;
+  estimatedAmount: number | null;
   totalExpense: number;
   todoCount: number;
   completedTodoCount: number;

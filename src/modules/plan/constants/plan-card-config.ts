@@ -1,6 +1,7 @@
 import type { PlanType, PlanSummary } from '@/modules/plan/types/plan';
 import type { PlanCardFooterItem, PlanCardMetric, PlanCardProgress } from '@/modules/plan/types/plan-card';
 import { planTypeOptions } from '@/modules/plan/constants/plan.constants';
+import { getEffectiveBudgetAmount } from '@/modules/plan/utils/get-effective-budget-amount';
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDate, formatDueCountdown, formatRelativeTime } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
@@ -36,6 +37,10 @@ function getSafeCurrency(value: number | null | undefined) {
 
 function getSafeBalance(plan: PlanSummary) {
   return getSafeNumber(plan.totalIncome) - getSafeNumber(plan.totalExpense);
+}
+
+function getSafeEffectiveBudget(plan: PlanSummary) {
+  return getEffectiveBudgetAmount(plan.budgetAmount, plan.estimatedAmount);
 }
 
 function getSafeRatioLabel(
@@ -126,7 +131,7 @@ function buildSharedLivingFooter(plan: PlanSummary): PlanCardFooterItem {
 }
 
 function buildBudgetProgress(plan: PlanSummary): PlanCardProgress | null {
-  const budgetAmount = getSafeNumber(plan.budgetAmount);
+  const budgetAmount = getSafeEffectiveBudget(plan);
   const totalExpense = getSafeNumber(plan.totalExpense);
 
   if (budgetAmount <= 0) {
@@ -246,7 +251,8 @@ function buildMilestoneProgress(plan: PlanSummary): PlanCardProgress | null {
 
 function buildEndedSummaryConfig(plan: PlanSummary) {
   const balance = getSafeBalance(plan);
-  const hasBudget = getSafeNumber(plan.budgetAmount) > 0;
+  const effectiveBudget = getSafeEffectiveBudget(plan);
+  const hasBudget = effectiveBudget > 0;
   const hasSavingGoal = getSafeNumber(plan.savingGoalAmount) > 0;
   const hasTodo = getSafeNumber(plan.todoCount) > 0;
   const hasMilestone = getSafeNumber(plan.milestoneCount) > 0;
@@ -291,7 +297,7 @@ function buildEndedSummaryConfig(plan: PlanSummary) {
       primaryMetric: {
         label: 'Tổng chi',
         value: getSafeCurrency(plan.totalExpense),
-        tone: hasBudget && getSafeNumber(plan.totalExpense) <= getSafeNumber(plan.budgetAmount) ? 'primary' : 'danger',
+        tone: hasBudget && getSafeNumber(plan.totalExpense) <= effectiveBudget ? 'primary' : 'danger',
         isMonetary: true,
       } satisfies PlanCardMetric,
       secondaryMetric: {
@@ -328,14 +334,14 @@ function buildEndedSummaryConfig(plan: PlanSummary) {
   return {
     primaryMetric: {
       label: hasBudget ? 'Ngân sách' : 'Tổng thu',
-      value: hasBudget ? getSafeCurrency(plan.budgetAmount) : getSafeCurrency(plan.totalIncome),
+      value: hasBudget ? getSafeCurrency(effectiveBudget) : getSafeCurrency(plan.totalIncome),
       tone: hasBudget ? 'primary' : 'success',
       isMonetary: true,
     } satisfies PlanCardMetric,
     secondaryMetric: {
       label: 'Tổng chi',
       value: getSafeCurrency(plan.totalExpense),
-      tone: hasBudget && getSafeNumber(plan.totalExpense) > getSafeNumber(plan.budgetAmount) ? 'danger' : 'default',
+      tone: hasBudget && getSafeNumber(plan.totalExpense) > effectiveBudget ? 'danger' : 'default',
       detail: plan.planType === 'travel' || plan.planType === 'wedding' ? getSafeCountLabel(plan.memberCount, 'người tham gia') : `Số dư ${getSafeCurrency(balance)}`,
       isMonetary: true,
       detailIsMonetary: !(plan.planType === 'travel' || plan.planType === 'wedding'),
@@ -349,7 +355,7 @@ export const planCardConfigByType: Record<PlanType, PlanCardTypeConfig> = {
   travel: {
     primaryMetric: ({ plan }) => ({
       label: 'Ngân sách',
-      value: getSafeCurrency(plan.budgetAmount),
+      value: getSafeCurrency(getSafeEffectiveBudget(plan)),
       tone: 'primary',
       isMonetary: true,
     }),
@@ -365,7 +371,7 @@ export const planCardConfigByType: Record<PlanType, PlanCardTypeConfig> = {
   wedding: {
     primaryMetric: ({ plan }) => ({
       label: 'Ngân sách',
-      value: getSafeCurrency(plan.budgetAmount),
+      value: getSafeCurrency(getSafeEffectiveBudget(plan)),
       tone: 'primary',
       isMonetary: true,
     }),
@@ -397,7 +403,7 @@ export const planCardConfigByType: Record<PlanType, PlanCardTypeConfig> = {
   birthday: {
     primaryMetric: ({ plan }) => ({
       label: 'Ngân sách',
-      value: getSafeCurrency(plan.budgetAmount),
+      value: getSafeCurrency(getSafeEffectiveBudget(plan)),
       tone: 'primary',
       isMonetary: true,
     }),
@@ -412,7 +418,7 @@ export const planCardConfigByType: Record<PlanType, PlanCardTypeConfig> = {
   event: {
     primaryMetric: ({ plan }) => ({
       label: 'Ngân sách',
-      value: getSafeCurrency(plan.budgetAmount),
+      value: getSafeCurrency(getSafeEffectiveBudget(plan)),
       tone: 'primary',
     }),
     secondaryMetric: ({ plan }) => ({

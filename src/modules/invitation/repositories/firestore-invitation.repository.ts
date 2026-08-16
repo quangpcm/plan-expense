@@ -143,6 +143,7 @@ export class FirestoreInvitationRepository implements InvitationRepository {
       startDate: null,
       endDate: null,
       budgetAmount: null,
+      estimatedAmount: 0,
       savingGoalAmount: null,
       savingTargetDate: null,
       milestoneCount: 0,
@@ -182,6 +183,7 @@ export class FirestoreInvitationRepository implements InvitationRepository {
           startDate: Timestamp | null;
           endDate: Timestamp | null;
           budgetAmount: number | null;
+          estimatedAmount: number | null;
           savingGoalAmount: number | null;
           savingTargetDate: Timestamp | null;
           milestoneCount: number;
@@ -201,6 +203,7 @@ export class FirestoreInvitationRepository implements InvitationRepository {
           startDate: plan.startDate ?? null,
           endDate: plan.endDate ?? null,
           budgetAmount: plan.budgetAmount ?? null,
+          estimatedAmount: plan.estimatedAmount ?? 0,
           savingGoalAmount: plan.savingGoalAmount ?? null,
           savingTargetDate: plan.savingTargetDate ?? null,
           milestoneCount: plan.milestoneCount ?? 0,
