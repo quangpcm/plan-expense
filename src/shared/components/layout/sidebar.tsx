@@ -1,8 +1,8 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Wallet } from 'lucide-react';
 
 import { getAppNavigationItems } from '@/shared/components/layout/navigation-items';
 import { cn } from '@/shared/utils/cn';
@@ -13,11 +13,15 @@ export function Sidebar() {
 
   return (
     <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-[var(--color-border)] py-6 pr-6 lg:flex">
-      <div className="flex items-center gap-2 px-2 pb-6">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-primary)] text-[var(--color-primary-foreground)]">
-          <Wallet className="size-5" />
-        </div>
-        <span className="text-lg font-semibold text-[var(--color-foreground)]">Plan Expense</span>
+      <div className="px-2 pb-6">
+        <Image
+          src="/icons/app/app-header-logo.png"
+          alt="Plan Expense"
+          width={180}
+          height={44}
+          className="h-11 w-auto"
+          priority
+        />
       </div>
 
       <nav className="flex flex-col gap-1">
