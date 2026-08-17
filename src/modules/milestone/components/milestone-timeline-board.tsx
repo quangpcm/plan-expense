@@ -141,11 +141,8 @@ export function MilestoneTimelineBoard({
   const [pendingDrag, setPendingDrag] = useState<PendingDragState | null>(null);
   const [activeDrag, setActiveDrag] = useState<ActiveDragState | null>(null);
   const [expandedMilestoneIds, setExpandedMilestoneIds] = useState<Set<string>>(() => new Set());
-  const [activeStickyMilestoneId, setActiveStickyMilestoneId] = useState<string | null>(null);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const headerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const wrapperRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const justDraggedRef = useRef(false);
   const hasAppliedDefaultExpandRef = useRef(false);
 
@@ -182,58 +179,6 @@ export function MilestoneTimelineBoard({
     hasAppliedDefaultExpandRef.current = true;
     setExpandedMilestoneIds(new Set([defaultExpandedMilestoneId]));
   }, [defaultExpandedMilestoneId]);
-
-  useEffect(() => {
-    let rafId: number | null = null;
-
-    function computeActiveSticky() {
-      rafId = null;
-
-      if (isSearching) {
-        setActiveStickyMilestoneId(null);
-        return;
-      }
-
-      let currentId: string | null = null;
-
-      for (const milestone of milestones) {
-        const headerEl = headerRefs.current[milestone.id];
-        const wrapperEl = wrapperRefs.current[milestone.id];
-
-        if (!headerEl || !wrapperEl) {
-          continue;
-        }
-
-        const headerRect = headerEl.getBoundingClientRect();
-        const wrapperRect = wrapperEl.getBoundingClientRect();
-
-        if (headerRect.bottom <= 0 && wrapperRect.bottom > 0) {
-          currentId = milestone.id;
-        }
-      }
-
-      setActiveStickyMilestoneId(currentId);
-    }
-
-    function handleScroll() {
-      if (rafId !== null) {
-        return;
-      }
-
-      rafId = requestAnimationFrame(computeActiveSticky);
-    }
-
-    computeActiveSticky();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-
-      if (rafId !== null) {
-        cancelAnimationFrame(rafId);
-      }
-    };
-  }, [milestones, isSearching]);
 
   if (milestones.length === 0) {
     return (
@@ -494,27 +439,6 @@ export function MilestoneTimelineBoard({
           </div>
         ) : null;
       })()}
-      {(() => {
-        const activeStickyMilestone = milestones.find((milestone) => milestone.id === activeStickyMilestoneId) ?? null;
-
-        return (
-          <div
-            className={cn(
-              'sticky top-0 z-20 overflow-hidden transition-[max-height,opacity] duration-200 ease-out',
-              activeStickyMilestone ? 'mb-3 max-h-16 opacity-100 sm:mb-4' : 'mb-0 max-h-0 opacity-0',
-            )}
-          >
-            {activeStickyMilestone ? (
-              <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/95 px-4 py-2.5 shadow-sm backdrop-blur-sm">
-                <span className="truncate text-sm font-semibold text-slate-900">{activeStickyMilestone.title}</span>
-                <Badge className={getMilestoneBadgeClass(activeStickyMilestone.status)}>
-                  {milestoneStatusLabel[activeStickyMilestone.status]}
-                </Badge>
-              </div>
-            ) : null}
-          </div>
-        );
-      })()}
       {isSearching && visibleMilestones.length === 0 ? (
         <Card className="border-slate-200 bg-slate-50 shadow-none">
           <p className="text-sm leading-6 text-slate-600">
@@ -538,13 +462,7 @@ export function MilestoneTimelineBoard({
         previousMonthLabel = monthLabel;
 
         return (
-          <div
-            className="relative"
-            key={milestone.id}
-            ref={(element) => {
-              wrapperRefs.current[milestone.id] = element;
-            }}
-          >
+          <div className="relative" key={milestone.id}>
             {shouldShowMonthLabel ? (
               <div className="mb-3 flex items-center gap-2 sm:mb-4 sm:gap-3">
                 <span
@@ -582,9 +500,6 @@ export function MilestoneTimelineBoard({
               onClick={() => {
                 onSelect(milestone.id);
                 handleToggleExpand(milestone.id);
-              }}
-              ref={(element) => {
-                headerRefs.current[milestone.id] = element;
               }}
               type="button"
             >
