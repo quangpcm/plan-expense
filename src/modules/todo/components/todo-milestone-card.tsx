@@ -1,7 +1,7 @@
 'use client';
 
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import { CheckCircle2, Circle, CircleAlert, Clock3, Store, Wallet } from 'lucide-react';
+import { CheckCircle2, Circle, CircleAlert, Clock3, ImageIcon, Paperclip, Store, Wallet } from 'lucide-react';
 
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
@@ -114,6 +114,12 @@ export function TodoMilestoneCard({
             >
               <Store className={cn('size-3 sm:size-5', selectedVendor ? 'text-[#5e7fb8]' : 'text-slate-400')} />
               {todo.vendors.length}
+            </span>
+          ) : null}
+          {todo.attachments.length > 0 ? (
+            <span className="inline-flex shrink-0 items-center gap-1">
+              <Paperclip className="size-3 text-slate-400 sm:size-5" />
+              {todo.attachments.length}
             </span>
           ) : null}
         </div>
