@@ -44,6 +44,7 @@ export type ResolvedPlanPermissions = {
   canDeleteOwnIncome: boolean;
   canViewStatistics: boolean;
   canManageSettlements: boolean;
+  canManageWeddingGuest: boolean;
 };
 
 export type AddGuestInput = {

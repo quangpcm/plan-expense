@@ -300,7 +300,18 @@ export class FirestorePlanRepository implements PlanRepository {
     // isPlanOwner(), so it must be the very last thing removed — deleting it
     // any earlier would make the owner fail the permission check partway
     // through and abort the rest of the cleanup.
-    const subcollectionNames = ['members', 'milestones', 'todos', 'expenses', 'incomes', 'settlements', 'invitations'];
+    const subcollectionNames = [
+      'members',
+      'milestones',
+      'todos',
+      'expenses',
+      'incomes',
+      'settlements',
+      'invitations',
+      'weddingGuestGroups',
+      'weddingGuests',
+      'guestInvitations',
+    ];
 
     try {
       const refsToDelete: DocumentReference[] = [];

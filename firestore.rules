@@ -26,6 +26,14 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/plans/$(planId)/milestones/$(milestoneId));
     }
 
+    function weddingGuestGroupDoc(planId, groupId) {
+      return get(/databases/$(database)/documents/plans/$(planId)/weddingGuestGroups/$(groupId));
+    }
+
+    function weddingGuestDoc(planId, guestId) {
+      return get(/databases/$(database)/documents/plans/$(planId)/weddingGuests/$(guestId));
+    }
+
     function isPlanVisible(planId) {
       return isSignedIn() &&
         exists(/databases/$(database)/documents/userPlans/$(request.auth.uid)/plans/$(planId)) &&
@@ -44,6 +52,11 @@ service cloud.firestore {
 
     function canCreateIncome(planId) {
       return canCreateExpense(planId);
+    }
+
+    function canManageWeddingGuest(planId) {
+      return isPlanVisible(planId) &&
+        currentUserPlanDoc(planId).data.role in ['owner', 'editor'];
     }
 
     function canEditAnyExpense(planId) {
@@ -413,6 +426,80 @@ service cloud.firestore {
         request.resource.data.orderIndex is int &&
         request.resource.data.status in ['upcoming', 'in_progress', 'completed', 'cancelled'];
       allow delete: if isPlanOwner(planId);
+    }
+
+    match /plans/{planId}/weddingGuestGroups/{groupId} {
+      allow read: if isPlanVisible(planId);
+      allow create: if canManageWeddingGuest(planId) &&
+        isPlanActive(planId) &&
+        request.resource.data.id == groupId &&
+        request.resource.data.planId == planId &&
+        request.resource.data.createdByUserId == request.auth.uid &&
+        request.resource.data.name is string;
+      allow update: if canManageWeddingGuest(planId) &&
+        isPlanActive(planId) &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.planId == resource.data.planId &&
+        request.resource.data.createdByUserId == resource.data.createdByUserId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.name is string;
+      allow delete: if canManageWeddingGuest(planId);
+    }
+
+    match /plans/{planId}/weddingGuests/{guestId} {
+      allow read: if isPlanVisible(planId);
+      allow create: if canManageWeddingGuest(planId) &&
+        isPlanActive(planId) &&
+        request.resource.data.id == guestId &&
+        request.resource.data.planId == planId &&
+        request.resource.data.createdByUserId == request.auth.uid &&
+        request.resource.data.name is string &&
+        request.resource.data.normalizedName is string &&
+        request.resource.data.sideId in ['bride_family', 'groom_family', 'shared'] &&
+        request.resource.data.relationshipId in ['family', 'friend', 'colleague', 'neighbor', 'partner_client', 'other'] &&
+        request.resource.data.invitedById in ['bride', 'groom', 'bride_parents', 'groom_parents', 'shared'];
+      allow update: if canManageWeddingGuest(planId) &&
+        isPlanActive(planId) &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.planId == resource.data.planId &&
+        request.resource.data.createdByUserId == resource.data.createdByUserId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.name is string &&
+        request.resource.data.normalizedName is string &&
+        request.resource.data.sideId in ['bride_family', 'groom_family', 'shared'] &&
+        request.resource.data.relationshipId in ['family', 'friend', 'colleague', 'neighbor', 'partner_client', 'other'] &&
+        request.resource.data.invitedById in ['bride', 'groom', 'bride_parents', 'groom_parents', 'shared'];
+      allow delete: if canManageWeddingGuest(planId);
+    }
+
+    match /plans/{planId}/guestInvitations/{invitationId} {
+      allow read: if isPlanVisible(planId);
+      // Doc ID is deterministic (`${guestId}_${groupId}`) so guestId+groupId stays
+      // unique per Firestore doc path — the composite check below rejects any
+      // create whose ID doesn't match its own guestId/groupId fields.
+      allow create: if canManageWeddingGuest(planId) &&
+        isPlanActive(planId) &&
+        request.resource.data.id == invitationId &&
+        request.resource.data.planId == planId &&
+        request.resource.data.createdByUserId == request.auth.uid &&
+        invitationId == request.resource.data.guestId + '_' + request.resource.data.groupId &&
+        weddingGuestDoc(planId, request.resource.data.guestId).data.planId == planId &&
+        weddingGuestGroupDoc(planId, request.resource.data.groupId).data.planId == planId &&
+        request.resource.data.rsvp in ['pending', 'attending', 'not_attending'] &&
+        request.resource.data.attendeeCount is int &&
+        request.resource.data.attendeeCount >= 0;
+      allow update: if canManageWeddingGuest(planId) &&
+        isPlanActive(planId) &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.planId == resource.data.planId &&
+        request.resource.data.guestId == resource.data.guestId &&
+        request.resource.data.groupId == resource.data.groupId &&
+        request.resource.data.createdByUserId == resource.data.createdByUserId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.rsvp in ['pending', 'attending', 'not_attending'] &&
+        request.resource.data.attendeeCount is int &&
+        request.resource.data.attendeeCount >= 0;
+      allow delete: if canManageWeddingGuest(planId);
     }
 
     match /plans/{planId}/todos/{todoId} {

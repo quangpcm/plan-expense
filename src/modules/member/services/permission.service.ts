@@ -23,6 +23,7 @@ export function resolvePlanPermissions(member: PlanMemberDocument | null): Resol
     canDeleteOwnIncome: isOwner || isEditor,
     canViewStatistics: role !== null,
     canManageSettlements: isOwner,
+    canManageWeddingGuest: isOwner || isEditor,
   };
 }
 
