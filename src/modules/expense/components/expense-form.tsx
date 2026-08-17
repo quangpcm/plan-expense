@@ -71,11 +71,17 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
   );
   const defaultPaidByMemberId =
     expense?.paidByMemberId || currentMember?.id || activeMembers[0]?.id || '';
-  const creatorDefaultParticipantIds = defaultPaidByMemberId ? [defaultPaidByMemberId] : [];
+  const creatorDefaultParticipantIds = useMemo(
+    () => (defaultPaidByMemberId ? [defaultPaidByMemberId] : []),
+    [defaultPaidByMemberId],
+  );
   const defaultParticipantIds =
     expense?.participants.map((participant) => participant.memberId) ||
     creatorDefaultParticipantIds;
-  const allActiveParticipantIds = activeMembers.map((member) => member.id);
+  const allActiveParticipantIds = useMemo(
+    () => activeMembers.map((member) => member.id),
+    [activeMembers],
+  );
   const defaultCategoryId = toSafeString(expense?.categoryId) || categories[0]?.id || '';
   const milestoneIdFromQuery = searchParams.get('milestoneId') || '';
   const resolvedDefaultMilestoneId =
@@ -142,6 +148,10 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
     if (isFirstSplitMethodRender.current) {
       isFirstSplitMethodRender.current = false;
       previousSplitMethodRef.current = selectedSplitMethod;
+      return;
+    }
+
+    if (selectedSplitMethod === previousSplitMethodRef.current) {
       return;
     }
 
