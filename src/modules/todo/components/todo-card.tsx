@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckCircle2, CircleAlert, Clock3, PencilLine, Plus, Trash2, Wallet } from 'lucide-react';
+import { CheckCircle2, CircleAlert, Clock3, Paperclip, PencilLine, Plus, Trash2, Wallet } from 'lucide-react';
 import type { MouseEvent } from 'react';
 
 import type { TodoDocument } from '@/modules/todo/types/todo';
@@ -15,7 +15,7 @@ import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { cn } from '@/shared/utils/cn';
-import { formatCurrency } from '@/shared/utils/currency';
+import { formatCompactCurrency, formatCurrency } from '@/shared/utils/currency';
 import { formatDueCountdown, getDueUrgency } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 
@@ -102,7 +102,7 @@ export function TodoCard({
         <p className="line-clamp-1 text-sm leading-6 text-slate-600">{todo.description}</p>
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600">
         <span
           className={cn(
             'inline-flex items-center gap-1.5',
@@ -129,7 +129,13 @@ export function TodoCard({
         {displayedBudget != null ? (
           <span className="inline-flex items-center gap-1.5">
             <Wallet className="size-4 text-slate-400" />
-            {formatCurrency(displayedBudget)}
+            {formatCompactCurrency(displayedBudget)}
+          </span>
+        ) : null}
+        {todo.attachments.length > 0 ? (
+          <span className="inline-flex items-center gap-1.5">
+            <Paperclip className="size-4 text-slate-400" />
+            {todo.attachments.length}
           </span>
         ) : null}
       </div>
@@ -137,7 +143,7 @@ export function TodoCard({
       {selectedVendor ? (
         <p className="text-sm text-slate-600">
           Đã chọn dịch vụ: <span className="font-medium text-slate-900">{selectedVendor.name}</span>
-          {displayedBudget != null ? ` · ${formatCurrency(displayedBudget)}` : ''}
+          {displayedBudget != null ? ` · ${formatCompactCurrency(displayedBudget)}` : ''}
         </p>
       ) : null}
 

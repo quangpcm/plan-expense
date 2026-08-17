@@ -42,7 +42,7 @@ export function MilestoneList({
   }
 
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-3 lg:grid-cols-3">
       {milestones.map((milestone, index) => {
         const isSelected = milestone.id === selectedMilestoneId;
         const estimatedTotal = estimatedByMilestoneId[milestone.id] ?? 0;

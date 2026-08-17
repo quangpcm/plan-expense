@@ -113,8 +113,10 @@ export default function PlansPage() {
           <Skeleton className="h-44 rounded-[28px]" />
         </div>
       ) : filteredPlans.length > 0 ? (
-        <div className="grid gap-4 pb-24">
-          <TodoAttentionSection plans={plans} />
+        <div className="grid gap-4 pb-24 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="sm:col-span-2 lg:col-span-3">
+            <TodoAttentionSection plans={plans} />
+          </div>
           {filteredPlans.map((plan) => (
             <PlanCard key={plan.id} plan={plan} />
           ))}
@@ -125,14 +127,14 @@ export default function PlansPage() {
           Không tìm thấy kế hoạch phù hợp với &ldquo;{searchQuery.trim()}&rdquo;.
         </div>
       ) : (
-        <div className="grid gap-4 pb-24">
+        <div className="grid gap-4 pb-24 sm:grid-cols-2 lg:grid-cols-3">
           <CreatePlanCard />
         </div>
       )}
 
       <Link
         aria-label="Tạo kế hoạch"
-        className="fixed right-4 bottom-24 z-20 flex size-14 items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-[0_14px_34px_rgba(36,59,107,0.32)] transition hover:bg-[var(--color-primary-hover)]"
+        className="fixed right-4 bottom-24 z-20 flex size-14 items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-[0_14px_34px_rgba(36,59,107,0.32)] transition hover:bg-[var(--color-primary-hover)] lg:bottom-6"
         href="/plans/new"
       >
         <Plus className="size-6" />

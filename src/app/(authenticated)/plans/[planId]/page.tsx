@@ -27,8 +27,12 @@ import { invitationService } from '@/modules/invitation/services';
 import type { InvitationDocument } from '@/modules/invitation/types/invitation';
 import { useIncomes } from '@/modules/income/hooks/use-incomes';
 import { getExpenseCategories, getIncomeCategories } from '@/modules/category/constants/category-presets';
+import { ExpenseDetailCard } from '@/modules/expense/components/expense-detail-card';
+import { ExpenseForm } from '@/modules/expense/components/expense-form';
 import { TimelineList } from '@/modules/expense/components/timeline-list';
 import { useExpenses } from '@/modules/expense/hooks/use-expenses';
+import { expenseService } from '@/modules/expense/services';
+import type { ExpenseDocument } from '@/modules/expense/types/expense';
 import { MemberAvatarStack } from '@/modules/member/components/member-avatar-stack';
 import { MemberList } from '@/modules/member/components/member-list';
 import { MemberManagementPanel } from '@/modules/member/components/member-management-panel';
@@ -93,6 +97,7 @@ import { Card } from '@/shared/components/ui/card';
 import { Dialog } from '@/shared/components/ui/dialog';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 import { Skeleton } from '@/shared/components/ui/skeleton';
+import { useMediaQuery } from '@/shared/hooks/use-media-query';
 import { formatCompactCurrency } from '@/shared/utils/currency';
 import { formatDate } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
@@ -201,6 +206,12 @@ export default function PlanDetailPage() {
   const [detailTodo, setDetailTodo] = useState<TodoDocument | null>(null);
   const [todoToRestoreAfterVendor, setTodoToRestoreAfterVendor] = useState<TodoDocument | null>(null);
   const [expenseSheetMilestoneId, setExpenseSheetMilestoneId] = useState<string | null>(null);
+  const [detailExpense, setDetailExpense] = useState<ExpenseDocument | null>(null);
+  const [editingExpense, setEditingExpense] = useState<ExpenseDocument | null>(null);
+  const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [expenseFormMilestoneId, setExpenseFormMilestoneId] = useState<string | null>(null);
+  const [isDeletingExpenseInline, setIsDeletingExpenseInline] = useState(false);
+  const [expenseActionError, setExpenseActionError] = useState<string | null>(null);
   const [workViewMode, setWorkViewMode] = useState<'milestones' | 'todos'>('milestones');
   const [milestoneSearchQuery, setMilestoneSearchQuery] = useState('');
   const [todoStatusFilter, setTodoStatusFilter] = useState<TodoStatusFilter>('pending');
@@ -360,12 +371,13 @@ export default function PlanDetailPage() {
         : [],
     [expenseSheetMilestone, expenses],
   );
+  const isDesktopViewport = useMediaQuery('(min-width: 1024px)');
   const upcomingMilestones = useMemo(() => {
     return milestones
       .filter((milestone) => milestone.status === 'in_progress' || milestone.status === 'upcoming')
       .sort((a, b) => getMilestoneWorkSortTime(a) - getMilestoneWorkSortTime(b))
-      .slice(0, 2);
-  }, [milestones]);
+      .slice(0, isDesktopViewport ? 3 : 2);
+  }, [milestones, isDesktopViewport]);
   const upcomingTodos = useMemo(() => {
     return todos
       .filter((todo) => todo.status !== 'done' && todo.status !== 'cancelled' && todo.dueDate)
@@ -995,6 +1007,49 @@ export default function PlanDetailPage() {
     }
   }
 
+  function openCreateExpense(milestoneId: string) {
+    setEditingExpense(null);
+    setExpenseFormMilestoneId(milestoneId);
+    setShowExpenseForm(true);
+  }
+
+  function openEditExpense(expense: ExpenseDocument) {
+    setDetailExpense(null);
+    setEditingExpense(expense);
+    setExpenseFormMilestoneId(expense.milestoneId);
+    setShowExpenseForm(true);
+  }
+
+  function closeExpenseForm() {
+    setShowExpenseForm(false);
+    setEditingExpense(null);
+    setExpenseFormMilestoneId(null);
+  }
+
+  async function handleDeleteExpenseInline(expense: ExpenseDocument) {
+    if (!user) {
+      return;
+    }
+
+    const confirmed = window.confirm(`Xoá khoản chi "${expense.title}"? Hành động này không thể hoàn tác.`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsDeletingExpenseInline(true);
+    setExpenseActionError(null);
+
+    try {
+      await expenseService.deleteExpense(ensuredPlan, expense, user, currentMember);
+      setDetailExpense(null);
+    } catch (error) {
+      setExpenseActionError(error instanceof Error ? error.message : 'Hiện chưa thể xoá khoản chi này.');
+    } finally {
+      setIsDeletingExpenseInline(false);
+    }
+  }
+
   const headerMenuItems: HeaderMenuItem[] = [
     permissions.canManagePlan
       ? {
@@ -1259,6 +1314,7 @@ export default function PlanDetailPage() {
                   ) : (
                     <TodoList
                       canManagePlan={permissions.canManagePlan && !isPlanEnded}
+                      className="sm:grid-cols-2 lg:grid-cols-3"
                       emptyMessage="Không có công việc nào sắp đến hạn."
                       isSubmitting={isTodoSubmitting}
                       members={members}
@@ -1322,7 +1378,7 @@ export default function PlanDetailPage() {
                   ) : (
                     <Button
                       className="min-w-0 justify-center bg-[color:color-mix(in_srgb,var(--color-primary)_92%,white)] px-3"
-                      href={`/plans/${planId}/expenses/new${selectedTimelineMilestoneId ? `?milestoneId=${selectedTimelineMilestoneId}&returnTab=timeline` : '?returnTab=timeline'}`}
+                      onClick={() => openCreateExpense(selectedTimelineMilestoneId ?? '')}
                     >
                       + Khoản Chi
                     </Button>
@@ -1383,6 +1439,7 @@ export default function PlanDetailPage() {
               members={members}
               milestones={milestones}
               onSelectedMilestoneChange={setSelectedTimelineMilestoneId}
+              onSelectExpense={setDetailExpense}
               planId={planId}
               selectedMilestoneId={selectedTimelineMilestoneId}
             />
@@ -1440,7 +1497,7 @@ export default function PlanDetailPage() {
                 {isMilestonesLoading ? (
                   <Skeleton className="h-48 rounded-[28px]" />
                 ) : (
-                  <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+                  <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                     <MilestoneTimelineBoard
                       canManagePlan={permissions.canManagePlan}
                       defaultExpandedMilestoneId={defaultWorkMilestone?.id ?? null}
@@ -1476,10 +1533,13 @@ export default function PlanDetailPage() {
                         <div className="hidden lg:block">
                           <MilestoneExpensePanel
                             canCreateExpense={plan.status !== 'closed'}
+                            categories={categories}
                             expenses={selectedMilestoneExpenses}
+                            members={members}
                             milestone={selectedMilestone}
+                            onAddExpense={() => openCreateExpense(selectedMilestone.id)}
+                            onSelectExpense={setDetailExpense}
                             onShowTimeline={() => setActiveTab('Tài chính')}
-                            planId={planId}
                           />
                         </div>
                       </div>
@@ -1506,6 +1566,7 @@ export default function PlanDetailPage() {
                       incomes={[]}
                       members={members}
                       milestones={[expenseSheetMilestone]}
+                      onSelectExpense={setDetailExpense}
                       planId={planId}
                       selectedMilestoneId={expenseSheetMilestone.id}
                     />
@@ -1532,6 +1593,7 @@ export default function PlanDetailPage() {
                 ) : (
                   <TodoList
                     canManagePlan={permissions.canManagePlan && plan.status !== 'closed'}
+                    className="sm:grid-cols-2 lg:grid-cols-3"
                     emptyMessage={
                       todoStatusFilter === 'done'
                         ? 'Chưa có công việc nào hoàn thành.'
@@ -1769,6 +1831,124 @@ export default function PlanDetailPage() {
                   onMoveToMilestone={handleMoveTodoToMilestone}
                   onSelectVendor={handleSelectTodoVendor}
                   todo={detailTodo}
+                />
+              </BottomSheet>
+            </div>
+          </>
+        ) : null}
+        {detailExpense ? (
+          <>
+            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
+              <button
+                aria-label="Đóng chi tiết khoản chi"
+                className="absolute inset-0"
+                onClick={() => setDetailExpense(null)}
+                type="button"
+              />
+              <Dialog
+                className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto"
+                title="Chi tiết khoản chi"
+              >
+                <div className="space-y-4">
+                  <ExpenseDetailCard
+                    categories={[...categories, ...incomeCategories]}
+                    expense={detailExpense}
+                    members={members}
+                    milestones={milestones}
+                  />
+                  {expenseActionError ? <AuthFormMessage message={expenseActionError} type="error" /> : null}
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <Button onClick={() => setDetailExpense(null)} variant="ghost">
+                      Đóng
+                    </Button>
+                    {permissions.canEditAllExpenses || detailExpense.createdByUserId === user?.uid ? (
+                      <Button onClick={() => openEditExpense(detailExpense)}>Chỉnh sửa</Button>
+                    ) : null}
+                    {permissions.canDeleteAllExpenses || detailExpense.createdByUserId === user?.uid ? (
+                      <Button
+                        disabled={isDeletingExpenseInline}
+                        onClick={() => void handleDeleteExpenseInline(detailExpense)}
+                        variant="ghost"
+                      >
+                        Xoá
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              </Dialog>
+            </div>
+            <div className="md:hidden">
+              <BottomSheet
+                onClose={() => setDetailExpense(null)}
+                open={Boolean(detailExpense)}
+                title="Chi tiết khoản chi"
+              >
+                <div className="space-y-4">
+                  <ExpenseDetailCard
+                    categories={[...categories, ...incomeCategories]}
+                    expense={detailExpense}
+                    members={members}
+                    milestones={milestones}
+                  />
+                  {expenseActionError ? <AuthFormMessage message={expenseActionError} type="error" /> : null}
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <Button onClick={() => setDetailExpense(null)} variant="ghost">
+                      Đóng
+                    </Button>
+                    {permissions.canEditAllExpenses || detailExpense.createdByUserId === user?.uid ? (
+                      <Button onClick={() => openEditExpense(detailExpense)}>Chỉnh sửa</Button>
+                    ) : null}
+                    {permissions.canDeleteAllExpenses || detailExpense.createdByUserId === user?.uid ? (
+                      <Button
+                        disabled={isDeletingExpenseInline}
+                        onClick={() => void handleDeleteExpenseInline(detailExpense)}
+                        variant="ghost"
+                      >
+                        Xoá
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              </BottomSheet>
+            </div>
+          </>
+        ) : null}
+        {showExpenseForm ? (
+          <>
+            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
+              <button
+                aria-label="Đóng form khoản chi"
+                className="absolute inset-0"
+                onClick={closeExpenseForm}
+                type="button"
+              />
+              <Dialog
+                className="relative z-10 max-h-[90vh] w-full max-w-xl overflow-y-auto"
+                title={editingExpense ? 'Sửa khoản chi' : 'Thêm khoản chi'}
+              >
+                <ExpenseForm
+                  defaultMilestoneId={expenseFormMilestoneId ?? undefined}
+                  expense={editingExpense ?? undefined}
+                  mode={editingExpense ? 'edit' : 'create'}
+                  onCancel={closeExpenseForm}
+                  onSuccess={closeExpenseForm}
+                  planId={planId}
+                />
+              </Dialog>
+            </div>
+            <div className="md:hidden">
+              <BottomSheet
+                onClose={closeExpenseForm}
+                open={showExpenseForm}
+                title={editingExpense ? 'Sửa khoản chi' : 'Thêm khoản chi'}
+              >
+                <ExpenseForm
+                  defaultMilestoneId={expenseFormMilestoneId ?? undefined}
+                  expense={editingExpense ?? undefined}
+                  mode={editingExpense ? 'edit' : 'create'}
+                  onCancel={closeExpenseForm}
+                  onSuccess={closeExpenseForm}
+                  planId={planId}
                 />
               </BottomSheet>
             </div>
@@ -2348,6 +2528,7 @@ export default function PlanDetailPage() {
               incomes={[]}
               members={members}
               milestones={milestones}
+              onSelectExpense={setDetailExpense}
               planId={planId}
             />
           ) : null}
@@ -2371,6 +2552,7 @@ export default function PlanDetailPage() {
               incomes={[]}
               members={members}
               milestones={[statisticMilestoneMemberDrilldownMilestone]}
+              onSelectExpense={setDetailExpense}
               planId={planId}
               selectedMilestoneId={statisticMilestoneMemberDrilldownMilestone.id}
             />

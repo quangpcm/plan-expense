@@ -24,6 +24,7 @@ type TimelineListProps = {
   milestones: MilestoneDocument[];
   selectedMilestoneId?: string | null;
   onSelectedMilestoneChange?: (milestoneId: string | null) => void;
+  onSelectExpense: (expense: ExpenseDocument) => void;
   hideMilestoneFilter?: boolean;
 };
 
@@ -40,6 +41,7 @@ export function TimelineList({
   milestones,
   selectedMilestoneId: selectedMilestoneIdProp,
   onSelectedMilestoneChange,
+  onSelectExpense,
   hideMilestoneFilter = false,
 }: TimelineListProps) {
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string>(selectedMilestoneIdProp || 'all');
@@ -162,7 +164,7 @@ export function TimelineList({
                     expense={entry.data}
                     members={members}
                     milestones={milestones}
-                    planId={planId}
+                    onSelectExpense={onSelectExpense}
                   />
                 ) : (
                   <IncomeTimelineCard
@@ -183,14 +185,14 @@ export function TimelineList({
 }
 
 type ExpenseTimelineCardProps = {
-  planId: string;
   expense: ExpenseDocument;
   members: PlanMemberDocument[];
   categories: Category[];
   milestones: MilestoneDocument[];
+  onSelectExpense: (expense: ExpenseDocument) => void;
 };
 
-function ExpenseTimelineCard({ planId, expense, members, categories, milestones }: ExpenseTimelineCardProps) {
+function ExpenseTimelineCard({ expense, members, categories, milestones, onSelectExpense }: ExpenseTimelineCardProps) {
   const paidBy = members.find((member) => member.id === expense.paidByMemberId);
   const category = categories.find((item) => item.id === expense.categoryId);
   const milestone = milestones.find((item) => item.id === expense.milestoneId);
@@ -203,9 +205,10 @@ function ExpenseTimelineCard({ planId, expense, members, categories, milestones 
       <span className="flex size-6 shrink-0 items-center justify-center pt-5">
         <span className="size-2 rounded-full bg-[var(--color-expense)]" />
       </span>
-      <Link
-        className="min-w-0 flex-1"
-        href={`/plans/${planId}/expenses/${expense.id}?returnTab=timeline${expense.milestoneId ? `&milestoneId=${expense.milestoneId}` : ''}`}
+      <button
+        className="min-w-0 flex-1 text-left"
+        onClick={() => onSelectExpense(expense)}
+        type="button"
       >
         <Card className="gap-2 border-[var(--color-danger-soft)] bg-[var(--color-surface)] p-4 transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
           <div className="flex items-center gap-2">
@@ -245,7 +248,7 @@ function ExpenseTimelineCard({ planId, expense, members, categories, milestones 
             </p>
           </div>
         </Card>
-      </Link>
+      </button>
     </div>
   );
 }

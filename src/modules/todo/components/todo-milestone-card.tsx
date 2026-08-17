@@ -1,7 +1,7 @@
 'use client';
 
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import { CheckCircle2, Circle, CircleAlert, Clock3, ImageIcon, Paperclip, Store, Wallet } from 'lucide-react';
+import { CheckCircle2, Circle, CircleAlert, Clock3, Paperclip, Store, Wallet } from 'lucide-react';
 
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
@@ -42,7 +42,7 @@ export function TodoMilestoneCard({
   return (
     <div
       className={cn(
-        'flex select-none items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 px-3.5 py-2.5 transition-[transform,box-shadow,opacity] duration-200 [-webkit-touch-callout:none] [-webkit-user-select:none] sm:gap-3 sm:rounded-[24px] sm:px-4 sm:py-3.5',
+        'flex select-none items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 px-3.5 py-2.5 transition-[transform,box-shadow,opacity] duration-200 [-webkit-touch-callout:none] [-webkit-user-select:none] sm:gap-3 sm:rounded-[24px] sm:px-4 sm:py-3.5 lg:gap-2 lg:rounded-2xl lg:px-3.5 lg:py-2.5',
         isPreview ? 'pointer-events-none scale-[1.03] shadow-[0_24px_54px_rgba(15,23,42,0.24)] ring-1 ring-[#dbe5f7]' : '',
       )}
       onClick={() => {
@@ -62,13 +62,13 @@ export function TodoMilestoneCard({
       tabIndex={0}
     >
       <Avatar
-        className="size-8 text-xs sm:size-9 sm:text-sm"
+        className="size-8 text-xs sm:size-9 sm:text-sm lg:size-8 lg:text-xs"
         initials={assignee?.nickname.slice(0, 2).toUpperCase() ?? 'PE'}
         src={assignee?.avatarUrl ?? null}
       />
       <div className="min-w-0 flex-1 space-y-1">
-        <p className="truncate text-[15px] font-semibold text-slate-950 sm:text-lg">{todo.title}</p>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-600 sm:gap-x-4 sm:text-base">
+        <p className="truncate text-[15px] font-semibold text-slate-950 sm:text-lg lg:text-[15px]">{todo.title}</p>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-600 sm:gap-x-4 sm:text-base lg:gap-x-2 lg:text-xs">
           {isDone ? (
             <span className="inline-flex shrink-0 items-center gap-1 font-medium text-[color:var(--color-success)]">
               Đã xong
@@ -83,11 +83,11 @@ export function TodoMilestoneCard({
               )}
             >
               {dueUrgency === 'overdue' ? (
-                <CircleAlert className="size-3 text-[color:var(--color-danger)] sm:size-5" />
+                <CircleAlert className="size-3 text-[color:var(--color-danger)] sm:size-5 lg:size-3" />
               ) : (
                 <Clock3
                   className={cn(
-                    'size-3 sm:size-5',
+                    'size-3 sm:size-5 lg:size-3',
                     dueUrgency === 'danger'
                       ? 'text-[color:var(--color-danger)]'
                       : dueUrgency === 'warning'
@@ -101,7 +101,7 @@ export function TodoMilestoneCard({
           )}
           {displayedBudget != null ? (
             <span className="inline-flex shrink-0 items-center gap-1">
-              <Wallet className="size-3 text-slate-400 sm:size-5" />
+              <Wallet className="size-3 text-slate-400 sm:size-5 lg:size-3" />
               {formatCompactCurrency(displayedBudget)}
             </span>
           ) : null}
@@ -112,19 +112,19 @@ export function TodoMilestoneCard({
                 selectedVendor ? 'font-semibold text-[#2f518f]' : '',
               )}
             >
-              <Store className={cn('size-3 sm:size-5', selectedVendor ? 'text-[#5e7fb8]' : 'text-slate-400')} />
+              <Store className={cn('size-3 sm:size-5 lg:size-3', selectedVendor ? 'text-[#5e7fb8]' : 'text-slate-400')} />
               {todo.vendors.length}
             </span>
           ) : null}
           {todo.attachments.length > 0 ? (
             <span className="inline-flex shrink-0 items-center gap-1">
-              <Paperclip className="size-3 text-slate-400 sm:size-5" />
+              <Paperclip className="size-3 text-slate-400 sm:size-5 lg:size-3" />
               {todo.attachments.length}
             </span>
           ) : null}
         </div>
         {selectedVendor ? (
-          <div className="inline-flex max-w-full items-center gap-2 self-start rounded-full border border-[#bfd6ff] bg-[#eef5ff] px-2.5 py-1 text-xs font-medium text-[#4f6792] sm:px-3">
+          <div className="inline-flex max-w-full items-center gap-2 self-start rounded-full border border-[#bfd6ff] bg-[#eef5ff] px-2.5 py-1 text-xs font-medium text-[#4f6792] sm:px-3 lg:px-2.5">
             <Store className="size-3 shrink-0 text-[#5e7fb8]" />
             <span className="truncate text-[#2f518f]">{selectedVendor.name}</span>
             {displayedBudget != null ? (
@@ -136,7 +136,7 @@ export function TodoMilestoneCard({
       <button
         aria-label={isDone ? 'Đánh dấu đang làm lại' : 'Đánh dấu hoàn thành'}
         className={cn(
-          'flex size-7 shrink-0 items-center justify-center rounded-full border transition sm:size-8',
+          'flex size-7 shrink-0 items-center justify-center rounded-full border transition sm:size-8 lg:size-7',
           isDone
             ? 'border-emerald-500 bg-emerald-500 text-white'
             : 'border-[#c4cbe0] text-slate-500 hover:border-[#0050cb]',

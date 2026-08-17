@@ -3,10 +3,10 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
-import { FolderKanban, UserCircle2 } from 'lucide-react';
 
+import { getAppNavigationItems } from '@/shared/components/layout/navigation-items';
 import { RouteLoadingScreen } from '@/shared/components/layout/route-loading-screen';
-import { appRoutes } from '@/shared/constants';
+import { Sidebar } from '@/shared/components/layout/sidebar';
 import { cn } from '@/shared/utils/cn';
 
 type AppShellProps = {
@@ -25,10 +25,7 @@ export function AppShell({ children }: AppShellProps) {
   const hideTimeoutRef = useRef<number | null>(null);
   const showTimeoutRef = useRef<number | null>(null);
 
-  const navigationItems = [
-    { href: appRoutes.plans, label: 'Kế hoạch', icon: FolderKanban, active: pathname.startsWith(appRoutes.plans) },
-    { href: appRoutes.profile, label: 'Cá nhân', icon: UserCircle2, active: pathname === appRoutes.profile },
-  ];
+  const navigationItems = getAppNavigationItems(pathname);
 
   useEffect(() => {
     if (!isRouteTransitionVisible || pendingRouteKeyRef.current === null) {
@@ -124,12 +121,12 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div
       onClickCapture={handleNavigationIntent}
-      className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 pb-28 sm:px-6 lg:px-8"
+      className="mx-auto flex min-h-screen w-full max-w-[1500px] flex-col px-4 sm:px-6 lg:flex-row lg:items-start lg:gap-6 lg:px-6"
       style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top))' }}
     >
       {isRouteTransitionVisible ? (
         <div className="pointer-events-none fixed inset-0 z-50 bg-[rgba(246,248,252,0.74)] backdrop-blur-[6px]">
-          <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-center px-4 pb-28 sm:px-6 lg:px-8">
+          <div className="mx-auto flex min-h-screen w-full max-w-[1500px] flex-col justify-center px-4 pb-28 sm:px-6 lg:px-6">
             <RouteLoadingScreen
               title="Đang tải nội dung..."
               description="Chỉ mất một chút thời gian."
@@ -137,9 +134,10 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         </div>
       ) : null}
-      <div className="flex-1">{children}</div>
+      <Sidebar />
+      <div className="min-w-0 flex-1 pb-28 lg:pb-8">{children}</div>
       <nav
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-20 mx-auto max-w-3xl px-3 pt-3 sm:px-4 sm:pt-4"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-20 mx-auto max-w-3xl px-3 pt-3 sm:px-4 sm:pt-4 lg:hidden"
         style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
       >
         <div className="pointer-events-auto grid grid-cols-2 rounded-[24px] border border-white/60 bg-slate-950/95 p-1.5 shadow-[0_18px_50px_rgba(15,23,42,0.3)] backdrop-blur sm:rounded-[28px] sm:p-2">

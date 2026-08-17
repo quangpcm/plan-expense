@@ -494,7 +494,7 @@ export function MilestoneTimelineBoard({
 
             <button
               className={cn(
-                'group relative z-[1] w-full rounded-[20px] border p-0 text-left transition sm:rounded-[32px]',
+                'group relative z-[1] w-full rounded-[20px] border p-0 text-left transition sm:rounded-[32px] lg:rounded-[20px]',
                 tone.card,
               )}
               onClick={() => {
@@ -503,11 +503,11 @@ export function MilestoneTimelineBoard({
               }}
               type="button"
             >
-              <div className="space-y-3 p-4 sm:space-y-5 sm:p-6">
-                <div className="flex items-start justify-between gap-2 sm:gap-3">
-                  <div className="min-w-0 space-y-2 sm:space-y-3">
+              <div className="space-y-3 p-4 sm:space-y-5 sm:p-6 lg:space-y-3 lg:p-4">
+                <div className="flex items-start justify-between gap-2 sm:gap-3 lg:gap-2">
+                  <div className="min-w-0 space-y-2 sm:space-y-3 lg:space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="truncate text-[19px] font-semibold sm:text-2xl">{milestone.title}</h3>
+                      <h3 className="truncate text-[19px] font-semibold sm:text-2xl lg:text-lg">{milestone.title}</h3>
                       <Badge className={getMilestoneBadgeClass(displayedStatus)}>
                         {milestoneStatusLabel[displayedStatus]}
                       </Badge>
@@ -537,7 +537,7 @@ export function MilestoneTimelineBoard({
                     {canManagePlan ? (
                       <div className="flex flex-wrap justify-end gap-2">
                         <Button
-                          className={cn('size-8 min-h-8 justify-center px-0 sm:size-9 sm:min-h-9', tone.action)}
+                          className={cn('size-8 min-h-8 justify-center px-0 sm:size-9 sm:min-h-9 lg:size-8 lg:min-h-8', tone.action)}
                           onClick={(event) => {
                             event.stopPropagation();
                             onEditMilestone(milestone);
@@ -549,7 +549,7 @@ export function MilestoneTimelineBoard({
                         <Button
                           aria-label={`Xoá mốc ${milestone.title}`}
                           className={cn(
-                            'size-8 min-h-8 justify-center px-0 hover:bg-rose-50 hover:text-rose-600 sm:size-9 sm:min-h-9',
+                            'size-8 min-h-8 justify-center px-0 hover:bg-rose-50 hover:text-rose-600 sm:size-9 sm:min-h-9 lg:size-8 lg:min-h-8',
                             tone.action,
                           )}
                           onClick={(event) => {
@@ -565,28 +565,28 @@ export function MilestoneTimelineBoard({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 text-sm sm:gap-3">
+                <div className="grid grid-cols-3 gap-2 text-sm sm:gap-3 lg:gap-2">
                   <div>
-                    <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', tone.titleMuted)}>
+                    <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em] lg:text-[11px] lg:tracking-[0.12em]', tone.titleMuted)}>
                       Đã chi
                     </p>
-                    <p className={cn('mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl', tone.valueStrong)}>
+                    <p className={cn('mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl lg:mt-1 lg:text-base', tone.valueStrong)}>
                       {formatCompactCurrency(milestone.totalExpense)}
                     </p>
                   </div>
                   <div>
-                    <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', tone.titleMuted)}>
+                    <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em] lg:text-[11px] lg:tracking-[0.12em]', tone.titleMuted)}>
                       Dự kiến chi
                     </p>
-                    <p className={cn('mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl', tone.valueSoft)}>
+                    <p className={cn('mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl lg:mt-1 lg:text-base', tone.valueSoft)}>
                       {formatCompactCurrency(estimatedBudget)}
                     </p>
                   </div>
                   <div>
-                    <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em]', tone.titleMuted)}>
+                    <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em] lg:text-[11px] lg:tracking-[0.12em]', tone.titleMuted)}>
                       Công việc
                     </p>
-                    <p className="mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl">
+                    <p className="mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl lg:mt-1 lg:text-base">
                       {milestone.completedTodoCount}/{milestone.todoCount}
                     </p>
                   </div>
@@ -597,17 +597,17 @@ export function MilestoneTimelineBoard({
             <div
               aria-hidden={!shouldExpandDetails}
               className={cn(
-                'ml-[11px] overflow-hidden transition-[max-height,opacity,margin,transform] duration-300 ease-out sm:ml-4',
+                'ml-[11px] overflow-hidden transition-[max-height,opacity,margin,transform] duration-300 ease-out sm:ml-4 lg:ml-[11px]',
                 shouldExpandDetails
                   ? 'mt-3 max-h-[2200px] opacity-100 sm:mt-4'
                   : 'mt-0 max-h-0 translate-y-[-6px] opacity-0 pointer-events-none',
               )}
             >
-              <div className="space-y-2 pl-2 sm:space-y-3 sm:pl-3">
+              <div className="space-y-2 pl-2 sm:space-y-3 sm:pl-3 lg:space-y-2 lg:pl-2">
                 <div className="relative">
                   {milestoneTodos.length > 0 ? (
                     <>
-                      <span className="absolute left-3 top-0 bottom-0 z-0 w-px bg-[#e8edf7] sm:left-4" />
+                      <span className="absolute left-3 top-0 bottom-0 z-0 w-px bg-[#e8edf7] sm:left-4 lg:left-3" />
                       {milestoneTodos.map((todo) => {
                         const assignee = members.find((member) => member.id === todo.assigneeMemberId) ?? null;
                         const canToggle = canManagePlan && !isPlanClosed;
@@ -617,13 +617,13 @@ export function MilestoneTimelineBoard({
                         return (
                           <div
                             key={todo.id}
-                            className="mb-2 flex gap-2 last:mb-0 sm:mb-3 sm:gap-3"
+                            className="mb-2 flex gap-2 last:mb-0 sm:mb-3 sm:gap-3 lg:mb-2 lg:gap-2"
                             onClick={(event) => event.stopPropagation()}
                             ref={(element) => {
                               itemRefs.current[todo.id] = element;
                             }}
                           >
-                            <div className="relative w-6 shrink-0 sm:w-8">
+                            <div className="relative w-6 shrink-0 sm:w-8 lg:w-6">
                               <span className="absolute left-1/2 top-1/2 z-10 size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-300 sm:size-2" />
                             </div>
                             <div className="min-w-0 flex-1">

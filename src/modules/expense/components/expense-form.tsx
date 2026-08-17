@@ -1,7 +1,7 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { startTransition, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, CheckCircle2, ChevronRight, User } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
 import { ZodError } from 'zod';
@@ -33,7 +33,10 @@ import { cn } from '@/shared/utils/cn';
 type ExpenseFormProps = {
   planId: string;
   mode: 'create' | 'edit';
-  expense?: ExpenseDocument;
+  expense?: ExpenseDocument | undefined;
+  defaultMilestoneId?: string | undefined;
+  onSuccess?: ((milestoneId: string) => void) | undefined;
+  onCancel?: (() => void) | undefined;
 };
 
 // Some legacy expenses predate this app's write path and can hold a non-string
@@ -45,8 +48,7 @@ function toSafeString(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
 
-export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
-  const router = useRouter();
+export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSuccess, onCancel }: ExpenseFormProps) {
   const searchParams = useSearchParams();
   const { user } = useAuthSession();
   const { plan } = usePlan(planId);
@@ -76,8 +78,8 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
   const allActiveParticipantIds = activeMembers.map((member) => member.id);
   const defaultCategoryId = toSafeString(expense?.categoryId) || categories[0]?.id || '';
   const milestoneIdFromQuery = searchParams.get('milestoneId') || '';
-  const returnTab = searchParams.get('returnTab');
-  const defaultMilestoneId = expense?.milestoneId || milestoneIdFromQuery || milestones[0]?.id || '';
+  const resolvedDefaultMilestoneId =
+    expense?.milestoneId || defaultMilestoneId || milestoneIdFromQuery || milestones[0]?.id || '';
   const defaultSpentAt = expense ? formatDateTimeLocalInput(expense.spentAt.toDate()) : formatDateTimeLocalInput(new Date());
   const defaultSplitValues: Record<string, number> = {};
 
@@ -97,7 +99,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
     defaultValues: {
       title: expense?.title || '',
       amount: expense?.amount || 0,
-      milestoneId: defaultMilestoneId,
+      milestoneId: resolvedDefaultMilestoneId,
       categoryId: defaultCategoryId,
       paidByMemberId: defaultPaidByMemberId,
       participantMemberIds: defaultParticipantIds,
@@ -168,14 +170,14 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
       form.setValue('categoryId', defaultCategoryId, { shouldValidate: true });
     }
 
-    if (!form.getValues('milestoneId') && defaultMilestoneId) {
-      form.setValue('milestoneId', defaultMilestoneId, { shouldValidate: true });
+    if (!form.getValues('milestoneId') && resolvedDefaultMilestoneId) {
+      form.setValue('milestoneId', resolvedDefaultMilestoneId, { shouldValidate: true });
     }
 
     if (!form.getValues('spentAt') && defaultSpentAt) {
       form.setValue('spentAt', defaultSpentAt, { shouldValidate: true });
     }
-  }, [defaultCategoryId, defaultMilestoneId, defaultPaidByMemberId, defaultParticipantIds, defaultSpentAt, form]);
+  }, [defaultCategoryId, resolvedDefaultMilestoneId, defaultPaidByMemberId, defaultParticipantIds, defaultSpentAt, form]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     if (!plan || !user) {
@@ -205,13 +207,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
         if (parsed.categoryId) {
           localStorage.setItem(`last-expense-category:${planId}`, parsed.categoryId);
         }
-        startTransition(() => {
-          router.replace(
-            returnTab === 'milestones'
-              ? `/plans/${planId}?tab=milestones&milestoneId=${parsed.milestoneId}`
-              : `/plans/${planId}?tab=timeline&milestoneId=${parsed.milestoneId}`,
-          );
-        });
+        onSuccess?.(parsed.milestoneId);
       } else if (expense) {
         const parsed = updateExpenseSchema.parse({
           ...values,
@@ -225,15 +221,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
           milestones,
           categories,
         }, expense);
-        startTransition(() => {
-          router.replace(
-            returnTab === 'milestones'
-              ? `/plans/${planId}?tab=milestones&milestoneId=${parsed.milestoneId}`
-              : returnTab === 'timeline'
-                ? `/plans/${planId}?tab=timeline&milestoneId=${parsed.milestoneId}`
-                : `/plans/${planId}/expenses/${expense.id}`,
-          );
-        });
+        onSuccess?.(parsed.milestoneId);
       }
     } catch (error) {
       if (error instanceof ZodError) {
@@ -256,7 +244,7 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
   const attachmentDrafts = useWatch({ control: form.control, name: 'attachments' }) ?? [];
 
   return (
-    <form className="space-y-5 pb-28" onSubmit={handleSubmit}>
+    <form className="space-y-5" onSubmit={handleSubmit}>
       <div className="space-y-1 text-center">
         <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#727687]" htmlFor="amount">
           Số tiền (VND)
@@ -507,8 +495,13 @@ export function ExpenseForm({ planId, mode, expense }: ExpenseFormProps) {
         </div>
       ) : null}
 
-      <div className="fixed inset-x-0 bottom-24 z-10 mx-auto max-w-3xl px-4">
-        <Button className="w-full justify-center rounded-full" disabled={isSubmitting} type="submit">
+      <div className="flex items-center justify-end gap-2">
+        {onCancel ? (
+          <Button onClick={onCancel} type="button" variant="ghost">
+            Huỷ
+          </Button>
+        ) : null}
+        <Button disabled={isSubmitting} type="submit">
           {isSubmitting ? (
             mode === 'create' ? 'Đang tạo khoản chi...' : 'Đang lưu khoản chi...'
           ) : (

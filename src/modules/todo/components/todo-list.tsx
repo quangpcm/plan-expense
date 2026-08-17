@@ -2,6 +2,7 @@ import type { TodoDocument } from '@/modules/todo/types/todo';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import { Card } from '@/shared/components/ui/card';
+import { cn } from '@/shared/utils/cn';
 
 import { TodoCard } from './todo-card';
 
@@ -12,6 +13,7 @@ type TodoListProps = {
   members: PlanMemberDocument[];
   canManagePlan: boolean;
   isSubmitting: boolean;
+  className?: string;
   onEdit: (todo: TodoDocument) => void;
   onChangeStatus: (todo: TodoDocument, status: TodoDocument['status']) => void;
   onAddVendor: (todo: TodoDocument) => void;
@@ -26,6 +28,7 @@ export function TodoList({
   members,
   canManagePlan,
   isSubmitting,
+  className,
   onEdit,
   onChangeStatus,
   onAddVendor,
@@ -43,7 +46,7 @@ export function TodoList({
   const sortedTodos = preserveOrder ? todos : [...todos].sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
 
   return (
-    <div className="grid gap-3">
+    <div className={cn('grid gap-3', className)}>
       {sortedTodos.map((todo) => (
         <TodoCard
           assignee={members.find((member) => member.id === todo.assigneeMemberId) ?? null}
