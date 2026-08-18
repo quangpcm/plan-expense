@@ -3,6 +3,7 @@ import type {
   WeddingGuestRelationshipId,
   WeddingGuestSideId,
 } from '@/modules/wedding-guest/types/wedding-guest';
+import { normalizeVietnameseName } from '@/modules/wedding-guest/utils/normalize-name';
 
 export const WEDDING_GUEST_SIDES: Array<{
   id: WeddingGuestSideId;
@@ -74,4 +75,45 @@ export function getGuestRsvpLabel(
   rsvp: 'pending' | 'attending' | 'not_attending',
 ): string {
   return GUEST_RSVP_OPTIONS.find((option) => option.id === rsvp)?.label ?? rsvp;
+}
+
+function matchNormalizedLabel<T extends string>(
+  items: Array<{ id: T; label: string }>,
+  label: string,
+): T | null {
+  const normalizedLabel = normalizeVietnameseName(label);
+
+  if (!normalizedLabel) {
+    return null;
+  }
+
+  return (
+    items.find(
+      (item) => normalizeVietnameseName(item.label) === normalizedLabel,
+    )?.id ?? null
+  );
+}
+
+export function getWeddingGuestSideIdByLabel(
+  label: string,
+): WeddingGuestSideId | null {
+  return matchNormalizedLabel(WEDDING_GUEST_SIDES, label);
+}
+
+export function getWeddingGuestRelationshipIdByLabel(
+  label: string,
+): WeddingGuestRelationshipId | null {
+  return matchNormalizedLabel(WEDDING_GUEST_RELATIONSHIPS, label);
+}
+
+export function getWeddingGuestInvitedByIdByLabel(
+  label: string,
+): WeddingGuestInvitedById | null {
+  return matchNormalizedLabel(WEDDING_GUEST_INVITED_BY, label);
+}
+
+export function getGuestRsvpIdByLabel(
+  label: string,
+): 'pending' | 'attending' | 'not_attending' | null {
+  return matchNormalizedLabel(GUEST_RSVP_OPTIONS, label);
 }

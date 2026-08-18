@@ -15,6 +15,7 @@ import {
 import { getFirebaseFirestore } from '@/config/firebase.config';
 import type {
   AddGuestInvitationPersistenceInput,
+  BulkUpsertGuestInvitationPersistenceInput,
   GuestInvitationRepository,
   UpdateGuestInvitationPersistenceInput,
 } from '@/modules/wedding-guest/repositories/guest-invitation.repository';
@@ -61,6 +62,67 @@ export class FirestoreGuestInvitationRepository implements GuestInvitationReposi
     } satisfies GuestInvitationDocument);
 
     return { invitationId: invitationRef.id };
+  }
+
+  async bulkUpsertInvitations(
+    inputs: BulkUpsertGuestInvitationPersistenceInput,
+  ) {
+    const db = getFirebaseFirestore();
+    let batch = writeBatch(db);
+    let operationCount = 0;
+
+    for (const input of inputs) {
+      const invitationRef = doc(
+        db,
+        'plans',
+        input.planId,
+        'guestInvitations',
+        input.mode === 'create'
+          ? `${input.guestId}_${input.groupId}`
+          : input.invitationId,
+      );
+      const now = Timestamp.now();
+
+      if (input.mode === 'create') {
+        batch.set(invitationRef, {
+          id: invitationRef.id,
+          planId: input.planId,
+          guestId: input.guestId,
+          groupId: input.groupId,
+          rsvp: input.rsvp,
+          attendeeCount: input.attendeeCount,
+          moneyGiftAmount: input.moneyGiftAmount,
+          goldGiftAmount: input.goldGiftAmount,
+          goldGiftNote: input.goldGiftNote,
+          note: input.note,
+          createdByUserId: input.createdByUserId,
+          createdAt: now,
+          updatedAt: now,
+        } satisfies GuestInvitationDocument);
+      } else {
+        batch.update(invitationRef, {
+          rsvp: input.rsvp,
+          attendeeCount: input.attendeeCount,
+          moneyGiftAmount: input.moneyGiftAmount,
+          goldGiftAmount: input.goldGiftAmount,
+          goldGiftNote: input.goldGiftNote,
+          note: input.note,
+          updatedAt: now,
+        });
+      }
+
+      operationCount += 1;
+
+      if (operationCount >= 450) {
+        await batch.commit();
+        batch = writeBatch(db);
+        operationCount = 0;
+      }
+    }
+
+    if (operationCount > 0) {
+      await batch.commit();
+    }
   }
 
   async updateInvitation(

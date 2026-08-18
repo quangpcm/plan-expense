@@ -23,6 +23,27 @@ export type CreateWeddingGuestPersistenceInput = {
   createdByUserId: string;
 };
 
+export type CreateWeddingGuestInvitationPersistenceInput = Omit<
+  CreateWeddingGuestPersistenceInput,
+  | 'name'
+  | 'normalizedName'
+  | 'sideId'
+  | 'relationshipId'
+  | 'invitedById'
+  | 'createdByUserId'
+>;
+
+export type BulkCreateWeddingGuestWithInvitationPersistenceInput = Array<{
+  planId: string;
+  name: string;
+  normalizedName: string;
+  sideId: WeddingGuestSideId;
+  relationshipId: WeddingGuestRelationshipId;
+  invitedById: WeddingGuestInvitedById;
+  createdByUserId: string;
+  invitations: CreateWeddingGuestInvitationPersistenceInput[];
+}>;
+
 export type UpdateWeddingGuestPersistenceInput = {
   guestId: string;
   name: string;
@@ -36,6 +57,9 @@ export interface WeddingGuestRepository {
   createGuestWithInvitation(
     input: CreateWeddingGuestPersistenceInput,
   ): Promise<{ guestId: string; invitationId: string }>;
+  bulkCreateGuestsWithInvitations(
+    inputs: BulkCreateWeddingGuestWithInvitationPersistenceInput,
+  ): Promise<Array<{ guestId: string; invitationId: string }>>;
   updateGuest(
     planId: string,
     input: UpdateWeddingGuestPersistenceInput,

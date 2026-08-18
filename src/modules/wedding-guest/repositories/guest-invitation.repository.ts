@@ -26,10 +26,19 @@ export type UpdateGuestInvitationPersistenceInput = {
   note: string | null;
 };
 
+export type BulkUpsertGuestInvitationPersistenceInput = Array<
+  | (AddGuestInvitationPersistenceInput & { mode: 'create' })
+  | (Omit<AddGuestInvitationPersistenceInput, 'createdByUserId'> &
+      UpdateGuestInvitationPersistenceInput & { mode: 'sync' })
+>;
+
 export interface GuestInvitationRepository {
   addInvitation(
     input: AddGuestInvitationPersistenceInput,
   ): Promise<{ invitationId: string }>;
+  bulkUpsertInvitations(
+    inputs: BulkUpsertGuestInvitationPersistenceInput,
+  ): Promise<void>;
   updateInvitation(
     planId: string,
     input: UpdateGuestInvitationPersistenceInput,

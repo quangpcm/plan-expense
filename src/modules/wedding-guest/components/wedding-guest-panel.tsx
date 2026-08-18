@@ -1,7 +1,8 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Download, Plus, Upload } from 'lucide-react';
 
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
@@ -51,6 +52,22 @@ type WeddingGuestPanelProps = {
   currentMember: PlanMemberDocument | null;
 };
 
+const WeddingGuestImportDialog = dynamic(
+  () =>
+    import(
+      '@/modules/wedding-guest/components/wedding-guest-import-dialog'
+    ).then((module) => module.WeddingGuestImportDialog),
+  { ssr: false },
+);
+
+const WeddingGuestExportDialog = dynamic(
+  () =>
+    import(
+      '@/modules/wedding-guest/components/wedding-guest-export-dialog'
+    ).then((module) => module.WeddingGuestExportDialog),
+  { ssr: false },
+);
+
 export function WeddingGuestPanel({
   plan,
   currentMember,
@@ -83,6 +100,8 @@ export function WeddingGuestPanel({
   );
   const [showGroupManager, setShowGroupManager] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const [editingGuest, setEditingGuest] = useState<WeddingGuestDocument | null>(
     null,
   );
@@ -540,16 +559,38 @@ export function WeddingGuestPanel({
         <Card>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SectionHeading eyebrow="Khách mời" title="Danh sách khách mời" />
-            {canManage && activeGroupId ? (
-              <Button
-                className="hidden shrink-0 lg:inline-flex"
-                onClick={() => setShowCreateForm(true)}
-                variant="secondary"
-              >
-                <Plus className="size-4" />
-                Thêm khách
-              </Button>
-            ) : null}
+            <div className="flex flex-wrap gap-2">
+              {canManage ? (
+                <>
+                  <Button
+                    className="hidden shrink-0 lg:inline-flex"
+                    onClick={() => setShowImportDialog(true)}
+                    variant="secondary"
+                  >
+                    <Upload className="size-4" />
+                    Import
+                  </Button>
+                  <Button
+                    className="hidden shrink-0 lg:inline-flex"
+                    onClick={() => setShowExportDialog(true)}
+                    variant="secondary"
+                  >
+                    <Download className="size-4" />
+                    Export
+                  </Button>
+                </>
+              ) : null}
+              {canManage && activeGroupId ? (
+                <Button
+                  className="hidden shrink-0 lg:inline-flex"
+                  onClick={() => setShowCreateForm(true)}
+                  variant="secondary"
+                >
+                  <Plus className="size-4" />
+                  Thêm khách
+                </Button>
+              ) : null}
+            </div>
           </div>
 
           <WeddingGuestFilterBar
@@ -617,6 +658,24 @@ export function WeddingGuestPanel({
           onUpdateGroup={handleUpdateGroup}
         />
       </BottomSheet>
+
+      <WeddingGuestImportDialog
+        currentMember={currentMember}
+        groups={groups}
+        guests={guests}
+        invitations={invitations}
+        onClose={() => setShowImportDialog(false)}
+        open={showImportDialog}
+        plan={plan}
+      />
+
+      <WeddingGuestExportDialog
+        groups={groups}
+        guests={guests}
+        invitations={invitations}
+        onClose={() => setShowExportDialog(false)}
+        open={showExportDialog}
+      />
 
       <BottomSheet
         onClose={() => setShowCreateForm(false)}

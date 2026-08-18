@@ -4,6 +4,7 @@ import { FirestoreGuestInvitationRepository } from '@/modules/wedding-guest/repo
 import { FirestoreWeddingGuestRepository } from '@/modules/wedding-guest/repositories/firestore-wedding-guest.repository';
 import { FirestoreWeddingGuestGroupRepository } from '@/modules/wedding-guest/repositories/firestore-wedding-guest-group.repository';
 import { GuestInvitationService } from '@/modules/wedding-guest/services/guest-invitation.service';
+import { WeddingGuestImportService } from '@/modules/wedding-guest/services/wedding-guest-import.service';
 import { WeddingGuestService } from '@/modules/wedding-guest/services/wedding-guest.service';
 import { WeddingGuestGroupService } from '@/modules/wedding-guest/services/wedding-guest-group.service';
 
@@ -19,4 +20,9 @@ export const weddingGuestService = new WeddingGuestService(
 );
 export const guestInvitationService = new GuestInvitationService(
   guestInvitationRepository,
+);
+export const weddingGuestImportService = new WeddingGuestImportService(
+  weddingGuestRepository,
+  guestInvitationRepository,
+  weddingGuestGroupService,
 );
