@@ -1656,11 +1656,15 @@ export default function PlanDetailPage() {
                       estimatedByMilestoneId={estimatedByMilestoneId}
                       isSubmitting={false}
                       milestones={upcomingMilestones}
-                      onEdit={() => setActiveTab('Công việc')}
+                      onEdit={() => {
+                        setWorkViewMode('milestones');
+                        setActiveTab('Công việc');
+                      }}
                       onMoveDown={() => {}}
                       onMoveUp={() => {}}
                       onSelect={(milestoneId) => {
                         setSelectedMilestoneId(milestoneId);
+                        setWorkViewMode('milestones');
                         setActiveTab('Công việc');
                       }}
                       selectedMilestoneId={selectedMilestone?.id ?? null}
@@ -1668,7 +1672,10 @@ export default function PlanDetailPage() {
                   )}
                   <Button
                     className="w-full justify-center"
-                    onClick={() => setActiveTab('Công việc')}
+                    onClick={() => {
+                      setWorkViewMode('milestones');
+                      setActiveTab('Công việc');
+                    }}
                     variant="ghost"
                   >
                     Xem tất cả mốc

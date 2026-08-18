@@ -1,10 +1,19 @@
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarDays, CircleDollarSign, PencilLine, Plus, Trash2 } from 'lucide-react';
+import {
+  CalendarDays,
+  CircleDollarSign,
+  PencilLine,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
-import { getMilestoneAnchorDate, milestoneStatusLabel } from '@/modules/milestone/utils/milestone-status';
+import {
+  getMilestoneAnchorDate,
+  milestoneStatusLabel,
+} from '@/modules/milestone/utils/milestone-status';
 import { TodoMilestoneCard } from '@/modules/todo/components/todo-milestone-card';
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import { Badge } from '@/shared/components/ui/badge';
@@ -32,9 +41,15 @@ type MilestoneTimelineBoardProps = {
   onEditMilestone: (milestone: MilestoneDocument) => void;
   onDeleteMilestone: (milestone: MilestoneDocument) => void;
   onAddTodo: (milestone: MilestoneDocument) => void;
-  onReorderTodos: (milestoneId: string, orderedTodoIds: string[]) => Promise<void>;
+  onReorderTodos: (
+    milestoneId: string,
+    orderedTodoIds: string[],
+  ) => Promise<void>;
   onViewTodo: (todo: TodoDocument) => void;
-  onChangeTodoStatus: (todo: TodoDocument, status: TodoDocument['status']) => void;
+  onChangeTodoStatus: (
+    todo: TodoDocument,
+    status: TodoDocument['status'],
+  ) => void;
   onOpenExpenseSheet: (milestone: MilestoneDocument) => void;
 };
 
@@ -57,7 +72,10 @@ type PendingDragState = {
   startY: number;
 };
 
-function getMilestoneCardTone(displayedStatus: MilestoneDocument['status'], isSelected: boolean) {
+function getMilestoneCardTone(
+  displayedStatus: MilestoneDocument['status'],
+  isSelected: boolean,
+) {
   if (isSelected) {
     return {
       card: 'border-[var(--color-milestone-selected-border)] bg-[var(--color-milestone-selected)] text-[var(--color-milestone-selected-foreground)] shadow-[0_24px_70px_rgba(36,59,107,0.22)]',
@@ -75,7 +93,8 @@ function getMilestoneCardTone(displayedStatus: MilestoneDocument['status'], isSe
       titleMuted: 'text-[var(--color-milestone-completed-muted)]',
       valueStrong: 'text-[var(--color-milestone-completed-foreground)]',
       valueSoft: 'text-[var(--color-milestone-completed-muted)]',
-      action: 'bg-white/80 text-[var(--color-milestone-completed-foreground)] hover:bg-white',
+      action:
+        'bg-white/80 text-[var(--color-milestone-completed-foreground)] hover:bg-white',
       mobileExpenseAction: 'ghost' as const,
     };
   }
@@ -137,14 +156,20 @@ export function MilestoneTimelineBoard({
   const AUTO_SCROLL_EDGE_PX = 112;
   const AUTO_SCROLL_SPEED = 12;
   const HOLD_MOVE_CANCEL_PX = 8;
-  const [optimisticOrders, setOptimisticOrders] = useState<Record<string, string[]>>({});
+  const [optimisticOrders, setOptimisticOrders] = useState<
+    Record<string, string[]>
+  >({});
   const [pendingDrag, setPendingDrag] = useState<PendingDragState | null>(null);
   const [activeDrag, setActiveDrag] = useState<ActiveDragState | null>(null);
-  const [expandedMilestoneIds, setExpandedMilestoneIds] = useState<Set<string>>(() => new Set());
+  const [expandedMilestoneIds, setExpandedMilestoneIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const milestoneCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const justDraggedRef = useRef(false);
   const hasAppliedDefaultExpandRef = useRef(false);
+  const hasScrolledToSelectedRef = useRef<string | null>(null);
 
   const trimmedQuery = searchQuery.trim().toLowerCase();
   const isSearching = trimmedQuery.length > 0;
@@ -154,7 +179,9 @@ export function MilestoneTimelineBoard({
       return true;
     }
 
-    return `${todo.title} ${todo.description ?? ''}`.toLowerCase().includes(trimmedQuery);
+    return `${todo.title} ${todo.description ?? ''}`
+      .toLowerCase()
+      .includes(trimmedQuery);
   }
 
   function handleToggleExpand(milestoneId: string) {
@@ -180,31 +207,73 @@ export function MilestoneTimelineBoard({
     setExpandedMilestoneIds(new Set([defaultExpandedMilestoneId]));
   }, [defaultExpandedMilestoneId]);
 
+  useEffect(() => {
+    if (
+      !selectedMilestoneId ||
+      hasScrolledToSelectedRef.current === selectedMilestoneId
+    ) {
+      return;
+    }
+
+    const targetMilestoneId = selectedMilestoneId;
+    let attemptsRemaining = 20;
+    let frameId: number;
+
+    function tryScroll() {
+      const element = milestoneCardRefs.current[targetMilestoneId];
+
+      if (element) {
+        hasScrolledToSelectedRef.current = targetMilestoneId;
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      attemptsRemaining -= 1;
+
+      if (attemptsRemaining > 0) {
+        frameId = requestAnimationFrame(tryScroll);
+      }
+    }
+
+    frameId = requestAnimationFrame(tryScroll);
+
+    return () => cancelAnimationFrame(frameId);
+  }, [selectedMilestoneId]);
+
   if (milestones.length === 0) {
     return (
       <Card className="border-slate-200 bg-slate-50 shadow-none">
         <p className="text-sm leading-6 text-slate-600">
-          Chưa có mốc kế hoạch nào. Hãy tạo mốc đầu tiên để bắt đầu tổ chức kế hoạch theo giai đoạn.
+          Chưa có mốc kế hoạch nào. Hãy tạo mốc đầu tiên để bắt đầu tổ chức kế
+          hoạch theo giai đoạn.
         </p>
       </Card>
     );
   }
 
   let previousMonthLabel: string | null = null;
-  const selectedMilestone = milestones.find((milestone) => milestone.id === selectedMilestoneId) ?? null;
-  const selectedMonthLabel = selectedMilestone ? formatMonthLabel(getMilestoneAnchorDate(selectedMilestone)) : null;
+  const selectedMilestone =
+    milestones.find((milestone) => milestone.id === selectedMilestoneId) ??
+    null;
+  const selectedMonthLabel = selectedMilestone
+    ? formatMonthLabel(getMilestoneAnchorDate(selectedMilestone))
+    : null;
   const todosByMilestone = useMemo(
     () =>
       Object.fromEntries(
         milestones.map((milestone) => [
           milestone.id,
-          sortTodosByMilestoneOrder(todos.filter((todo) => todo.milestoneId === milestone.id)),
+          sortTodosByMilestoneOrder(
+            todos.filter((todo) => todo.milestoneId === milestone.id),
+          ),
         ]),
       ) as Record<string, TodoDocument[]>,
     [milestones, todos],
   );
   const visibleMilestones = isSearching
-    ? milestones.filter((milestone) => (todosByMilestone[milestone.id] ?? []).some(todoMatchesQuery))
+    ? milestones.filter((milestone) =>
+        (todosByMilestone[milestone.id] ?? []).some(todoMatchesQuery),
+      )
     : milestones;
 
   useEffect(() => {
@@ -238,8 +307,11 @@ export function MilestoneTimelineBoard({
         window.scrollBy({ top: AUTO_SCROLL_SPEED, behavior: 'auto' });
       }
 
-      const currentOrder = optimisticOrders[activeDrag.milestoneId] ?? activeDrag.originalOrder;
-      const otherTodoIds = currentOrder.filter((todoId) => todoId !== activeDrag.todoId);
+      const currentOrder =
+        optimisticOrders[activeDrag.milestoneId] ?? activeDrag.originalOrder;
+      const otherTodoIds = currentOrder.filter(
+        (todoId) => todoId !== activeDrag.todoId,
+      );
       let insertAt = otherTodoIds.length;
 
       for (let index = 0; index < otherTodoIds.length; index += 1) {
@@ -284,8 +356,10 @@ export function MilestoneTimelineBoard({
 
       justDraggedRef.current = true;
 
-      const finalOrder = optimisticOrders[activeDrag.milestoneId] ?? activeDrag.originalOrder;
-      const hasOrderChanged = finalOrder.join('|') !== activeDrag.originalOrder.join('|');
+      const finalOrder =
+        optimisticOrders[activeDrag.milestoneId] ?? activeDrag.originalOrder;
+      const hasOrderChanged =
+        finalOrder.join('|') !== activeDrag.originalOrder.join('|');
       const nextMilestoneId = activeDrag.milestoneId;
       const originalOrder = activeDrag.originalOrder;
 
@@ -308,7 +382,9 @@ export function MilestoneTimelineBoard({
       });
     }
 
-    window.addEventListener('pointermove', handlePointerMove, { passive: false });
+    window.addEventListener('pointermove', handlePointerMove, {
+      passive: false,
+    });
     window.addEventListener('pointerup', handlePointerUp);
     window.addEventListener('pointercancel', handlePointerUp);
 
@@ -345,13 +421,22 @@ export function MilestoneTimelineBoard({
     }
 
     const todoMap = new Map(milestoneTodos.map((todo) => [todo.id, todo]));
-    const orderedTodos = orderIds.map((todoId) => todoMap.get(todoId)).filter((todo): todo is TodoDocument => Boolean(todo));
+    const orderedTodos = orderIds
+      .map((todoId) => todoMap.get(todoId))
+      .filter((todo): todo is TodoDocument => Boolean(todo));
     const seenIds = new Set(orderIds);
 
-    return [...orderedTodos, ...milestoneTodos.filter((todo) => !seenIds.has(todo.id))];
+    return [
+      ...orderedTodos,
+      ...milestoneTodos.filter((todo) => !seenIds.has(todo.id)),
+    ];
   }
 
-  function handleTodoPointerDown(event: ReactPointerEvent<HTMLDivElement>, milestoneId: string, todoId: string) {
+  function handleTodoPointerDown(
+    event: ReactPointerEvent<HTMLDivElement>,
+    milestoneId: string,
+    todoId: string,
+  ) {
     if (!canManagePlan || isPlanClosed || isTodoSubmitting) {
       return;
     }
@@ -367,7 +452,9 @@ export function MilestoneTimelineBoard({
       clearTimeout(holdTimerRef.current);
     }
 
-    const originalOrder = getDisplayedMilestoneTodos(milestoneId).map((todo) => todo.id);
+    const originalOrder = getDisplayedMilestoneTodos(milestoneId).map(
+      (todo) => todo.id,
+    );
 
     setPendingDrag({
       milestoneId,
@@ -413,7 +500,9 @@ export function MilestoneTimelineBoard({
   return (
     <div className="space-y-6">
       {(() => {
-        const draggedTodo = activeDrag ? todos.find((todo) => todo.id === activeDrag.todoId) ?? null : null;
+        const draggedTodo = activeDrag
+          ? (todos.find((todo) => todo.id === activeDrag.todoId) ?? null)
+          : null;
 
         return draggedTodo && activeDrag ? (
           <div
@@ -428,7 +517,11 @@ export function MilestoneTimelineBoard({
             }}
           >
             <TodoMilestoneCard
-              assignee={members.find((member) => member.id === draggedTodo.assigneeMemberId) ?? null}
+              assignee={
+                members.find(
+                  (member) => member.id === draggedTodo.assigneeMemberId,
+                ) ?? null
+              }
               canToggle={false}
               isPreview
               isSubmitting
@@ -448,21 +541,34 @@ export function MilestoneTimelineBoard({
       ) : null}
       {visibleMilestones.map((milestone) => {
         const isSelected = milestone.id === selectedMilestoneId;
-        const milestoneTodos = getDisplayedMilestoneTodos(milestone.id).filter(todoMatchesQuery);
-        const estimatedBudget = milestoneTodos.reduce((total, todoItem) => total + (getTodoBudgetAmount(todoItem) ?? 0), 0);
+        const milestoneTodos = getDisplayedMilestoneTodos(milestone.id).filter(
+          todoMatchesQuery,
+        );
+        const estimatedBudget = milestoneTodos.reduce(
+          (total, todoItem) => total + (getTodoBudgetAmount(todoItem) ?? 0),
+          0,
+        );
         const startDate = timestampToDate(milestone.startDate);
         const endDate = timestampToDate(milestone.endDate);
         const displayedStatus = milestone.status;
         const anchorDate = getMilestoneAnchorDate(milestone);
         const monthLabel = formatMonthLabel(anchorDate);
         const shouldShowMonthLabel = monthLabel !== previousMonthLabel;
-        const isMonthSelected = selectedMonthLabel !== null && monthLabel === selectedMonthLabel;
+        const isMonthSelected =
+          selectedMonthLabel !== null && monthLabel === selectedMonthLabel;
         const tone = getMilestoneCardTone(displayedStatus, isSelected);
-        const shouldExpandDetails = isSearching || expandedMilestoneIds.has(milestone.id);
+        const shouldExpandDetails =
+          isSearching || expandedMilestoneIds.has(milestone.id);
         previousMonthLabel = monthLabel;
 
         return (
-          <div className="relative" key={milestone.id}>
+          <div
+            className="relative"
+            key={milestone.id}
+            ref={(element) => {
+              milestoneCardRefs.current[milestone.id] = element;
+            }}
+          >
             {shouldShowMonthLabel ? (
               <div className="mb-3 flex items-center gap-2 sm:mb-4 sm:gap-3">
                 <span
@@ -507,18 +613,34 @@ export function MilestoneTimelineBoard({
                 <div className="flex items-start justify-between gap-2 sm:gap-3 lg:gap-2">
                   <div className="min-w-0 space-y-2 sm:space-y-3 lg:space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="truncate text-[19px] font-semibold sm:text-2xl lg:text-lg">{milestone.title}</h3>
-                      <Badge className={getMilestoneBadgeClass(displayedStatus)}>
+                      <h3 className="truncate text-[19px] font-semibold sm:text-2xl lg:text-lg">
+                        {milestone.title}
+                      </h3>
+                      <Badge
+                        className={getMilestoneBadgeClass(displayedStatus)}
+                      >
                         {milestoneStatusLabel[displayedStatus]}
                       </Badge>
                     </div>
-                    <p className={cn('hidden text-sm leading-6 md:block', tone.titleMuted)}>
-                      {milestone.description || 'Chưa có mô tả cho milestone này.'}
+                    <p
+                      className={cn(
+                        'hidden text-sm leading-6 md:block',
+                        tone.titleMuted,
+                      )}
+                    >
+                      {milestone.description ||
+                        'Chưa có mô tả cho milestone này.'}
                     </p>
-                    <div className={cn('hidden items-center gap-2 text-sm md:inline-flex', tone.titleMuted)}>
+                    <div
+                      className={cn(
+                        'hidden items-center gap-2 text-sm md:inline-flex',
+                        tone.titleMuted,
+                      )}
+                    >
                       <CalendarDays className="size-4 shrink-0" />
                       <span>
-                        {startDate ? formatDate(startDate) : 'Chưa đặt'} - {endDate ? formatDate(endDate) : 'Chưa đặt'}
+                        {startDate ? formatDate(startDate) : 'Chưa đặt'} -{' '}
+                        {endDate ? formatDate(endDate) : 'Chưa đặt'}
                       </span>
                     </div>
                   </div>
@@ -537,7 +659,10 @@ export function MilestoneTimelineBoard({
                     {canManagePlan ? (
                       <div className="flex flex-wrap justify-end gap-2">
                         <Button
-                          className={cn('size-8 min-h-8 justify-center px-0 sm:size-9 sm:min-h-9 lg:size-8 lg:min-h-8', tone.action)}
+                          className={cn(
+                            'size-8 min-h-8 justify-center px-0 sm:size-9 sm:min-h-9 lg:size-8 lg:min-h-8',
+                            tone.action,
+                          )}
                           onClick={(event) => {
                             event.stopPropagation();
                             onEditMilestone(milestone);
@@ -567,23 +692,48 @@ export function MilestoneTimelineBoard({
 
                 <div className="grid grid-cols-3 gap-2 text-sm sm:gap-3 lg:gap-2">
                   <div>
-                    <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em] lg:text-[11px] lg:tracking-[0.12em]', tone.titleMuted)}>
+                    <p
+                      className={cn(
+                        'text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em] lg:text-[11px] lg:tracking-[0.12em]',
+                        tone.titleMuted,
+                      )}
+                    >
                       Đã chi
                     </p>
-                    <p className={cn('mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl lg:mt-1 lg:text-base', tone.valueStrong)}>
+                    <p
+                      className={cn(
+                        'mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl lg:mt-1 lg:text-base',
+                        tone.valueStrong,
+                      )}
+                    >
                       {formatCompactCurrency(milestone.totalExpense)}
                     </p>
                   </div>
                   <div>
-                    <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em] lg:text-[11px] lg:tracking-[0.12em]', tone.titleMuted)}>
+                    <p
+                      className={cn(
+                        'text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em] lg:text-[11px] lg:tracking-[0.12em]',
+                        tone.titleMuted,
+                      )}
+                    >
                       Dự kiến chi
                     </p>
-                    <p className={cn('mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl lg:mt-1 lg:text-base', tone.valueSoft)}>
+                    <p
+                      className={cn(
+                        'mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl lg:mt-1 lg:text-base',
+                        tone.valueSoft,
+                      )}
+                    >
                       {formatCompactCurrency(estimatedBudget)}
                     </p>
                   </div>
                   <div>
-                    <p className={cn('text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em] lg:text-[11px] lg:tracking-[0.12em]', tone.titleMuted)}>
+                    <p
+                      className={cn(
+                        'text-[11px] uppercase tracking-[0.12em] sm:text-xs sm:tracking-[0.16em] lg:text-[11px] lg:tracking-[0.12em]',
+                        tone.titleMuted,
+                      )}
+                    >
                       Công việc
                     </p>
                     <p className="mt-1 text-[17px] font-semibold sm:mt-2 sm:text-2xl lg:mt-1 lg:text-base">
@@ -609,10 +759,17 @@ export function MilestoneTimelineBoard({
                     <>
                       <span className="absolute left-3 top-0 bottom-0 z-0 w-px bg-[#e8edf7] sm:left-4 lg:left-3" />
                       {milestoneTodos.map((todo) => {
-                        const assignee = members.find((member) => member.id === todo.assigneeMemberId) ?? null;
+                        const assignee =
+                          members.find(
+                            (member) => member.id === todo.assigneeMemberId,
+                          ) ?? null;
                         const canToggle = canManagePlan && !isPlanClosed;
-                        const isDraggingTodo = activeDrag?.todoId === todo.id && activeDrag.milestoneId === milestone.id;
-                        const isPendingTodo = pendingDrag?.todoId === todo.id && pendingDrag.milestoneId === milestone.id;
+                        const isDraggingTodo =
+                          activeDrag?.todoId === todo.id &&
+                          activeDrag.milestoneId === milestone.id;
+                        const isPendingTodo =
+                          pendingDrag?.todoId === todo.id &&
+                          pendingDrag.milestoneId === milestone.id;
 
                         return (
                           <div
@@ -636,7 +793,9 @@ export function MilestoneTimelineBoard({
                                 <div
                                   className={cn(
                                     'transition duration-150',
-                                    isPendingTodo ? 'scale-[1.02] opacity-80' : '',
+                                    isPendingTodo
+                                      ? 'scale-[1.02] opacity-80'
+                                      : '',
                                   )}
                                 >
                                   <TodoMilestoneCard
@@ -648,8 +807,14 @@ export function MilestoneTimelineBoard({
                                     todo={todo}
                                     {...(canManagePlan && !isPlanClosed
                                       ? {
-                                          onHoldPointerDown: (event: ReactPointerEvent<HTMLDivElement>) =>
-                                            handleTodoPointerDown(event, milestone.id, todo.id),
+                                          onHoldPointerDown: (
+                                            event: ReactPointerEvent<HTMLDivElement>,
+                                          ) =>
+                                            handleTodoPointerDown(
+                                              event,
+                                              milestone.id,
+                                              todo.id,
+                                            ),
                                         }
                                       : {})}
                                   />
@@ -661,7 +826,9 @@ export function MilestoneTimelineBoard({
                       })}
                     </>
                   ) : (
-                    <p className="px-1 text-sm text-slate-500">Milestone này chưa có todo nào.</p>
+                    <p className="px-1 text-sm text-slate-500">
+                      Milestone này chưa có todo nào.
+                    </p>
                   )}
                 </div>
 
