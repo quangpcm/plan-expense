@@ -40,7 +40,13 @@ export function PlanUnlockGate({ secretNumberHash, onUnlock }: PlanUnlockGatePro
   }
 
   return (
-    <main className="flex min-h-[70vh] flex-col items-center justify-center gap-6 px-4">
+    <main
+      className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-6 overflow-y-auto bg-[var(--color-background)] px-4 py-10"
+      style={{
+        paddingTop: 'max(2.5rem, env(safe-area-inset-top))',
+        paddingBottom: 'max(2.5rem, env(safe-area-inset-bottom))',
+      }}
+    >
       <div className="flex size-14 items-center justify-center rounded-full bg-[var(--color-secondary)] text-[var(--color-primary)]">
         <Lock className="size-6" />
       </div>

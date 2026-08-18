@@ -158,7 +158,7 @@ function EditableMemberRow({
               {memberStatusLabel[member.status]}
             </Badge>
           ) : null}
-          {member.permissions.canEditAllExpenses ? <Badge>được sửa mọi khoản chi</Badge> : null}
+          {/* {member.permissions.canEditAllExpenses ? <Badge>được sửa mọi khoản chi</Badge> : null} */}
         </div>
         {member.memberType === 'guest' ? null : (
           <p className="text-sm text-slate-500">{member.email || 'Thành viên đã đăng ký'}</p>
