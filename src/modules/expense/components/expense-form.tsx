@@ -167,7 +167,16 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
       ? 'Bạn (Mặc định)'
       : paidByMember?.nickname || 'Chọn người chi trả';
   const selectedCounterpartMember = counterpartMembers.find((member) => member.id === selectedMembers[0]);
-  const selfSplitLabel = `${currentMember?.nickname || paidByMember?.nickname || 'Người tạo'}`;
+  const selfSplitLabel = `${paidByMember?.nickname || currentMember?.nickname || 'Người tạo'}`;
+  const liveSelfParticipantIds = useMemo(
+    () =>
+      isDebtPlan
+        ? creatorDefaultParticipantIds
+        : paidByMemberIdWatched
+          ? [paidByMemberIdWatched]
+          : creatorDefaultParticipantIds,
+    [creatorDefaultParticipantIds, isDebtPlan, paidByMemberIdWatched],
+  );
 
   useEffect(() => {
     if (isFirstSplitMethodRender.current) {
@@ -184,13 +193,26 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
     const previousSplitMethod = previousSplitMethodRef.current;
 
     if (selectedSplitMethod === splitMethods.self) {
-      form.setValue('participantMemberIds', creatorDefaultParticipantIds, { shouldDirty: true, shouldValidate: true });
+      form.setValue('participantMemberIds', liveSelfParticipantIds, { shouldDirty: true, shouldValidate: true });
     } else if (previousSplitMethod === splitMethods.self) {
       form.setValue('participantMemberIds', allActiveParticipantIds, { shouldDirty: true, shouldValidate: true });
     }
 
     previousSplitMethodRef.current = selectedSplitMethod;
-  }, [allActiveParticipantIds, creatorDefaultParticipantIds, form, selectedSplitMethod]);
+  }, [allActiveParticipantIds, liveSelfParticipantIds, form, selectedSplitMethod]);
+
+  useEffect(() => {
+    if (isDebtPlan || selectedSplitMethod !== splitMethods.self) {
+      return;
+    }
+
+    const current = form.getValues('participantMemberIds');
+    if (current.length === 1 && current[0] === liveSelfParticipantIds[0]) {
+      return;
+    }
+
+    form.setValue('participantMemberIds', liveSelfParticipantIds, { shouldDirty: true, shouldValidate: true });
+  }, [form, isDebtPlan, liveSelfParticipantIds, selectedSplitMethod]);
 
   useEffect(() => {
     if (!form.getValues('paidByMemberId') && defaultPaidByMemberId) {

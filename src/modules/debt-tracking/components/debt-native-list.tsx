@@ -1,5 +1,7 @@
 'use client';
 
+import { ChevronRight } from 'lucide-react';
+
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { CounterpartyDebtLedger } from '@/modules/debt-tracking/calculators/debt-calculators';
 import { Avatar } from '@/shared/components/ui/avatar';
@@ -16,7 +18,20 @@ type DebtNativeListProps = {
   onSelect: (memberId: string) => void;
 };
 
-export function DebtNativeList({ ledgers, members, selectedMemberId, onSelect }: DebtNativeListProps) {
+function resolveLedgerStatusLabel(ledger: CounterpartyDebtLedger): string {
+  if (ledger.receivableOutstanding === 0 && ledger.payableOutstanding === 0) {
+    return 'Đã tất toán';
+  }
+
+  return ledger.netPosition >= 0 ? 'Bạn cần thu' : 'Bạn cần trả';
+}
+
+export function DebtNativeList({
+  ledgers,
+  members,
+  selectedMemberId,
+  onSelect,
+}: DebtNativeListProps) {
   if (ledgers.length === 0) {
     return (
       <Card className="border-slate-200 bg-slate-50 shadow-none">
@@ -30,7 +45,9 @@ export function DebtNativeList({ ledgers, members, selectedMemberId, onSelect }:
   return (
     <div className="space-y-3">
       {ledgers.map((ledger) => {
-        const counterpart = members.find((member) => member.id === ledger.counterpartyMemberId);
+        const counterpart = members.find(
+          (member) => member.id === ledger.counterpartyMemberId,
+        );
         const lastTransactionAt = timestampToDate(ledger.lastTransactionAt);
         const isSelected = ledger.counterpartyMemberId === selectedMemberId;
 
@@ -47,7 +64,9 @@ export function DebtNativeList({ ledgers, members, selectedMemberId, onSelect }:
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 flex-1 items-center gap-3">
                   <Avatar
-                    initials={(counterpart?.nickname ?? '?').slice(0, 2).toUpperCase()}
+                    initials={(counterpart?.nickname ?? '?')
+                      .slice(0, 2)
+                      .toUpperCase()}
                     src={counterpart?.avatarUrl ?? null}
                   />
                   <div className="min-w-0">
@@ -55,27 +74,29 @@ export function DebtNativeList({ ledgers, members, selectedMemberId, onSelect }:
                       {counterpart?.nickname ?? 'Chưa rõ đối tượng'}
                     </p>
                     <p className="mt-0.5 text-sm text-slate-500">
-                      {lastTransactionAt ? formatDate(lastTransactionAt) : 'Chưa có ngày'}
+                      {resolveLedgerStatusLabel(ledger)}
                     </p>
                   </div>
                 </div>
                 <p
                   className={cn(
                     'shrink-0 text-base font-semibold',
-                    ledger.netPosition >= 0 ? 'text-[color:var(--color-income)]' : 'text-[color:var(--color-expense)]',
+                    ledger.netPosition >= 0
+                      ? 'text-[color:var(--color-income)]'
+                      : 'text-[color:var(--color-expense)]',
                   )}
                 >
                   {ledger.netPosition >= 0 ? '+' : ''}
                   {formatCompactCurrency(ledger.netPosition)}
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
-                <p className="text-sm text-slate-600">
-                  Phải thu <span className="ml-1 font-medium text-slate-900">{formatCompactCurrency(ledger.receivableOutstanding)}</span>
+              <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+                <p className="text-xs text-slate-400">
+                  {lastTransactionAt
+                    ? `Cập nhật ${formatDate(lastTransactionAt)}`
+                    : 'Chưa có ngày'}
                 </p>
-                <p className="text-sm text-slate-600">
-                  Phải trả <span className="ml-1 font-medium text-slate-900">{formatCompactCurrency(ledger.payableOutstanding)}</span>
-                </p>
+                <ChevronRight className="size-4 shrink-0 text-slate-300" />
               </div>
             </button>
           </Card>

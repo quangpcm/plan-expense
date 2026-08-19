@@ -140,7 +140,8 @@ export function DebtTransactionForm({
     return calculateOutstanding(counterpartyTransactions, direction);
   }, [counterpartyMemberId, direction, transaction?.id, transactions]);
 
-  const submitLabel = type === 'loan' ? 'Ghi nhận khoản nợ' : 'Ghi nhận đã trả';
+  const submitLabel =
+    type === 'loan' ? 'Ghi nhận khoản vay' : 'Ghi nhận đã trả';
 
   async function handleAddGuest(nickname: string) {
     if (!user) {

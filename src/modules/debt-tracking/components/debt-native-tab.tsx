@@ -1,14 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, Landmark } from 'lucide-react';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
-import type {
-  CounterpartyDebtLedger,
-  PlanDebtSummary,
-} from '@/modules/debt-tracking/calculators/debt-calculators';
+import type { CounterpartyDebtLedger } from '@/modules/debt-tracking/calculators/debt-calculators';
 import { debtTransactionService } from '@/modules/debt-tracking/services';
 import type {
   DebtDirection,
@@ -24,21 +20,50 @@ import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 import { Skeleton } from '@/shared/components/ui/skeleton';
-import { formatCompactCurrency } from '@/shared/utils/currency';
+import { cn } from '@/shared/utils/cn';
 
 type DebtNativeTabProps = {
   planId: string;
   members: PlanMemberDocument[];
   transactions: DebtTransaction[];
   counterpartyLedgers: CounterpartyDebtLedger[];
-  planSummary: PlanDebtSummary;
   isLoading: boolean;
   errorMessage: string | null;
 };
 
+type DebtListFilter = 'all' | 'receivable' | 'payable' | 'settled';
+
+const DEBT_LIST_FILTER_OPTIONS: Array<{
+  value: DebtListFilter;
+  label: string;
+}> = [
+  { value: 'all', label: 'Tất cả' },
+  { value: 'receivable', label: 'Phải thu' },
+  { value: 'payable', label: 'Phải trả' },
+  { value: 'settled', label: 'Đã tất toán' },
+];
+
+function matchesDebtListFilter(
+  ledger: CounterpartyDebtLedger,
+  filter: DebtListFilter,
+): boolean {
+  switch (filter) {
+    case 'receivable':
+      return ledger.receivableOutstanding > 0;
+    case 'payable':
+      return ledger.payableOutstanding > 0;
+    case 'settled':
+      return (
+        ledger.receivableOutstanding === 0 && ledger.payableOutstanding === 0
+      );
+    default:
+      return true;
+  }
+}
+
 type SheetState =
-  // counterpartyMemberId/direction chỉ có khi mở từ "+ Ghi khoản nợ" trong counterparty
-  // detail (đã biết sẵn người đang xem) — nút "+ Ghi nhận khoản nợ" ở đầu trang vẫn mở
+  // counterpartyMemberId/direction chỉ có khi mở từ "+ Ghi khoản vay" trong counterparty
+  // detail (đã biết sẵn người đang xem) — nút "+ Ghi nhận khoản vay" ở đầu trang vẫn mở
   // mode này nhưng không truyền gì, để user tự chọn người/chiều nợ từ đầu.
   | {
       mode: 'create-loan';
@@ -78,7 +103,6 @@ export function DebtNativeTab({
   members,
   transactions,
   counterpartyLedgers,
-  planSummary,
   isLoading,
   errorMessage,
 }: DebtNativeTabProps) {
@@ -87,25 +111,46 @@ export function DebtNativeTab({
   const [requestedMemberId, setRequestedMemberId] = useState<string | null>(
     null,
   );
+  const [listFilter, setListFilter] = useState<DebtListFilter>('all');
   const [sheet, setSheet] = useState<SheetState>(null);
   const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(
     null,
   );
 
-  // Falls back to the first counterparty when nothing is explicitly selected yet,
-  // or when the previously selected one no longer has any ledger (e.g. deleted).
+  const filteredLedgers = useMemo(
+    () =>
+      counterpartyLedgers.filter((ledger) =>
+        matchesDebtListFilter(ledger, listFilter),
+      ),
+    [counterpartyLedgers, listFilter],
+  );
+  const listFilterCounts = useMemo(
+    () =>
+      Object.fromEntries(
+        DEBT_LIST_FILTER_OPTIONS.map((option) => [
+          option.value,
+          counterpartyLedgers.filter((ledger) =>
+            matchesDebtListFilter(ledger, option.value),
+          ).length,
+        ]),
+      ) as Record<DebtListFilter, number>,
+    [counterpartyLedgers],
+  );
+
+  // Falls back to the first counterparty (trong danh sách đã lọc) khi chưa chọn gì,
+  // hoặc khi người đang chọn không còn khớp filter/không còn ledger (vd đã bị xoá).
   const selectedMemberId = useMemo(() => {
     if (
       requestedMemberId &&
-      counterpartyLedgers.some(
+      filteredLedgers.some(
         (ledger) => ledger.counterpartyMemberId === requestedMemberId,
       )
     ) {
       return requestedMemberId;
     }
 
-    return counterpartyLedgers[0]?.counterpartyMemberId ?? null;
-  }, [counterpartyLedgers, requestedMemberId]);
+    return filteredLedgers[0]?.counterpartyMemberId ?? null;
+  }, [filteredLedgers, requestedMemberId]);
 
   const selectedLedger = useMemo(
     () =>
@@ -149,7 +194,7 @@ export function DebtNativeTab({
   return (
     <div className="space-y-5">
       <SectionHeading
-        description="Ghi nhận từng lần cho vay/đi vay và trả nợ để biết ai đang nợ bạn và bạn đang nợ ai."
+        description="Theo dõi các khoản vay, trả và số dư công nợ với từng người."
         eyebrow="Khoản nợ"
         title="Sổ công nợ"
       />
@@ -160,61 +205,44 @@ export function DebtNativeTab({
         <AuthFormMessage message={actionErrorMessage} type="error" />
       ) : null}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Card className="flex-row items-center gap-3 p-3">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--color-income-soft)] text-[color:var(--color-income)]">
-            <ArrowUp className="size-4" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-xs text-slate-500">Tổng phải thu</p>
-            <p className="truncate text-lg font-semibold text-[color:var(--color-income)]">
-              {formatCompactCurrency(planSummary.totalReceivableOutstanding)}
-            </p>
-          </div>
-        </Card>
-        <Card className="flex-row items-center gap-3 p-3">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--color-expense-soft)] text-[color:var(--color-expense)]">
-            <ArrowDown className="size-4" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-xs text-slate-500">Tổng phải trả</p>
-            <p className="truncate text-lg font-semibold text-[var(--color-expense)]">
-              {formatCompactCurrency(planSummary.totalPayableOutstanding)}
-            </p>
-          </div>
-        </Card>
-        <Card className="flex-row items-center gap-3 border-transparent bg-[var(--color-primary)] p-3 text-white">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/10">
-            <Landmark className="size-4" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-xs text-white/70">
-              Chênh lệch ròng · {planSummary.activeCounterpartyCount} đối tượng
-            </p>
-            <p className="truncate text-lg font-semibold">
-              {planSummary.netPosition >= 0 ? '+' : ''}
-              {formatCompactCurrency(planSummary.netPosition)}
-            </p>
-          </div>
-        </Card>
-      </div>
-
       <div className="flex justify-end">
         <Button onClick={() => setSheet({ mode: 'create-loan' })} type="button">
-          + Ghi nhận khoản nợ
+          + Ghi nhận khoản vay
         </Button>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {DEBT_LIST_FILTER_OPTIONS.map((option) => {
+          const isActive = listFilter === option.value;
+
+          return (
+            <button
+              className={cn(
+                'shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition',
+                isActive
+                  ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
+                  : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
+              )}
+              key={option.value}
+              onClick={() => setListFilter(option.value)}
+              type="button"
+            >
+              {option.label} {listFilterCounts[option.value]}
+            </button>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <div className="space-y-4">
           <h3 className="text-base font-semibold text-slate-900">
-            Danh sách đối tượng
+            Công nợ theo người
           </h3>
           {isLoading ? (
             <Skeleton className="h-52 rounded-[28px]" />
           ) : (
             <DebtNativeList
-              ledgers={counterpartyLedgers}
+              ledgers={filteredLedgers}
               members={members}
               onSelect={setRequestedMemberId}
               selectedMemberId={selectedMemberId}
@@ -257,8 +285,11 @@ export function DebtNativeTab({
           ) : (
             <Card className="border-slate-200 bg-slate-50 shadow-none">
               <p className="text-sm leading-6 text-slate-600">
-                Chọn một đối tượng để xem chi tiết công nợ, hoặc ghi nhận khoản
-                nợ đầu tiên.
+                {counterpartyLedgers.length === 0
+                  ? 'Chưa có khoản nợ nào. Ghi nhận khoản vay đầu tiên để bắt đầu theo dõi.'
+                  : filteredLedgers.length === 0
+                    ? 'Không có ai khớp với bộ lọc đã chọn.'
+                    : 'Chọn một người để xem số dư và lịch sử giao dịch.'}
               </p>
             </Card>
           )}
@@ -275,11 +306,11 @@ export function DebtNativeTab({
         title={
           sheet?.mode === 'edit'
             ? sheet.transaction.type === 'loan'
-              ? 'Sửa khoản nợ'
+              ? 'Sửa khoản vay'
               : 'Sửa khoản đã trả'
             : sheet?.mode === 'record-repayment'
               ? 'Ghi nhận đã trả'
-              : 'Ghi nhận khoản nợ'
+              : 'Ghi nhận khoản vay'
         }
       >
         {sheet ? (

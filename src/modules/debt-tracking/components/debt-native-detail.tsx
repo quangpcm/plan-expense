@@ -15,7 +15,10 @@ import {
 } from 'lucide-react';
 
 import type { PlanMemberDocument } from '@/modules/member/types/member';
-import type { CounterpartyDebtLedger } from '@/modules/debt-tracking/calculators/debt-calculators';
+import {
+  isDebtTransactionCashIn,
+  type CounterpartyDebtLedger,
+} from '@/modules/debt-tracking/calculators/debt-calculators';
 import {
   categoryIconMap,
   getDebtTransactionCategoryLabel,
@@ -88,9 +91,7 @@ function TransactionRow({
     : isReceivable
       ? 'Đã trả'
       : 'Tôi trả';
-  // Quy ước màu: xanh/mũi tên vào = tiền nhận về (Tôi vay, Đã trả); đỏ/mũi tên ra = tiền đưa đi (Cho vay, Tôi trả).
-  // Độc lập với chiều công nợ (receivable/payable) — chiều đó đã được phân biệt bằng section riêng.
-  const isCashIn = (isLoan && !isReceivable) || (!isLoan && isReceivable);
+  const isCashIn = isDebtTransactionCashIn(transaction);
   const CashFlowIcon = isCashIn ? ArrowDownLeft : ArrowUpRight;
   const CategoryIcon =
     categoryIconMap[transaction.category ?? 'other'] ?? categoryIconMap.other;
@@ -363,6 +364,12 @@ export function DebtNativeDetail({
   );
   const isReceivable = activeDirection === 'receivable';
   const activeOutstanding = outstandingFor(ledger, activeDirection);
+  const activeLoanTotal = isReceivable
+    ? ledger.receivableLoan
+    : ledger.payableLoan;
+  const activeRepaidTotal = isReceivable
+    ? ledger.receivableRepayment
+    : ledger.payableRepayment;
 
   // Cố định "now" tại thời điểm mở trang chi tiết — ranh giới tháng/năm không cần trôi
   // theo từng giây, và tránh việc list nhảy giữa lúc user đang xem.
@@ -473,7 +480,7 @@ export function DebtNativeDetail({
               type="button"
               variant="ghost"
             >
-              + Ghi khoản nợ
+              + Ghi khoản vay
             </Button>
           </div>
         </div>
@@ -497,6 +504,21 @@ export function DebtNativeDetail({
         </div>
 
         <div className="space-y-3 p-5">
+          <div className="grid grid-cols-2 gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+            <div>
+              <p className="text-xs text-slate-500">Tổng khoản vay</p>
+              <p className="text-sm font-semibold text-slate-900">
+                {formatCompactCurrency(activeLoanTotal)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500">Đã trả</p>
+              <p className="text-sm font-semibold text-slate-900">
+                {formatCompactCurrency(activeRepaidTotal)}
+              </p>
+            </div>
+          </div>
+
           <DateRangeFilterBar
             filter={dateRangeFilter}
             onOpenCustomRange={openCustomRangeSheet}

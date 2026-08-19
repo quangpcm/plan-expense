@@ -15,17 +15,42 @@ export const modularPlanTypeFallbackMap: PlanTypeConfigFallbackMap = {
   project: 'general',
 };
 
-export const supportedModularPlanTypes: ModularPlanType[] = ['general', 'wedding', 'travel', 'debt'];
+export const supportedModularPlanTypes: ModularPlanType[] = [
+  'general',
+  'wedding',
+  'travel',
+  'debt',
+];
 
 export const planTypeConfigMap: SupportedPlanTypeConfigMap = {
   general: {
     type: 'general',
     label: 'Chung',
     modules: [
-      { moduleId: 'overview', enabled: true, order: 0, label: planModuleRegistry.overview.defaultLabel },
-      { moduleId: 'planning', enabled: true, order: 10, label: planModuleRegistry.planning.defaultLabel },
-      { moduleId: 'finance', enabled: true, order: 20, label: planModuleRegistry.finance.defaultLabel },
-      { moduleId: 'members', enabled: true, order: 30, label: planModuleRegistry.members.defaultLabel },
+      {
+        moduleId: 'overview',
+        enabled: true,
+        order: 0,
+        label: planModuleRegistry.overview.defaultLabel,
+      },
+      {
+        moduleId: 'planning',
+        enabled: true,
+        order: 10,
+        label: planModuleRegistry.planning.defaultLabel,
+      },
+      {
+        moduleId: 'finance',
+        enabled: true,
+        order: 20,
+        label: planModuleRegistry.finance.defaultLabel,
+      },
+      {
+        moduleId: 'members',
+        enabled: true,
+        order: 30,
+        label: planModuleRegistry.members.defaultLabel,
+      },
     ],
     overview: {
       widgets: [
@@ -43,7 +68,12 @@ export const planTypeConfigMap: SupportedPlanTypeConfigMap = {
       { moduleId: 'overview', enabled: true, order: 0, label: 'Tổng quan' },
       { moduleId: 'planning', enabled: true, order: 10, label: 'Công việc' },
       { moduleId: 'finance', enabled: true, order: 20, label: 'Tài chính' },
-      { moduleId: 'weddingGuests', enabled: true, order: 30, label: 'Khách mời' },
+      {
+        moduleId: 'weddingGuests',
+        enabled: true,
+        order: 30,
+        label: 'Khách mời',
+      },
       { moduleId: 'members', enabled: true, order: 40, label: 'Thành viên' },
     ],
     overview: {
@@ -62,7 +92,12 @@ export const planTypeConfigMap: SupportedPlanTypeConfigMap = {
     modules: [
       { moduleId: 'overview', enabled: true, order: 0, label: 'Tổng quan' },
       { moduleId: 'planning', enabled: true, order: 10, label: 'Công việc' },
-      { moduleId: 'travelItinerary', enabled: true, order: 20, label: 'Lịch trình' },
+      {
+        moduleId: 'travelItinerary',
+        enabled: true,
+        order: 20,
+        label: 'Lịch trình',
+      },
       { moduleId: 'finance', enabled: true, order: 30, label: 'Chi phí' },
       { moduleId: 'members', enabled: true, order: 40, label: 'Thành viên' },
     ],
@@ -81,7 +116,12 @@ export const planTypeConfigMap: SupportedPlanTypeConfigMap = {
     label: 'Vay & trả',
     modules: [
       { moduleId: 'overview', enabled: true, order: 0, label: 'Tổng quan' },
-      { moduleId: 'debtTracking', enabled: true, order: 10, label: 'Khoản vay' },
+      {
+        moduleId: 'debtTracking',
+        enabled: true,
+        order: 10,
+        label: 'Khoản vay',
+      },
       { moduleId: 'finance', enabled: true, order: 20, label: 'Dòng tiền' },
     ],
     overview: {
@@ -106,14 +146,16 @@ const debtNativeConfig: PlanTypeConfig = {
     { moduleId: 'members', enabled: true, order: 20, label: 'Đối tượng' },
   ],
   overview: {
-    widgets: [
-      { widgetId: 'planSummary', enabled: true, order: 0 },
-      { widgetId: 'debtSummary', enabled: true, order: 10 },
-    ],
+    // planSummary (Tổng thu/Tổng chi) không hợp lý cho debt plan — Finance không bật.
+    // debtOverviewSummary gộp trạng thái/thành viên + tổng phải thu/phải trả + breakdown
+    // theo từng đối tượng vào 1 widget duy nhất, thay thế cả planSummary lẫn debtSummary.
+    widgets: [{ widgetId: 'debtOverviewSummary', enabled: true, order: 0 }],
   },
 };
 
-export function isSupportedModularPlanType(planType: PlanType): planType is ModularPlanType {
+export function isSupportedModularPlanType(
+  planType: PlanType,
+): planType is ModularPlanType {
   return supportedModularPlanTypes.includes(planType as ModularPlanType);
 }
 
@@ -125,7 +167,10 @@ export function resolveModularPlanType(planType: PlanType): ModularPlanType {
   return modularPlanTypeFallbackMap[planType] ?? 'general';
 }
 
-export function getPlanTypeConfig(planType: PlanType, debtModel?: DebtModel): PlanTypeConfig {
+export function getPlanTypeConfig(
+  planType: PlanType,
+  debtModel?: DebtModel,
+): PlanTypeConfig {
   const modularPlanType = resolveModularPlanType(planType);
 
   if (modularPlanType === 'debt' && debtModel === 'native_debt') {

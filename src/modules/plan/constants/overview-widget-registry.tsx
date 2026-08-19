@@ -1,21 +1,35 @@
 'use client';
 
+import { AlertTriangle, ArrowDown, ArrowUp } from 'lucide-react';
+
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { MilestoneList } from '@/modules/milestone';
 import { CategoryBreakdown } from '@/modules/statistic/components/category-breakdown';
 import { MilestoneBreakdown } from '@/modules/statistic/components/milestone-breakdown';
 import { StatisticOverview } from '@/modules/statistic/components/statistic-overview';
 import { TodoList } from '@/modules/todo';
+import {
+  calculateDebtAttentionItems,
+  isDebtTransactionCashIn,
+} from '@/modules/debt-tracking/calculators/debt-calculators';
+import { getDebtTransactionCategoryLabel } from '@/modules/debt-tracking/constants/debt-transaction-category';
 import { Card } from '@/shared/components/ui/card';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { formatDate } from '@/shared/utils/date';
 import { formatCompactCurrency, formatCurrency } from '@/shared/utils/currency';
-import type { OverviewWidgetDefinition, OverviewWidgetId } from '@/modules/plan/types/plan-modular';
+import { timestampToDate } from '@/shared/utils/firebase';
+import { cn } from '@/shared/utils/cn';
+import type {
+  OverviewWidgetDefinition,
+  OverviewWidgetId,
+} from '@/modules/plan/types/plan-modular';
 import type { OverviewRendererProps } from '@/modules/plan/components/overview-renderer';
 import { resolvePlanDebtModel } from '@/modules/plan/utils/plan-type-config';
 
-type OverviewWidgetComponent = (props: OverviewRendererProps) => React.JSX.Element;
+type OverviewWidgetComponent = (
+  props: OverviewRendererProps,
+) => React.JSX.Element;
 
 export type OverviewWidgetRendererDefinition = OverviewWidgetDefinition & {
   component: OverviewWidgetComponent;
@@ -29,7 +43,9 @@ function PlanSummaryWidget({
   planStatus,
   statistic,
 }: OverviewRendererProps) {
-  const endedAtLabel = endedPlanDate ? formatDate(endedPlanDate) : 'Đã kết thúc';
+  const endedAtLabel = endedPlanDate
+    ? formatDate(endedPlanDate)
+    : 'Đã kết thúc';
 
   return (
     <Card className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -245,60 +261,15 @@ function TravelItinerarySummaryWidget({
   );
 }
 
+// Chỉ còn phục vụ legacy (finance_aggregate) — native_debt dùng DebtOverviewSummaryWidget
+// riêng (docs/debt-plan-specs.md #26: hai engine tách biệt).
 function DebtSummaryWidget(props: OverviewRendererProps) {
   const {
     debtTrackingError,
     debtTrackingSummary,
     isDebtTrackingLoading,
-    nativeDebtError,
-    nativeDebtSummary,
-    isNativeDebtLoading,
     onOpenDebtTracking,
-    plan,
   } = props;
-  const isNativeDebt = resolvePlanDebtModel(plan) === 'native_debt';
-
-  if (isNativeDebt) {
-    return (
-      <Card className="transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Khoản nợ</p>
-        {nativeDebtError ? (
-          <p className="mt-2 text-sm text-rose-600">{nativeDebtError}</p>
-        ) : isNativeDebtLoading || !nativeDebtSummary ? (
-          <Skeleton className="mt-3 h-20 rounded-2xl" />
-        ) : (
-          <>
-            <div className="mt-2 grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-xs text-slate-500">Phải thu</p>
-                <p className="text-lg font-semibold text-slate-950">
-                  {formatCompactCurrency(nativeDebtSummary.totalReceivableOutstanding)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500">Phải trả</p>
-                <p className="text-lg font-semibold text-slate-950">
-                  {formatCompactCurrency(nativeDebtSummary.totalPayableOutstanding)}
-                </p>
-              </div>
-            </div>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Chênh lệch ròng {nativeDebtSummary.netPosition >= 0 ? '+' : ''}
-              {formatCompactCurrency(nativeDebtSummary.netPosition)} ·{' '}
-              {nativeDebtSummary.activeCounterpartyCount} đối tượng đang có công nợ
-            </p>
-            <button
-              className="mt-3 text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
-              onClick={onOpenDebtTracking}
-              type="button"
-            >
-              Mở sổ công nợ
-            </button>
-          </>
-        )}
-      </Card>
-    );
-  }
 
   return (
     <Card className="transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
@@ -328,6 +299,249 @@ function DebtSummaryWidget(props: OverviewRendererProps) {
         </>
       )}
     </Card>
+  );
+}
+
+const DEBT_ATTENTION_MAX_LINES = 5;
+const DEBT_RECENT_ACTIVITY_MAX_LINES = 5;
+
+function resolveCounterpartyName(
+  members: OverviewRendererProps['members'],
+  counterpartyMemberId: string,
+): string {
+  return (
+    members.find((member) => member.id === counterpartyMemberId)?.nickname ??
+    'Chưa rõ đối tượng'
+  );
+}
+
+// "Công nợ hiện tại": chỉ đếm SỐ NGƯỜI theo từng chiều, không lặp lại số tiền đã có ở
+// Plan Header phía trên — mỗi vùng UI trả lời một câu hỏi riêng (xem brainstorm trong
+// hội thoại). Không hiển thị Net balance/Chênh lệch ròng ở đây.
+function DebtStatusOverviewCard({
+  nativeDebtCounterpartyLedgers,
+}: Pick<OverviewRendererProps, 'nativeDebtCounterpartyLedgers'>) {
+  const receivableCount = nativeDebtCounterpartyLedgers.filter(
+    (ledger) => ledger.receivableOutstanding > 0,
+  ).length;
+  const payableCount = nativeDebtCounterpartyLedgers.filter(
+    (ledger) => ledger.payableOutstanding > 0,
+  ).length;
+
+  return (
+    <Card className="transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
+      <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+        Công nợ hiện tại
+      </p>
+      <div className="mt-2 space-y-2">
+        <div className="flex items-center gap-2">
+          <ArrowUp className="size-4 shrink-0 text-[color:var(--color-income)]" />
+          <p className="text-sm text-slate-700">
+            <span className="font-semibold text-slate-950">
+              {receivableCount}
+            </span>{' '}
+            người đang nợ bạn
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <ArrowDown className="size-4 shrink-0 text-[color:var(--color-expense)]" />
+          <p className="text-sm text-slate-700">
+            <span className="font-semibold text-slate-950">{payableCount}</span>{' '}
+            người bạn đang nợ
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// "Cần chú ý": chỉ render khi thực sự có loan quá hạn/sắp đến hạn — không tạo placeholder
+// giả để lấp UI. Amount là outstanding của cả ledger (direction đó), không phải amount
+// riêng của 1 loan cụ thể (docs/debt-plan-specs.md #21/#22 — repayment không allocate vào
+// loan cụ thể nên không được khẳng định 1 loan còn lại bao nhiêu).
+function DebtAttentionCard({
+  members,
+  nativeDebtCounterpartyLedgers,
+  nativeDebtTransactions,
+}: Pick<
+  OverviewRendererProps,
+  'members' | 'nativeDebtCounterpartyLedgers' | 'nativeDebtTransactions'
+>) {
+  const items = calculateDebtAttentionItems(
+    nativeDebtTransactions,
+    nativeDebtCounterpartyLedgers,
+    new Date(),
+  );
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  const visibleItems = items.slice(0, DEBT_ATTENTION_MAX_LINES);
+  const hiddenCount = items.length - visibleItems.length;
+
+  return (
+    <Card className="transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
+      <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+        Cần chú ý
+      </p>
+      <div className="mt-2 space-y-3">
+        {visibleItems.map((item) => (
+          <div
+            className="flex items-start justify-between gap-3"
+            key={`${item.counterpartyMemberId}:${item.direction}`}
+          >
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-slate-900">
+                {resolveCounterpartyName(members, item.counterpartyMemberId)}
+              </p>
+              <p className="mt-0.5 flex items-center gap-1 text-xs text-[color:var(--color-warning)]">
+                <AlertTriangle className="size-3.5 shrink-0" />
+                {item.isOverdue ? 'Quá hạn' : 'Đến hạn'}{' '}
+                {formatDate(item.earliestDueDate.toDate())}
+              </p>
+            </div>
+            <p
+              className={cn(
+                'shrink-0 text-sm font-semibold',
+                item.direction === 'receivable'
+                  ? 'text-[color:var(--color-income)]'
+                  : 'text-[color:var(--color-expense)]',
+              )}
+            >
+              {item.direction === 'receivable' ? 'Cần thu ' : 'Cần trả '}
+              {formatCompactCurrency(item.outstanding)}
+            </p>
+          </div>
+        ))}
+      </div>
+      {hiddenCount > 0 ? (
+        <p className="text-xs text-slate-400">+{hiddenCount} khoản khác</p>
+      ) : null}
+    </Card>
+  );
+}
+
+// "Hoạt động gần đây": tối đa DEBT_RECENT_ACTIVITY_MAX_LINES giao dịch mới nhất toàn plan
+// (không phải theo 1 người) — không đưa toàn bộ lịch sử vào Overview, xem chi tiết đầy đủ
+// nằm ở tab Khoản vay (onOpenDebtTracking).
+function DebtRecentActivityCard({
+  members,
+  nativeDebtTransactions,
+  onOpenDebtTracking,
+}: Pick<
+  OverviewRendererProps,
+  'members' | 'nativeDebtTransactions' | 'onOpenDebtTracking'
+>) {
+  const recentTransactions = nativeDebtTransactions.slice(
+    0,
+    DEBT_RECENT_ACTIVITY_MAX_LINES,
+  );
+
+  return (
+    <Card className="transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
+      <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+        Hoạt động gần đây
+      </p>
+      {recentTransactions.length === 0 ? (
+        <p className="mt-2 text-sm text-slate-500">
+          Chưa có giao dịch nào được ghi nhận.
+        </p>
+      ) : (
+        <div className="mt-2 space-y-3">
+          {recentTransactions.map((transaction) => {
+            const isCashIn = isDebtTransactionCashIn(transaction);
+            const categoryLabel =
+              transaction.type === 'loan'
+                ? getDebtTransactionCategoryLabel(transaction.category)
+                : 'Trả nợ';
+            const occurredAt =
+              timestampToDate(transaction.occurredAt) ?? new Date();
+
+            return (
+              <div
+                className="flex items-start justify-between gap-3"
+                key={transaction.id}
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-slate-900">
+                    {resolveCounterpartyName(
+                      members,
+                      transaction.counterpartyMemberId,
+                    )}
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    {categoryLabel} · {formatDate(occurredAt)}
+                  </p>
+                </div>
+                <p
+                  className={cn(
+                    'shrink-0 text-sm font-semibold',
+                    isCashIn
+                      ? 'text-[color:var(--color-income)]'
+                      : 'text-[color:var(--color-expense)]',
+                  )}
+                >
+                  {isCashIn ? '+' : '-'}
+                  {formatCompactCurrency(transaction.amount)}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <button
+        className="text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+        onClick={onOpenDebtTracking}
+        type="button"
+      >
+        Xem tất cả →
+      </button>
+    </Card>
+  );
+}
+
+// Widget "Tổng quan" riêng cho native_debt — thay thế planSummary + debtSummary (2 widget
+// đó không phù hợp/không đủ cho debt plan). Mỗi card trả lời đúng 1 câu hỏi, không lặp lại
+// số tiền đã có ở Plan Header (Phải thu/Phải trả) hay member count.
+function DebtOverviewSummaryWidget(props: OverviewRendererProps) {
+  const {
+    members,
+    nativeDebtCounterpartyLedgers,
+    nativeDebtError,
+    nativeDebtTransactions,
+    isNativeDebtLoading,
+    onOpenDebtTracking,
+  } = props;
+
+  if (nativeDebtError) {
+    return (
+      <Card>
+        <p className="text-sm text-rose-600">{nativeDebtError}</p>
+      </Card>
+    );
+  }
+
+  if (isNativeDebtLoading) {
+    return <Skeleton className="h-52 rounded-[28px]" />;
+  }
+
+  return (
+    <>
+      <DebtStatusOverviewCard
+        nativeDebtCounterpartyLedgers={nativeDebtCounterpartyLedgers}
+      />
+      <DebtAttentionCard
+        members={members}
+        nativeDebtCounterpartyLedgers={nativeDebtCounterpartyLedgers}
+        nativeDebtTransactions={nativeDebtTransactions}
+      />
+      <DebtRecentActivityCard
+        members={members}
+        nativeDebtTransactions={nativeDebtTransactions}
+        onOpenDebtTracking={onOpenDebtTracking}
+      />
+    </>
   );
 }
 
@@ -368,6 +582,16 @@ export const overviewWidgetRegistry: Partial<
     id: 'debtSummary',
     moduleId: 'debtTracking',
     component: DebtSummaryWidget,
-    isAvailable: (props) => props.isDebtTrackingEnabled,
+    isAvailable: (props) =>
+      props.isDebtTrackingEnabled &&
+      resolvePlanDebtModel(props.plan) !== 'native_debt',
+  },
+  debtOverviewSummary: {
+    id: 'debtOverviewSummary',
+    moduleId: 'debtTracking',
+    component: DebtOverviewSummaryWidget,
+    isAvailable: (props) =>
+      props.isDebtTrackingEnabled &&
+      resolvePlanDebtModel(props.plan) === 'native_debt',
   },
 };

@@ -46,7 +46,8 @@ export type OverviewWidgetId =
   | 'memberSummary'
   | 'weddingGuestSummary'
   | 'travelItinerarySummary'
-  | 'debtSummary';
+  | 'debtSummary'
+  | 'debtOverviewSummary';
 
 export type PlanModuleRoute = {
   key: string;
@@ -100,6 +101,11 @@ export type PlanTypeConfig = {
   overview: OverviewConfig;
 };
 
-export type SupportedPlanTypeConfigMap = Record<ModularPlanType, PlanTypeConfig>;
+export type SupportedPlanTypeConfigMap = Record<
+  ModularPlanType,
+  PlanTypeConfig
+>;
 
-export type PlanTypeConfigFallbackMap = Partial<Record<PlanType, ModularPlanType>>;
+export type PlanTypeConfigFallbackMap = Partial<
+  Record<PlanType, ModularPlanType>
+>;

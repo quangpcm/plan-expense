@@ -173,15 +173,16 @@ export default function PlanDetailPage() {
     : params.planId;
   const { user } = useAuthSession();
   const { plan, isLoading, errorMessage: planError } = usePlan(planId);
-  const [activeTab, setActiveTab] = useState<
-    keyof typeof tabIcons
-  >('overview');
+  const [activeTab, setActiveTab] = useState<keyof typeof tabIcons>('overview');
   const {
     milestones,
     isLoading: isMilestonesLoading,
     errorMessage: milestoneError,
   } = useMilestones(planId);
-  const visibleMilestones = useMemo(() => getVisibleMilestones(milestones), [milestones]);
+  const visibleMilestones = useMemo(
+    () => getVisibleMilestones(milestones),
+    [milestones],
+  );
   const {
     todos,
     isLoading: isTodosLoading,
@@ -263,14 +264,20 @@ export default function PlanDetailPage() {
     expenses,
     incomes,
   });
-  const isNativeDebtPlan = Boolean(plan && resolvePlanDebtModel(plan) === 'native_debt');
+  const isNativeDebtPlan = Boolean(
+    plan && resolvePlanDebtModel(plan) === 'native_debt',
+  );
   const {
     transactions: debtTransactions,
     isLoading: isNativeDebtLoading,
     errorMessage: nativeDebtError,
-  } = useDebtTransactions(planId, { enabled: isDebtTrackingEnabled && isNativeDebtPlan });
-  const { counterpartyLedgers: nativeDebtCounterpartyLedgers, planSummary: nativeDebtSummary } =
-    useDebtLedger(debtTransactions);
+  } = useDebtTransactions(planId, {
+    enabled: isDebtTrackingEnabled && isNativeDebtPlan,
+  });
+  const {
+    counterpartyLedgers: nativeDebtCounterpartyLedgers,
+    planSummary: nativeDebtSummary,
+  } = useDebtLedger(debtTransactions);
   const isPlanEnded = plan?.status === 'completed' || plan?.status === 'closed';
   const canManageMembers = hasCapability('members.manage');
   const canManageSettlements = hasCapability('finance.manageSettlements');
@@ -350,7 +357,9 @@ export default function PlanDetailPage() {
   const [expenseActionError, setExpenseActionError] = useState<string | null>(
     null,
   );
-  const [travelActionError, setTravelActionError] = useState<string | null>(null);
+  const [travelActionError, setTravelActionError] = useState<string | null>(
+    null,
+  );
   const [showTravelActivityForm, setShowTravelActivityForm] = useState(false);
   const [editingTravelActivity, setEditingTravelActivity] =
     useState<TravelActivityDocument | null>(null);
@@ -404,7 +413,9 @@ export default function PlanDetailPage() {
     }
 
     const nextSearch = nextSearchParams.toString();
-    router.replace(nextSearch ? `/plans/${planId}?${nextSearch}` : `/plans/${planId}`);
+    router.replace(
+      nextSearch ? `/plans/${planId}?${nextSearch}` : `/plans/${planId}`,
+    );
   };
 
   useEffect(() => {
@@ -715,8 +726,9 @@ export default function PlanDetailPage() {
     }
 
     const nextActivity =
-      travelActivities.find((activity) => activity.id === detailTravelActivity.id) ??
-      null;
+      travelActivities.find(
+        (activity) => activity.id === detailTravelActivity.id,
+      ) ?? null;
 
     if (!nextActivity) {
       setDetailTravelActivity(null);
@@ -734,7 +746,9 @@ export default function PlanDetailPage() {
     }
 
     const nextDebt =
-      debtSnapshots.find((snapshot) => snapshot.memberId === detailDebt.memberId) ?? null;
+      debtSnapshots.find(
+        (snapshot) => snapshot.memberId === detailDebt.memberId,
+      ) ?? null;
 
     if (!nextDebt) {
       setDetailDebt(null);
@@ -1551,6 +1565,8 @@ export default function PlanDetailPage() {
             isNativeDebtLoading={isNativeDebtLoading}
             nativeDebtError={nativeDebtError}
             nativeDebtSummary={nativeDebtSummary}
+            nativeDebtCounterpartyLedgers={nativeDebtCounterpartyLedgers}
+            nativeDebtTransactions={debtTransactions}
             isMilestonesLoading={isMilestonesLoading}
             isPlanEnded={Boolean(isPlanEnded)}
             isTodoSubmitting={isTodoSubmitting}
@@ -1904,7 +1920,6 @@ export default function PlanDetailPage() {
               members,
               transactions: debtTransactions,
               counterpartyLedgers: nativeDebtCounterpartyLedgers,
-              planSummary: nativeDebtSummary,
               isLoading: isNativeDebtLoading,
               errorMessage: nativeDebtError,
             }}
@@ -2036,22 +2051,49 @@ export default function PlanDetailPage() {
 
           <div className="flex items-end justify-between gap-4">
             <div className="flex gap-8">
-              <div>
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
-                  Tổng chi
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-slate-950">
-                  {formatCompactCurrency(plan.totalExpense)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
-                  Dự kiến
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-slate-600">
-                  {formatCompactCurrency(effectiveEstimatedTotal)}
-                </p>
-              </div>
+              {isNativeDebtPlan ? (
+                <>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                      Phải thu
+                    </p>
+                    <p className="mt-1 text-2xl font-semibold text-[color:var(--color-income)]">
+                      {formatCompactCurrency(
+                        nativeDebtSummary?.totalReceivableOutstanding ?? 0,
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                      Phải trả
+                    </p>
+                    <p className="mt-1 text-2xl font-semibold text-[color:var(--color-expense)]">
+                      {formatCompactCurrency(
+                        nativeDebtSummary?.totalPayableOutstanding ?? 0,
+                      )}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                      Tổng chi
+                    </p>
+                    <p className="mt-1 text-2xl font-semibold text-slate-950">
+                      {formatCompactCurrency(plan.totalExpense)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                      Dự kiến
+                    </p>
+                    <p className="mt-1 text-2xl font-semibold text-slate-600">
+                      {formatCompactCurrency(effectiveEstimatedTotal)}
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -2067,35 +2109,35 @@ export default function PlanDetailPage() {
       <Card className="gap-4">
         <div className="flex items-center gap-2">
           {planDetailTabs.map((tab) => {
-              const Icon = tabIcons[tab.id];
-              const isActive = activeTab === tab.id;
+            const Icon = tabIcons[tab.id];
+            const isActive = activeTab === tab.id;
 
-              return (
-                <button
-                  key={tab.id}
+            return (
+              <button
+                key={tab.id}
+                className={cn(
+                  'flex min-h-11 items-center justify-center gap-2 overflow-hidden rounded-full text-sm font-medium transition-[background-color,color,padding] duration-200',
+                  isActive
+                    ? 'flex-1 bg-slate-950 px-4 text-white'
+                    : 'bg-slate-100 px-3 text-slate-600 sm:flex-1 sm:px-4',
+                )}
+                onClick={() => openPlanTab(tab.id)}
+                type="button"
+              >
+                <Icon className="size-4 shrink-0" />
+                <span
                   className={cn(
-                    'flex min-h-11 items-center justify-center gap-2 overflow-hidden rounded-full text-sm font-medium transition-[background-color,color,padding] duration-200',
+                    'overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200',
                     isActive
-                      ? 'flex-1 bg-slate-950 px-4 text-white'
-                      : 'bg-slate-100 px-3 text-slate-600 sm:flex-1 sm:px-4',
+                      ? 'max-w-[8rem] opacity-100'
+                      : 'max-w-0 opacity-0 sm:max-w-[8rem] sm:opacity-100',
                   )}
-                  onClick={() => openPlanTab(tab.id)}
-                  type="button"
                 >
-                  <Icon className="size-4 shrink-0" />
-                  <span
-                    className={cn(
-                      'overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200',
-                      isActive
-                        ? 'max-w-[8rem] opacity-100'
-                        : 'max-w-0 opacity-0 sm:max-w-[8rem] sm:opacity-100',
-                    )}
-                    >
-                    {tab.label}
-                  </span>
-                </button>
-              );
-            })}
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
         {activeTabContent}
         {detailTodo ? (
@@ -2241,14 +2283,23 @@ export default function PlanDetailPage() {
                       Đóng
                     </Button>
                     {canEditAllExpenses ||
-                    (hasPlanCapability(currentMember, 'finance.editOwnExpense') &&
+                    (hasPlanCapability(
+                      currentMember,
+                      'finance.editOwnExpense',
+                    ) &&
                       detailExpense.createdByUserId === user?.uid) ? (
                       <Button onClick={() => openEditExpense(detailExpense)}>
                         Chỉnh sửa
                       </Button>
                     ) : null}
-                    {hasPlanCapability(currentMember, 'finance.deleteAllExpense') ||
-                    (hasPlanCapability(currentMember, 'finance.deleteOwnExpense') &&
+                    {hasPlanCapability(
+                      currentMember,
+                      'finance.deleteAllExpense',
+                    ) ||
+                    (hasPlanCapability(
+                      currentMember,
+                      'finance.deleteOwnExpense',
+                    ) &&
                       detailExpense.createdByUserId === user?.uid) ? (
                       <Button
                         disabled={isDeletingExpenseInline}
@@ -2293,14 +2344,23 @@ export default function PlanDetailPage() {
                       Đóng
                     </Button>
                     {canEditAllExpenses ||
-                    (hasPlanCapability(currentMember, 'finance.editOwnExpense') &&
+                    (hasPlanCapability(
+                      currentMember,
+                      'finance.editOwnExpense',
+                    ) &&
                       detailExpense.createdByUserId === user?.uid) ? (
                       <Button onClick={() => openEditExpense(detailExpense)}>
                         Chỉnh sửa
                       </Button>
                     ) : null}
-                    {hasPlanCapability(currentMember, 'finance.deleteAllExpense') ||
-                    (hasPlanCapability(currentMember, 'finance.deleteOwnExpense') &&
+                    {hasPlanCapability(
+                      currentMember,
+                      'finance.deleteAllExpense',
+                    ) ||
+                    (hasPlanCapability(
+                      currentMember,
+                      'finance.deleteOwnExpense',
+                    ) &&
                       detailExpense.createdByUserId === user?.uid) ? (
                       <Button
                         disabled={isDeletingExpenseInline}
@@ -2941,9 +3001,7 @@ export default function PlanDetailPage() {
                     ? 'Xóa kế hoạch sẽ xóa vĩnh viễn toàn bộ dữ liệu — thành viên, mốc kế hoạch, công việc, khoản thu/chi, đối soát, lời mời. Hành động này không thể hoàn tác.'
                     : 'Tính năng này đang được phát triển và sẽ sớm ra mắt.'
                 }
-                title={
-                  isOwner ? 'Xóa kế hoạch' : 'Rời kế hoạch'
-                }
+                title={isOwner ? 'Xóa kế hoạch' : 'Rời kế hoạch'}
               >
                 <div className="flex justify-end gap-2">
                   <Button onClick={() => setHeaderModal(null)} variant="ghost">
@@ -2972,9 +3030,7 @@ export default function PlanDetailPage() {
                 }
                 onClose={() => setHeaderModal(null)}
                 open={headerModal === 'leave-or-delete'}
-                title={
-                  isOwner ? 'Xóa kế hoạch' : 'Rời kế hoạch'
-                }
+                title={isOwner ? 'Xóa kế hoạch' : 'Rời kế hoạch'}
               >
                 <div className="flex justify-end gap-2">
                   <Button onClick={() => setHeaderModal(null)} variant="ghost">
@@ -3035,8 +3091,7 @@ export default function PlanDetailPage() {
                   suggestions.map((suggestion) => (
                     <SettlementSuggestionCard
                       canConfirm={
-                        canManageSettlements &&
-                        plan.status !== 'closed'
+                        canManageSettlements && plan.status !== 'closed'
                       }
                       isSubmitting={isSettlementSubmitting}
                       key={`${suggestion.fromMemberId}-${suggestion.toMemberId}-${suggestion.amount}`}
@@ -3062,9 +3117,7 @@ export default function PlanDetailPage() {
                 description="Các khoản đã xác nhận hoặc đã hủy."
               />
               <SettlementList
-                canCancel={
-                  canManageSettlements && plan.status !== 'closed'
-                }
+                canCancel={canManageSettlements && plan.status !== 'closed'}
                 isSubmitting={isSettlementSubmitting}
                 members={members}
                 onCancel={handleCancelSettlement}

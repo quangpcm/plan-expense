@@ -1,10 +1,18 @@
 'use client';
 
 import type { DebtTrackingSummary } from '@/modules/debt-tracking/types/debt-tracking';
-import type { PlanDebtSummary } from '@/modules/debt-tracking/calculators/debt-calculators';
+import type {
+  CounterpartyDebtLedger,
+  PlanDebtSummary,
+} from '@/modules/debt-tracking/calculators/debt-calculators';
+import type { DebtTransaction } from '@/modules/debt-tracking/types/debt-transaction';
 import { overviewWidgetRegistry } from '@/modules/plan/constants/overview-widget-registry';
 import { getResolvedPlanTypeConfig } from '@/modules/plan/utils/plan-type-config';
-import type { PlanDocument, PlanStatus, PlanType } from '@/modules/plan/types/plan';
+import type {
+  PlanDocument,
+  PlanStatus,
+  PlanType,
+} from '@/modules/plan/types/plan';
 import type { StatisticResult } from '@/modules/statistic/types/statistic';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import type { TodoDocument } from '@/modules/todo';
@@ -20,6 +28,8 @@ export type OverviewRendererProps = {
   isDebtTrackingEnabled: boolean;
   isDebtTrackingLoading: boolean;
   nativeDebtSummary: PlanDebtSummary | null;
+  nativeDebtCounterpartyLedgers: CounterpartyDebtLedger[];
+  nativeDebtTransactions: DebtTransaction[];
   isNativeDebtLoading: boolean;
   nativeDebtError: string | null;
   isMilestonesLoading: boolean;
@@ -39,7 +49,10 @@ export type OverviewRendererProps = {
   onSelectMemberDrilldown: (memberId: string) => void;
   onSelectMilestoneDrilldown: (milestoneId: string, memberId: string) => void;
   onSelectUpcomingMilestone: (milestoneId: string) => void;
-  onToggleTodoStatus: (todo: TodoDocument, status: TodoDocument['status']) => void;
+  onToggleTodoStatus: (
+    todo: TodoDocument,
+    status: TodoDocument['status'],
+  ) => void;
   plan: Pick<PlanDocument, 'planType' | 'status' | 'debtModel'> | PlanType;
   planStatus: PlanStatus;
   selectedMilestoneId: string | null;
