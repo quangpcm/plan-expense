@@ -1,5 +1,14 @@
 import { AppError } from '@/shared/errors/app-error';
 
+function getFirebaseMessage(error: unknown) {
+  if (!error || typeof error !== 'object' || !('message' in error)) {
+    return null;
+  }
+
+  const message = error.message;
+  return typeof message === 'string' ? message : null;
+}
+
 export function mapFirebaseError(
   error: unknown,
   fallbackMessage: string,
@@ -25,8 +34,15 @@ export function mapFirebaseError(
     }
 
     if (firebaseCode === 'failed-precondition') {
+      const firebaseMessage = getFirebaseMessage(error);
+      const likelyMissingIndex =
+        firebaseMessage?.toLowerCase().includes('index') ||
+        firebaseMessage?.includes('FAILED_PRECONDITION: The query requires an index');
+
       return new AppError(
-        'Firebase chưa sẵn sàng cho thao tác này. Vui lòng kiểm tra database hoặc cấu hình index.',
+        likelyMissingIndex
+          ? 'Firestore cần thêm index cho truy vấn này. Vui lòng tạo index được gợi ý trong Firebase Console rồi thử lại.'
+          : 'Firestore chưa sẵn sàng cho thao tác này. Vui lòng kiểm tra database đã được tạo đầy đủ và cấu hình hiện tại.',
         'FIREBASE_FAILED_PRECONDITION',
         400,
       );

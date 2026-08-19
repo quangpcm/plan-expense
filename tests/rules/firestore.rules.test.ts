@@ -48,6 +48,35 @@ async function seedBasePlan() {
       archivedAt: null,
     });
 
+    await setDoc(doc(db, 'plans', 'plan-2'), {
+      id: 'plan-2',
+      name: 'Debt Plan',
+      description: null,
+      planType: 'debt',
+      ownerUserId: 'owner-user',
+      ownerMemberId: 'member-owner-2',
+      currency: 'VND',
+      timezone: 'Asia/Ho_Chi_Minh',
+      coverImageUrl: null,
+      coverImageStoragePath: null,
+      startDate: null,
+      endDate: null,
+      status: 'active',
+      memberCount: 2,
+      milestoneCount: 1,
+      todoCount: 0,
+      expenseCount: 1,
+      incomeCount: 1,
+      settlementCount: 0,
+      estimatedAmount: 0,
+      totalExpense: 80,
+      totalIncome: 500,
+      createdAt: now,
+      updatedAt: now,
+      closedAt: null,
+      archivedAt: null,
+    });
+
     await setDoc(doc(db, 'plans', 'plan-1', 'members', 'member-owner'), {
       id: 'member-owner',
       planId: 'plan-1',
@@ -101,6 +130,48 @@ async function seedBasePlan() {
       invitationId: null,
       avatarUrl: null,
       role: 'viewer',
+      permissions: { canEditAllExpenses: false },
+      status: 'active',
+      invitedAt: null,
+      joinedAt: now,
+      removedAt: null,
+      createdByUserId: 'owner-user',
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await setDoc(doc(db, 'plans', 'plan-2', 'members', 'member-owner-2'), {
+      id: 'member-owner-2',
+      planId: 'plan-2',
+      memberType: 'registered',
+      userId: 'owner-user',
+      email: 'owner@example.com',
+      nickname: 'Owner',
+      nicknameIsCustom: false,
+      invitationId: null,
+      avatarUrl: null,
+      role: 'owner',
+      permissions: { canEditAllExpenses: true },
+      status: 'active',
+      invitedAt: null,
+      joinedAt: now,
+      removedAt: null,
+      createdByUserId: 'owner-user',
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await setDoc(doc(db, 'plans', 'plan-2', 'members', 'member-editor-2'), {
+      id: 'member-editor-2',
+      planId: 'plan-2',
+      memberType: 'registered',
+      userId: 'editor-user',
+      email: 'editor@example.com',
+      nickname: 'Editor',
+      nicknameIsCustom: false,
+      invitationId: null,
+      avatarUrl: null,
+      role: 'editor',
       permissions: { canEditAllExpenses: false },
       status: 'active',
       invitedAt: null,
@@ -171,6 +242,48 @@ async function seedBasePlan() {
       updatedAt: now,
     });
 
+    await setDoc(doc(db, 'userPlans', 'owner-user', 'plans', 'plan-2'), {
+      id: 'plan-2',
+      planId: 'plan-2',
+      userId: 'owner-user',
+      planName: 'Debt Plan',
+      planType: 'debt',
+      role: 'owner',
+      memberId: 'member-owner-2',
+      memberStatus: 'active',
+      planStatus: 'active',
+      coverImageUrl: null,
+      estimatedAmount: 0,
+      totalExpense: 80,
+      totalIncome: 500,
+      memberCount: 2,
+      joinedAt: now,
+      lastActivityAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await setDoc(doc(db, 'userPlans', 'editor-user', 'plans', 'plan-2'), {
+      id: 'plan-2',
+      planId: 'plan-2',
+      userId: 'editor-user',
+      planName: 'Debt Plan',
+      planType: 'debt',
+      role: 'editor',
+      memberId: 'member-editor-2',
+      memberStatus: 'active',
+      planStatus: 'active',
+      coverImageUrl: null,
+      estimatedAmount: 0,
+      totalExpense: 80,
+      totalIncome: 500,
+      memberCount: 2,
+      joinedAt: now,
+      lastActivityAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+
     await setDoc(doc(db, 'plans', 'plan-1', 'expenses', 'expense-owner'), {
       id: 'expense-owner',
       planId: 'plan-1',
@@ -226,6 +339,7 @@ async function seedBasePlan() {
     await setDoc(doc(db, 'plans', 'plan-1', 'incomes', 'income-owner'), {
       id: 'income-owner',
       planId: 'plan-1',
+      milestoneId: 'milestone-1',
       title: 'Nap quy',
       categoryId: null,
       amount: 500,
@@ -247,6 +361,7 @@ async function seedBasePlan() {
     await setDoc(doc(db, 'plans', 'plan-1', 'incomes', 'income-editor'), {
       id: 'income-editor',
       planId: 'plan-1',
+      milestoneId: 'milestone-1',
       title: 'Hoan tien',
       categoryId: null,
       amount: 150,
@@ -400,6 +515,7 @@ async function seedBasePlan() {
       title: 'Book hotel',
       description: null,
       iconId: null,
+      isSystemHidden: false,
       startDate: null,
       endDate: null,
       status: 'in_progress',
@@ -413,6 +529,98 @@ async function seedBasePlan() {
       updatedAt: now,
       completedAt: null,
       cancelledAt: null,
+    });
+
+    await setDoc(doc(db, 'plans', 'plan-1', 'milestones', 'milestone-hidden'), {
+      id: 'milestone-hidden',
+      planId: 'plan-1',
+      title: '__system_hidden_milestone__',
+      description: null,
+      iconId: null,
+      isSystemHidden: true,
+      startDate: null,
+      endDate: null,
+      status: 'upcoming',
+      orderIndex: 99,
+      budgetAmount: null,
+      totalExpense: 0,
+      todoCount: 0,
+      completedTodoCount: 0,
+      createdByUserId: 'owner-user',
+      createdAt: now,
+      updatedAt: now,
+      completedAt: null,
+      cancelledAt: null,
+    });
+
+    await setDoc(doc(db, 'plans', 'plan-2', 'milestones', 'milestone-hidden-debt'), {
+      id: 'milestone-hidden-debt',
+      planId: 'plan-2',
+      title: '__system_hidden_milestone__',
+      description: null,
+      iconId: null,
+      isSystemHidden: true,
+      startDate: null,
+      endDate: null,
+      status: 'upcoming',
+      orderIndex: 0,
+      budgetAmount: null,
+      totalExpense: 0,
+      todoCount: 0,
+      completedTodoCount: 0,
+      createdByUserId: 'owner-user',
+      createdAt: now,
+      updatedAt: now,
+      completedAt: null,
+      cancelledAt: null,
+    });
+
+    await setDoc(doc(db, 'plans', 'plan-2', 'expenses', 'expense-hidden'), {
+      id: 'expense-hidden',
+      planId: 'plan-2',
+      milestoneId: 'milestone-hidden-debt',
+      title: 'Repayment',
+      categoryId: null,
+      amount: 80,
+      currency: 'VND',
+      paidByMemberId: 'member-editor-2',
+      participants: [],
+      splitMethod: 'equal',
+      merchantName: null,
+      locationName: null,
+      note: null,
+      attachments: [],
+      spentAt: now,
+      createdByUserId: 'editor-user',
+      createdByMemberId: 'member-editor-2',
+      createdAt: now,
+      updatedAt: now,
+      status: 'active',
+      deletedAt: null,
+      deletedByUserId: null,
+      version: 1,
+    });
+
+    await setDoc(doc(db, 'plans', 'plan-2', 'incomes', 'income-hidden'), {
+      id: 'income-hidden',
+      planId: 'plan-2',
+      milestoneId: 'milestone-hidden-debt',
+      title: 'Disbursement',
+      categoryId: null,
+      amount: 500,
+      currency: 'VND',
+      contributedByMemberId: 'member-owner-2',
+      note: null,
+      attachments: [],
+      receivedAt: now,
+      createdByUserId: 'owner-user',
+      createdByMemberId: 'member-owner-2',
+      createdAt: now,
+      updatedAt: now,
+      status: 'active',
+      deletedAt: null,
+      deletedByUserId: null,
+      version: 1,
     });
 
     await setDoc(doc(db, 'plans', 'plan-1', 'todos', 'todo-1'), {
@@ -597,6 +805,7 @@ describe('firestore rules', () => {
         title: 'Prepare transport',
         description: null,
         iconId: null,
+        isSystemHidden: false,
         startDate: null,
         endDate: null,
         status: 'upcoming',
@@ -621,6 +830,7 @@ describe('firestore rules', () => {
         title: 'Illegal milestone',
         description: null,
         iconId: null,
+        isSystemHidden: false,
         startDate: null,
         endDate: null,
         status: 'upcoming',
@@ -665,6 +875,44 @@ describe('firestore rules', () => {
         planId: 'plan-1',
         milestoneId: 'milestone-missing',
         title: 'Broken relation',
+        description: null,
+        assigneeMemberId: 'member-owner',
+        dueDate: null,
+        priority: 'medium',
+        status: 'todo',
+        createdByUserId: 'owner-user',
+        createdAt: now,
+        updatedAt: now,
+        completedAt: null,
+        cancelledAt: null,
+      }),
+    );
+  });
+
+  it('blocks owner from editing or deleting a hidden milestone directly', async () => {
+    const db = testEnv.authenticatedContext('owner-user').firestore();
+
+    await assertFails(
+      updateDoc(doc(db, 'plans', 'plan-1', 'milestones', 'milestone-hidden'), {
+        title: 'Should not edit hidden milestone',
+        updatedAt: now,
+      }),
+    );
+
+    await assertFails(
+      deleteDoc(doc(db, 'plans', 'plan-1', 'milestones', 'milestone-hidden')),
+    );
+  });
+
+  it('blocks owner from creating todo under a hidden milestone', async () => {
+    const db = testEnv.authenticatedContext('owner-user').firestore();
+
+    await assertFails(
+      setDoc(doc(db, 'plans', 'plan-1', 'todos', 'todo-hidden'), {
+        id: 'todo-hidden',
+        planId: 'plan-1',
+        milestoneId: 'milestone-hidden',
+        title: 'Hidden todo',
         description: null,
         assigneeMemberId: 'member-owner',
         dueDate: null,
@@ -813,6 +1061,54 @@ describe('firestore rules', () => {
     await assertFails(
       updateDoc(doc(db, 'plans', 'plan-1', 'incomes', 'income-owner'), {
         title: 'Illegal edit',
+        updatedAt: now,
+        version: 2,
+      }),
+    );
+  });
+
+  it('allows finance create and update when plan uses a hidden milestone', async () => {
+    const db = testEnv.authenticatedContext('editor-user').firestore();
+
+    await assertSucceeds(
+      setDoc(doc(db, 'plans', 'plan-2', 'expenses', 'expense-hidden-new'), {
+        id: 'expense-hidden-new',
+        planId: 'plan-2',
+        milestoneId: 'milestone-hidden-debt',
+        title: 'Debt fee',
+        categoryId: null,
+        amount: 60,
+        currency: 'VND',
+        paidByMemberId: 'member-editor-2',
+        participants: [],
+        splitMethod: 'equal',
+        merchantName: null,
+        locationName: null,
+        note: null,
+        attachments: [],
+        spentAt: now,
+        createdByUserId: 'editor-user',
+        createdByMemberId: 'member-editor-2',
+        createdAt: now,
+        updatedAt: now,
+        status: 'active',
+        deletedAt: null,
+        deletedByUserId: null,
+        version: 1,
+      }),
+    );
+
+    await assertSucceeds(
+      updateDoc(doc(db, 'plans', 'plan-2', 'expenses', 'expense-hidden'), {
+        title: 'Repayment updated',
+        updatedAt: now,
+        version: 2,
+      }),
+    );
+
+    await assertSucceeds(
+      updateDoc(doc(db, 'plans', 'plan-2', 'incomes', 'income-hidden'), {
+        title: 'Disbursement updated',
         updatedAt: now,
         version: 2,
       }),

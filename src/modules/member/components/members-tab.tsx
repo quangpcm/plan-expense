@@ -20,13 +20,19 @@ type MembersTabProps = {
   memberActionError: string | null;
   memberActionMessage: string | null;
   members: PlanMemberDocument[];
-  onCreateClaimInvitation: (member: PlanMemberDocument) => void;
-  onDeleteMember: (member: PlanMemberDocument) => void;
-  onReactivateMember: (member: PlanMemberDocument) => void;
-  onRemoveMember: (member: PlanMemberDocument) => void;
+  onCreateClaimInvitation: (
+    member: PlanMemberDocument,
+    email: string | null,
+  ) => Promise<{ invitationId: string }>;
+  onDeleteMember: (member: PlanMemberDocument) => Promise<void>;
+  onReactivateMember: (member: PlanMemberDocument) => Promise<void>;
+  onRemoveMember: (member: PlanMemberDocument) => Promise<void>;
   onRevokeInvitation: (invitation: InvitationDocument) => void;
-  onUnlinkAccount: (member: PlanMemberDocument) => void;
-  onUpdateAvatar: (member: PlanMemberDocument, avatarUrl: string | null) => void;
+  onUnlinkAccount: (member: PlanMemberDocument) => Promise<void>;
+  onUpdateAvatar: (
+    member: PlanMemberDocument,
+    avatarUrl: string | null,
+  ) => Promise<void>;
   onUpdateMember: (
     member: PlanMemberDocument,
     values: {
@@ -34,7 +40,7 @@ type MembersTabProps = {
       role: Exclude<PlanRole, 'owner'>;
       canEditAllExpenses: boolean;
     },
-  ) => void;
+  ) => Promise<void>;
   plan: PlanDocument;
   planId: string;
 };

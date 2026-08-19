@@ -26,6 +26,15 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/plans/$(planId)/milestones/$(milestoneId));
     }
 
+    function isBootstrapPlanCreate(planId) {
+      return !exists(/databases/$(database)/documents/plans/$(planId)) &&
+        getAfter(/databases/$(database)/documents/plans/$(planId)).data.ownerUserId == request.auth.uid;
+    }
+
+    function milestoneIsWritable(planId, milestoneId) {
+      return milestoneDoc(planId, milestoneId).data.isSystemHidden != true;
+    }
+
     function weddingGuestGroupDoc(planId, groupId) {
       return get(/databases/$(database)/documents/plans/$(planId)/weddingGuestGroups/$(groupId));
     }
@@ -175,7 +184,7 @@ service cloud.firestore {
         request.resource.data.closedAt == resource.data.closedAt &&
         request.resource.data.name is string &&
         request.resource.data.planType in
-          ['travel', 'wedding', 'saving', 'birthday', 'event', 'shared_living', 'project', 'general'] &&
+          ['debt', 'travel', 'wedding', 'saving', 'birthday', 'event', 'shared_living', 'project', 'general'] &&
         planCountersUnchanged();
     }
 
@@ -392,6 +401,7 @@ service cloud.firestore {
           request.resource.data.planId == planId &&
           request.resource.data.createdByUserId == request.auth.uid &&
           request.resource.data.title is string &&
+          request.resource.data.isSystemHidden == false &&
           request.resource.data.status in ['upcoming', 'in_progress', 'completed', 'cancelled'] &&
           request.resource.data.orderIndex is int &&
           request.resource.data.totalExpense is int &&
@@ -403,11 +413,12 @@ service cloud.firestore {
           // (which isPlanOwner() reads) exists — so check the plan's
           // ownerUserId via getAfter() instead, same trick the owner-member
           // create rule above already uses for this exact race.
-          getAfter(/databases/$(database)/documents/plans/$(planId)).data.ownerUserId == request.auth.uid &&
+          isBootstrapPlanCreate(planId) &&
           request.resource.data.id == milestoneId &&
           request.resource.data.planId == planId &&
           request.resource.data.createdByUserId == request.auth.uid &&
           request.resource.data.title is string &&
+          request.resource.data.isSystemHidden is bool &&
           request.resource.data.status in ['upcoming', 'in_progress', 'completed', 'cancelled'] &&
           request.resource.data.orderIndex is int &&
           request.resource.data.totalExpense is int &&
@@ -416,16 +427,18 @@ service cloud.firestore {
         );
       allow update: if isPlanOwner(planId) &&
         isPlanActive(planId) &&
+        resource.data.isSystemHidden != true &&
         request.resource.data.id == resource.data.id &&
         request.resource.data.planId == resource.data.planId &&
         request.resource.data.createdByUserId == resource.data.createdByUserId &&
         request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.isSystemHidden == resource.data.isSystemHidden &&
         request.resource.data.totalExpense is int &&
         request.resource.data.todoCount is int &&
         request.resource.data.completedTodoCount is int &&
         request.resource.data.orderIndex is int &&
         request.resource.data.status in ['upcoming', 'in_progress', 'completed', 'cancelled'];
-      allow delete: if isPlanOwner(planId);
+      allow delete: if isPlanOwner(planId) && resource.data.isSystemHidden != true;
     }
 
     match /plans/{planId}/weddingGuestGroups/{groupId} {
@@ -511,6 +524,7 @@ service cloud.firestore {
         request.resource.data.createdByUserId == request.auth.uid &&
         request.resource.data.milestoneId is string &&
         milestoneDoc(planId, request.resource.data.milestoneId).data.planId == planId &&
+        milestoneIsWritable(planId, request.resource.data.milestoneId) &&
         request.resource.data.title is string &&
         request.resource.data.priority in ['low', 'medium', 'high'] &&
         request.resource.data.status in ['todo', 'in_progress', 'done', 'cancelled'];
@@ -522,6 +536,7 @@ service cloud.firestore {
         request.resource.data.createdAt == resource.data.createdAt &&
         request.resource.data.milestoneId == resource.data.milestoneId &&
         milestoneDoc(planId, request.resource.data.milestoneId).data.planId == planId &&
+        milestoneIsWritable(planId, request.resource.data.milestoneId) &&
         request.resource.data.title is string &&
         request.resource.data.priority in ['low', 'medium', 'high'] &&
         request.resource.data.status in ['todo', 'in_progress', 'done', 'cancelled'];
@@ -572,7 +587,10 @@ service cloud.firestore {
         request.resource.data.createdByMemberId == currentUserPlanDoc(planId).data.memberId &&
         request.resource.data.status == 'active' &&
         request.resource.data.amount is int &&
-        request.resource.data.amount > 0;
+        request.resource.data.amount > 0 &&
+        request.resource.data.milestoneId is string &&
+        milestoneDoc(planId, request.resource.data.milestoneId).data.planId == planId &&
+        request.resource.data.contributedByMemberId is string;
       allow update: if isPlanActive(planId) &&
         resource.data.createdByUserId == request.auth.uid &&
         request.resource.data.id == resource.data.id &&
@@ -581,7 +599,10 @@ service cloud.firestore {
         request.resource.data.createdByMemberId == resource.data.createdByMemberId &&
         request.resource.data.createdAt == resource.data.createdAt &&
         request.resource.data.amount is int &&
-        request.resource.data.amount > 0;
+        request.resource.data.amount > 0 &&
+        request.resource.data.milestoneId is string &&
+        milestoneDoc(planId, request.resource.data.milestoneId).data.planId == planId &&
+        request.resource.data.contributedByMemberId is string;
       allow delete: if isPlanOwner(planId);
     }
 

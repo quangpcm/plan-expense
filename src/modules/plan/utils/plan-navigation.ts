@@ -45,12 +45,11 @@ export function getPlanDetailTabs(
     .filter((moduleDefinition) => moduleDefinition.navigation.enabled)
     .flatMap((moduleDefinition) => {
       const navigationRoutes = getNavigationRoutes(moduleDefinition);
+      const primaryRoute = navigationRoutes[0];
 
-      if (navigationRoutes.length === 0) {
+      if (!primaryRoute) {
         return [];
       }
-
-      const primaryRoute = navigationRoutes[0];
 
       return [
         {
@@ -79,14 +78,16 @@ export function resolvePlanDetailTab(
       (candidate) => candidate.id === tab.id,
     );
 
-    for (const alias of getTabAliases(moduleDefinition!)) {
+    if (!moduleDefinition) {
+      continue;
+    }
+
+    for (const alias of getTabAliases(moduleDefinition)) {
       navigationByTab.set(alias, tab.id);
     }
 
     if (tab.id === 'planning') {
-      const planningDefinition = moduleDefinition!;
-
-      for (const route of planningDefinition.routes ?? []) {
+      for (const route of moduleDefinition.routes ?? []) {
         const routeTab = extractTabParam(route);
 
         if (routeTab) {
@@ -102,4 +103,3 @@ export function resolvePlanDetailTab(
 
   return tabs[0]?.id ?? 'overview';
 }
-

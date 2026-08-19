@@ -3,6 +3,7 @@ export { useCreatePlan } from './hooks/use-create-plan';
 export { usePlan } from './hooks/use-plan';
 export { useUserPlans } from './hooks/use-user-plans';
 export { OverviewTab } from './components/overview-tab';
+export { OverviewRenderer, resolveOverviewWidgets } from './components/overview-renderer';
 export { planModuleRegistry } from './constants/plan-module-registry';
 export {
   getPlanTypeConfig,

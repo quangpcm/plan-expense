@@ -1,6 +1,6 @@
 'use client';
 
-import { Timestamp, doc, onSnapshot, orderBy, runTransaction } from 'firebase/firestore';
+import { Timestamp, doc, getDocs, onSnapshot, orderBy, runTransaction } from 'firebase/firestore';
 
 import { getFirebaseFirestore } from '@/config/firebase.config';
 import { getPlanCollectionRef, getPlanDocumentRef, getPlanRootRef, queryByPlanCollection } from '@/modules/plan';
@@ -35,8 +35,8 @@ export class FirestoreDebtTrackingRepository implements DebtTrackingRepository {
         id: debtRef.id,
         planId: input.planId,
         title: input.title.trim(),
-        borrowerMemberId: input.borrowerMemberId?.trim() || null,
-        lenderMemberId: input.lenderMemberId?.trim() || null,
+        borrowerMemberId: input.borrowerMemberId.trim(),
+        lenderMemberId: input.lenderMemberId.trim(),
         principalAmount: input.principalAmount,
         note: input.note?.trim() || null,
         dueDate: input.dueDate ? toTimestamp(input.dueDate) : null,
@@ -61,6 +61,13 @@ export class FirestoreDebtTrackingRepository implements DebtTrackingRepository {
     const repaymentRef = getPlanDocumentRef(db, input.planId, 'repayments', input.repaymentId);
     const debtRef = getPlanDocumentRef(db, input.planId, 'debts', input.debtId);
     const now = Timestamp.now();
+    const repaymentsSnapshot = await getDocs(
+      queryByPlanCollection(db, input.planId, 'repayments', orderBy('paidAt', 'desc')),
+    );
+    const paidAmountBefore = repaymentsSnapshot.docs
+      .map((snapshot) => snapshot.data() as RepaymentDocument)
+      .filter((repayment) => repayment.debtId === input.debtId)
+      .reduce((total, repayment) => total + repayment.amount, 0);
 
     await runTransaction(db, async (transaction) => {
       const debtSnapshot = await transaction.get(debtRef);
@@ -70,13 +77,6 @@ export class FirestoreDebtTrackingRepository implements DebtTrackingRepository {
       }
 
       const debt = debtSnapshot.data() as DebtDocument;
-      const repaymentsSnapshot = await transaction.get(
-        queryByPlanCollection(db, input.planId, 'repayments', orderBy('paidAt', 'desc')),
-      );
-      const paidAmountBefore = repaymentsSnapshot.docs
-        .map((snapshot) => snapshot.data() as RepaymentDocument)
-        .filter((repayment) => repayment.debtId === input.debtId)
-        .reduce((total, repayment) => total + repayment.amount, 0);
       const paidAmountAfter = paidAmountBefore + input.amount;
       const isPaidOff = paidAmountAfter >= debt.principalAmount;
 

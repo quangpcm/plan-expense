@@ -1,6 +1,6 @@
 'use client';
 
-import { Timestamp, doc, onSnapshot, orderBy, writeBatch } from 'firebase/firestore';
+import { Timestamp, doc, getDocs, onSnapshot, orderBy, query, where, writeBatch } from 'firebase/firestore';
 
 import { getFirebaseFirestore } from '@/config/firebase.config';
 import { getPlanCollectionRef, getPlanDocumentRef, getPlanRootRef, queryByPlanCollection } from '@/modules/plan';
@@ -10,6 +10,7 @@ import type {
   UpdateTravelActivityPersistenceInput,
 } from '@/modules/travel-activity/repositories/travel-activity.repository';
 import type { TravelActivityDocument } from '@/modules/travel-activity/types/travel-activity';
+import type { ExpenseDocument } from '@/modules/expense/types/expense';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
 function toTimestamp(value: string) {
@@ -72,10 +73,25 @@ export class FirestoreTravelActivityRepository implements TravelActivityReposito
   async deleteActivity(planId: string, activityId: string) {
     const db = getFirebaseFirestore();
     const now = Timestamp.now();
+    const activityRef = getPlanDocumentRef(db, planId, 'travelActivities', activityId);
+    const planRef = getPlanRootRef(db, planId);
+    const expensesQuery = query(getPlanCollectionRef(db, planId, 'expenses'), where('activityId', '==', activityId));
+    const linkedExpensesSnapshot = await getDocs(expensesQuery);
+    const batch = writeBatch(db);
 
-    await writeBatch(db)
-      .delete(getPlanDocumentRef(db, planId, 'travelActivities', activityId))
-      .update(getPlanRootRef(db, planId), {
+    linkedExpensesSnapshot.docs.forEach((expenseSnapshot) => {
+      const expense = expenseSnapshot.data() as ExpenseDocument;
+
+      batch.update(expenseSnapshot.ref, {
+        activityId: null,
+        updatedAt: now,
+        version: expense.version + 1,
+      });
+    });
+
+    await batch
+      .delete(activityRef)
+      .update(planRef, {
         updatedAt: now,
       })
       .commit();

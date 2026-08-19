@@ -73,6 +73,7 @@ function makeMilestone(overrides: Partial<MilestoneDocument> = {}): MilestoneDoc
     title: 'Booking',
     description: null,
     iconId: null,
+    isSystemHidden: false,
     startDate: null,
     endDate: null,
     status: 'in_progress',
@@ -194,6 +195,9 @@ describe('StatisticService', () => {
       {
         categoryId: 'cat-food',
         categoryName: 'Food',
+        icon: 'utensils',
+        iconColor: 'text-orange-600',
+        iconBgColor: 'bg-orange-100',
         totalAmount: 300,
       },
     ]);

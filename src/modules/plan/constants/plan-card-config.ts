@@ -414,6 +414,28 @@ function buildEndedSummaryConfig(plan: PlanSummary) {
 }
 
 export const planCardConfigByType: Record<PlanType, PlanCardTypeConfig> = {
+  debt: {
+    primaryMetric: ({ plan }) => ({
+      label: 'Dòng tiền ròng',
+      value: getSafeCurrency(getSafeBalance(plan)),
+      tone: getSafeBalance(plan) >= 0 ? 'warning' : 'danger',
+      isMonetary: true,
+    }),
+    secondaryMetric: ({ plan }) => ({
+      label: 'Đã nhận giải ngân',
+      value: getSafeCurrency(plan.totalIncome),
+      detail: `Đã trả / chi ${getSafeCurrency(plan.totalExpense)}`,
+      isMonetary: true,
+      detailIsMonetary: true,
+    }),
+    progress: ({ plan }) => buildBalanceProgress(plan),
+    footerLeft: ({ plan }) => ({
+      label: 'Theo dõi nợ',
+      value: isEndedPlan(plan)
+        ? buildEndedFooter(plan).value
+        : getSafeCountLabel(plan.memberCount, 'thành viên liên quan'),
+    }),
+  },
   travel: {
     primaryMetric: ({ plan }) => ({
       label: 'Ngân sách',

@@ -83,6 +83,26 @@ export function useDebtTracking(planId: string, enabled = true) {
       (total, repayment) => total + repayment.amount,
       0,
     );
+    const lentOutstandingAmount = debts.reduce((total, debt) => {
+      const repaidAmount = repaymentTotalsByDebtId[debt.id] ?? 0;
+      const remainingAmount = Math.max(debt.principalAmount - repaidAmount, 0);
+
+      if (debt.lenderMemberId === debt.createdByMemberId) {
+        return total + remainingAmount;
+      }
+
+      return total;
+    }, 0);
+    const borrowedOutstandingAmount = debts.reduce((total, debt) => {
+      const repaidAmount = repaymentTotalsByDebtId[debt.id] ?? 0;
+      const remainingAmount = Math.max(debt.principalAmount - repaidAmount, 0);
+
+      if (debt.borrowerMemberId === debt.createdByMemberId) {
+        return total + remainingAmount;
+      }
+
+      return total;
+    }, 0);
     const outstandingAmount = debts.reduce((total, debt) => {
       const repaidAmount = repaymentTotalsByDebtId[debt.id] ?? 0;
       return total + Math.max(debt.principalAmount - repaidAmount, 0);
@@ -97,6 +117,8 @@ export function useDebtTracking(planId: string, enabled = true) {
       activeDebtCount,
       paidDebtCount,
       repaymentCount: repayments.length,
+      lentOutstandingAmount,
+      borrowedOutstandingAmount,
     };
   }, [debts, repaymentTotalsByDebtId, repayments]);
 
@@ -113,6 +135,8 @@ export function useDebtTracking(planId: string, enabled = true) {
           activeDebtCount: 0,
           paidDebtCount: 0,
           repaymentCount: 0,
+          lentOutstandingAmount: 0,
+          borrowedOutstandingAmount: 0,
         },
     isLoading: isActive ? isLoading : false,
     errorMessage: isActive ? errorMessage : null,

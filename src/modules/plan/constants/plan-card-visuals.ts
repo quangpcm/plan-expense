@@ -4,6 +4,7 @@ import {
   Cake,
   Folder,
   Heart,
+  HandCoins,
   Home,
   PiggyBank,
   Plane,
@@ -22,6 +23,14 @@ export type PlanCardVisual = {
 };
 
 export const planCardVisualsByType: Record<PlanType, PlanCardVisual> = {
+  debt: {
+    icon: HandCoins,
+    iconBgClassName: 'bg-gradient-to-br from-amber-500 to-orange-300',
+    iconFgClassName: 'text-white',
+    accentTextClassName: 'text-[#9a3412]',
+    progressTrackClassName: 'bg-[#eceef0]',
+    progressFillClassName: 'bg-[#f59e0b]',
+  },
   travel: {
     icon: Plane,
     iconBgClassName: 'bg-gradient-to-br from-blue-400 to-cyan-300',

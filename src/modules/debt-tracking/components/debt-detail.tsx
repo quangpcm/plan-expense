@@ -2,6 +2,11 @@
 
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { DebtDocument, RepaymentDocument } from '@/modules/debt-tracking/types/debt-tracking';
+import {
+  formatDebtDirectionLabel,
+  resolveDebtCounterpart,
+  resolveDebtDirection,
+} from '@/modules/debt-tracking/utils/debt-perspective';
 import { Card } from '@/shared/components/ui/card';
 import { formatCompactCurrency } from '@/shared/utils/currency';
 import { formatDate } from '@/shared/utils/date';
@@ -11,11 +16,12 @@ type DebtDetailProps = {
   debt: DebtDocument;
   repayments: RepaymentDocument[];
   members: PlanMemberDocument[];
+  currentMemberId: string | null;
 };
 
-export function DebtDetail({ debt, repayments, members }: DebtDetailProps) {
-  const borrower = members.find((member) => member.id === debt.borrowerMemberId);
-  const lender = members.find((member) => member.id === debt.lenderMemberId);
+export function DebtDetail({ debt, repayments, members, currentMemberId }: DebtDetailProps) {
+  const direction = resolveDebtDirection(debt, currentMemberId);
+  const counterpart = resolveDebtCounterpart(debt, members, currentMemberId);
   const debtRepayments = repayments.filter((repayment) => repayment.debtId === debt.id);
   const repaidAmount = debtRepayments.reduce((total, repayment) => total + repayment.amount, 0);
   const remainingAmount = Math.max(debt.principalAmount - repaidAmount, 0);
@@ -26,7 +32,7 @@ export function DebtDetail({ debt, repayments, members }: DebtDetailProps) {
         <div className="space-y-1">
           <p className="text-lg font-semibold text-slate-950">{debt.title}</p>
           <p className="text-sm text-slate-500">
-            {borrower?.nickname ?? 'Chưa rõ người vay'} {'->'} {lender?.nickname ?? 'Chưa rõ người cho vay'}
+            {formatDebtDirectionLabel(direction)} · {counterpart?.nickname ?? 'Chưa rõ thành viên còn lại'}
           </p>
         </div>
         {debt.note ? <p className="text-sm leading-6 text-slate-600">{debt.note}</p> : null}

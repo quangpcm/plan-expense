@@ -56,8 +56,8 @@ type PlanningTabProps = {
   onOpenExpenseSheet: (milestone: MilestoneDocument) => void;
   onOpenMilestoneExpenseCreate: (milestoneId: string) => void;
   onOpenTimelineFromMilestone: () => void;
-  onReorderTodos: (input: { milestoneId: string; orderedTodoIds: string[] }) => void;
-  onSelectMilestone: (milestoneId: string) => void;
+  onReorderTodos: (milestoneId: string, orderedTodoIds: string[]) => Promise<void>;
+  onSelectMilestone: (milestoneId: string | null) => void;
   onSelectExpense: (expense: ExpenseDocument) => void;
   onSortOrderChange: (sortOrder: TodoDueSortOrder) => void;
   onStatusFilterChange: (statusFilter: TodoStatusFilter) => void;
@@ -193,7 +193,7 @@ export function PlanningTab({
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               <MilestoneTimelineBoard
                 canManagePlan={isOwner}
-                defaultExpandedMilestoneId={selectedMilestone?.id ?? undefined}
+                defaultExpandedMilestoneId={selectedMilestone?.id ?? null}
                 isMilestoneSubmitting={isMilestoneSubmitting}
                 isPlanClosed={Boolean(isPlanEnded)}
                 isTodoSubmitting={isTodoSubmitting}

@@ -12,6 +12,7 @@ export type CreateExpensePersistenceInput = {
   planId: string;
   expenseId: string;
   milestoneId: string;
+  activityId: string | null;
   title: string;
   categoryId: string | null;
   amount: number;
@@ -28,6 +29,7 @@ export type CreateExpensePersistenceInput = {
 };
 
 export type UpdateExpensePersistenceInput = Omit<UpdateExpenseInput, 'attachments'> & {
+  activityId?: string | null | undefined;
   attachments: ExpenseDocument['attachments'];
 };
 

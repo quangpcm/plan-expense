@@ -69,7 +69,7 @@ describe('resolvePlanPermissions', () => {
       ),
     ).toMatchObject({
       canEditAllExpenses: true,
-      canDeleteAllExpenses: false,
+      canDeleteAllExpenses: true,
       canCreateExpense: false,
     });
   });

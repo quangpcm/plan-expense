@@ -7,7 +7,7 @@ import type { AuthUser } from '@/modules/auth/types/auth';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import { debtTrackingService } from '@/modules/debt-tracking/services';
-import type { CreateDebtInput } from '@/modules/debt-tracking/types/debt-tracking';
+import type { CreateDebtInput, DebtDirection } from '@/modules/debt-tracking/types/debt-tracking';
 import { Button } from '@/shared/components/ui/button';
 
 type DebtFormProps = {
@@ -28,8 +28,8 @@ export function DebtForm({
   onSuccess,
 }: DebtFormProps) {
   const [title, setTitle] = useState('');
-  const [borrowerMemberId, setBorrowerMemberId] = useState('');
-  const [lenderMemberId, setLenderMemberId] = useState('');
+  const [counterpartMemberId, setCounterpartMemberId] = useState('');
+  const [direction, setDirection] = useState<DebtDirection>('lent');
   const [principalAmount, setPrincipalAmount] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [note, setNote] = useState('');
@@ -43,8 +43,8 @@ export function DebtForm({
     try {
       const input: CreateDebtInput = {
         title,
-        borrowerMemberId,
-        lenderMemberId,
+        counterpartMemberId,
+        direction,
         principalAmount: Number(principalAmount),
         dueDate,
         note,
@@ -67,39 +67,37 @@ export function DebtForm({
         <input
           className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
           onChange={(event) => setTitle(event.target.value)}
-          placeholder="Ví dụ: Ứng tiền thuê nhà tháng 8"
+          placeholder="Ví dụ: Mượn tiền đóng tiền nhà tháng 8"
           value={title}
         />
       </label>
       <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-2 text-sm text-slate-700">
-          Người vay
+          Kiểu khoản nợ
           <select
             className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
-            onChange={(event) => setBorrowerMemberId(event.target.value)}
-            value={borrowerMemberId}
+            onChange={(event) => setDirection(event.target.value as DebtDirection)}
+            value={direction}
           >
-            <option value="">Chưa chọn</option>
-            {members.map((member) => (
-              <option key={member.id} value={member.id}>
-                {member.nickname}
-              </option>
-            ))}
+            <option value="lent">Tôi cho người này mượn</option>
+            <option value="borrowed">Tôi mượn từ người này</option>
           </select>
         </label>
         <label className="grid gap-2 text-sm text-slate-700">
-          Người cho vay
+          Thành viên còn lại
           <select
             className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
-            onChange={(event) => setLenderMemberId(event.target.value)}
-            value={lenderMemberId}
+            onChange={(event) => setCounterpartMemberId(event.target.value)}
+            value={counterpartMemberId}
           >
-            <option value="">Chưa chọn</option>
-            {members.map((member) => (
-              <option key={member.id} value={member.id}>
-                {member.nickname}
-              </option>
-            ))}
+            <option value="">Chọn thành viên</option>
+            {members
+              .filter((member) => member.id !== currentMember?.id)
+              .map((member) => (
+                <option key={member.id} value={member.id}>
+                  {member.nickname}
+                </option>
+              ))}
           </select>
         </label>
       </div>
@@ -129,6 +127,7 @@ export function DebtForm({
         <textarea
           className="min-h-28 rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
           onChange={(event) => setNote(event.target.value)}
+          placeholder="Ghi thêm bối cảnh khoản vay nếu cần"
           value={note}
         />
       </label>

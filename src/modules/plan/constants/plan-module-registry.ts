@@ -21,7 +21,7 @@ export const planModuleRegistry: Record<PlanModuleId, PlanModuleDefinition> = {
     navigation: { enabled: true },
     permissions: ['overview.view'],
     routes: [{ key: 'overview.home', pathname: '/plans/[planId]' }],
-    overviewWidgets: [overviewWidgets.planSummary],
+    overviewWidgets: [overviewWidgets.planSummary!],
   },
   planning: {
     id: 'planning',
@@ -33,7 +33,7 @@ export const planModuleRegistry: Record<PlanModuleId, PlanModuleDefinition> = {
       { key: 'planning.tab.todos', pathname: '/plans/[planId]?tab=todos' },
     ],
     collections: [{ path: 'milestones' }, { path: 'todos' }],
-    overviewWidgets: [overviewWidgets.planningSnapshot],
+    overviewWidgets: [overviewWidgets.planningSnapshot!],
   },
   finance: {
     id: 'finance',
@@ -61,7 +61,7 @@ export const planModuleRegistry: Record<PlanModuleId, PlanModuleDefinition> = {
       { key: 'finance.income.edit', pathname: '/plans/[planId]/incomes/[incomeId]/edit' },
     ],
     collections: [{ path: 'expenses' }, { path: 'incomes' }, { path: 'settlements' }],
-    overviewWidgets: [overviewWidgets.financeSummary],
+    overviewWidgets: [overviewWidgets.financeSummary!],
   },
   members: {
     id: 'members',
@@ -70,7 +70,7 @@ export const planModuleRegistry: Record<PlanModuleId, PlanModuleDefinition> = {
     permissions: ['members.view', 'members.manage'],
     routes: [{ key: 'members.tab', pathname: '/plans/[planId]?tab=members' }],
     collections: [{ path: 'members' }, { path: 'invitations' }],
-    overviewWidgets: [overviewWidgets.memberSummary],
+    overviewWidgets: [overviewWidgets.memberSummary!],
   },
   weddingGuests: {
     id: 'weddingGuests',
@@ -83,7 +83,7 @@ export const planModuleRegistry: Record<PlanModuleId, PlanModuleDefinition> = {
       { path: 'weddingGuestGroups' },
       { path: 'guestInvitations' },
     ],
-    overviewWidgets: [overviewWidgets.weddingGuestSummary],
+    overviewWidgets: [overviewWidgets.weddingGuestSummary!],
   },
   travelItinerary: {
     id: 'travelItinerary',
@@ -97,7 +97,7 @@ export const planModuleRegistry: Record<PlanModuleId, PlanModuleDefinition> = {
     ],
     routes: [{ key: 'travelItinerary.tab', pathname: '/plans/[planId]?tab=travelItinerary' }],
     collections: [{ path: 'travelActivities' }],
-    overviewWidgets: [overviewWidgets.travelItinerarySummary],
+    overviewWidgets: [overviewWidgets.travelItinerarySummary!],
   },
   debtTracking: {
     id: 'debtTracking',
@@ -106,6 +106,6 @@ export const planModuleRegistry: Record<PlanModuleId, PlanModuleDefinition> = {
     permissions: ['debtTracking.view', 'debtTracking.createDebt', 'debtTracking.recordRepayment'],
     routes: [{ key: 'debtTracking.tab', pathname: '/plans/[planId]?tab=debtTracking' }],
     collections: [{ path: 'debts' }, { path: 'repayments' }],
-    overviewWidgets: [overviewWidgets.debtSummary],
+    overviewWidgets: [overviewWidgets.debtSummary!],
   },
 };

@@ -67,7 +67,7 @@ export function RepaymentForm({
     <div className="space-y-4">
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-        Ghi nhận trả nợ cho khoản: <span className="font-medium text-slate-900">{debt.title}</span>
+        Ghi nhận một lần hoàn trả cho khoản: <span className="font-medium text-slate-900">{debt.title}</span>
       </div>
       <label className="grid gap-2 text-sm text-slate-700">
         Số tiền trả
@@ -93,6 +93,7 @@ export function RepaymentForm({
         <textarea
           className="min-h-28 rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
           onChange={(event) => setNote(event.target.value)}
+          placeholder="Ví dụ: đã chuyển khoản đợt 1"
           value={note}
         />
       </label>

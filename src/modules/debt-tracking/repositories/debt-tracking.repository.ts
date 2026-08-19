@@ -1,11 +1,16 @@
 import type {
-  CreateDebtInput,
   DebtDocument,
   RecordRepaymentInput,
   RepaymentDocument,
 } from '@/modules/debt-tracking/types/debt-tracking';
 
-export type CreateDebtPersistenceInput = CreateDebtInput & {
+export type CreateDebtPersistenceInput = {
+  title: string;
+  principalAmount: number;
+  note?: string | undefined;
+  dueDate?: string | undefined;
+  borrowerMemberId: string;
+  lenderMemberId: string;
   planId: string;
   debtId: string;
   createdByUserId: string;

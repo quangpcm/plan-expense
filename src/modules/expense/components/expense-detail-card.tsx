@@ -6,19 +6,30 @@ import { formatCurrency } from '@/shared/utils/currency';
 import { formatDateTime } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 import type { Category } from '@/modules/category/types/category';
+import { ExpenseActivityLink } from '@/modules/expense/components/expense-activity-link';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
 import { AttachmentGallery } from '@/modules/storage';
+import type { TravelActivityDocument } from '@/modules/travel-activity/types/travel-activity';
 
 type ExpenseDetailCardProps = {
   expense: ExpenseDocument;
   members: PlanMemberDocument[];
   categories: Category[];
   milestones: MilestoneDocument[];
+  planId: string;
+  travelActivities?: TravelActivityDocument[];
 };
 
-export function ExpenseDetailCard({ expense, members, categories, milestones }: ExpenseDetailCardProps) {
+export function ExpenseDetailCard({
+  expense,
+  members,
+  categories,
+  milestones,
+  planId,
+  travelActivities = [],
+}: ExpenseDetailCardProps) {
   const category = categories.find((item) => item.id === expense.categoryId);
   const milestone = milestones.find((item) => item.id === expense.milestoneId);
   const paidBy = members.find((member) => member.id === expense.paidByMemberId);
@@ -60,6 +71,16 @@ export function ExpenseDetailCard({ expense, members, categories, milestones }: 
           <div className="flex items-center gap-2 text-slate-500">
             <History className="size-4 shrink-0 text-slate-400" />
             <span>Cập nhật lần cuối · {formatDateTime(updatedAt)}</span>
+          </div>
+        ) : null}
+        {expense.activityId ? (
+          <div className="flex items-center gap-2 text-slate-600">
+            <ExpenseActivityLink
+              expense={expense}
+              planId={planId}
+              travelActivities={travelActivities}
+              variant="inline"
+            />
           </div>
         ) : null}
       </div>

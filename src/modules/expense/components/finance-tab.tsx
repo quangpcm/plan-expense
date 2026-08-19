@@ -10,6 +10,7 @@ import type { IncomeDocument } from '@/modules/income/types/income';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import type { PlanDocument } from '@/modules/plan/types/plan';
+import type { TravelActivityDocument } from '@/modules/travel-activity/types/travel-activity';
 import { Button } from '@/shared/components/ui/button';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 
@@ -28,6 +29,7 @@ type FinanceTabProps = {
   plan: PlanDocument;
   planId: string;
   selectedMilestoneId: string | null;
+  travelActivities?: TravelActivityDocument[];
 };
 
 export function FinanceTab({
@@ -45,7 +47,9 @@ export function FinanceTab({
   plan,
   planId,
   selectedMilestoneId,
+  travelActivities = [],
 }: FinanceTabProps) {
+  const isDebtPlan = plan.planType === 'debt';
   const incomeHref = `/plans/${planId}/incomes/new${
     selectedMilestoneId
       ? `?milestoneId=${selectedMilestoneId}&returnTab=timeline`
@@ -56,11 +60,19 @@ export function FinanceTab({
       ? `?milestoneId=${selectedMilestoneId}&returnTab=timeline`
       : '?returnTab=timeline'
   }`;
+  const emptyStateDescription = isDebtPlan
+    ? `Chưa có giao dịch finance nào cho khoản nợ này${
+        selectedMilestoneId !== 'all' ? ' trong bộ lọc hiện tại' : ''
+      }. Hãy thêm khoản chi khi bạn cho mượn hoặc thêm khoản thu khi bạn thu hồi tiền.`
+    : null;
 
   return (
     <>
       <div className="flex flex-col gap-4">
-        <SectionHeading eyebrow="Thu chi" title="Dòng tiền kế hoạch" />
+        <SectionHeading
+          eyebrow={isDebtPlan ? 'Dòng tiền khoản nợ' : 'Thu chi'}
+          title={isDebtPlan ? 'Ghi nhận cho mượn, thu hồi và hoàn trả' : 'Dòng tiền kế hoạch'}
+        />
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)]">
           <div className="grid grid-cols-3 gap-2 lg:hidden">
             <Button
@@ -160,6 +172,8 @@ export function FinanceTab({
         onSelectExpense={onSelectExpense}
         planId={planId}
         selectedMilestoneId={selectedMilestoneId}
+        travelActivities={travelActivities}
+        {...(emptyStateDescription ? { emptyStateDescription } : {})}
       />
     </>
   );

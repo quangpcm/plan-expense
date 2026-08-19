@@ -12,7 +12,9 @@ import { expenseService } from '@/modules/expense/services';
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
 import { hasPlanCapability } from '@/modules/member/services/permission.service';
 import { useMilestones } from '@/modules/milestone';
+import { hasPlanModule } from '@/modules/plan';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
+import { useTravelActivities } from '@/modules/travel-activity';
 import { Breadcrumbs } from '@/shared/components/ui/breadcrumbs';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
@@ -48,6 +50,8 @@ export default function ExpenseDetailPage() {
   const currentExpense = expense;
   const currentPlan = plan;
   const categories = getExpenseCategories(currentPlan.planType);
+  const isTravelItineraryEnabled = hasPlanModule(currentPlan, 'travelItinerary');
+  const { activities: travelActivities } = useTravelActivities(planId, isTravelItineraryEnabled);
   const returnTab = searchParams.get('returnTab');
   const milestoneId = searchParams.get('milestoneId') || currentExpense.milestoneId;
   const canEdit =
@@ -98,7 +102,14 @@ export default function ExpenseDetailPage() {
           type="error"
         />
       ) : null}
-      <ExpenseDetailCard categories={categories} expense={expense} members={members} milestones={milestones} />
+      <ExpenseDetailCard
+        categories={categories}
+        expense={expense}
+        members={members}
+        milestones={milestones}
+        planId={planId}
+        travelActivities={travelActivities}
+      />
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       <Card className="gap-3 sm:flex-row sm:justify-end">
         <Button

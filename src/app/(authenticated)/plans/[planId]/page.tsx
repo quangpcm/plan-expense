@@ -636,6 +636,27 @@ export default function PlanDetailPage() {
   }, [searchParams, todos]);
 
   useEffect(() => {
+    const activityIdParam = searchParams.get('activityId');
+
+    if (!activityIdParam || !isTravelItineraryEnabled) {
+      return;
+    }
+
+    const matchedActivity = travelActivities.find(
+      (activity) => activity.id === activityIdParam,
+    );
+
+    if (!matchedActivity) {
+      return;
+    }
+
+    setActiveTab('travelItinerary');
+    setDetailTravelActivity((current) =>
+      current?.id === matchedActivity.id ? current : matchedActivity,
+    );
+  }, [isTravelItineraryEnabled, searchParams, travelActivities]);
+
+  useEffect(() => {
     if (!selectedMilestoneId && defaultWorkMilestone) {
       setSelectedMilestoneId(defaultWorkMilestone.id);
       return;
@@ -1511,12 +1532,18 @@ export default function PlanDetailPage() {
         return (
           <OverviewTab
             canManagePlanning={canManagePlanning}
+            debtTrackingError={debtTrackingError}
+            debtTrackingSummary={debtTrackingSummary}
             endedPlanDate={endedPlanDate}
             estimatedByMilestoneId={estimatedByMilestoneId}
+            isDebtTrackingEnabled={isDebtTrackingEnabled}
+            isDebtTrackingLoading={isDebtTrackingLoading}
             isMilestonesLoading={isMilestonesLoading}
             isPlanEnded={Boolean(isPlanEnded)}
             isTodoSubmitting={isTodoSubmitting}
             isTodosLoading={isTodosLoading}
+            isTravelActivitiesLoading={isTravelActivitiesLoading}
+            isTravelItineraryEnabled={isTravelItineraryEnabled}
             members={members}
             milestoneActionError={milestoneActionError}
             onAddVendor={(todo) => {
@@ -1535,6 +1562,7 @@ export default function PlanDetailPage() {
               openPlanTab('planning');
             }}
             onOpenPlanningTodos={() => openPlanTab('planning')}
+            onOpenDebtTracking={() => openPlanTab('debtTracking')}
             onSelectMemberDrilldown={(memberId) =>
               setStatisticMemberDrilldown({ memberId })
             }
@@ -1547,10 +1575,13 @@ export default function PlanDetailPage() {
               openPlanTab('planning');
             }}
             onToggleTodoStatus={handleChangeTodoStatus}
+            plan={plan}
             planStatus={plan.status}
             selectedMilestoneId={selectedMilestone?.id ?? null}
             statistic={statistic}
             todoActionError={todoActionError}
+            travelActivities={travelActivities}
+            travelActivityError={travelActivityError}
             upcomingMilestones={upcomingMilestones}
             upcomingTodos={upcomingTodos}
             visibleMilestones={visibleMilestones}
@@ -1573,6 +1604,7 @@ export default function PlanDetailPage() {
             plan={ensuredPlan}
             planId={planId}
             selectedMilestoneId={selectedTimelineMilestoneId}
+            travelActivities={travelActivities}
           />
         );
       case 'planning':
@@ -1846,6 +1878,7 @@ export default function PlanDetailPage() {
         return (
           <DebtTrackingTab
             canManage={canManageDebtTracking}
+            currentMemberId={currentMember?.id ?? null}
             debts={debts}
             detailDebt={detailDebt}
             errorMessage={debtTrackingError}
@@ -2172,6 +2205,8 @@ export default function PlanDetailPage() {
                     expense={detailExpense}
                     members={members}
                     milestones={visibleMilestones}
+                    planId={planId}
+                    travelActivities={travelActivities}
                   />
                   {expenseActionError ? (
                     <AuthFormMessage
@@ -2222,6 +2257,8 @@ export default function PlanDetailPage() {
                     expense={detailExpense}
                     members={members}
                     milestones={visibleMilestones}
+                    planId={planId}
+                    travelActivities={travelActivities}
                   />
                   {expenseActionError ? (
                     <AuthFormMessage

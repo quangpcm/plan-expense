@@ -10,6 +10,9 @@ export type MilestoneTemplate = {
 // structure" per plan so a freshly created plan doesn't open onto a long,
 // opinionated timeline the user has to fight — they can always add more.
 export const milestoneTemplatesByPlanType: Record<PlanType, MilestoneTemplate[]> = {
+  // Debt has no business milestone in UX. A hidden system milestone is created
+  // separately only as a finance persistence anchor when needed.
+  debt: [],
   travel: [
     { title: 'Chuẩn bị', iconId: 'luggage' },
     { title: 'Chuyến đi', iconId: 'plane' },

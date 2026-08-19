@@ -1,9 +1,10 @@
-import { Archive, Briefcase, Cake, CheckCircle2, Gem, Home, LayoutGrid, PartyPopper, PiggyBank, Plane, Radio, PauseCircle } from 'lucide-react';
+import { Archive, Briefcase, Cake, CheckCircle2, Gem, HandCoins, Home, LayoutGrid, PartyPopper, PiggyBank, Plane, Radio, PauseCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 import type { PlanStatus, PlanType } from '@/modules/plan/types/plan';
 
 export const planTypeOptions: Array<{ value: PlanType; label: string }> = [
+  { value: 'debt', label: 'Khoản vay' },
   { value: 'travel', label: 'Du lịch' },
   { value: 'wedding', label: 'Cưới hỏi' },
   { value: 'saving', label: 'Tiết kiệm' },
@@ -15,6 +16,7 @@ export const planTypeOptions: Array<{ value: PlanType; label: string }> = [
 ];
 
 export const planTypeIcons: Record<PlanType, LucideIcon> = {
+  debt: HandCoins,
   travel: Plane,
   wedding: Gem,
   saving: PiggyBank,
@@ -26,6 +28,7 @@ export const planTypeIcons: Record<PlanType, LucideIcon> = {
 };
 
 export const planTypeGradients: Record<PlanType, string> = {
+  debt: 'bg-gradient-to-br from-amber-100 via-orange-50 to-white',
   travel: 'bg-gradient-to-br from-sky-100 via-cyan-50 to-white',
   wedding: 'bg-gradient-to-br from-rose-100 via-pink-50 to-white',
   saving: 'bg-gradient-to-br from-emerald-100 via-green-50 to-white',
@@ -37,6 +40,7 @@ export const planTypeGradients: Record<PlanType, string> = {
 };
 
 export const planTypeBadgeColors: Record<PlanType, string> = {
+  debt: 'bg-[#8a5a2b]',
   travel: 'bg-[var(--color-primary)]',
   saving: 'bg-[var(--color-primary)]',
   wedding: 'bg-[#4f5f7f]',

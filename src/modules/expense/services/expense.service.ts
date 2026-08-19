@@ -126,6 +126,7 @@ export class ExpenseService {
       planId: context.plan.id,
       expenseId,
       milestoneId: milestone.id,
+      activityId: input.activityId?.trim() || null,
       title: input.title.trim(),
       categoryId: input.categoryId || context.categories[0]?.id || null,
       amount: input.amount,
@@ -167,7 +168,7 @@ export class ExpenseService {
 
     const { orphanedAttachments } = await this.expenseRepository.updateExpense(
       context.plan.id,
-      { ...input, milestoneId: milestone.id, attachments },
+      { ...input, activityId: input.activityId?.trim() || undefined, milestoneId: milestone.id, attachments },
       participants,
     );
     deleteAttachmentsInBackground(context.plan.id, orphanedAttachments);

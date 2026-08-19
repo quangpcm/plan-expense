@@ -64,3 +64,17 @@ export function resolvePlanCapabilities(member: PlanMemberDocument | null): Plan
 export function hasPlanCapability(member: PlanMemberDocument | null, capability: PlanCapability): boolean {
   return resolvePlanCapabilities(member).includes(capability);
 }
+
+export function resolvePlanPermissions(member: PlanMemberDocument | null) {
+  const hasCapability = (capability: PlanCapability) =>
+    hasPlanCapability(member, capability);
+
+  return {
+    canManagePlan: hasCapability('planning.createMilestone'),
+    canManageMembers: hasCapability('members.manage'),
+    canCreateExpense: hasCapability('finance.createExpense'),
+    canEditAllExpenses: hasCapability('finance.editAllExpense'),
+    canDeleteAllExpenses: hasCapability('finance.deleteAllExpense'),
+    canManageSettlements: hasCapability('finance.manageSettlements'),
+  };
+}

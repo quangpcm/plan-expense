@@ -11,6 +11,7 @@ import type {
   PlanModuleRoute,
   PlanTypeConfig,
 } from '@/modules/plan/types/plan-modular';
+import type { PlanOwnedCollectionPath } from '@/modules/plan/utils/plan-ownership';
 
 const planCoreCollections: PlanModuleCollection[] = [
   { path: 'members' },
@@ -64,8 +65,10 @@ export function getPlanOwnedCollections(plan: Pick<PlanDocument, 'planType'> | P
   return Array.from(collectionMap.values());
 }
 
-export function getPlanOwnedCollectionPaths(plan: Pick<PlanDocument, 'planType'> | PlanType): string[] {
-  return getPlanOwnedCollections(plan).map((collectionDefinition) => collectionDefinition.path);
+export function getPlanOwnedCollectionPaths(plan: Pick<PlanDocument, 'planType'> | PlanType): PlanOwnedCollectionPath[] {
+  return getPlanOwnedCollections(plan).map(
+    (collectionDefinition) => collectionDefinition.path as PlanOwnedCollectionPath,
+  );
 }
 
 export function getPlanOwnedRoutes(plan: Pick<PlanDocument, 'planType'> | PlanType): PlanModuleRoute[] {

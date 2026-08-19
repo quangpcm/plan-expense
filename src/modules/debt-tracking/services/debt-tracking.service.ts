@@ -37,12 +37,34 @@ export class DebtTrackingService {
       throw new AppError('Debt amount must be greater than zero.', 'DEBT_AMOUNT_INVALID', 400);
     }
 
+    if (!currentMember) {
+      throw new AppError('Unable to resolve your plan membership.', 'MEMBER_NOT_FOUND', 400);
+    }
+
+    if (!input.counterpartMemberId.trim()) {
+      throw new AppError('Please select the member linked to this debt.', 'DEBT_COUNTERPART_REQUIRED', 400);
+    }
+
+    if (input.counterpartMemberId === currentMember.id) {
+      throw new AppError('Debt counterpart cannot be yourself.', 'DEBT_COUNTERPART_INVALID', 400);
+    }
+
+    const borrowerMemberId =
+      input.direction === 'borrowed' ? currentMember.id : input.counterpartMemberId;
+    const lenderMemberId =
+      input.direction === 'lent' ? currentMember.id : input.counterpartMemberId;
+
     return this.debtTrackingRepository.createDebt({
-      ...input,
+      title: input.title,
+      note: input.note,
+      dueDate: input.dueDate,
+      principalAmount: input.principalAmount,
+      borrowerMemberId,
+      lenderMemberId,
       planId: plan.id,
       debtId: this.debtTrackingRepository.generateDebtId(plan.id),
       createdByUserId: currentUser.uid,
-      createdByMemberId: currentMember!.id,
+      createdByMemberId: currentMember.id,
     });
   }
 

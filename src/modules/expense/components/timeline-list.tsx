@@ -10,10 +10,12 @@ import { timestampToDate } from '@/shared/utils/firebase';
 import { cn } from '@/shared/utils/cn';
 import { categoryIcons } from '@/modules/category/utils/category-icon';
 import type { Category } from '@/modules/category/types/category';
+import { ExpenseActivityLink } from '@/modules/expense/components/expense-activity-link';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
 import type { IncomeDocument } from '@/modules/income/types/income';
+import type { TravelActivityDocument } from '@/modules/travel-activity/types/travel-activity';
 
 type TimelineListProps = {
   planId: string;
@@ -21,7 +23,9 @@ type TimelineListProps = {
   incomes: IncomeDocument[];
   members: PlanMemberDocument[];
   categories: Category[];
+  emptyStateDescription?: string;
   milestones: MilestoneDocument[];
+  travelActivities?: TravelActivityDocument[];
   selectedMilestoneId?: string | null;
   onSelectedMilestoneChange?: (milestoneId: string | null) => void;
   onSelectExpense: (expense: ExpenseDocument) => void;
@@ -38,7 +42,9 @@ export function TimelineList({
   incomes,
   members,
   categories,
+  emptyStateDescription,
   milestones,
+  travelActivities = [],
   selectedMilestoneId: selectedMilestoneIdProp,
   onSelectedMilestoneChange,
   onSelectExpense,
@@ -106,8 +112,10 @@ export function TimelineList({
         ) : null}
         <Card>
           <p className="text-sm leading-6 text-[var(--color-muted)]">
-            Chưa có khoản chi hoặc khoản thu nào
-            {selectedMilestoneId !== 'all' ? ' trong mốc kế hoạch đang chọn' : ''}. Hãy thêm khoản đầu tiên chỉ trong vài giây.
+            {emptyStateDescription ??
+              `Chưa có khoản chi hoặc khoản thu nào${
+                selectedMilestoneId !== 'all' ? ' trong mốc kế hoạch đang chọn' : ''
+              }. Hãy thêm khoản đầu tiên chỉ trong vài giây.`}
           </p>
         </Card>
       </div>
@@ -165,6 +173,8 @@ export function TimelineList({
                     members={members}
                     milestones={milestones}
                     onSelectExpense={onSelectExpense}
+                    planId={planId}
+                    travelActivities={travelActivities}
                   />
                 ) : (
                   <IncomeTimelineCard
@@ -190,9 +200,19 @@ type ExpenseTimelineCardProps = {
   categories: Category[];
   milestones: MilestoneDocument[];
   onSelectExpense: (expense: ExpenseDocument) => void;
+  planId: string;
+  travelActivities: TravelActivityDocument[];
 };
 
-function ExpenseTimelineCard({ expense, members, categories, milestones, onSelectExpense }: ExpenseTimelineCardProps) {
+function ExpenseTimelineCard({
+  expense,
+  members,
+  categories,
+  milestones,
+  onSelectExpense,
+  planId,
+  travelActivities,
+}: ExpenseTimelineCardProps) {
   const paidBy = members.find((member) => member.id === expense.paidByMemberId);
   const category = categories.find((item) => item.id === expense.categoryId);
   const milestone = milestones.find((item) => item.id === expense.milestoneId);
@@ -222,7 +242,7 @@ function ExpenseTimelineCard({ expense, members, categories, milestones, onSelec
             </span>
           </p>
           <div className="flex items-center justify-between gap-3 pt-1">
-            <div className="flex min-w-0 items-center gap-2 text-xs text-[var(--color-subtle)]">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-[var(--color-subtle)]">
               {milestone ? (
                 <>
                   <span className="truncate">{milestone.title}</span>
@@ -240,6 +260,17 @@ function ExpenseTimelineCard({ expense, members, categories, milestones, onSelec
                     <Paperclip className="size-3.5" />
                     {expense.attachments.length}
                   </span>
+                </>
+              ) : null}
+              {expense.activityId ? (
+                <>
+                  <span className="text-[var(--color-border-strong)]">•</span>
+                  <ExpenseActivityLink
+                    expense={expense}
+                    interactive={false}
+                    planId={planId}
+                    travelActivities={travelActivities}
+                  />
                 </>
               ) : null}
             </div>

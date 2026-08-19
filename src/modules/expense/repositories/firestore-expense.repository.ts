@@ -5,7 +5,9 @@ import {
   doc,
   increment,
   onSnapshot,
+  query,
   runTransaction,
+  where,
 } from 'firebase/firestore';
 
 import { getFirebaseFirestore } from '@/config/firebase.config';
@@ -16,10 +18,23 @@ import type {
   UpdateExpensePersistenceInput,
 } from '@/modules/expense/repositories/expense.repository';
 import type { ExpenseDocument, ExpenseParticipant } from '@/modules/expense/types/expense';
+import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import { getPlanCollectionRef, getPlanDocumentRef, getPlanRootRef } from '@/modules/plan';
 import { diffRemovedAttachments } from '@/modules/storage/utils/diff-attachments';
 import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
+
+function isWritableMilestone(snapshot: { data(): unknown } | null) {
+  const milestone = snapshot?.data() as Partial<MilestoneDocument> | undefined;
+  return milestone?.isSystemHidden !== true;
+}
+
+function normalizeExpenseDocument(expense: ExpenseDocument): ExpenseDocument {
+  return {
+    ...expense,
+    activityId: typeof expense.activityId === 'string' && expense.activityId.trim() ? expense.activityId : null,
+  };
+}
 
 export class FirestoreExpenseRepository implements ExpenseRepository {
   generateExpenseId(planId: string): string {
@@ -50,6 +65,7 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
         id: expenseRef.id,
         planId: input.planId,
         milestoneId: input.milestoneId,
+        activityId: input.activityId,
         title: input.title,
         categoryId: input.categoryId,
         amount: input.amount,
@@ -78,10 +94,12 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
         updatedAt: now,
       });
 
-      transaction.update(milestoneRef, {
-        totalExpense: currentMilestoneTotal + input.amount,
-        updatedAt: now,
-      });
+      if (isWritableMilestone(milestoneSnapshot)) {
+        transaction.update(milestoneRef, {
+          totalExpense: currentMilestoneTotal + input.amount,
+          updatedAt: now,
+        });
+      }
 
       return updatedTotalExpense;
     });
@@ -131,6 +149,7 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
       transaction.update(expenseRef, {
         title: input.title,
         milestoneId: input.milestoneId,
+        activityId: input.activityId ?? null,
         categoryId: input.categoryId || null,
         amount: input.amount,
         paidByMemberId: input.paidByMemberId,
@@ -151,21 +170,29 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
       });
 
       if (previousMilestoneId === input.milestoneId) {
-        transaction.update(nextMilestoneRef, {
-          totalExpense: nextMilestoneTotal + delta,
-          updatedAt: now,
-        });
+        if (isWritableMilestone(nextMilestoneSnapshot)) {
+          transaction.update(nextMilestoneRef, {
+            totalExpense: nextMilestoneTotal + delta,
+            updatedAt: now,
+          });
+        }
       } else {
-        if (previousMilestoneRef && previousMilestoneSnapshot?.exists()) {
+        if (
+          previousMilestoneRef &&
+          previousMilestoneSnapshot?.exists() &&
+          isWritableMilestone(previousMilestoneSnapshot)
+        ) {
           transaction.update(previousMilestoneRef, {
             totalExpense: previousMilestoneTotal - previousExpense.amount,
             updatedAt: now,
           });
         }
-        transaction.update(nextMilestoneRef, {
-          totalExpense: nextMilestoneTotal + input.amount,
-          updatedAt: now,
-        });
+        if (isWritableMilestone(nextMilestoneSnapshot)) {
+          transaction.update(nextMilestoneRef, {
+            totalExpense: nextMilestoneTotal + input.amount,
+            updatedAt: now,
+          });
+        }
       }
 
       return { updatedTotalExpense, orphanedAttachments };
@@ -213,10 +240,12 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
         updatedAt: now,
       });
 
-      transaction.update(milestoneRef, {
-        totalExpense: currentMilestoneTotal - expense.amount,
-        updatedAt: now,
-      });
+      if (isWritableMilestone(milestoneSnapshot)) {
+        transaction.update(milestoneRef, {
+          totalExpense: currentMilestoneTotal - expense.amount,
+          updatedAt: now,
+        });
+      }
 
       return { updatedTotalExpense, orphanedAttachments: expense.attachments ?? [] };
     });
@@ -233,7 +262,7 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
       getPlanCollectionRef(getFirebaseFirestore(), planId, 'expenses'),
       (snapshot) => {
         const expenses = snapshot.docs
-          .map((item) => item.data() as ExpenseDocument)
+          .map((item) => normalizeExpenseDocument(item.data() as ExpenseDocument))
           .filter((expense) => expense.status === 'active')
           .sort((a, b) => b.spentAt.toMillis() - a.spentAt.toMillis());
 
@@ -254,7 +283,7 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
     return onSnapshot(
       getPlanDocumentRef(getFirebaseFirestore(), planId, 'expenses', expenseId),
       (snapshot) => {
-        callback(snapshot.exists() ? (snapshot.data() as ExpenseDocument) : null);
+        callback(snapshot.exists() ? normalizeExpenseDocument(snapshot.data() as ExpenseDocument) : null);
       },
       (error) => {
         onError?.(mapFirebaseError(error, 'Unable to load this expense.', 'EXPENSE_DETAIL_WATCH_FAILED'));

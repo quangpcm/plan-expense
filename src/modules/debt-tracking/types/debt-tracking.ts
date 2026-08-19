@@ -1,6 +1,7 @@
 import type { Timestamp } from 'firebase/firestore';
 
 export type DebtStatus = 'active' | 'paid';
+export type DebtDirection = 'lent' | 'borrowed';
 
 export type DebtDocument = {
   id: string;
@@ -34,8 +35,8 @@ export type RepaymentDocument = {
 
 export type CreateDebtInput = {
   title: string;
-  borrowerMemberId?: string | undefined;
-  lenderMemberId?: string | undefined;
+  counterpartMemberId: string;
+  direction: DebtDirection;
   principalAmount: number;
   note?: string | undefined;
   dueDate?: string | undefined;
@@ -55,4 +56,6 @@ export type DebtTrackingSummary = {
   activeDebtCount: number;
   paidDebtCount: number;
   repaymentCount: number;
+  lentOutstandingAmount: number;
+  borrowedOutstandingAmount: number;
 };

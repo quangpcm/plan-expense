@@ -9,3 +9,4 @@ export type Category = {
   iconBgColor: string;
 };
 
+export type CategoryOption = Category;

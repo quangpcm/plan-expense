@@ -2,6 +2,11 @@
 
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { DebtDocument } from '@/modules/debt-tracking/types/debt-tracking';
+import {
+  formatDebtDirectionLabel,
+  resolveDebtCounterpart,
+  resolveDebtDirection,
+} from '@/modules/debt-tracking/utils/debt-perspective';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { formatCompactCurrency } from '@/shared/utils/currency';
@@ -10,6 +15,7 @@ type DebtListProps = {
   debts: DebtDocument[];
   repaymentTotalsByDebtId: Record<string, number>;
   members: PlanMemberDocument[];
+  currentMemberId: string | null;
   canManage: boolean;
   onCreate: () => void;
   onSelect: (debt: DebtDocument) => void;
@@ -20,6 +26,7 @@ export function DebtList({
   debts,
   repaymentTotalsByDebtId,
   members,
+  currentMemberId,
   canManage,
   onCreate,
   onSelect,
@@ -50,8 +57,8 @@ export function DebtList({
         </div>
       ) : null}
       {debts.map((debt) => {
-        const borrower = members.find((member) => member.id === debt.borrowerMemberId);
-        const lender = members.find((member) => member.id === debt.lenderMemberId);
+        const direction = resolveDebtDirection(debt, currentMemberId);
+        const counterpart = resolveDebtCounterpart(debt, members, currentMemberId);
         const repaidAmount = repaymentTotalsByDebtId[debt.id] ?? 0;
         const remainingAmount = Math.max(debt.principalAmount - repaidAmount, 0);
 
@@ -61,7 +68,7 @@ export function DebtList({
               <button className="min-w-0 flex-1 text-left" onClick={() => onSelect(debt)} type="button">
                 <p className="text-lg font-semibold text-slate-950">{debt.title}</p>
                 <p className="mt-1 text-sm text-slate-500">
-                  {borrower?.nickname ?? 'Chưa rõ người vay'} {'->'} {lender?.nickname ?? 'Chưa rõ người cho vay'}
+                  {formatDebtDirectionLabel(direction)} · {counterpart?.nickname ?? 'Chưa rõ thành viên còn lại'}
                 </p>
               </button>
               {canManage && debt.status !== 'paid' ? (

@@ -11,6 +11,7 @@ import { formatCompactCurrency } from '@/shared/utils/currency';
 
 type DebtTrackingTabProps = {
   canManage: boolean;
+  currentMemberId: string | null;
   debts: DebtDocument[];
   detailDebt: DebtDocument | null;
   errorMessage: string | null;
@@ -26,6 +27,7 @@ type DebtTrackingTabProps = {
 
 export function DebtTrackingTab({
   canManage,
+  currentMemberId,
   debts,
   detailDebt,
   errorMessage,
@@ -42,8 +44,8 @@ export function DebtTrackingTab({
     <div className="space-y-5">
       <SectionHeading
         eyebrow="Khoản vay"
-        title="Theo dõi vay và hoàn trả"
-        description="Theo dõi các khoản vay, số tiền còn lại và lịch sử hoàn trả theo thời gian thực."
+        title="Theo dõi nợ giữa tôi và thành viên"
+        description="Theo dõi các khoản tôi cho mượn hoặc tôi đi mượn, số còn lại và lịch sử hoàn trả theo thời gian thực."
       />
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -55,26 +57,26 @@ export function DebtTrackingTab({
             {formatCompactCurrency(summary.outstandingAmount)}
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Tổng số tiền còn outstanding sau khi trừ toàn bộ repayment đã ghi nhận.
+            Tổng số tiền còn lại sau khi trừ toàn bộ khoản hoàn trả đã ghi nhận.
           </p>
         </Card>
         <Card>
           <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
-            Tổng gốc
+            Tôi cho mượn
           </p>
           <p className="mt-2 text-2xl font-semibold text-slate-950">
-            {formatCompactCurrency(summary.totalPrincipalAmount)}
+            {formatCompactCurrency(summary.lentOutstandingAmount)}
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Tổng principal của toàn bộ khoản vay đang được theo dõi trong plan.
+            Dư nợ còn lại của các khoản mà tôi là người cho mượn.
           </p>
         </Card>
         <Card>
           <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
-            Đã hoàn trả
+            Tôi đi mượn
           </p>
-          <p className="mt-2 text-2xl font-semibold text-[var(--color-income)]">
-            {formatCompactCurrency(summary.totalRepaidAmount)}
+          <p className="mt-2 text-2xl font-semibold text-[var(--color-expense)]">
+            {formatCompactCurrency(summary.borrowedOutstandingAmount)}
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             {summary.repaymentCount} giao dịch hoàn trả, {summary.activeDebtCount} khoản đang mở, {summary.paidDebtCount} khoản đã tất toán.
@@ -88,6 +90,7 @@ export function DebtTrackingTab({
           ) : (
             <DebtList
               canManage={canManage}
+              currentMemberId={currentMemberId}
               debts={debts}
               members={members}
               onCreate={onCreate}
@@ -99,7 +102,12 @@ export function DebtTrackingTab({
         </div>
         <div className="space-y-4">
           {detailDebt ? (
-            <DebtDetail debt={detailDebt} members={members} repayments={repayments} />
+            <DebtDetail
+              currentMemberId={currentMemberId}
+              debt={detailDebt}
+              members={members}
+              repayments={repayments}
+            />
           ) : (
             <Card className="border-slate-200 bg-slate-50 shadow-none">
               <p className="text-sm leading-6 text-slate-600">

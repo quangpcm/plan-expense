@@ -54,7 +54,7 @@ function mapPlanWriteError(error: unknown) {
 
     if (firebaseCode === 'failed-precondition') {
       return new AppError(
-        'Firestore is not ready for this operation yet. Please verify that the database is created and configured.',
+        'Firestore chưa sẵn sàng cho thao tác này. Vui lòng kiểm tra database đã được tạo và cấu hình hiện tại hợp lệ.',
         'PLAN_CREATE_FAILED_PRECONDITION',
         400,
       );
