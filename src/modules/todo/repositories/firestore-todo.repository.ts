@@ -2,19 +2,23 @@
 
 import {
   Timestamp,
-  collection,
   doc,
   getDocs,
   increment,
   onSnapshot,
   orderBy,
-  query,
   runTransaction,
   writeBatch,
   where,
 } from 'firebase/firestore';
 
 import { getFirebaseFirestore } from '@/config/firebase.config';
+import {
+  getPlanCollectionRef,
+  getPlanDocumentRef,
+  getPlanRootRef,
+  queryByPlanCollection,
+} from '@/modules/plan';
 import type {
   AddTodoVendorPersistenceInput,
   CreateTodoPersistenceInput,
@@ -60,14 +64,14 @@ function getTodoEstimatedAmount(todo: TodoDocument) {
 
 export class FirestoreTodoRepository implements TodoRepository {
   generateTodoId(planId: string): string {
-    return doc(collection(getFirebaseFirestore(), 'plans', planId, 'todos')).id;
+    return doc(getPlanCollectionRef(getFirebaseFirestore(), planId, 'todos')).id;
   }
 
   async createTodo(input: CreateTodoPersistenceInput) {
     const db = getFirebaseFirestore();
-    const todoRef = doc(db, 'plans', input.planId, 'todos', input.todoId);
-    const planRef = doc(db, 'plans', input.planId);
-    const milestoneRef = doc(db, 'plans', input.planId, 'milestones', input.milestoneId);
+    const todoRef = getPlanDocumentRef(db, input.planId, 'todos', input.todoId);
+    const planRef = getPlanRootRef(db, input.planId);
+    const milestoneRef = getPlanDocumentRef(db, input.planId, 'milestones', input.milestoneId);
     const now = Timestamp.now();
     const estimatedAmount = input.budget ?? 0;
 
@@ -119,9 +123,9 @@ export class FirestoreTodoRepository implements TodoRepository {
 
   async updateTodo(planId: string, input: UpdateTodoPersistenceInput) {
     const db = getFirebaseFirestore();
-    const todoRef = doc(db, 'plans', planId, 'todos', input.todoId);
-    const planRef = doc(db, 'plans', planId);
-    const milestoneRef = doc(db, 'plans', planId, 'milestones', input.milestoneId);
+    const todoRef = getPlanDocumentRef(db, planId, 'todos', input.todoId);
+    const planRef = getPlanRootRef(db, planId);
+    const milestoneRef = getPlanDocumentRef(db, planId, 'milestones', input.milestoneId);
     const now = Timestamp.now();
 
     const { completedDelta, estimatedDelta, orphanedAttachments } = await runTransaction(db, async (transaction) => {
@@ -213,7 +217,7 @@ export class FirestoreTodoRepository implements TodoRepository {
     const db = getFirebaseFirestore();
     const now = Timestamp.now();
     const todosSnapshot = await getDocs(
-      query(collection(db, 'plans', planId, 'todos'), where('milestoneId', '==', input.milestoneId)),
+      queryByPlanCollection(db, planId, 'todos', where('milestoneId', '==', input.milestoneId)),
     );
     const todos = sortTodosByMilestoneOrder(
       todosSnapshot.docs.map((snapshot) => normalizeTodo(snapshot.data() as TodoDocument)),
@@ -230,17 +234,17 @@ export class FirestoreTodoRepository implements TodoRepository {
     const batch = writeBatch(db);
 
     input.orderedTodoIds.forEach((todoId, index) => {
-      batch.update(doc(db, 'plans', planId, 'todos', todoId), {
+      batch.update(getPlanDocumentRef(db, planId, 'todos', todoId), {
         orderIndex: (index + 1) * TODO_ORDER_INDEX_STEP,
         updatedAt: now,
       });
     });
 
-    batch.update(doc(db, 'plans', planId), {
+    batch.update(getPlanRootRef(db, planId), {
       updatedAt: now,
     });
 
-    batch.update(doc(db, 'plans', planId, 'milestones', input.milestoneId), {
+    batch.update(getPlanDocumentRef(db, planId, 'milestones', input.milestoneId), {
       updatedAt: now,
     });
 
@@ -250,8 +254,8 @@ export class FirestoreTodoRepository implements TodoRepository {
   async moveTodoToMilestone(planId: string, input: MoveTodoToMilestoneInput) {
     const db = getFirebaseFirestore();
     const now = Timestamp.now();
-    const todoRef = doc(db, 'plans', planId, 'todos', input.todoId);
-    const planRef = doc(db, 'plans', planId);
+    const todoRef = getPlanDocumentRef(db, planId, 'todos', input.todoId);
+    const planRef = getPlanRootRef(db, planId);
 
     await runTransaction(db, async (transaction) => {
       const todoSnapshot = await transaction.get(todoRef);
@@ -267,8 +271,8 @@ export class FirestoreTodoRepository implements TodoRepository {
         return;
       }
 
-      const sourceMilestoneRef = doc(db, 'plans', planId, 'milestones', todo.milestoneId);
-      const targetMilestoneRef = doc(db, 'plans', planId, 'milestones', input.targetMilestoneId);
+      const sourceMilestoneRef = getPlanDocumentRef(db, planId, 'milestones', todo.milestoneId);
+      const targetMilestoneRef = getPlanDocumentRef(db, planId, 'milestones', input.targetMilestoneId);
       const [sourceMilestoneSnapshot, targetMilestoneSnapshot] = await Promise.all([
         transaction.get(sourceMilestoneRef),
         transaction.get(targetMilestoneRef),
@@ -307,7 +311,7 @@ export class FirestoreTodoRepository implements TodoRepository {
 
   async addVendor(planId: string, todoId: string, vendor: AddTodoVendorPersistenceInput) {
     const db = getFirebaseFirestore();
-    const todoRef = doc(db, 'plans', planId, 'todos', todoId);
+    const todoRef = getPlanDocumentRef(db, planId, 'todos', todoId);
     const now = Timestamp.now();
 
     await runTransaction(db, async (transaction) => {
@@ -336,8 +340,8 @@ export class FirestoreTodoRepository implements TodoRepository {
 
   async updateVendor(planId: string, todoId: string, input: UpdateTodoVendorPersistenceInput) {
     const db = getFirebaseFirestore();
-    const todoRef = doc(db, 'plans', planId, 'todos', todoId);
-    const planRef = doc(db, 'plans', planId);
+    const todoRef = getPlanDocumentRef(db, planId, 'todos', todoId);
+    const planRef = getPlanRootRef(db, planId);
     const now = Timestamp.now();
 
     const { estimatedDelta, orphanedAttachments } = await runTransaction(db, async (transaction) => {
@@ -369,7 +373,7 @@ export class FirestoreTodoRepository implements TodoRepository {
         vendors: previousVendors.map((vendor) => (vendor.id === input.vendorId ? updatedVendor : vendor)),
       });
       const estimatedDelta = getTodoEstimatedAmount(nextTodo) - getTodoEstimatedAmount(previousTodo);
-      const milestoneRef = doc(db, 'plans', planId, 'milestones', previousTodo.milestoneId);
+      const milestoneRef = getPlanDocumentRef(db, planId, 'milestones', previousTodo.milestoneId);
 
       transaction.update(todoRef, {
         vendors: nextTodo.vendors,
@@ -406,8 +410,8 @@ export class FirestoreTodoRepository implements TodoRepository {
 
   async deleteVendor(planId: string, todoId: string, vendorId: string) {
     const db = getFirebaseFirestore();
-    const todoRef = doc(db, 'plans', planId, 'todos', todoId);
-    const planRef = doc(db, 'plans', planId);
+    const todoRef = getPlanDocumentRef(db, planId, 'todos', todoId);
+    const planRef = getPlanRootRef(db, planId);
     const now = Timestamp.now();
 
     const { estimatedDelta, orphanedAttachments } = await runTransaction(db, async (transaction) => {
@@ -431,7 +435,7 @@ export class FirestoreTodoRepository implements TodoRepository {
         selectedTodoVendorId: previousTodo.selectedTodoVendorId === vendorId ? null : previousTodo.selectedTodoVendorId,
       });
       const estimatedDelta = getTodoEstimatedAmount(nextTodo) - getTodoEstimatedAmount(previousTodo);
-      const milestoneRef = doc(db, 'plans', planId, 'milestones', previousTodo.milestoneId);
+      const milestoneRef = getPlanDocumentRef(db, planId, 'milestones', previousTodo.milestoneId);
 
       transaction.update(todoRef, {
         vendors: nextTodo.vendors,
@@ -466,8 +470,8 @@ export class FirestoreTodoRepository implements TodoRepository {
 
   async selectVendor(planId: string, todoId: string, vendorId: string | null) {
     const db = getFirebaseFirestore();
-    const todoRef = doc(db, 'plans', planId, 'todos', todoId);
-    const planRef = doc(db, 'plans', planId);
+    const todoRef = getPlanDocumentRef(db, planId, 'todos', todoId);
+    const planRef = getPlanRootRef(db, planId);
     const now = Timestamp.now();
     const normalizedVendorId = vendorId?.trim() || null;
 
@@ -489,7 +493,7 @@ export class FirestoreTodoRepository implements TodoRepository {
         selectedTodoVendorId: normalizedVendorId,
       });
       const estimatedDelta = getTodoEstimatedAmount(nextTodo) - getTodoEstimatedAmount(previousTodo);
-      const milestoneRef = doc(db, 'plans', planId, 'milestones', previousTodo.milestoneId);
+      const milestoneRef = getPlanDocumentRef(db, planId, 'milestones', previousTodo.milestoneId);
 
       transaction.update(todoRef, {
         selectedTodoVendorId: normalizedVendorId,
@@ -521,8 +525,8 @@ export class FirestoreTodoRepository implements TodoRepository {
 
   async deleteTodo(planId: string, todoId: string) {
     const db = getFirebaseFirestore();
-    const todoRef = doc(db, 'plans', planId, 'todos', todoId);
-    const planRef = doc(db, 'plans', planId);
+    const todoRef = getPlanDocumentRef(db, planId, 'todos', todoId);
+    const planRef = getPlanRootRef(db, planId);
     const now = Timestamp.now();
 
     const deletedTodo = await runTransaction(db, async (transaction) => {
@@ -533,7 +537,7 @@ export class FirestoreTodoRepository implements TodoRepository {
       }
 
       const previousTodo = normalizeTodo(todoSnapshot.data() as TodoDocument);
-      const milestoneRef = doc(db, 'plans', planId, 'milestones', previousTodo.milestoneId);
+      const milestoneRef = getPlanDocumentRef(db, planId, 'milestones', previousTodo.milestoneId);
       const estimatedAmount = getTodoEstimatedAmount(previousTodo);
 
       transaction.delete(todoRef);
@@ -577,8 +581,10 @@ export class FirestoreTodoRepository implements TodoRepository {
     callback: (todos: TodoDocument[]) => void,
     onError?: (error: Error) => void,
   ) {
-    const todosQuery = query(
-      collection(getFirebaseFirestore(), 'plans', planId, 'todos'),
+    const todosQuery = queryByPlanCollection(
+      getFirebaseFirestore(),
+      planId,
+      'todos',
       orderBy('createdAt', 'desc'),
     );
 
@@ -599,8 +605,10 @@ export class FirestoreTodoRepository implements TodoRepository {
     callback: (todos: TodoDocument[]) => void,
     onError?: (error: Error) => void,
   ) {
-    const todosQuery = query(
-      collection(getFirebaseFirestore(), 'plans', planId, 'todos'),
+    const todosQuery = queryByPlanCollection(
+      getFirebaseFirestore(),
+      planId,
+      'todos',
       where('milestoneId', '==', milestoneId),
     );
 

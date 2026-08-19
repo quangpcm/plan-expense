@@ -2,12 +2,10 @@
 
 import {
   Timestamp,
-  collection,
   doc,
   increment,
   onSnapshot,
   orderBy,
-  query,
   runTransaction,
 } from 'firebase/firestore';
 
@@ -18,13 +16,14 @@ import type {
   SettlementRepository,
 } from '@/modules/settlement/repositories/settlement.repository';
 import type { SettlementDocument } from '@/modules/settlement/types/settlement';
+import { getPlanCollectionRef, getPlanDocumentRef, getPlanRootRef, queryByPlanCollection } from '@/modules/plan';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
 export class FirestoreSettlementRepository implements SettlementRepository {
   async createSettlement(input: CreateSettlementPersistenceInput) {
     const db = getFirebaseFirestore();
-    const settlementRef = doc(collection(db, 'plans', input.planId, 'settlements'));
-    const planRef = doc(db, 'plans', input.planId);
+    const settlementRef = doc(getPlanCollectionRef(db, input.planId, 'settlements'));
+    const planRef = getPlanRootRef(db, input.planId);
     const now = Timestamp.now();
 
     await runTransaction(db, async (transaction) => {
@@ -59,8 +58,8 @@ export class FirestoreSettlementRepository implements SettlementRepository {
 
   async cancelSettlement(planId: string, settlementId: string, actor: AuthUser) {
     const db = getFirebaseFirestore();
-    const settlementRef = doc(db, 'plans', planId, 'settlements', settlementId);
-    const planRef = doc(db, 'plans', planId);
+    const settlementRef = getPlanDocumentRef(db, planId, 'settlements', settlementId);
+    const planRef = getPlanRootRef(db, planId);
     const now = Timestamp.now();
 
     await runTransaction(db, async (transaction) => {
@@ -96,8 +95,10 @@ export class FirestoreSettlementRepository implements SettlementRepository {
     callback: (settlements: SettlementDocument[]) => void,
     onError?: (error: Error) => void,
   ) {
-    const settlementsQuery = query(
-      collection(getFirebaseFirestore(), 'plans', planId, 'settlements'),
+    const settlementsQuery = queryByPlanCollection(
+      getFirebaseFirestore(),
+      planId,
+      'settlements',
       orderBy('settledAt', 'desc'),
     );
 

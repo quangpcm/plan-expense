@@ -2,7 +2,6 @@
 
 import {
   Timestamp,
-  collection,
   doc,
   getDoc,
   getDocs,
@@ -21,6 +20,7 @@ import type {
   MilestoneRepository,
 } from '@/modules/milestone/repositories/milestone.repository';
 import type { MilestoneDocument, ReorderMilestoneInput, UpdateMilestoneInput } from '@/modules/milestone/types/milestone';
+import { getPlanCollectionRef, getPlanDocumentRef, getPlanRootRef, queryByPlanCollection } from '@/modules/plan';
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
@@ -28,8 +28,8 @@ import { mapFirebaseError } from '@/shared/utils/firebase-error';
 export class FirestoreMilestoneRepository implements MilestoneRepository {
   async createMilestone(input: CreateMilestonePersistenceInput) {
     const db = getFirebaseFirestore();
-    const milestoneRef = doc(collection(db, 'plans', input.planId, 'milestones'));
-    const planRef = doc(db, 'plans', input.planId);
+    const milestoneRef = doc(getPlanCollectionRef(db, input.planId, 'milestones'));
+    const planRef = getPlanRootRef(db, input.planId);
     const now = Timestamp.now();
 
     await runTransaction(db, async (transaction) => {
@@ -48,6 +48,7 @@ export class FirestoreMilestoneRepository implements MilestoneRepository {
         title: input.title,
         description: input.description,
         iconId: input.iconId,
+        isSystemHidden: false,
         startDate: input.startDate ? Timestamp.fromDate(input.startDate) : null,
         endDate: input.endDate ? Timestamp.fromDate(input.endDate) : null,
         status: 'upcoming',
@@ -80,8 +81,8 @@ export class FirestoreMilestoneRepository implements MilestoneRepository {
 
   async updateMilestone(planId: string, input: UpdateMilestoneInput) {
     const db = getFirebaseFirestore();
-    const milestoneRef = doc(db, 'plans', planId, 'milestones', input.milestoneId);
-    const planRef = doc(db, 'plans', planId);
+    const milestoneRef = getPlanDocumentRef(db, planId, 'milestones', input.milestoneId);
+    const planRef = getPlanRootRef(db, planId);
     const now = Timestamp.now();
 
     const completedDelta = await runTransaction(db, async (transaction) => {
@@ -92,6 +93,11 @@ export class FirestoreMilestoneRepository implements MilestoneRepository {
       }
 
       const previous = snapshot.data() as MilestoneDocument;
+
+      if (previous.isSystemHidden) {
+        throw new Error('System hidden milestone cannot be edited.');
+      }
+
       const completedAt =
         input.status === 'completed'
           ? previous.completedAt ?? now
@@ -138,17 +144,25 @@ export class FirestoreMilestoneRepository implements MilestoneRepository {
 
   async reorderMilestones(planId: string, input: ReorderMilestoneInput[]) {
     const db = getFirebaseFirestore();
+    const milestoneSnapshots = await Promise.all(
+      input.map((item) => getDoc(getPlanDocumentRef(db, planId, 'milestones', item.milestoneId))),
+    );
+
+    if (milestoneSnapshots.some((snapshot) => snapshot.exists() && (snapshot.data() as MilestoneDocument).isSystemHidden)) {
+      throw new Error('System hidden milestone cannot be reordered.');
+    }
+
     const batch = writeBatch(db);
     const now = Timestamp.now();
 
     input.forEach((item) => {
-      batch.update(doc(db, 'plans', planId, 'milestones', item.milestoneId), {
+      batch.update(getPlanDocumentRef(db, planId, 'milestones', item.milestoneId), {
         orderIndex: item.orderIndex,
         updatedAt: now,
       });
     });
 
-    batch.update(doc(db, 'plans', planId), {
+    batch.update(getPlanRootRef(db, planId), {
       updatedAt: now,
     });
 
@@ -157,8 +171,8 @@ export class FirestoreMilestoneRepository implements MilestoneRepository {
 
   async deleteMilestone(planId: string, milestoneId: string) {
     const db = getFirebaseFirestore();
-    const milestoneRef = doc(db, 'plans', planId, 'milestones', milestoneId);
-    const planRef = doc(db, 'plans', planId);
+    const milestoneRef = getPlanDocumentRef(db, planId, 'milestones', milestoneId);
+    const planRef = getPlanRootRef(db, planId);
     const now = Timestamp.now();
 
     const milestoneSnapshot = await getDoc(milestoneRef);
@@ -169,8 +183,12 @@ export class FirestoreMilestoneRepository implements MilestoneRepository {
 
     const milestone = milestoneSnapshot.data() as MilestoneDocument;
 
+    if (milestone.isSystemHidden) {
+      throw new Error('System hidden milestone cannot be deleted.');
+    }
+
     const expensesSnapshot = await getDocs(
-      query(collection(db, 'plans', planId, 'expenses'), where('milestoneId', '==', milestoneId)),
+      queryByPlanCollection(db, planId, 'expenses', where('milestoneId', '==', milestoneId)),
     );
 
     if (!expensesSnapshot.empty) {
@@ -178,7 +196,7 @@ export class FirestoreMilestoneRepository implements MilestoneRepository {
     }
 
     const todosSnapshot = await getDocs(
-      query(collection(db, 'plans', planId, 'todos'), where('milestoneId', '==', milestoneId)),
+      queryByPlanCollection(db, planId, 'todos', where('milestoneId', '==', milestoneId)),
     );
     const todos = todosSnapshot.docs.map((snapshot) => snapshot.data() as TodoDocument);
     const orphanedAttachments = todos.flatMap((todo) => [
@@ -220,7 +238,7 @@ export class FirestoreMilestoneRepository implements MilestoneRepository {
     onError?: (error: Error) => void,
   ) {
     const milestonesQuery = query(
-      collection(getFirebaseFirestore(), 'plans', planId, 'milestones'),
+      getPlanCollectionRef(getFirebaseFirestore(), planId, 'milestones'),
       orderBy('orderIndex', 'asc'),
     );
 
@@ -242,7 +260,7 @@ export class FirestoreMilestoneRepository implements MilestoneRepository {
     onError?: (error: Error) => void,
   ) {
     return onSnapshot(
-      doc(getFirebaseFirestore(), 'plans', planId, 'milestones', milestoneId),
+      getPlanDocumentRef(getFirebaseFirestore(), planId, 'milestones', milestoneId),
       (snapshot) => {
         callback(snapshot.exists() ? (snapshot.data() as MilestoneDocument) : null);
       },

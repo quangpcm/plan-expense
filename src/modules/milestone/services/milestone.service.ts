@@ -6,7 +6,6 @@ import type {
   UpdateMilestoneInput,
 } from '@/modules/milestone/types/milestone';
 import type { AuthUser } from '@/modules/auth/types/auth';
-import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import { deleteAttachmentsInBackground } from '@/modules/storage/utils/delete-attachments';
@@ -16,7 +15,7 @@ export class MilestoneService {
   constructor(private readonly milestoneRepository: MilestoneRepository) {}
 
   private assertManagePlanPermission(currentMember: PlanMemberDocument | null) {
-    if (!resolvePlanPermissions(currentMember).canManagePlan) {
+    if (currentMember?.role !== 'owner') {
       throw new AppError('Only the owner can manage milestones.', 'MILESTONE_PERMISSION_DENIED', 403);
     }
   }
@@ -110,6 +109,10 @@ export class MilestoneService {
     void currentUser;
     this.assertEditablePlan(plan);
     this.assertManagePlanPermission(currentMember);
+
+    if (milestone.isSystemHidden) {
+      throw new AppError('System hidden milestone cannot be deleted.', 'MILESTONE_SYSTEM_HIDDEN_DELETE_DENIED', 400);
+    }
 
     const { orphanedAttachments } = await this.milestoneRepository.deleteMilestone(plan.id, milestone.id);
     deleteAttachmentsInBackground(plan.id, orphanedAttachments);

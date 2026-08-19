@@ -2,7 +2,6 @@
 
 import {
   Timestamp,
-  collection,
   doc,
   getDocs,
   onSnapshot,
@@ -13,6 +12,7 @@ import {
 } from 'firebase/firestore';
 
 import { getFirebaseFirestore } from '@/config/firebase.config';
+import { getPlanCollectionRef, getPlanDocumentRef, queryByPlanCollection } from '@/modules/plan';
 import type {
   CreateWeddingGuestGroupPersistenceInput,
   UpdateWeddingGuestGroupPersistenceInput,
@@ -26,9 +26,7 @@ const CHUNK_SIZE = 450;
 export class FirestoreWeddingGuestGroupRepository implements WeddingGuestGroupRepository {
   async createGroup(input: CreateWeddingGuestGroupPersistenceInput) {
     const db = getFirebaseFirestore();
-    const groupRef = doc(
-      collection(db, 'plans', input.planId, 'weddingGuestGroups'),
-    );
+    const groupRef = doc(getPlanCollectionRef(db, input.planId, 'weddingGuestGroups'));
     const now = Timestamp.now();
 
     await writeBatch(db)
@@ -50,13 +48,7 @@ export class FirestoreWeddingGuestGroupRepository implements WeddingGuestGroupRe
     input: UpdateWeddingGuestGroupPersistenceInput,
   ) {
     const db = getFirebaseFirestore();
-    const groupRef = doc(
-      db,
-      'plans',
-      planId,
-      'weddingGuestGroups',
-      input.groupId,
-    );
+    const groupRef = getPlanDocumentRef(db, planId, 'weddingGuestGroups', input.groupId);
 
     await writeBatch(db)
       .update(groupRef, {
@@ -68,13 +60,10 @@ export class FirestoreWeddingGuestGroupRepository implements WeddingGuestGroupRe
 
   async deleteGroup(planId: string, groupId: string) {
     const db = getFirebaseFirestore();
-    const groupRef = doc(db, 'plans', planId, 'weddingGuestGroups', groupId);
+    const groupRef = getPlanDocumentRef(db, planId, 'weddingGuestGroups', groupId);
 
     const invitationsSnapshot = await getDocs(
-      query(
-        collection(db, 'plans', planId, 'guestInvitations'),
-        where('groupId', '==', groupId),
-      ),
+      queryByPlanCollection(db, planId, 'guestInvitations', where('groupId', '==', groupId)),
     );
 
     const refsToDelete = [
@@ -97,7 +86,7 @@ export class FirestoreWeddingGuestGroupRepository implements WeddingGuestGroupRe
     onError?: (error: Error) => void,
   ) {
     const groupsQuery = query(
-      collection(getFirebaseFirestore(), 'plans', planId, 'weddingGuestGroups'),
+      getPlanCollectionRef(getFirebaseFirestore(), planId, 'weddingGuestGroups'),
       orderBy('createdAt', 'asc'),
     );
 

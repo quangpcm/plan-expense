@@ -2,8 +2,6 @@
 
 import {
   Timestamp,
-  collection,
-  doc,
   getDoc,
   onSnapshot,
   orderBy,
@@ -13,6 +11,7 @@ import {
 } from 'firebase/firestore';
 
 import { getFirebaseFirestore } from '@/config/firebase.config';
+import { getPlanCollectionRef, getPlanDocumentRef } from '@/modules/plan';
 import type {
   AddGuestInvitationPersistenceInput,
   BulkUpsertGuestInvitationPersistenceInput,
@@ -26,9 +25,8 @@ import { mapFirebaseError } from '@/shared/utils/firebase-error';
 export class FirestoreGuestInvitationRepository implements GuestInvitationRepository {
   async addInvitation(input: AddGuestInvitationPersistenceInput) {
     const db = getFirebaseFirestore();
-    const invitationRef = doc(
+    const invitationRef = getPlanDocumentRef(
       db,
-      'plans',
       input.planId,
       'guestInvitations',
       `${input.guestId}_${input.groupId}`,
@@ -72,9 +70,8 @@ export class FirestoreGuestInvitationRepository implements GuestInvitationReposi
     let operationCount = 0;
 
     for (const input of inputs) {
-      const invitationRef = doc(
+      const invitationRef = getPlanDocumentRef(
         db,
-        'plans',
         input.planId,
         'guestInvitations',
         input.mode === 'create'
@@ -130,13 +127,7 @@ export class FirestoreGuestInvitationRepository implements GuestInvitationReposi
     input: UpdateGuestInvitationPersistenceInput,
   ) {
     const db = getFirebaseFirestore();
-    const invitationRef = doc(
-      db,
-      'plans',
-      planId,
-      'guestInvitations',
-      input.invitationId,
-    );
+    const invitationRef = getPlanDocumentRef(db, planId, 'guestInvitations', input.invitationId);
 
     await writeBatch(db)
       .update(invitationRef, {
@@ -155,7 +146,7 @@ export class FirestoreGuestInvitationRepository implements GuestInvitationReposi
     const db = getFirebaseFirestore();
 
     await writeBatch(db)
-      .delete(doc(db, 'plans', planId, 'guestInvitations', invitationId))
+      .delete(getPlanDocumentRef(db, planId, 'guestInvitations', invitationId))
       .commit();
   }
 
@@ -165,7 +156,7 @@ export class FirestoreGuestInvitationRepository implements GuestInvitationReposi
     onError?: (error: Error) => void,
   ) {
     const invitationsQuery = query(
-      collection(getFirebaseFirestore(), 'plans', planId, 'guestInvitations'),
+      getPlanCollectionRef(getFirebaseFirestore(), planId, 'guestInvitations'),
       orderBy('createdAt', 'asc'),
     );
 

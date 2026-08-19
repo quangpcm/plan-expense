@@ -6,7 +6,7 @@ import type {
   InvitationDocument,
 } from '@/modules/invitation/types/invitation';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
-import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
+import { hasPlanCapability } from '@/modules/member/services/permission.service';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 
 export class InvitationService {
@@ -26,7 +26,7 @@ export class InvitationService {
     actor: AuthUser,
     currentMember: PlanMemberDocument | null,
   ) {
-    if (!resolvePlanPermissions(currentMember).canManageMembers) {
+    if (!hasPlanCapability(currentMember, 'members.manage')) {
       throw new AppError(
         'You do not have permission to send invitations.',
         'INVITATION_PERMISSION_DENIED',
@@ -54,7 +54,7 @@ export class InvitationService {
     actor: AuthUser,
     currentMember: PlanMemberDocument | null,
   ) {
-    if (!resolvePlanPermissions(currentMember).canManageMembers) {
+    if (!hasPlanCapability(currentMember, 'members.manage')) {
       throw new AppError(
         'You do not have permission to send invitations.',
         'INVITATION_PERMISSION_DENIED',
@@ -121,7 +121,7 @@ export class InvitationService {
     actor: AuthUser,
     currentMember: PlanMemberDocument | null,
   ) {
-    if (!resolvePlanPermissions(currentMember).canManageMembers) {
+    if (!hasPlanCapability(currentMember, 'members.manage')) {
       throw new AppError(
         'You do not have permission to revoke invitations.',
         'INVITATION_PERMISSION_DENIED',

@@ -2,7 +2,6 @@
 
 import {
   Timestamp,
-  collection,
   doc,
   getDocs,
   onSnapshot,
@@ -13,6 +12,7 @@ import {
 } from 'firebase/firestore';
 
 import { getFirebaseFirestore } from '@/config/firebase.config';
+import { getPlanCollectionRef, getPlanDocumentRef, queryByPlanCollection } from '@/modules/plan';
 import type {
   BulkCreateWeddingGuestWithInvitationPersistenceInput,
   CreateWeddingGuestPersistenceInput,
@@ -40,11 +40,10 @@ export class FirestoreWeddingGuestRepository implements WeddingGuestRepository {
   ) {
     const db = getFirebaseFirestore();
     const guestRef = guestId
-      ? doc(db, 'plans', input.planId, 'weddingGuests', guestId)
-      : doc(collection(db, 'plans', input.planId, 'weddingGuests'));
-    const invitationRef = doc(
+      ? getPlanDocumentRef(db, input.planId, 'weddingGuests', guestId)
+      : doc(getPlanCollectionRef(db, input.planId, 'weddingGuests'));
+    const invitationRef = getPlanDocumentRef(
       db,
-      'plans',
       input.planId,
       'guestInvitations',
       `${guestRef.id}_${input.groupId}`,
@@ -107,7 +106,7 @@ export class FirestoreWeddingGuestRepository implements WeddingGuestRepository {
     let operationCount = 0;
 
     for (const input of inputs) {
-      const guestRef = doc(collection(db, 'plans', input.planId, 'weddingGuests'));
+      const guestRef = doc(getPlanCollectionRef(db, input.planId, 'weddingGuests'));
       const now = Timestamp.now();
 
       batch.set(guestRef, {
@@ -125,9 +124,8 @@ export class FirestoreWeddingGuestRepository implements WeddingGuestRepository {
       operationCount += 1;
 
       for (const invitation of input.invitations) {
-        const invitationRef = doc(
+        const invitationRef = getPlanDocumentRef(
           db,
-          'plans',
           input.planId,
           'guestInvitations',
           `${guestRef.id}_${invitation.groupId}`,
@@ -174,7 +172,7 @@ export class FirestoreWeddingGuestRepository implements WeddingGuestRepository {
 
   async updateGuest(planId: string, input: UpdateWeddingGuestPersistenceInput) {
     const db = getFirebaseFirestore();
-    const guestRef = doc(db, 'plans', planId, 'weddingGuests', input.guestId);
+    const guestRef = getPlanDocumentRef(db, planId, 'weddingGuests', input.guestId);
 
     await writeBatch(db)
       .update(guestRef, {
@@ -190,13 +188,10 @@ export class FirestoreWeddingGuestRepository implements WeddingGuestRepository {
 
   async deleteGuest(planId: string, guestId: string) {
     const db = getFirebaseFirestore();
-    const guestRef = doc(db, 'plans', planId, 'weddingGuests', guestId);
+    const guestRef = getPlanDocumentRef(db, planId, 'weddingGuests', guestId);
 
     const invitationsSnapshot = await getDocs(
-      query(
-        collection(db, 'plans', planId, 'guestInvitations'),
-        where('guestId', '==', guestId),
-      ),
+      queryByPlanCollection(db, planId, 'guestInvitations', where('guestId', '==', guestId)),
     );
 
     const refsToDelete = [
@@ -219,7 +214,7 @@ export class FirestoreWeddingGuestRepository implements WeddingGuestRepository {
     onError?: (error: Error) => void,
   ) {
     const guestsQuery = query(
-      collection(getFirebaseFirestore(), 'plans', planId, 'weddingGuests'),
+      getPlanCollectionRef(getFirebaseFirestore(), planId, 'weddingGuests'),
       orderBy('createdAt', 'asc'),
     );
 

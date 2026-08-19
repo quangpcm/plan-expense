@@ -4,6 +4,7 @@ import {
   Timestamp,
   collection,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   orderBy,
@@ -15,7 +16,11 @@ import {
 import type { DocumentReference } from 'firebase/firestore';
 
 import { getFirebaseFirestore } from '@/config/firebase.config';
+import { SYSTEM_HIDDEN_MILESTONE_TITLE } from '@/modules/milestone/utils/system-milestone';
 import { milestoneTemplatesByPlanType } from '@/modules/plan/constants/milestone-templates';
+import { getPlanTypeConfig } from '@/modules/plan/constants/plan-type-config';
+import { getPlanCollectionRef, getPlanRootRef } from '@/modules/plan';
+import { getPlanOwnedCollectionPaths } from '@/modules/plan/utils/plan-type-config';
 import type {
   CreatePlanPersistenceInput,
   PlanRepository,
@@ -72,7 +77,15 @@ export class FirestorePlanRepository implements PlanRepository {
     const planRef = doc(collection(db, 'plans'));
     const ownerMemberRef = doc(collection(db, 'plans', planRef.id, 'members'));
     const userPlanRef = doc(db, 'userPlans', input.owner.uid, 'plans', planRef.id);
-    const milestoneTemplates = milestoneTemplatesByPlanType[input.planType];
+    const planTypeConfig = getPlanTypeConfig(input.planType);
+    const hasPlanningModule = planTypeConfig.modules.some(
+      (moduleConfig) => moduleConfig.enabled && moduleConfig.moduleId === 'planning',
+    );
+    const hasFinanceModule = planTypeConfig.modules.some(
+      (moduleConfig) => moduleConfig.enabled && moduleConfig.moduleId === 'finance',
+    );
+    const visibleMilestoneTemplates = hasPlanningModule ? milestoneTemplatesByPlanType[input.planType] : [];
+    const shouldCreateHiddenSystemMilestone = !hasPlanningModule && hasFinanceModule;
 
     batch.set(planRef, {
       id: planRef.id,
@@ -93,7 +106,7 @@ export class FirestorePlanRepository implements PlanRepository {
       savingTargetDate: input.savingTargetDate ? Timestamp.fromDate(input.savingTargetDate) : null,
       status: 'active',
       memberCount: 1,
-      milestoneCount: milestoneTemplates.length,
+      milestoneCount: visibleMilestoneTemplates.length,
       completedMilestoneCount: 0,
       todoCount: 0,
       completedTodoCount: 0,
@@ -148,7 +161,7 @@ export class FirestorePlanRepository implements PlanRepository {
       estimatedAmount: 0,
       savingGoalAmount: input.savingGoalAmount,
       savingTargetDate: input.savingTargetDate ? Timestamp.fromDate(input.savingTargetDate) : null,
-      milestoneCount: milestoneTemplates.length,
+      milestoneCount: visibleMilestoneTemplates.length,
       completedMilestoneCount: 0,
       todoCount: 0,
       completedTodoCount: 0,
@@ -162,7 +175,7 @@ export class FirestorePlanRepository implements PlanRepository {
       updatedAt: now,
     });
 
-    milestoneTemplates.forEach((template, index) => {
+    visibleMilestoneTemplates.forEach((template, index) => {
       const milestoneRef = doc(collection(db, 'plans', planRef.id, 'milestones'));
 
       batch.set(milestoneRef, {
@@ -171,6 +184,7 @@ export class FirestorePlanRepository implements PlanRepository {
         title: template.title,
         description: null,
         iconId: template.iconId,
+        isSystemHidden: false,
         startDate: null,
         endDate: null,
         status: 'upcoming',
@@ -188,6 +202,33 @@ export class FirestorePlanRepository implements PlanRepository {
       } satisfies MilestoneDocument);
     });
 
+    if (shouldCreateHiddenSystemMilestone) {
+      const milestoneRef = doc(collection(db, 'plans', planRef.id, 'milestones'));
+
+      batch.set(milestoneRef, {
+        id: milestoneRef.id,
+        planId: planRef.id,
+        title: SYSTEM_HIDDEN_MILESTONE_TITLE,
+        description: null,
+        iconId: null,
+        isSystemHidden: true,
+        startDate: null,
+        endDate: null,
+        status: 'upcoming',
+        orderIndex: 0,
+        budgetAmount: null,
+        estimatedAmount: 0,
+        totalExpense: 0,
+        todoCount: 0,
+        completedTodoCount: 0,
+        createdByUserId: input.owner.uid,
+        createdAt: now,
+        updatedAt: now,
+        completedAt: null,
+        cancelledAt: null,
+      } satisfies MilestoneDocument);
+    }
+
     try {
       await batch.commit();
     } catch (error) {
@@ -201,7 +242,7 @@ export class FirestorePlanRepository implements PlanRepository {
   async updatePlan(planId: string, input: UpdatePlanPersistenceInput) {
     const db = getFirebaseFirestore();
     const now = Timestamp.now();
-    const planRef = doc(db, 'plans', planId);
+    const planRef = getPlanRootRef(db, planId);
 
     try {
       await updateDoc(planRef, {
@@ -238,7 +279,7 @@ export class FirestorePlanRepository implements PlanRepository {
   async completePlan(planId: string) {
     const db = getFirebaseFirestore();
     const now = Timestamp.now();
-    const planRef = doc(db, 'plans', planId);
+    const planRef = getPlanRootRef(db, planId);
 
     await updateDoc(planRef, {
       status: 'completed',
@@ -252,7 +293,7 @@ export class FirestorePlanRepository implements PlanRepository {
   async closePlan(planId: string) {
     const db = getFirebaseFirestore();
     const now = Timestamp.now();
-    const planRef = doc(db, 'plans', planId);
+    const planRef = getPlanRootRef(db, planId);
 
     await updateDoc(planRef, {
       status: 'closed',
@@ -300,25 +341,20 @@ export class FirestorePlanRepository implements PlanRepository {
     // isPlanOwner(), so it must be the very last thing removed — deleting it
     // any earlier would make the owner fail the permission check partway
     // through and abort the rest of the cleanup.
-    const subcollectionNames = [
-      'members',
-      'milestones',
-      'todos',
-      'expenses',
-      'incomes',
-      'settlements',
-      'invitations',
-      'weddingGuestGroups',
-      'weddingGuests',
-      'guestInvitations',
-    ];
-
     try {
+      const planSnapshot = await getDoc(getPlanRootRef(db, planId));
+
+      if (!planSnapshot.exists()) {
+        return;
+      }
+
+      const plan = planSnapshot.data() as PlanDocument;
+      const subcollectionNames = getPlanOwnedCollectionPaths(plan);
       const refsToDelete: DocumentReference[] = [];
       const memberUserIds = new Set<string>();
 
       for (const name of subcollectionNames) {
-        const snapshot = await getDocs(collection(db, 'plans', planId, name));
+        const snapshot = await getDocs(getPlanCollectionRef(db, planId, name));
 
         snapshot.forEach((docSnapshot) => {
           refsToDelete.push(docSnapshot.ref);
@@ -347,7 +383,7 @@ export class FirestorePlanRepository implements PlanRepository {
       }
 
       const finalBatch = writeBatch(db);
-      finalBatch.delete(doc(db, 'plans', planId));
+      finalBatch.delete(getPlanRootRef(db, planId));
       finalBatch.delete(doc(db, 'userPlans', ownerUserId, 'plans', planId));
       await finalBatch.commit();
     } catch (error) {
@@ -379,7 +415,7 @@ export class FirestorePlanRepository implements PlanRepository {
 
   watchPlan(planId: string, callback: (plan: PlanDocument | null) => void, onError?: (error: Error) => void) {
     return onSnapshot(
-      doc(getFirebaseFirestore(), 'plans', planId),
+      getPlanRootRef(getFirebaseFirestore(), planId),
       (snapshot) => {
         callback(snapshot.exists() ? (snapshot.data() as PlanDocument) : null);
       },

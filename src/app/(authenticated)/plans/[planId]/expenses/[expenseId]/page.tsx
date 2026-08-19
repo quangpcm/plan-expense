@@ -10,6 +10,7 @@ import { ExpenseDetailCard } from '@/modules/expense/components/expense-detail-c
 import { useExpense } from '@/modules/expense/hooks/use-expense';
 import { expenseService } from '@/modules/expense/services';
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
+import { hasPlanCapability } from '@/modules/member/services/permission.service';
 import { useMilestones } from '@/modules/milestone';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
 import { Breadcrumbs } from '@/shared/components/ui/breadcrumbs';
@@ -26,7 +27,7 @@ export default function ExpenseDetailPage() {
   const { user } = useAuthSession();
   const { plan, errorMessage: planError } = usePlan(planId);
   const { milestones, errorMessage: milestoneError } = useMilestones(planId);
-  const { members, currentMember, permissions } = usePlanMembers(planId);
+  const { members, currentMember } = usePlanMembers(planId);
   const { expense, isLoading, errorMessage: expenseError } = useExpense(planId, expenseId);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -49,8 +50,13 @@ export default function ExpenseDetailPage() {
   const categories = getExpenseCategories(currentPlan.planType);
   const returnTab = searchParams.get('returnTab');
   const milestoneId = searchParams.get('milestoneId') || currentExpense.milestoneId;
-  const canEdit = permissions.canEditAllExpenses || currentExpense.createdByUserId === currentUser.uid;
-  const canDelete = permissions.canDeleteAllExpenses || currentExpense.createdByUserId === currentUser.uid;
+  const canEdit =
+    hasPlanCapability(currentMember, 'finance.editAllExpense') ||
+    (hasPlanCapability(currentMember, 'finance.editOwnExpense') && currentExpense.createdByUserId === currentUser.uid);
+  const canDelete =
+    hasPlanCapability(currentMember, 'finance.deleteAllExpense') ||
+    (hasPlanCapability(currentMember, 'finance.deleteOwnExpense') &&
+      currentExpense.createdByUserId === currentUser.uid);
 
   async function handleDelete() {
     const confirmed = window.confirm(`Xoá khoản chi "${currentExpense.title}"? Hành động này không thể hoàn tác.`);

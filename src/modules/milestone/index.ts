@@ -7,6 +7,14 @@ export { MilestoneList } from './components/milestone-list';
 export { MilestoneSearchControl } from './components/milestone-search-control';
 export { MilestoneTimelineBoard } from './components/milestone-timeline-board';
 export { getMilestoneAnchorDate, milestoneStatusLabel } from './utils/milestone-status';
+export {
+  getHiddenSystemMilestone,
+  getVisibleMilestones,
+  isSystemHiddenMilestone,
+  planUsesHiddenMilestone,
+  resolveFinanceMilestoneId,
+  SYSTEM_HIDDEN_MILESTONE_TITLE,
+} from './utils/system-milestone';
 export type {
   CreateMilestoneInput,
   MilestoneDocument,

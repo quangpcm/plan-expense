@@ -4,7 +4,6 @@ import { z } from 'zod';
 
 import { getAdminAuth, getAdminFirestore } from '@/config/firebase-admin.config';
 import { getR2BucketName, getR2Client } from '@/config/r2.config';
-import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import { AppError } from '@/shared/errors/app-error';
 
@@ -71,9 +70,7 @@ export async function POST(request: NextRequest) {
     const { planId, storagePaths } = parsed.data;
 
     const member = await resolveActiveMember(planId, decodedToken.uid);
-    const permissions = resolvePlanPermissions(member);
-
-    if (!permissions.canManagePlan) {
+    if (member.role !== 'owner') {
       throw new AppError('Only the plan owner can delete storage objects.', 'STORAGE_PERMISSION_DENIED', 403);
     }
 

@@ -10,6 +10,7 @@ import { IncomeDetailCard } from '@/modules/income/components/income-detail-card
 import { useIncome } from '@/modules/income/hooks/use-income';
 import { incomeService } from '@/modules/income/services';
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
+import { hasPlanCapability } from '@/modules/member/services/permission.service';
 import { useMilestones } from '@/modules/milestone';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
 import { Breadcrumbs } from '@/shared/components/ui/breadcrumbs';
@@ -25,7 +26,7 @@ export default function IncomeDetailPage() {
   const incomeId = Array.isArray(params.incomeId) ? params.incomeId[0] : params.incomeId;
   const { user } = useAuthSession();
   const { plan, errorMessage: planError } = usePlan(planId);
-  const { members, currentMember, permissions } = usePlanMembers(planId);
+  const { members, currentMember } = usePlanMembers(planId);
   const { milestones, errorMessage: milestoneError } = useMilestones(planId);
   const { income, isLoading, errorMessage: incomeError } = useIncome(planId, incomeId);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -49,8 +50,11 @@ export default function IncomeDetailPage() {
   const categories = [...getExpenseCategories(currentPlan.planType), ...getIncomeCategories(currentPlan.planType)];
   const returnTab = searchParams.get('returnTab');
   const milestoneId = searchParams.get('milestoneId') || currentIncome.milestoneId;
-  const canEdit = permissions.canEditOwnIncome && currentIncome.createdByMemberId === currentMember?.id;
-  const canDelete = permissions.canDeleteOwnIncome && currentIncome.createdByMemberId === currentMember?.id;
+  const canEdit =
+    hasPlanCapability(currentMember, 'finance.editOwnIncome') && currentIncome.createdByMemberId === currentMember?.id;
+  const canDelete =
+    hasPlanCapability(currentMember, 'finance.deleteOwnIncome') &&
+    currentIncome.createdByMemberId === currentMember?.id;
 
   async function handleDelete() {
     setIsDeleting(true);

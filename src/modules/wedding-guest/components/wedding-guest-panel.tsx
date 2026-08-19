@@ -6,7 +6,7 @@ import { Download, Plus, Upload } from 'lucide-react';
 
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
-import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
+import { hasPlanCapability } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import { GuestInvitationForm } from '@/modules/wedding-guest/components/guest-invitation-form';
@@ -90,7 +90,7 @@ export function WeddingGuestPanel({
   } = useGuestInvitations(plan.id);
 
   const canManage =
-    resolvePlanPermissions(currentMember).canManageWeddingGuest &&
+    hasPlanCapability(currentMember, 'weddingGuests.manageGuest') &&
     plan.status === 'active';
 
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);

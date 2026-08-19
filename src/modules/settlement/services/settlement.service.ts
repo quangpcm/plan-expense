@@ -1,6 +1,6 @@
 import { AppError } from '@/shared/errors/app-error';
 import type { AuthUser } from '@/modules/auth/types/auth';
-import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
+import { hasPlanCapability } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import type { MemberBalanceRow } from '@/modules/statistic/types/statistic';
@@ -22,7 +22,7 @@ export class SettlementService {
   constructor(private readonly settlementRepository: SettlementRepository) {}
 
   private assertManagePermission(currentMember: PlanMemberDocument | null) {
-    if (!resolvePlanPermissions(currentMember).canManageSettlements) {
+    if (!hasPlanCapability(currentMember, 'finance.manageSettlements')) {
       throw new AppError('Only the owner can manage settlements.', 'SETTLEMENT_PERMISSION_DENIED', 403);
     }
   }

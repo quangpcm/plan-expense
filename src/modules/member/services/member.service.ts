@@ -7,7 +7,7 @@ import type {
   UpdateMemberAvatarInput,
   UpdateMemberInput,
 } from '@/modules/member/types/member';
-import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
+import { hasPlanCapability } from '@/modules/member/services/permission.service';
 
 export class MemberService {
   constructor(private readonly memberRepository: MemberRepository) {}
@@ -22,7 +22,7 @@ export class MemberService {
     actor: AuthUser,
     currentMember: PlanMemberDocument | null,
   ) {
-    if (!resolvePlanPermissions(currentMember).canManageMembers) {
+    if (!hasPlanCapability(currentMember, 'members.manage')) {
       throw new AppError('You do not have permission to add members.', 'MEMBER_PERMISSION_DENIED', 403);
     }
 
@@ -35,7 +35,7 @@ export class MemberService {
     actor: AuthUser,
     currentMember: PlanMemberDocument | null,
   ) {
-    if (!resolvePlanPermissions(currentMember).canManageMembers) {
+    if (!hasPlanCapability(currentMember, 'members.manage')) {
       throw new AppError('You do not have permission to edit members.', 'MEMBER_PERMISSION_DENIED', 403);
     }
 
@@ -48,7 +48,7 @@ export class MemberService {
     actor: AuthUser,
     currentMember: PlanMemberDocument | null,
   ) {
-    if (!resolvePlanPermissions(currentMember).canManageMembers) {
+    if (!hasPlanCapability(currentMember, 'members.manage')) {
       throw new AppError('You do not have permission to edit members.', 'MEMBER_PERMISSION_DENIED', 403);
     }
 
@@ -61,7 +61,7 @@ export class MemberService {
     actor: AuthUser,
     currentMember: PlanMemberDocument | null,
   ) {
-    if (!resolvePlanPermissions(currentMember).canManageMembers) {
+    if (!hasPlanCapability(currentMember, 'members.manage')) {
       throw new AppError('You do not have permission to remove members.', 'MEMBER_PERMISSION_DENIED', 403);
     }
 
@@ -78,7 +78,7 @@ export class MemberService {
     actor: AuthUser,
     currentMember: PlanMemberDocument | null,
   ) {
-    if (!resolvePlanPermissions(currentMember).canManageMembers) {
+    if (!hasPlanCapability(currentMember, 'members.manage')) {
       throw new AppError('You do not have permission to reactivate members.', 'MEMBER_PERMISSION_DENIED', 403);
     }
 
@@ -92,7 +92,7 @@ export class MemberService {
     currentMember: PlanMemberDocument | null,
     options: { hasLinkedRecords: boolean },
   ) {
-    if (!resolvePlanPermissions(currentMember).canManageMembers) {
+    if (!hasPlanCapability(currentMember, 'members.manage')) {
       throw new AppError('You do not have permission to delete members.', 'MEMBER_PERMISSION_DENIED', 403);
     }
 
@@ -120,7 +120,7 @@ export class MemberService {
     member: PlanMemberDocument,
     currentMember: PlanMemberDocument | null,
   ) {
-    if (!resolvePlanPermissions(currentMember).canManageMembers) {
+    if (!hasPlanCapability(currentMember, 'members.manage')) {
       throw new AppError('You do not have permission to unlink member accounts.', 'MEMBER_PERMISSION_DENIED', 403);
     }
 

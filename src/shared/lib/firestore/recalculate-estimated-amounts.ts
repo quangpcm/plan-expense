@@ -1,9 +1,10 @@
 'use client';
 
-import { collection, doc, getDocs, writeBatch } from 'firebase/firestore';
+import { getDocs, writeBatch } from 'firebase/firestore';
 
 import { getFirebaseFirestore } from '@/config/firebase.config';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
+import { getPlanCollectionRef, getPlanDocumentRef, getPlanRootRef } from '@/modules/plan';
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import { getTodoBudgetAmount } from '@/modules/todo/utils/todo-budget';
 import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
@@ -11,8 +12,8 @@ import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
 export async function recalculateEstimatedAmounts(planId: string) {
   const db = getFirebaseFirestore();
   const [milestonesSnapshot, todosSnapshot] = await Promise.all([
-    getDocs(collection(db, 'plans', planId, 'milestones')),
-    getDocs(collection(db, 'plans', planId, 'todos')),
+    getDocs(getPlanCollectionRef(db, planId, 'milestones')),
+    getDocs(getPlanCollectionRef(db, planId, 'todos')),
   ]);
 
   const milestones = milestonesSnapshot.docs.map((snapshot) => snapshot.data() as MilestoneDocument);
@@ -32,13 +33,13 @@ export async function recalculateEstimatedAmounts(planId: string) {
     planEstimatedAmount += estimatedAmount;
 
     if ((milestone.estimatedAmount ?? 0) !== estimatedAmount) {
-      batch.update(doc(db, 'plans', planId, 'milestones', milestone.id), {
+      batch.update(getPlanDocumentRef(db, planId, 'milestones', milestone.id), {
         estimatedAmount,
       });
     }
   });
 
-  batch.update(doc(db, 'plans', planId), {
+  batch.update(getPlanRootRef(db, planId), {
     estimatedAmount: Math.max(planEstimatedAmount, 0),
   });
 

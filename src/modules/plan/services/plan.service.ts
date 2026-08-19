@@ -1,6 +1,5 @@
 import { appConfig } from '@/config/app.config';
 import type { AuthUser } from '@/modules/auth/types/auth';
-import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanRepository } from '@/modules/plan/repositories/plan.repository';
 import type { CreatePlanInput, PlanDocument, PlanSummary, UpdatePlanInput } from '@/modules/plan/types/plan';
@@ -68,7 +67,7 @@ export class PlanService {
     input: UpdatePlanInput,
     currentMember: PlanMemberDocument | null,
   ) {
-    if (!resolvePlanPermissions(currentMember).canManagePlan) {
+    if (currentMember?.role !== 'owner') {
       throw new AppError('Only the owner can edit this plan.', 'PLAN_UPDATE_PERMISSION_DENIED', 403);
     }
 
@@ -103,7 +102,7 @@ export class PlanService {
   }
 
   async closePlan(plan: PlanDocument, currentMember: PlanMemberDocument | null) {
-    if (!resolvePlanPermissions(currentMember).canManagePlan) {
+    if (currentMember?.role !== 'owner') {
       throw new AppError('Only the owner can close this plan.', 'PLAN_CLOSE_PERMISSION_DENIED', 403);
     }
 
@@ -115,7 +114,7 @@ export class PlanService {
   }
 
   async completePlan(plan: PlanDocument, currentMember: PlanMemberDocument | null) {
-    if (!resolvePlanPermissions(currentMember).canManagePlan) {
+    if (currentMember?.role !== 'owner') {
       throw new AppError('Only the owner can complete this plan.', 'PLAN_COMPLETE_PERMISSION_DENIED', 403);
     }
 
@@ -135,7 +134,7 @@ export class PlanService {
   }
 
   async deletePlan(plan: PlanDocument, currentMember: PlanMemberDocument | null) {
-    if (!resolvePlanPermissions(currentMember).canManagePlan) {
+    if (currentMember?.role !== 'owner') {
       throw new AppError('Only the owner can delete this plan.', 'PLAN_DELETE_PERMISSION_DENIED', 403);
     }
 

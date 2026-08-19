@@ -2,7 +2,6 @@
 
 import {
   Timestamp,
-  collection,
   doc,
   getDoc,
   onSnapshot,
@@ -18,6 +17,7 @@ import type {
   CreateInvitationPersistenceInput,
   InvitationRepository,
 } from '@/modules/invitation/repositories/invitation.repository';
+import { getPlanCollectionRef, getPlanDocumentRef, getPlanRootRef } from '@/modules/plan';
 import type { InvitationDocument } from '@/modules/invitation/types/invitation';
 import { syncPlanMemberCountAggregate } from '@/shared/lib/firestore/sync-user-plans';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
@@ -27,7 +27,7 @@ const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 export class FirestoreInvitationRepository implements InvitationRepository {
   watchInvitations(planId: string, callback: (items: InvitationDocument[]) => void, onError?: (error: Error) => void) {
     const invitationsQuery = query(
-      collection(getFirebaseFirestore(), 'plans', planId, 'invitations'),
+      getPlanCollectionRef(getFirebaseFirestore(), planId, 'invitations'),
       orderBy('createdAt', 'desc'),
     );
 
@@ -43,14 +43,14 @@ export class FirestoreInvitationRepository implements InvitationRepository {
   }
 
   async getInvitation(planId: string, invitationId: string) {
-    const snapshot = await getDoc(doc(getFirebaseFirestore(), 'plans', planId, 'invitations', invitationId));
+    const snapshot = await getDoc(getPlanDocumentRef(getFirebaseFirestore(), planId, 'invitations', invitationId));
     return snapshot.exists() ? (snapshot.data() as InvitationDocument) : null;
   }
 
   async createInvitation(input: CreateInvitationPersistenceInput, actor: AuthUser) {
     const db = getFirebaseFirestore();
     const now = Timestamp.now();
-    const invitationRef = doc(collection(db, 'plans', input.planId, 'invitations'));
+    const invitationRef = doc(getPlanCollectionRef(db, input.planId, 'invitations'));
 
     await writeBatch(db)
       .set(invitationRef, {
@@ -80,7 +80,7 @@ export class FirestoreInvitationRepository implements InvitationRepository {
 
   async acceptInvitation(planId: string, invitationId: string, actor: AuthUser) {
     const db = getFirebaseFirestore();
-    const invitationRef = doc(db, 'plans', planId, 'invitations', invitationId);
+    const invitationRef = getPlanDocumentRef(db, planId, 'invitations', invitationId);
     const invitationSnapshot = await getDoc(invitationRef);
 
     if (!invitationSnapshot.exists()) {
@@ -89,8 +89,8 @@ export class FirestoreInvitationRepository implements InvitationRepository {
 
     const invitation = invitationSnapshot.data() as InvitationDocument;
     const memberRef = invitation.targetMemberId
-      ? doc(db, 'plans', planId, 'members', invitation.targetMemberId)
-      : doc(collection(db, 'plans', planId, 'members'));
+      ? getPlanDocumentRef(db, planId, 'members', invitation.targetMemberId)
+      : doc(getPlanCollectionRef(db, planId, 'members'));
     const userPlanRef = doc(db, 'userPlans', actor.uid, 'plans', planId);
     const now = Timestamp.now();
     const batch = writeBatch(db);
@@ -176,7 +176,7 @@ export class FirestoreInvitationRepository implements InvitationRepository {
     // aggregate fields" rule already used elsewhere — never blocks a successful
     // join if this secondary step fails.
     try {
-      const planSnapshot = await getDoc(doc(db, 'plans', planId));
+      const planSnapshot = await getDoc(getPlanRootRef(db, planId));
 
       if (planSnapshot.exists()) {
         const plan = planSnapshot.data() as {
@@ -226,7 +226,7 @@ export class FirestoreInvitationRepository implements InvitationRepository {
   }
 
   async revokeInvitation(planId: string, invitationId: string, actor: AuthUser) {
-    await updateDoc(doc(getFirebaseFirestore(), 'plans', planId, 'invitations', invitationId), {
+    await updateDoc(getPlanDocumentRef(getFirebaseFirestore(), planId, 'invitations', invitationId), {
       status: 'revoked',
       revokedAt: Timestamp.now(),
       revokedByUserId: actor.uid,

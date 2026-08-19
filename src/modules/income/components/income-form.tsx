@@ -11,7 +11,12 @@ import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
 import { getCategoryIcon } from '@/modules/category/utils/category-icon';
 import { getIncomeCategories } from '@/modules/category/constants/category-presets';
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
-import { useMilestones } from '@/modules/milestone';
+import {
+  getVisibleMilestones,
+  planUsesHiddenMilestone,
+  resolveFinanceMilestoneId,
+  useMilestones,
+} from '@/modules/milestone';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
 import { createIncomeSchema, type CreateIncomeSchema } from '@/modules/income/schemas/create-income.schema';
 import { updateIncomeSchema, type UpdateIncomeSchema } from '@/modules/income/schemas/update-income.schema';
@@ -52,9 +57,13 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const activeMembers = members.filter((member) => member.status === 'active');
+  const visibleMilestones = useMemo(() => getVisibleMilestones(milestones), [milestones]);
+  const shouldHideMilestoneSelector = plan ? planUsesHiddenMilestone(plan) : false;
   const milestoneIdFromQuery = searchParams.get('milestoneId') || '';
   const returnTab = searchParams.get('returnTab');
-  const defaultMilestoneId = income?.milestoneId || milestoneIdFromQuery || milestones[0]?.id || '';
+  const defaultMilestoneId = plan
+    ? resolveFinanceMilestoneId(plan, milestones, income?.milestoneId || milestoneIdFromQuery)
+    : income?.milestoneId || milestoneIdFromQuery || visibleMilestones[0]?.id || milestones[0]?.id || '';
   const form = useForm<CreateIncomeSchema>({
     defaultValues: {
       title: income?.title || '',
@@ -74,7 +83,7 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
   const selectedContributor = activeMembers.find((member) => member.id === contributedByMemberIdWatched);
 
   useEffect(() => {
-    if (!form.getValues('milestoneId') && defaultMilestoneId) {
+    if ((shouldHideMilestoneSelector || !form.getValues('milestoneId')) && defaultMilestoneId) {
       form.setValue('milestoneId', defaultMilestoneId, { shouldValidate: true });
     }
 
@@ -83,7 +92,7 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
         shouldValidate: true,
       });
     }
-  }, [activeMembers, currentMember?.id, defaultMilestoneId, form]);
+  }, [activeMembers, currentMember?.id, defaultMilestoneId, form, shouldHideMilestoneSelector]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     if (!plan || !user) {
@@ -170,18 +179,20 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
       </div>
       <Input placeholder="Đóng quỹ, nạp thêm..." {...form.register('title')} />
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700" htmlFor="milestoneId">
-          Mốc kế hoạch
-        </label>
-        <DropdownSelect
-          id="milestoneId"
-          onValueChange={(value) => form.setValue('milestoneId', value, { shouldValidate: true, shouldDirty: true })}
-          options={milestones.map((milestone) => ({ value: milestone.id, label: milestone.title }))}
-          placeholder="Chọn mốc kế hoạch"
-          value={milestoneIdWatched || ''}
-        />
-      </div>
+      {!shouldHideMilestoneSelector ? (
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700" htmlFor="milestoneId">
+            Mốc kế hoạch
+          </label>
+          <DropdownSelect
+            id="milestoneId"
+            onValueChange={(value) => form.setValue('milestoneId', value, { shouldValidate: true, shouldDirty: true })}
+            options={visibleMilestones.map((milestone) => ({ value: milestone.id, label: milestone.title }))}
+            placeholder="Chọn mốc kế hoạch"
+            value={milestoneIdWatched || ''}
+          />
+        </div>
+      ) : null}
 
       <div className="space-y-2">
         <p className="text-sm font-medium text-slate-700">Danh mục</p>

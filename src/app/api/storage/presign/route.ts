@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 import { getAdminAuth, getAdminFirestore } from '@/config/firebase-admin.config';
 import { getR2BucketName, getR2Client } from '@/config/r2.config';
-import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
+import { hasPlanCapability } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import type { RequestUploadUrlInput } from '@/modules/storage/types/storage';
@@ -95,10 +95,9 @@ async function assertPermission(input: RequestUploadUrlInput, uid: string): Prom
   }
 
   const member = await resolveActiveMember(input.planId, uid);
-  const permissions = resolvePlanPermissions(member);
 
   if (input.mediaType === 'plan-cover') {
-    if (!permissions.canManagePlan) {
+    if (member.role !== 'owner') {
       throw new AppError('Only the plan owner can update the cover image.', 'STORAGE_PERMISSION_DENIED', 403);
     }
     return;
@@ -110,21 +109,21 @@ async function assertPermission(input: RequestUploadUrlInput, uid: string): Prom
     throw new AppError('This plan has ended and cannot be edited.', 'PLAN_ENDED', 400);
   }
 
-  if (input.mediaType === 'expense-attachment' && !permissions.canCreateExpense) {
+  if (input.mediaType === 'expense-attachment' && !hasPlanCapability(member, 'finance.createExpense')) {
     throw new AppError('You do not have permission to add expense attachments.', 'STORAGE_PERMISSION_DENIED', 403);
   }
 
-  if (input.mediaType === 'income-attachment' && !permissions.canCreateIncome) {
+  if (input.mediaType === 'income-attachment' && !hasPlanCapability(member, 'finance.createIncome')) {
     throw new AppError('You do not have permission to add income attachments.', 'STORAGE_PERMISSION_DENIED', 403);
   }
 
-  if (input.mediaType === 'settlement-attachment' && !permissions.canManageSettlements) {
+  if (input.mediaType === 'settlement-attachment' && !hasPlanCapability(member, 'finance.manageSettlements')) {
     throw new AppError('You do not have permission to add settlement attachments.', 'STORAGE_PERMISSION_DENIED', 403);
   }
 
   if (
     (input.mediaType === 'todo-attachment' || input.mediaType === 'todo-vendor-attachment') &&
-    !permissions.canManagePlan
+    member.role !== 'owner'
   ) {
     throw new AppError('Only the plan owner can manage todo attachments.', 'STORAGE_PERMISSION_DENIED', 403);
   }

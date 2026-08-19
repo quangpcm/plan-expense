@@ -11,7 +11,7 @@ import type {
 import type { ExpenseRepository } from '@/modules/expense/repositories/expense.repository';
 import type { Category } from '@/modules/category/types/category';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
-import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
+import { hasPlanCapability } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import { deleteAttachmentsInBackground } from '@/modules/storage/utils/delete-attachments';
@@ -38,7 +38,7 @@ export class ExpenseService {
   }
 
   private assertCreatePermission(currentMember: PlanMemberDocument | null) {
-    if (!resolvePlanPermissions(currentMember).canCreateExpense) {
+    if (!hasPlanCapability(currentMember, 'finance.createExpense')) {
       throw new AppError('You do not have permission to create expenses.', 'EXPENSE_PERMISSION_DENIED', 403);
     }
   }
@@ -144,8 +144,11 @@ export class ExpenseService {
 
   async updateExpense(input: UpdateExpenseInput, context: ExpenseContext, expense: ExpenseDocument) {
     this.assertEditablePlan(context.plan);
-    const permissions = resolvePlanPermissions(context.currentMember);
-    const canEdit = permissions.canEditAllExpenses || expense.createdByUserId === context.currentUser.uid;
+    const canEditAllExpenses = hasPlanCapability(context.currentMember, 'finance.editAllExpense');
+    const canEditOwnExpense = hasPlanCapability(context.currentMember, 'finance.editOwnExpense');
+    const canEdit =
+      canEditAllExpenses ||
+      (canEditOwnExpense && expense.createdByUserId === context.currentUser.uid);
 
     if (!canEdit) {
       throw new AppError('You do not have permission to edit this expense.', 'EXPENSE_EDIT_DENIED', 403);
@@ -177,8 +180,9 @@ export class ExpenseService {
     currentMember: PlanMemberDocument | null,
   ) {
     this.assertEditablePlan(plan);
-    const permissions = resolvePlanPermissions(currentMember);
-    const canDelete = permissions.canDeleteAllExpenses || expense.createdByUserId === currentUser.uid;
+    const canDelete =
+      hasPlanCapability(currentMember, 'finance.deleteAllExpense') ||
+      (hasPlanCapability(currentMember, 'finance.deleteOwnExpense') && expense.createdByUserId === currentUser.uid);
 
     if (!canDelete) {
       throw new AppError('You do not have permission to delete this expense.', 'EXPENSE_DELETE_DENIED', 403);

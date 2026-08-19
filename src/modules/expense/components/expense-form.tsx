@@ -11,7 +11,12 @@ import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
 import { getCategoryIcon } from '@/modules/category/utils/category-icon';
 import { getExpenseCategories } from '@/modules/category/constants/category-presets';
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
-import { useMilestones } from '@/modules/milestone';
+import {
+  getVisibleMilestones,
+  planUsesHiddenMilestone,
+  resolveFinanceMilestoneId,
+  useMilestones,
+} from '@/modules/milestone';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
 import { createExpenseSchema, type CreateExpenseSchema } from '@/modules/expense/schemas/create-expense.schema';
 import { updateExpenseSchema, type UpdateExpenseSchema } from '@/modules/expense/schemas/update-expense.schema';
@@ -82,10 +87,17 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
     () => activeMembers.map((member) => member.id),
     [activeMembers],
   );
+  const visibleMilestones = useMemo(() => getVisibleMilestones(milestones), [milestones]);
+  const shouldHideMilestoneSelector = plan ? planUsesHiddenMilestone(plan) : false;
   const defaultCategoryId = toSafeString(expense?.categoryId) || categories[0]?.id || '';
   const milestoneIdFromQuery = searchParams.get('milestoneId') || '';
-  const resolvedDefaultMilestoneId =
-    expense?.milestoneId || defaultMilestoneId || milestoneIdFromQuery || milestones[0]?.id || '';
+  const resolvedDefaultMilestoneId = plan
+    ? resolveFinanceMilestoneId(
+        plan,
+        milestones,
+        expense?.milestoneId || defaultMilestoneId || milestoneIdFromQuery,
+      )
+    : expense?.milestoneId || defaultMilestoneId || milestoneIdFromQuery || visibleMilestones[0]?.id || milestones[0]?.id || '';
   const defaultSpentAt = expense ? formatDateTimeLocalInput(expense.spentAt.toDate()) : formatDateTimeLocalInput(new Date());
   const defaultSplitValues: Record<string, number> = {};
 
@@ -180,14 +192,22 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
       form.setValue('categoryId', defaultCategoryId, { shouldValidate: true });
     }
 
-    if (!form.getValues('milestoneId') && resolvedDefaultMilestoneId) {
+    if ((shouldHideMilestoneSelector || !form.getValues('milestoneId')) && resolvedDefaultMilestoneId) {
       form.setValue('milestoneId', resolvedDefaultMilestoneId, { shouldValidate: true });
     }
 
     if (!form.getValues('spentAt') && defaultSpentAt) {
       form.setValue('spentAt', defaultSpentAt, { shouldValidate: true });
     }
-  }, [defaultCategoryId, resolvedDefaultMilestoneId, defaultPaidByMemberId, defaultParticipantIds, defaultSpentAt, form]);
+  }, [
+    defaultCategoryId,
+    resolvedDefaultMilestoneId,
+    defaultPaidByMemberId,
+    defaultParticipantIds,
+    defaultSpentAt,
+    form,
+    shouldHideMilestoneSelector,
+  ]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     if (!plan || !user) {
@@ -273,20 +293,22 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
         <Input id="title" placeholder="Ăn sáng, khách sạn, vé..." {...form.register('title')} />
       </div>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700" htmlFor="milestoneId">
-          Mốc kế hoạch
-        </label>
-        <DropdownSelect
-          id="milestoneId"
-          onValueChange={(value) => form.setValue('milestoneId', value, { shouldValidate: true, shouldDirty: true })}
-          options={[
-            { value: '', label: 'Chọn mốc kế hoạch' },
-            ...milestones.map((milestone) => ({ value: milestone.id, label: milestone.title })),
-          ]}
-          value={milestoneIdWatched || ''}
-        />
-      </div>
+      {!shouldHideMilestoneSelector ? (
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700" htmlFor="milestoneId">
+            Mốc kế hoạch
+          </label>
+          <DropdownSelect
+            id="milestoneId"
+            onValueChange={(value) => form.setValue('milestoneId', value, { shouldValidate: true, shouldDirty: true })}
+            options={[
+              { value: '', label: 'Chọn mốc kế hoạch' },
+              ...visibleMilestones.map((milestone) => ({ value: milestone.id, label: milestone.title })),
+            ]}
+            value={milestoneIdWatched || ''}
+          />
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] gap-3">
         <div className="space-y-2">

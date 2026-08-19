@@ -8,6 +8,7 @@ export type MilestoneDocument = {
   title: string;
   description: string | null;
   iconId: string | null;
+  isSystemHidden: boolean;
   startDate: Timestamp | null;
   endDate: Timestamp | null;
   status: MilestoneStatus;

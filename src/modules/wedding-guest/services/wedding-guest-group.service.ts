@@ -4,7 +4,7 @@ import type {
   UpdateWeddingGuestGroupInput,
 } from '@/modules/wedding-guest/types/wedding-guest-group';
 import type { AuthUser } from '@/modules/auth/types/auth';
-import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
+import { hasPlanCapability } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import { AppError } from '@/shared/errors/app-error';
@@ -15,7 +15,7 @@ export class WeddingGuestGroupService {
   private assertManageWeddingGuestPermission(
     currentMember: PlanMemberDocument | null,
   ) {
-    if (!resolvePlanPermissions(currentMember).canManageWeddingGuest) {
+    if (!hasPlanCapability(currentMember, 'weddingGuests.manageGuest')) {
       throw new AppError(
         'Bạn không có quyền quản lý khách mời.',
         'WEDDING_GUEST_PERMISSION_DENIED',

@@ -5,6 +5,7 @@ import type { PlanMemberStatus, PlanRole } from '@/modules/member/types/member';
 export type PlanStatus = 'active' | 'completed' | 'closed' | 'archived';
 
 export type PlanType =
+  | 'debt'
   | 'travel'
   | 'wedding'
   | 'saving'

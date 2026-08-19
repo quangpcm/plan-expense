@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
 import { memberService } from '@/modules/member/services';
-import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
+import { hasPlanCapability, resolvePlanCapabilities } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
+import type { PlanCapability } from '@/modules/plan/types/plan-modular';
 
 export function usePlanMembers(planId: string) {
   const { user } = useAuthSession();
@@ -42,12 +43,16 @@ export function usePlanMembers(planId: string) {
       members.find((member) => member.userId === user?.uid && member.status !== 'removed') ?? null,
     [members, user?.uid],
   );
+  const capabilities = useMemo(() => resolvePlanCapabilities(currentMember), [currentMember]);
+  const isOwner = currentMember?.role === 'owner';
 
   return {
     members,
     isLoading,
     errorMessage,
     currentMember,
-    permissions: resolvePlanPermissions(currentMember),
+    capabilities,
+    isOwner,
+    hasCapability: (capability: PlanCapability) => hasPlanCapability(currentMember, capability),
   };
 }

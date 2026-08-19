@@ -2,7 +2,6 @@
 
 import {
   Timestamp,
-  collection,
   doc,
   increment,
   onSnapshot,
@@ -16,14 +15,15 @@ import type {
   IncomeRepository,
 } from '@/modules/income/repositories/income.repository';
 import type { IncomeDocument, UpdateIncomeInput } from '@/modules/income/types/income';
+import { getPlanCollectionRef, getPlanDocumentRef, getPlanRootRef } from '@/modules/plan';
 import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
 export class FirestoreIncomeRepository implements IncomeRepository {
   async createIncome(input: CreateIncomePersistenceInput) {
     const db = getFirebaseFirestore();
-    const incomeRef = doc(collection(db, 'plans', input.planId, 'incomes'));
-    const planRef = doc(db, 'plans', input.planId);
+    const incomeRef = doc(getPlanCollectionRef(db, input.planId, 'incomes'));
+    const planRef = getPlanRootRef(db, input.planId);
     const now = Timestamp.now();
 
     await runTransaction(db, async (transaction) => {
@@ -63,8 +63,8 @@ export class FirestoreIncomeRepository implements IncomeRepository {
 
   async updateIncome(planId: string, input: UpdateIncomeInput) {
     const db = getFirebaseFirestore();
-    const incomeRef = doc(db, 'plans', planId, 'incomes', input.incomeId);
-    const planRef = doc(db, 'plans', planId);
+    const incomeRef = getPlanDocumentRef(db, planId, 'incomes', input.incomeId);
+    const planRef = getPlanRootRef(db, planId);
     const now = Timestamp.now();
 
     const delta = await runTransaction(db, async (transaction) => {
@@ -104,8 +104,8 @@ export class FirestoreIncomeRepository implements IncomeRepository {
 
   async softDeleteIncome(planId: string, incomeId: string, actor: AuthUser) {
     const db = getFirebaseFirestore();
-    const incomeRef = doc(db, 'plans', planId, 'incomes', incomeId);
-    const planRef = doc(db, 'plans', planId);
+    const incomeRef = getPlanDocumentRef(db, planId, 'incomes', incomeId);
+    const planRef = getPlanRootRef(db, planId);
     const now = Timestamp.now();
 
     const deletedAmount = await runTransaction(db, async (transaction) => {
@@ -145,7 +145,7 @@ export class FirestoreIncomeRepository implements IncomeRepository {
 
   watchIncomes(planId: string, callback: (incomes: IncomeDocument[]) => void, onError?: (error: Error) => void) {
     return onSnapshot(
-      collection(getFirebaseFirestore(), 'plans', planId, 'incomes'),
+      getPlanCollectionRef(getFirebaseFirestore(), planId, 'incomes'),
       (snapshot) => {
         const incomes = snapshot.docs
           .map((item) => item.data() as IncomeDocument)
@@ -167,7 +167,7 @@ export class FirestoreIncomeRepository implements IncomeRepository {
     onError?: (error: Error) => void,
   ) {
     return onSnapshot(
-      doc(getFirebaseFirestore(), 'plans', planId, 'incomes', incomeId),
+      getPlanDocumentRef(getFirebaseFirestore(), planId, 'incomes', incomeId),
       (snapshot) => {
         callback(snapshot.exists() ? (snapshot.data() as IncomeDocument) : null);
       },

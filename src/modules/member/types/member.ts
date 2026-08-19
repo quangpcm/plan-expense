@@ -1,5 +1,4 @@
 import type { Timestamp } from 'firebase/firestore';
-
 export type MemberType = 'registered' | 'guest';
 
 export type PlanRole = 'owner' | 'editor' | 'viewer';
@@ -29,22 +28,6 @@ export type PlanMemberDocument = {
   createdByUserId: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
-};
-
-export type ResolvedPlanPermissions = {
-  canManagePlan: boolean;
-  canManageMembers: boolean;
-  canCreateExpense: boolean;
-  canEditOwnExpense: boolean;
-  canDeleteOwnExpense: boolean;
-  canEditAllExpenses: boolean;
-  canDeleteAllExpenses: boolean;
-  canCreateIncome: boolean;
-  canEditOwnIncome: boolean;
-  canDeleteOwnIncome: boolean;
-  canViewStatistics: boolean;
-  canManageSettlements: boolean;
-  canManageWeddingGuest: boolean;
 };
 
 export type AddGuestInput = {

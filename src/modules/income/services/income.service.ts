@@ -3,7 +3,7 @@ import type { AuthUser } from '@/modules/auth/types/auth';
 import type { Category } from '@/modules/category/types/category';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
-import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
+import { hasPlanCapability } from '@/modules/member/services/permission.service';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import type { CreateIncomeInput, IncomeDocument, UpdateIncomeInput } from '@/modules/income/types/income';
 import type { IncomeRepository } from '@/modules/income/repositories/income.repository';
@@ -39,7 +39,7 @@ export class IncomeService {
   async createIncome(input: CreateIncomeInput, context: IncomeContext) {
     this.assertEditablePlan(context.plan);
 
-    if (!resolvePlanPermissions(context.currentMember).canCreateIncome) {
+    if (!hasPlanCapability(context.currentMember, 'finance.createIncome')) {
       throw new AppError('You do not have permission to create incomes.', 'INCOME_PERMISSION_DENIED', 403);
     }
 
@@ -73,8 +73,9 @@ export class IncomeService {
 
   async updateIncome(input: UpdateIncomeInput, context: IncomeContext, income: IncomeDocument) {
     this.assertEditablePlan(context.plan);
-    const permissions = resolvePlanPermissions(context.currentMember);
-    const canEdit = permissions.canEditOwnIncome && income.createdByMemberId === context.currentMember?.id;
+    const canEdit =
+      hasPlanCapability(context.currentMember, 'finance.editOwnIncome') &&
+      income.createdByMemberId === context.currentMember?.id;
 
     if (!canEdit) {
       throw new AppError('You do not have permission to edit this income.', 'INCOME_EDIT_DENIED', 403);
@@ -98,8 +99,8 @@ export class IncomeService {
     currentMember: PlanMemberDocument | null,
   ) {
     this.assertEditablePlan(plan);
-    const permissions = resolvePlanPermissions(currentMember);
-    const canDelete = permissions.canDeleteOwnIncome && income.createdByMemberId === currentMember?.id;
+    const canDelete =
+      hasPlanCapability(currentMember, 'finance.deleteOwnIncome') && income.createdByMemberId === currentMember?.id;
 
     if (!canDelete) {
       throw new AppError('You do not have permission to delete this income.', 'INCOME_DELETE_DENIED', 403);

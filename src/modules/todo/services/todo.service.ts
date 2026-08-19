@@ -9,7 +9,6 @@ import type {
   UpdateTodoInput,
 } from '@/modules/todo/types/todo';
 import type { AuthUser } from '@/modules/auth/types/auth';
-import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import { deleteAttachmentsInBackground } from '@/modules/storage/utils/delete-attachments';
@@ -20,7 +19,7 @@ export class TodoService {
   constructor(private readonly todoRepository: TodoRepository) {}
 
   private assertManagePlanPermission(currentMember: PlanMemberDocument | null) {
-    if (!resolvePlanPermissions(currentMember).canManagePlan) {
+    if (currentMember?.role !== 'owner') {
       throw new AppError('Only the owner can manage todos.', 'TODO_PERMISSION_DENIED', 403);
     }
   }

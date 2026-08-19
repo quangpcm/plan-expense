@@ -2,7 +2,6 @@
 
 import {
   Timestamp,
-  collection,
   doc,
   getDoc,
   getDocs,
@@ -17,6 +16,7 @@ import {
 import { getFirebaseFirestore } from '@/config/firebase.config';
 import type { AuthUser } from '@/modules/auth/types/auth';
 import type { MemberRepository } from '@/modules/member/repositories/member.repository';
+import { getPlanCollectionRef, getPlanDocumentRef } from '@/modules/plan';
 import type {
   AddGuestInput,
   PlanMemberDocument,
@@ -29,7 +29,7 @@ import { mapFirebaseError } from '@/shared/utils/firebase-error';
 export class FirestoreMemberRepository implements MemberRepository {
   watchMembers(planId: string, callback: (members: PlanMemberDocument[]) => void, onError?: (error: Error) => void) {
     const membersQuery = query(
-      collection(getFirebaseFirestore(), 'plans', planId, 'members'),
+      getPlanCollectionRef(getFirebaseFirestore(), planId, 'members'),
       orderBy('createdAt', 'asc'),
     );
 
@@ -48,8 +48,7 @@ export class FirestoreMemberRepository implements MemberRepository {
     const db = getFirebaseFirestore();
     const now = Timestamp.now();
     const batch = writeBatch(db);
-    const memberRef = doc(collection(db, 'plans', planId, 'members'));
-    const planRef = doc(db, 'plans', planId);
+    const memberRef = doc(getPlanCollectionRef(db, planId, 'members'));
 
     batch.set(memberRef, {
       id: memberRef.id,
@@ -79,7 +78,7 @@ export class FirestoreMemberRepository implements MemberRepository {
   }
 
   async updateMember(planId: string, input: UpdateMemberInput) {
-    await updateDoc(doc(getFirebaseFirestore(), 'plans', planId, 'members', input.memberId), {
+    await updateDoc(getPlanDocumentRef(getFirebaseFirestore(), planId, 'members', input.memberId), {
       nickname: input.nickname,
       nicknameIsCustom: true,
       role: input.role,
@@ -91,7 +90,7 @@ export class FirestoreMemberRepository implements MemberRepository {
   }
 
   async updateMemberAvatar(planId: string, input: UpdateMemberAvatarInput) {
-    await updateDoc(doc(getFirebaseFirestore(), 'plans', planId, 'members', input.memberId), {
+    await updateDoc(getPlanDocumentRef(getFirebaseFirestore(), planId, 'members', input.memberId), {
       avatarUrl: input.avatarUrl,
       updatedAt: Timestamp.now(),
     });
@@ -105,7 +104,7 @@ export class FirestoreMemberRepository implements MemberRepository {
     await Promise.all(
       userPlansSnapshot.docs.map(async (userPlanSnapshot) => {
         const { planId, memberId } = userPlanSnapshot.data() as { planId: string; memberId: string };
-        const memberRef = doc(db, 'plans', planId, 'members', memberId);
+        const memberRef = getPlanDocumentRef(db, planId, 'members', memberId);
         const memberSnapshot = await getDoc(memberRef);
 
         if (!memberSnapshot.exists()) {
@@ -125,7 +124,7 @@ export class FirestoreMemberRepository implements MemberRepository {
 
   async unlinkMemberAccount(planId: string, memberId: string) {
     const db = getFirebaseFirestore();
-    const memberRef = doc(db, 'plans', planId, 'members', memberId);
+    const memberRef = getPlanDocumentRef(db, planId, 'members', memberId);
 
     await runTransaction(db, async (transaction) => {
       const memberSnapshot = await transaction.get(memberRef);
@@ -153,7 +152,7 @@ export class FirestoreMemberRepository implements MemberRepository {
 
   async removeMember(planId: string, memberId: string) {
     const db = getFirebaseFirestore();
-    const memberRef = doc(db, 'plans', planId, 'members', memberId);
+    const memberRef = getPlanDocumentRef(db, planId, 'members', memberId);
     const removedAt = await runTransaction(db, async (transaction) => {
       const memberSnapshot = await transaction.get(memberRef);
 
@@ -185,7 +184,7 @@ export class FirestoreMemberRepository implements MemberRepository {
 
   async reactivateMember(planId: string, memberId: string) {
     const db = getFirebaseFirestore();
-    const memberRef = doc(db, 'plans', planId, 'members', memberId);
+    const memberRef = getPlanDocumentRef(db, planId, 'members', memberId);
     const reactivatedAt = await runTransaction(db, async (transaction) => {
       const memberSnapshot = await transaction.get(memberRef);
 
@@ -217,7 +216,7 @@ export class FirestoreMemberRepository implements MemberRepository {
 
   async deleteMember(planId: string, memberId: string) {
     const db = getFirebaseFirestore();
-    const memberRef = doc(db, 'plans', planId, 'members', memberId);
+    const memberRef = getPlanDocumentRef(db, planId, 'members', memberId);
     const deletedAt = await runTransaction(db, async (transaction) => {
       const memberSnapshot = await transaction.get(memberRef);
 

@@ -1,6 +1,5 @@
 'use client';
-
-import Link from 'next/link';
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   notFound,
@@ -18,7 +17,6 @@ import {
   LogOut,
   MoreVertical,
   PencilLine,
-  Plus,
   Settings,
   Trash2,
   Users,
@@ -27,7 +25,6 @@ import type { LucideIcon } from 'lucide-react';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
-import { InvitationList } from '@/modules/invitation/components/invitation-list';
 import { usePlanInvitations } from '@/modules/invitation/hooks/use-plan-invitations';
 import { invitationService } from '@/modules/invitation/services';
 import type { InvitationDocument } from '@/modules/invitation/types/invitation';
@@ -42,11 +39,12 @@ import { TimelineList } from '@/modules/expense/components/timeline-list';
 import { useExpenses } from '@/modules/expense/hooks/use-expenses';
 import { expenseService } from '@/modules/expense/services';
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
+import { FinanceTab } from '@/modules/expense';
 import { MemberAvatarStack } from '@/modules/member/components/member-avatar-stack';
-import { MemberList } from '@/modules/member/components/member-list';
-import { MemberManagementPanel } from '@/modules/member/components/member-management-panel';
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
+import { hasPlanCapability } from '@/modules/member/services/permission.service';
 import { memberService } from '@/modules/member/services';
+import { MembersTab } from '@/modules/member';
 import type {
   PlanMemberDocument,
   PlanRole,
@@ -58,6 +56,12 @@ import { planTypeOptions } from '@/modules/plan/constants/plan.constants';
 import { planService } from '@/modules/plan/services';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
 import { useUserPlans } from '@/modules/plan/hooks/use-user-plans';
+import {
+  getPlanDetailTabs,
+  hasPlanModule,
+  OverviewTab,
+  resolvePlanDetailTab,
+} from '@/modules/plan';
 import type { PlanStatus } from '@/modules/plan/types/plan';
 import { getEffectiveBudgetAmount } from '@/modules/plan/utils/get-effective-budget-amount';
 import { PasscodeForm } from '@/modules/user/components/passcode-form';
@@ -65,11 +69,8 @@ import { useCurrentUserProfile } from '@/modules/user/hooks/use-current-user-pro
 import { recalculateEstimatedAmounts } from '@/shared/lib/firestore/recalculate-estimated-amounts';
 import { Switch } from '@/shared/components/ui/switch';
 import {
-  MilestoneExpensePanel,
+  getVisibleMilestones,
   MilestoneForm,
-  MilestoneList,
-  MilestoneSearchControl,
-  MilestoneTimelineBoard,
   getMilestoneAnchorDate,
   milestoneService,
   useMilestones,
@@ -78,19 +79,31 @@ import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import {
   TodoDetailView,
   TodoForm,
-  TodoList,
-  TodoListControls,
   TodoVendorForm,
   filterTodosByStatus,
   sortTodosByDueDate,
   useTodos,
   todoService,
 } from '@/modules/todo';
+import { PlanningTab } from '@/modules/planning';
 import type { TodoDueSortOrder, TodoStatusFilter } from '@/modules/todo';
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import { WeddingGuestPanel } from '@/modules/wedding-guest';
+import {
+  TravelActivityForm,
+  TravelItineraryTab,
+  travelActivityService,
+  useTravelActivities,
+} from '@/modules/travel-activity';
+import type { TravelActivityDocument } from '@/modules/travel-activity';
+import {
+  DebtForm,
+  DebtTrackingTab,
+  RepaymentForm,
+  useDebtTracking,
+} from '@/modules/debt-tracking';
+import type { DebtDocument } from '@/modules/debt-tracking';
 import { CategoryBreakdown } from '@/modules/statistic/components/category-breakdown';
-import { CompletedPlanOverview } from '@/modules/statistic/components/completed-plan-overview';
 import { ExpenseTimelineChart } from '@/modules/statistic/components/expense-timeline-chart';
 import { MemberBalanceTable } from '@/modules/statistic/components/member-balance-table';
 import { MemberSpendingList } from '@/modules/statistic/components/member-spending-list';
@@ -119,31 +132,15 @@ import { formatDate } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 import { cn } from '@/shared/utils/cn';
 
-const tabs = [
-  'Tổng quan',
-  'Công việc',
-  'Tài chính',
-  'Khách mời',
-  'Thành viên',
-] as const;
-
 const tabIcons = {
-  'Tổng quan': LayoutDashboard,
-  'Công việc': Flag,
-  'Tài chính': Clock,
-  'Khách mời': Gift,
-  'Thành viên': Users,
+  overview: LayoutDashboard,
+  planning: Flag,
+  finance: Clock,
+  weddingGuests: Gift,
+  members: Users,
+  travelItinerary: Clock,
+  debtTracking: BarChart3,
 } as const;
-
-const TAB_BY_QUERY_PARAM: Record<string, (typeof tabs)[number]> = {
-  milestones: 'Công việc',
-  todos: 'Công việc',
-  timeline: 'Tài chính',
-  statistic: 'Tài chính',
-  guests: 'Khách mời',
-  members: 'Thành viên',
-  // 'settings' xử lý riêng trong effect bên dưới — mở headerModal thay vì set activeTab
-};
 
 function getMilestoneWorkSortTime(milestone: MilestoneDocument) {
   return getMilestoneAnchorDate(milestone)?.getTime() ?? 0;
@@ -175,13 +172,15 @@ export default function PlanDetailPage() {
     : params.planId;
   const { user } = useAuthSession();
   const { plan, isLoading, errorMessage: planError } = usePlan(planId);
-  const [activeTab, setActiveTab] =
-    useState<(typeof tabs)[number]>('Tổng quan');
+  const [activeTab, setActiveTab] = useState<
+    keyof typeof tabIcons
+  >('overview');
   const {
     milestones,
     isLoading: isMilestonesLoading,
     errorMessage: milestoneError,
   } = useMilestones(planId);
+  const visibleMilestones = useMemo(() => getVisibleMilestones(milestones), [milestones]);
   const {
     todos,
     isLoading: isTodosLoading,
@@ -190,11 +189,16 @@ export default function PlanDetailPage() {
   const {
     members,
     currentMember,
-    permissions,
+    isOwner,
+    hasCapability,
     errorMessage: memberError,
   } = usePlanMembers(planId);
   const { invitations, errorMessage: invitationError } =
     usePlanInvitations(planId);
+  const planDetailTabs = useMemo(
+    () => (plan ? getPlanDetailTabs(plan) : []),
+    [plan],
+  );
   const estimatedTotal = useMemo(
     () =>
       todos.reduce(
@@ -233,8 +237,36 @@ export default function PlanDetailPage() {
     () => (plan ? getIncomeCategories(plan.planType) : []),
     [plan],
   );
+  const isTravelItineraryEnabled = Boolean(
+    plan && hasPlanModule(plan, 'travelItinerary'),
+  );
+  const isDebtTrackingEnabled = Boolean(
+    plan && hasPlanModule(plan, 'debtTracking'),
+  );
   const { expenses, errorMessage: expenseError } = useExpenses(planId);
   const { incomes, errorMessage: incomeError } = useIncomes(planId);
+  const {
+    activities: travelActivities,
+    isLoading: isTravelActivitiesLoading,
+    errorMessage: travelActivityError,
+  } = useTravelActivities(planId, isTravelItineraryEnabled);
+  const {
+    debts,
+    repayments,
+    repaymentTotalsByDebtId,
+    summary: debtTrackingSummary,
+    isLoading: isDebtTrackingLoading,
+    errorMessage: debtTrackingError,
+  } = useDebtTracking(planId, isDebtTrackingEnabled);
+  const isPlanEnded = plan?.status === 'completed' || plan?.status === 'closed';
+  const canManageMembers = hasCapability('members.manage');
+  const canManageSettlements = hasCapability('finance.manageSettlements');
+  const canEditAllExpenses = hasCapability('finance.editAllExpense');
+  const canManageTravelActivities =
+    hasCapability('travelItinerary.createActivity') && !isPlanEnded;
+  const canManageDebtTracking =
+    hasCapability('debtTracking.createDebt') && !isPlanEnded;
+  const canManagePlanning = isOwner && !isPlanEnded;
   const { settlements, errorMessage: settlementWatchError } =
     useSettlements(planId);
   const [memberActionError, setMemberActionError] = useState<string | null>(
@@ -307,6 +339,15 @@ export default function PlanDetailPage() {
   const [expenseActionError, setExpenseActionError] = useState<string | null>(
     null,
   );
+  const [travelActionError, setTravelActionError] = useState<string | null>(null);
+  const [showTravelActivityForm, setShowTravelActivityForm] = useState(false);
+  const [editingTravelActivity, setEditingTravelActivity] =
+    useState<TravelActivityDocument | null>(null);
+  const [detailTravelActivity, setDetailTravelActivity] =
+    useState<TravelActivityDocument | null>(null);
+  const [showDebtForm, setShowDebtForm] = useState(false);
+  const [detailDebt, setDetailDebt] = useState<DebtDocument | null>(null);
+  const [repaymentDebt, setRepaymentDebt] = useState<DebtDocument | null>(null);
   const [workViewMode, setWorkViewMode] = useState<'milestones' | 'todos'>(
     'milestones',
   );
@@ -332,6 +373,30 @@ export default function PlanDetailPage() {
   } | null>(null);
   const previousPlanIdRef = useRef<string | undefined>(undefined);
   const hasRequestedEstimateRepairRef = useRef(false);
+  const openPlanTab = (tabId: keyof typeof tabIcons) => {
+    setActiveTab(tabId);
+
+    const tabDefinition = planDetailTabs.find((tab) => tab.id === tabId);
+
+    if (!tabDefinition) {
+      return;
+    }
+
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+
+    if (tabDefinition.queryTab) {
+      nextSearchParams.set('tab', tabDefinition.queryTab);
+    } else {
+      nextSearchParams.delete('tab');
+    }
+
+    if (tabDefinition.id !== 'finance') {
+      nextSearchParams.delete('milestoneId');
+    }
+
+    const nextSearch = nextSearchParams.toString();
+    router.replace(nextSearch ? `/plans/${planId}?${nextSearch}` : `/plans/${planId}`);
+  };
 
   useEffect(() => {
     if (!plan) {
@@ -352,6 +417,10 @@ export default function PlanDetailPage() {
   }, [estimatedTotal, plan]);
 
   useEffect(() => {
+    if (!plan) {
+      return;
+    }
+
     const tabParam = searchParams.get('tab');
     const isNewPlan =
       previousPlanIdRef.current !== undefined &&
@@ -360,30 +429,28 @@ export default function PlanDetailPage() {
 
     if (tabParam === 'settings') {
       setHeaderModal('plan-settings');
-    } else if (tabParam && TAB_BY_QUERY_PARAM[tabParam]) {
-      setActiveTab(TAB_BY_QUERY_PARAM[tabParam]);
-
+    } else if (tabParam) {
+      setActiveTab(resolvePlanDetailTab(plan, tabParam));
       if (tabParam === 'statistic') {
         setShowStatisticSheet(true);
       }
     } else if (isNewPlan) {
-      setActiveTab('Tổng quan');
+      setActiveTab(resolvePlanDetailTab(plan, null));
     }
-  }, [planId, searchParams]);
+  }, [plan, planId, searchParams]);
 
   const currentPlan = plan;
-  const isPlanEnded = plan?.status === 'completed' || plan?.status === 'closed';
   const statistic = useMemo(
     () =>
       statisticService.calculate({
         members,
         expenses,
         incomes,
-        milestones,
+        milestones: visibleMilestones,
         categories,
         settlements,
       }),
-    [members, expenses, incomes, milestones, categories, settlements],
+    [members, expenses, incomes, visibleMilestones, categories, settlements],
   );
   const suggestions = settlementService.suggest(statistic.memberBalances);
   const statisticMemberDrilldownMember = useMemo(
@@ -410,12 +477,12 @@ export default function PlanDetailPage() {
   const statisticMilestoneMemberDrilldownMilestone = useMemo(
     () =>
       statisticMilestoneMemberDrilldown
-        ? (milestones.find(
+        ? (visibleMilestones.find(
             (milestone) =>
               milestone.id === statisticMilestoneMemberDrilldown.milestoneId,
           ) ?? null)
         : null,
-    [statisticMilestoneMemberDrilldown, milestones],
+    [statisticMilestoneMemberDrilldown, visibleMilestones],
   );
   const statisticMilestoneMemberDrilldownMember = useMemo(
     () =>
@@ -455,7 +522,7 @@ export default function PlanDetailPage() {
   });
   const sortedWorkMilestones = useMemo(
     () =>
-      [...milestones].sort((a, b) => {
+      [...visibleMilestones].sort((a, b) => {
         const timeDifference =
           getMilestoneWorkSortTime(a) - getMilestoneWorkSortTime(b);
 
@@ -465,7 +532,7 @@ export default function PlanDetailPage() {
 
         return a.orderIndex - b.orderIndex;
       }),
-    [milestones],
+    [visibleMilestones],
   );
   const defaultWorkMilestone = useMemo(() => {
     const eligible = sortedWorkMilestones.filter(
@@ -482,21 +549,12 @@ export default function PlanDetailPage() {
       ) ?? defaultWorkMilestone,
     [selectedMilestoneId, sortedWorkMilestones, defaultWorkMilestone],
   );
-  const selectedMilestoneExpenses = useMemo(
-    () =>
-      selectedMilestone
-        ? expenses
-            .filter((expense) => expense.milestoneId === selectedMilestone.id)
-            .sort((a, b) => b.spentAt.toMillis() - a.spentAt.toMillis())
-        : [],
-    [expenses, selectedMilestone],
-  );
   const expenseSheetMilestone = useMemo(
     () =>
-      milestones.find(
+      visibleMilestones.find(
         (milestone) => milestone.id === expenseSheetMilestoneId,
       ) ?? null,
-    [expenseSheetMilestoneId, milestones],
+    [expenseSheetMilestoneId, visibleMilestones],
   );
   const expenseSheetMilestoneExpenses = useMemo(
     () =>
@@ -511,14 +569,14 @@ export default function PlanDetailPage() {
   );
   const isDesktopViewport = useMediaQuery('(min-width: 1024px)');
   const upcomingMilestones = useMemo(() => {
-    return milestones
+    return visibleMilestones
       .filter(
         (milestone) =>
           milestone.status === 'in_progress' || milestone.status === 'upcoming',
       )
       .sort((a, b) => getMilestoneWorkSortTime(a) - getMilestoneWorkSortTime(b))
       .slice(0, isDesktopViewport ? 3 : 2);
-  }, [milestones, isDesktopViewport]);
+  }, [visibleMilestones, isDesktopViewport]);
   const upcomingTodos = useMemo(() => {
     return todos
       .filter(
@@ -550,11 +608,11 @@ export default function PlanDetailPage() {
 
     if (
       milestoneIdParam &&
-      milestones.some((milestone) => milestone.id === milestoneIdParam)
+      visibleMilestones.some((milestone) => milestone.id === milestoneIdParam)
     ) {
       setSelectedTimelineMilestoneId(milestoneIdParam);
     }
-  }, [milestones, searchParams]);
+  }, [visibleMilestones, searchParams]);
 
   useEffect(() => {
     const todoIdParam = searchParams.get('todoId');
@@ -569,7 +627,7 @@ export default function PlanDetailPage() {
       return;
     }
 
-    setActiveTab('Công việc');
+    setActiveTab('planning');
     setWorkViewMode('todos');
     setSelectedMilestoneId(matchedTodo.milestoneId);
     setDetailTodo((current) =>
@@ -596,13 +654,13 @@ export default function PlanDetailPage() {
   useEffect(() => {
     if (
       selectedTimelineMilestoneId &&
-      !milestones.some(
+      !visibleMilestones.some(
         (milestone) => milestone.id === selectedTimelineMilestoneId,
       )
     ) {
       setSelectedTimelineMilestoneId(null);
     }
-  }, [milestones, selectedTimelineMilestoneId]);
+  }, [visibleMilestones, selectedTimelineMilestoneId]);
 
   useEffect(() => {
     if (!detailTodo) {
@@ -620,6 +678,42 @@ export default function PlanDetailPage() {
       setDetailTodo(nextTodo);
     }
   }, [detailTodo, todos]);
+
+  useEffect(() => {
+    if (!detailTravelActivity) {
+      return;
+    }
+
+    const nextActivity =
+      travelActivities.find((activity) => activity.id === detailTravelActivity.id) ??
+      null;
+
+    if (!nextActivity) {
+      setDetailTravelActivity(null);
+      return;
+    }
+
+    if (nextActivity !== detailTravelActivity) {
+      setDetailTravelActivity(nextActivity);
+    }
+  }, [detailTravelActivity, travelActivities]);
+
+  useEffect(() => {
+    if (!detailDebt) {
+      return;
+    }
+
+    const nextDebt = debts.find((debt) => debt.id === detailDebt.id) ?? null;
+
+    if (!nextDebt) {
+      setDetailDebt(null);
+      return;
+    }
+
+    if (nextDebt !== detailDebt) {
+      setDetailDebt(nextDebt);
+    }
+  }, [debts, detailDebt]);
 
   useEffect(() => {
     if (!todoToRestoreAfterVendor) {
@@ -659,6 +753,41 @@ export default function PlanDetailPage() {
   const isPlanSecuredForMe = Boolean(
     mySummary?.isLocked && userProfile?.secretNumberHash,
   );
+
+  async function handleDeleteTravelActivity(activity: TravelActivityDocument) {
+    if (!user) {
+      return;
+    }
+
+    const shouldDelete = window.confirm(
+      `Xóa hoạt động "${activity.title}" khỏi itinerary?`,
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    setTravelActionError(null);
+
+    try {
+      await travelActivityService.deleteActivity(
+        ensuredPlan,
+        activity.id,
+        user,
+        currentMember,
+      );
+
+      if (detailTravelActivity?.id === activity.id) {
+        setDetailTravelActivity(null);
+      }
+    } catch (error) {
+      setTravelActionError(
+        error instanceof Error
+          ? error.message
+          : 'Không thể xóa hoạt động lịch trình.',
+      );
+    }
+  }
 
   if (isPlanSecuredForMe && userProfile?.secretNumberHash && !isPlanUnlocked) {
     return (
@@ -1035,60 +1164,6 @@ export default function PlanDetailPage() {
     }
   }
 
-  async function handleMoveMilestone(
-    milestone: MilestoneDocument,
-    direction: 'up' | 'down',
-  ) {
-    if (!currentPlan) {
-      return;
-    }
-
-    const currentIndex = milestones.findIndex(
-      (item) => item.id === milestone.id,
-    );
-    const targetIndex =
-      direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-    const targetMilestone = milestones[targetIndex];
-
-    if (currentIndex < 0 || !targetMilestone) {
-      return;
-    }
-
-    setIsMilestoneSubmitting(true);
-    setMilestoneActionError(null);
-
-    try {
-      const reordered = milestones.map((item, index) => {
-        if (index === currentIndex) {
-          return {
-            milestoneId: item.id,
-            orderIndex: targetMilestone.orderIndex,
-          };
-        }
-
-        if (index === targetIndex) {
-          return { milestoneId: item.id, orderIndex: milestone.orderIndex };
-        }
-
-        return { milestoneId: item.id, orderIndex: item.orderIndex };
-      });
-
-      await milestoneService.reorderMilestones(
-        ensuredPlan,
-        reordered,
-        currentMember,
-      );
-    } catch (error) {
-      setMilestoneActionError(
-        error instanceof Error
-          ? error.message
-          : 'Hiện chưa thể sắp xếp lại mốc kế hoạch.',
-      );
-    } finally {
-      setIsMilestoneSubmitting(false);
-    }
-  }
-
   async function handleDeleteMilestone(milestone: MilestoneDocument) {
     if (!user) {
       return;
@@ -1389,7 +1464,7 @@ export default function PlanDetailPage() {
   }
 
   const headerMenuItems: HeaderMenuItem[] = [
-    permissions.canManagePlan
+    isOwner
       ? {
           key: 'edit-plan',
           label: 'Chỉnh sửa kế hoạch',
@@ -1406,7 +1481,7 @@ export default function PlanDetailPage() {
       icon: Users,
       onSelect: () => {
         setShowHeaderMenu(false);
-        setActiveTab('Thành viên');
+        openPlanTab('members');
       },
     },
     {
@@ -1420,8 +1495,8 @@ export default function PlanDetailPage() {
     },
     {
       key: 'leave-or-delete',
-      label: permissions.canManagePlan ? 'Xóa kế hoạch' : 'Rời kế hoạch',
-      icon: permissions.canManagePlan ? Trash2 : LogOut,
+      label: isOwner ? 'Xóa kế hoạch' : 'Rời kế hoạch',
+      icon: isOwner ? Trash2 : LogOut,
       destructive: true,
       onSelect: () => {
         setShowHeaderMenu(false);
@@ -1430,630 +1505,146 @@ export default function PlanDetailPage() {
     },
   ].filter((item): item is HeaderMenuItem => item !== null);
 
-  return (
-    <main className="flex flex-col gap-5">
-      <Breadcrumbs items={[{ label: currentPlan.name }]} />
-      {planError ||
-      milestoneError ||
-      todoError ||
-      memberError ||
-      invitationError ||
-      expenseError ||
-      incomeError ||
-      settlementWatchError ? (
-        <AuthFormMessage
-          message={
-            planError ||
-            milestoneError ||
-            todoError ||
-            memberError ||
-            invitationError ||
-            expenseError ||
-            incomeError ||
-            settlementWatchError ||
-            'Hiện chưa thể đồng bộ dữ liệu kế hoạch mới nhất.'
-          }
-          type="error"
-        />
-      ) : null}
-      {activeTab === 'Tổng quan' ? (
-        <div className="flex flex-col gap-6">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <h1 className="min-w-0 flex-1 truncate text-3xl font-semibold text-slate-950">
-                {plan.name}
-              </h1>
-              <div className="relative shrink-0">
-                <button
-                  aria-label="Tùy chọn kế hoạch"
-                  className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
-                  onClick={() => setShowHeaderMenu((value) => !value)}
-                  type="button"
-                >
-                  <MoreVertical className="size-4" />
-                </button>
-                {showHeaderMenu ? (
-                  <>
-                    <div className="hidden md:block">
-                      <button
-                        aria-label="Đóng menu"
-                        className="fixed inset-0 z-40"
-                        onClick={() => setShowHeaderMenu(false)}
-                        type="button"
-                      />
-                      <Card className="absolute top-12 right-0 z-50 w-64 gap-1 p-2 shadow-[0_16px_60px_rgba(15,23,42,0.16)]">
-                        {headerMenuItems.map((item) => (
-                          <button
-                            className={cn(
-                              'flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition hover:bg-slate-100',
-                              item.destructive
-                                ? 'text-rose-600'
-                                : 'text-slate-700',
-                            )}
-                            key={item.key}
-                            onClick={item.onSelect}
-                            type="button"
-                          >
-                            <item.icon className="size-4 shrink-0" />
-                            {item.label}
-                          </button>
-                        ))}
-                      </Card>
-                    </div>
-                    <div className="md:hidden">
-                      <BottomSheet
-                        onClose={() => setShowHeaderMenu(false)}
-                        open={showHeaderMenu}
-                        title="Tùy chọn kế hoạch"
-                      >
-                        <div className="grid gap-1">
-                          {headerMenuItems.map((item) => (
-                            <button
-                              className={cn(
-                                'flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition hover:bg-slate-100',
-                                item.destructive
-                                  ? 'text-rose-600'
-                                  : 'text-slate-700',
-                              )}
-                              key={item.key}
-                              onClick={item.onSelect}
-                              type="button"
-                            >
-                              <item.icon className="size-4 shrink-0" />
-                              {item.label}
-                            </button>
-                          ))}
-                        </div>
-                      </BottomSheet>
-                    </div>
-                  </>
-                ) : null}
-              </div>
-            </div>
-
-            <p className="text-sm text-slate-600">
-              {planTypeOptions.find((option) => option.value === plan.planType)
-                ?.label ?? plan.planType}{' '}
-              · {planStatusLabel[plan.status]}
-            </p>
-
-            {plan.description ? (
-              <p className="text-sm leading-6 text-slate-600">
-                {plan.description}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="flex items-end justify-between gap-4">
-            <div className="flex gap-8">
-              <div>
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
-                  Tổng chi
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-slate-950">
-                  {formatCompactCurrency(plan.totalExpense)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
-                  Dự kiến
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-slate-600">
-                  {formatCompactCurrency(effectiveEstimatedTotal)}
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
-                Thành viên
-              </p>
-              <MemberAvatarStack members={members} />
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      <Card className="gap-4">
-        <div className="flex items-center gap-2">
-          {tabs
-            .filter((tab) => tab !== 'Khách mời' || plan.planType === 'wedding')
-            .map((tab) => {
-              const Icon = tabIcons[tab];
-              const isActive = activeTab === tab;
-
-              return (
-                <button
-                  key={tab}
-                  className={cn(
-                    'flex min-h-11 items-center justify-center gap-2 overflow-hidden rounded-full text-sm font-medium transition-[background-color,color,padding] duration-200',
-                    isActive
-                      ? 'flex-1 bg-slate-950 px-4 text-white'
-                      : 'bg-slate-100 px-3 text-slate-600 sm:flex-1 sm:px-4',
-                  )}
-                  onClick={() => setActiveTab(tab)}
-                  type="button"
-                >
-                  <Icon className="size-4 shrink-0" />
-                  <span
-                    className={cn(
-                      'overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200',
-                      isActive
-                        ? 'max-w-[8rem] opacity-100'
-                        : 'max-w-0 opacity-0 sm:max-w-[8rem] sm:opacity-100',
-                    )}
-                  >
-                    {tab}
-                  </span>
-                </button>
-              );
-            })}
-        </div>
-        {activeTab === 'Tổng quan' ? (
-          <div className="space-y-6">
-            {isPlanEnded ? (
-              <>
-                <CompletedPlanOverview
-                  endedAtLabel={
-                    endedPlanDate ? formatDate(endedPlanDate) : 'Đã kết thúc'
-                  }
-                  onSelectMember={(memberId) =>
-                    setStatisticMemberDrilldown({ memberId })
-                  }
-                  planStatus={plan.status}
-                  statistic={statistic}
-                />
-
-                <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                  <CategoryBreakdown statistic={statistic} />
-                  <MilestoneBreakdown
-                    onSelectMilestoneMember={(milestoneId, memberId) =>
-                      setStatisticMilestoneMemberDrilldown({
-                        milestoneId,
-                        memberId,
-                      })
-                    }
-                    statistic={statistic}
-                  />
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="space-y-3">
-                  <SectionHeading eyebrow="Mốc kế hoạch" title="Mốc sắp tới" />
-                  {milestoneActionError ? (
-                    <AuthFormMessage
-                      message={milestoneActionError}
-                      type="error"
-                    />
-                  ) : null}
-                  {isMilestonesLoading ? (
-                    <Skeleton className="h-32 rounded-[28px]" />
-                  ) : (
-                    <MilestoneList
-                      canManagePlan={false}
-                      emptyLabel="Không có mốc nào đang diễn ra hoặc sắp diễn ra."
-                      estimatedByMilestoneId={estimatedByMilestoneId}
-                      isSubmitting={false}
-                      milestones={upcomingMilestones}
-                      onEdit={() => {
-                        setWorkViewMode('milestones');
-                        setActiveTab('Công việc');
-                      }}
-                      onMoveDown={() => {}}
-                      onMoveUp={() => {}}
-                      onSelect={(milestoneId) => {
-                        setSelectedMilestoneId(milestoneId);
-                        setWorkViewMode('milestones');
-                        setActiveTab('Công việc');
-                      }}
-                      selectedMilestoneId={selectedMilestone?.id ?? null}
-                    />
-                  )}
-                  <Button
-                    className="w-full justify-center"
-                    onClick={() => {
-                      setWorkViewMode('milestones');
-                      setActiveTab('Công việc');
-                    }}
-                    variant="ghost"
-                  >
-                    Xem tất cả mốc
-                  </Button>
-                </div>
-
-                <div className="space-y-3">
-                  <SectionHeading
-                    eyebrow="Công việc"
-                    title="Việc sắp đến hạn"
-                    description="5 việc chưa hoàn thành"
-                  />
-                  {todoActionError ? (
-                    <AuthFormMessage message={todoActionError} type="error" />
-                  ) : null}
-                  {isTodosLoading ? (
-                    <Skeleton className="h-32 rounded-[28px]" />
-                  ) : (
-                    <TodoList
-                      canManagePlan={permissions.canManagePlan && !isPlanEnded}
-                      className="sm:grid-cols-2 lg:grid-cols-3"
-                      emptyMessage="Không có công việc nào sắp đến hạn."
-                      isSubmitting={isTodoSubmitting}
-                      members={members}
-                      milestones={milestones}
-                      preserveOrder
-                      onAddVendor={(todo) => {
-                        setEditingVendorId(null);
-                        setVendorFormTodo(todo);
-                      }}
-                      onChangeStatus={handleChangeTodoStatus}
-                      onDeleteTodo={handleDeleteTodo}
-                      onEdit={(todo) => {
-                        setSelectedMilestoneId(todo.milestoneId);
-                        setEditingTodo(todo);
-                        setShowTodoForm(true);
-                        setActiveTab('Công việc');
-                      }}
-                      todos={upcomingTodos}
-                    />
-                  )}
-                  <Button
-                    className="w-full justify-center"
-                    onClick={() => setActiveTab('Công việc')}
-                    variant="ghost"
-                  >
-                    Xem tất cả công việc
-                  </Button>
-                </div>
-
-                <div className="space-y-3">
-                  <SectionHeading
-                    eyebrow="Tài chính"
-                    title="Thu chi kế hoạch"
-                  />
-                  <StatisticOverview statistic={statistic} />
-                </div>
-              </>
-            )}
-          </div>
-        ) : null}
-        {activeTab === 'Tài chính' ? (
+  const activeTabContent = (() => {
+    switch (activeTab) {
+      case 'overview':
+        return (
+          <OverviewTab
+            canManagePlanning={canManagePlanning}
+            endedPlanDate={endedPlanDate}
+            estimatedByMilestoneId={estimatedByMilestoneId}
+            isMilestonesLoading={isMilestonesLoading}
+            isPlanEnded={Boolean(isPlanEnded)}
+            isTodoSubmitting={isTodoSubmitting}
+            isTodosLoading={isTodosLoading}
+            members={members}
+            milestoneActionError={milestoneActionError}
+            onAddVendor={(todo) => {
+              setEditingVendorId(null);
+              setVendorFormTodo(todo);
+            }}
+            onDeleteTodo={handleDeleteTodo}
+            onOpenPlanningMilestones={() => {
+              setWorkViewMode('milestones');
+              openPlanTab('planning');
+            }}
+            onOpenPlanningTodo={(todo) => {
+              setSelectedMilestoneId(todo.milestoneId);
+              setEditingTodo(todo);
+              setShowTodoForm(true);
+              openPlanTab('planning');
+            }}
+            onOpenPlanningTodos={() => openPlanTab('planning')}
+            onSelectMemberDrilldown={(memberId) =>
+              setStatisticMemberDrilldown({ memberId })
+            }
+            onSelectMilestoneDrilldown={(milestoneId, memberId) =>
+              setStatisticMilestoneMemberDrilldown({ milestoneId, memberId })
+            }
+            onSelectUpcomingMilestone={(milestoneId) => {
+              setSelectedMilestoneId(milestoneId);
+              setWorkViewMode('milestones');
+              openPlanTab('planning');
+            }}
+            onToggleTodoStatus={handleChangeTodoStatus}
+            planStatus={plan.status}
+            selectedMilestoneId={selectedMilestone?.id ?? null}
+            statistic={statistic}
+            todoActionError={todoActionError}
+            upcomingMilestones={upcomingMilestones}
+            upcomingTodos={upcomingTodos}
+            visibleMilestones={visibleMilestones}
+          />
+        );
+      case 'finance':
+        return (
+          <FinanceTab
+            categories={[...categories, ...incomeCategories]}
+            errorMessage={expenseActionError}
+            expenses={expenses}
+            incomes={incomes}
+            isPlanEnded={Boolean(isPlanEnded)}
+            members={members}
+            milestones={visibleMilestones}
+            onOpenCreateExpense={openCreateExpense}
+            onOpenStatistic={() => setShowStatisticSheet(true)}
+            onSelectExpense={setDetailExpense}
+            onSelectedMilestoneChange={setSelectedTimelineMilestoneId}
+            plan={ensuredPlan}
+            planId={planId}
+            selectedMilestoneId={selectedTimelineMilestoneId}
+          />
+        );
+      case 'planning':
+        return (
           <>
-            <div className="flex flex-col gap-4">
-              <SectionHeading eyebrow="Thu chi" title="Dòng tiền kế hoạch" />
-              <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)]">
-                <div className="grid grid-cols-3 gap-2 lg:hidden">
-                  <Button
-                    className="min-w-0 justify-center px-3"
-                    onClick={() => setShowStatisticSheet(true)}
-                    variant="secondary"
-                  >
-                    <BarChart3 className="size-4" />
-                    Thống kê
-                  </Button>
-                  {isPlanEnded ? (
-                    <Button
-                      className="min-w-0 px-3"
-                      disabled
-                      variant="secondary"
-                    >
-                      + Khoản Thu
-                    </Button>
-                  ) : (
-                    <Button
-                      className="min-w-0 justify-center border border-[var(--color-income)]/14 bg-[var(--color-income-soft)] px-3 text-[var(--color-income)] hover:bg-[color-mix(in_srgb,var(--color-income-soft)_72%,white)]"
-                      href={`/plans/${planId}/incomes/new${selectedTimelineMilestoneId ? `?milestoneId=${selectedTimelineMilestoneId}&returnTab=timeline` : '?returnTab=timeline'}`}
-                      variant="secondary"
-                    >
-                      + Khoản Thu
-                    </Button>
-                  )}
-                  {isPlanEnded ? (
-                    <Button className="min-w-0 px-3" disabled>
-                      + Khoản Chi
-                    </Button>
-                  ) : (
-                    <Button
-                      className="min-w-0 justify-center bg-[color:color-mix(in_srgb,var(--color-primary)_92%,white)] px-3"
-                      onClick={() =>
-                        openCreateExpense(selectedTimelineMilestoneId ?? '')
-                      }
-                    >
-                      + Khoản Chi
-                    </Button>
-                  )}
-                </div>
-
-                <div className="hidden space-y-2 lg:block">
-                  <Button
-                    className="w-full justify-center"
-                    onClick={() => setShowStatisticSheet(true)}
-                    variant="secondary"
-                  >
-                    <BarChart3 className="size-4" />
-                    Thống kê
-                  </Button>
-                </div>
-                <div className="hidden space-y-2 lg:block">
-                  <div className="grid grid-cols-2 gap-2">
-                    {isPlanEnded ? (
-                      <Button
-                        className="min-w-0 px-3"
-                        disabled
-                        variant="secondary"
-                      >
-                        + Khoản Thu
-                      </Button>
-                    ) : (
-                      <Button
-                        className="min-w-0 justify-center border border-[var(--color-income)]/14 bg-[var(--color-income-soft)] text-[var(--color-income)] hover:bg-[color-mix(in_srgb,var(--color-income-soft)_72%,white)]"
-                        href={`/plans/${planId}/incomes/new${selectedTimelineMilestoneId ? `?milestoneId=${selectedTimelineMilestoneId}&returnTab=timeline` : '?returnTab=timeline'}`}
-                        variant="secondary"
-                      >
-                        + Khoản Thu
-                      </Button>
-                    )}
-                    {isPlanEnded ? (
-                      <Button className="min-w-0 px-3" disabled>
-                        + Khoản Chi
-                      </Button>
-                    ) : (
-                      <Button
-                        className="min-w-0 justify-center bg-[color:color-mix(in_srgb,var(--color-primary)_92%,white)]"
-                        href={`/plans/${planId}/expenses/new${selectedTimelineMilestoneId ? `?milestoneId=${selectedTimelineMilestoneId}&returnTab=timeline` : '?returnTab=timeline'}`}
-                      >
-                        + Khoản Chi
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-            {isPlanEnded ? (
-              <AuthFormMessage
-                message={
-                  plan.status === 'completed'
-                    ? 'Kế hoạch này đã hoàn thành. Bạn vẫn xem được dữ liệu và báo cáo tổng kết, nhưng không thể thêm hay sửa giao dịch mới.'
-                    : 'Kế hoạch này đã dừng theo dõi. Bạn vẫn xem được dữ liệu và báo cáo tổng kết, nhưng không thể thêm hay sửa giao dịch mới.'
-                }
-                type="success"
-              />
-            ) : null}
-            <TimelineList
-              categories={[...categories, ...incomeCategories]}
-              expenses={expenses}
-              incomes={incomes}
+            <PlanningTab
+              allTodosFilteredAndSorted={allTodosFilteredAndSorted}
+              categories={categories}
+              errorMessage={null}
+              expenseSheetMilestone={expenseSheetMilestone}
+              expenseSheetMilestoneExpenses={expenseSheetMilestoneExpenses}
+              incomeCategories={incomeCategories}
+              isMilestoneSubmitting={isMilestoneSubmitting}
+              isMilestonesLoading={isMilestonesLoading}
+              isOwner={isOwner}
+              isPlanEnded={Boolean(isPlanEnded)}
+              isTodoSubmitting={isTodoSubmitting}
+              isTodosLoading={isTodosLoading}
               members={members}
-              milestones={milestones}
-              onSelectedMilestoneChange={setSelectedTimelineMilestoneId}
+              milestoneActionError={milestoneActionError}
+              milestoneSearchQuery={milestoneSearchQuery}
+              onCloseExpenseSheet={() => setExpenseSheetMilestoneId(null)}
+              onCreateMilestone={() => {
+                setEditingMilestone(null);
+                setShowMilestoneForm(true);
+              }}
+              onAddTodo={(milestone) => {
+                setSelectedMilestoneId(milestone.id);
+                setEditingTodo(null);
+                setShowTodoForm(true);
+              }}
+              onAddVendor={(todo) => {
+                setEditingVendorId(null);
+                setVendorFormTodo(todo);
+              }}
+              onChangeTodoStatus={handleChangeTodoStatus}
+              onDeleteMilestone={handleDeleteMilestone}
+              onDeleteTodo={handleDeleteTodo}
+              onEditMilestone={(milestone) => {
+                setEditingMilestone(milestone);
+                setShowMilestoneForm(true);
+              }}
+              onEditTodo={(todo) => {
+                setSelectedMilestoneId(todo.milestoneId);
+                setEditingTodo(todo);
+                setShowTodoForm(true);
+              }}
+              onMilestoneQueryChange={setMilestoneSearchQuery}
+              onOpenExpenseSheet={(milestone) => {
+                setSelectedMilestoneId(milestone.id);
+                setExpenseSheetMilestoneId(milestone.id);
+              }}
+              onOpenMilestoneExpenseCreate={openCreateExpense}
+              onOpenTimelineFromMilestone={() => openPlanTab('finance')}
+              onReorderTodos={handleReorderTodosWithinMilestone}
               onSelectExpense={setDetailExpense}
+              onSelectMilestone={setSelectedMilestoneId}
+              onSortOrderChange={setTodoDueSortOrder}
+              onStatusFilterChange={setTodoStatusFilter}
+              onViewTodo={setDetailTodo}
               planId={planId}
-              selectedMilestoneId={selectedTimelineMilestoneId}
+              preserveSelectedMilestoneId={selectedMilestone?.id ?? null}
+              searchStatusFilter={todoStatusFilter}
+              selectedMilestone={selectedMilestone}
+              selectedTodoSortOrder={todoDueSortOrder}
+              sortedWorkMilestones={sortedWorkMilestones}
+              todoActionError={todoActionError}
+              todos={todos}
+              visibleMilestones={visibleMilestones}
+              workViewMode={workViewMode}
+              onWorkViewModeChange={setWorkViewMode}
             />
-          </>
-        ) : null}
-        {activeTab === 'Công việc' ? (
-          <div className="space-y-5">
-            <SectionHeading
-              eyebrow="Công việc"
-              title={
-                workViewMode === 'milestones'
-                  ? 'Lộ trình kế hoạch'
-                  : 'Tất cả công việc'
-              }
-              description={
-                workViewMode === 'milestones'
-                  ? 'Theo dõi các mốc quan trọng và công việc cần hoàn thành.'
-                  : 'Danh sách này gom toàn bộ công việc từ các milestone, giúp bạn rà nhanh tiến độ mà không cần mở từng mốc.'
-              }
-            />
-            <div className="flex items-center justify-between gap-2">
-              <div className="inline-flex gap-1 rounded-full bg-slate-100 p-1">
-                <button
-                  className={cn(
-                    'rounded-full px-4 py-2 text-sm font-medium transition',
-                    workViewMode === 'milestones'
-                      ? 'bg-white text-slate-950 shadow-sm'
-                      : 'text-slate-600',
-                  )}
-                  onClick={() => setWorkViewMode('milestones')}
-                  type="button"
-                >
-                  Theo mốc
-                </button>
-                <button
-                  className={cn(
-                    'rounded-full px-4 py-2 text-sm font-medium transition',
-                    workViewMode === 'todos'
-                      ? 'bg-white text-slate-950 shadow-sm'
-                      : 'text-slate-600',
-                  )}
-                  onClick={() => setWorkViewMode('todos')}
-                  type="button"
-                >
-                  Tất cả công việc
-                </button>
-              </div>
-              {workViewMode === 'todos' ? (
-                <TodoListControls
-                  onSortOrderChange={setTodoDueSortOrder}
-                  onStatusFilterChange={setTodoStatusFilter}
-                  sortOrder={todoDueSortOrder}
-                  statusFilter={todoStatusFilter}
-                />
-              ) : (
-                <MilestoneSearchControl
-                  onQueryChange={setMilestoneSearchQuery}
-                  query={milestoneSearchQuery}
-                />
-              )}
-            </div>
-            {milestoneActionError ? (
-              <AuthFormMessage message={milestoneActionError} type="error" />
-            ) : null}
-            {todoActionError ? (
-              <AuthFormMessage message={todoActionError} type="error" />
-            ) : null}
-            {workViewMode === 'milestones' ? (
-              <>
-                {isMilestonesLoading ? (
-                  <Skeleton className="h-48 rounded-[28px]" />
-                ) : (
-                  <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-                    <MilestoneTimelineBoard
-                      canManagePlan={permissions.canManagePlan}
-                      defaultExpandedMilestoneId={
-                        defaultWorkMilestone?.id ?? null
-                      }
-                      isMilestoneSubmitting={isMilestoneSubmitting}
-                      isPlanClosed={Boolean(isPlanEnded)}
-                      isTodoSubmitting={isTodoSubmitting}
-                      milestones={sortedWorkMilestones}
-                      members={members}
-                      onAddTodo={(milestone) => {
-                        setSelectedMilestoneId(milestone.id);
-                        setEditingTodo(null);
-                        setShowTodoForm(true);
-                      }}
-                      onReorderTodos={handleReorderTodosWithinMilestone}
-                      onChangeTodoStatus={handleChangeTodoStatus}
-                      onEditMilestone={(milestone) => {
-                        setEditingMilestone(milestone);
-                        setShowMilestoneForm(true);
-                      }}
-                      onDeleteMilestone={handleDeleteMilestone}
-                      onOpenExpenseSheet={(milestone) => {
-                        setSelectedMilestoneId(milestone.id);
-                        setExpenseSheetMilestoneId(milestone.id);
-                      }}
-                      onSelect={(milestoneId) =>
-                        setSelectedMilestoneId(milestoneId)
-                      }
-                      onViewTodo={setDetailTodo}
-                      searchQuery={milestoneSearchQuery}
-                      selectedMilestoneId={selectedMilestone?.id ?? null}
-                      todos={todos}
-                    />
-                    {selectedMilestone ? (
-                      <div className="space-y-4">
-                        <div className="hidden lg:block">
-                          <MilestoneExpensePanel
-                            canCreateExpense={plan.status !== 'closed'}
-                            categories={categories}
-                            expenses={selectedMilestoneExpenses}
-                            members={members}
-                            milestone={selectedMilestone}
-                            onAddExpense={() =>
-                              openCreateExpense(selectedMilestone.id)
-                            }
-                            onSelectExpense={setDetailExpense}
-                            onShowTimeline={() => setActiveTab('Tài chính')}
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <Card className="border-slate-200 bg-slate-50 shadow-none">
-                        <p className="text-sm leading-6 text-slate-600">
-                          Chọn một mốc kế hoạch để xem chi tiết hoặc tạo mốc đầu
-                          tiên nếu kế hoạch của bạn chưa có giai đoạn nào.
-                        </p>
-                      </Card>
-                    )}
-                  </div>
-                )}
-                <BottomSheet
-                  description="Các khoản chi của milestone này được hiển thị theo dạng dòng thời gian."
-                  onClose={() => setExpenseSheetMilestoneId(null)}
-                  open={Boolean(expenseSheetMilestone)}
-                  title={
-                    expenseSheetMilestone
-                      ? `Khoản chi · ${expenseSheetMilestone.title}`
-                      : 'Khoản chi milestone'
-                  }
-                >
-                  {expenseSheetMilestone ? (
-                    <TimelineList
-                      categories={[...categories, ...incomeCategories]}
-                      expenses={expenseSheetMilestoneExpenses}
-                      hideMilestoneFilter
-                      incomes={[]}
-                      members={members}
-                      milestones={[expenseSheetMilestone]}
-                      onSelectExpense={setDetailExpense}
-                      planId={planId}
-                      selectedMilestoneId={expenseSheetMilestone.id}
-                    />
-                  ) : null}
-                </BottomSheet>
-                {permissions.canManagePlan && plan.status !== 'closed' ? (
-                  <button
-                    aria-label="Tạo mốc kế hoạch"
-                    className="fixed right-4 bottom-24 z-30 flex size-14 items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-[0_14px_34px_rgba(36,59,107,0.32)] transition hover:bg-[var(--color-primary-hover)] md:right-8 md:bottom-8"
-                    onClick={() => {
-                      setEditingMilestone(null);
-                      setShowMilestoneForm(true);
-                    }}
-                    type="button"
-                  >
-                    <Plus className="size-6" />
-                  </button>
-                ) : null}
-              </>
-            ) : (
-              <div className="space-y-3">
-                {isTodosLoading ? (
-                  <Skeleton className="h-40 rounded-[28px]" />
-                ) : (
-                  <TodoList
-                    canManagePlan={
-                      permissions.canManagePlan && plan.status !== 'closed'
-                    }
-                    className="sm:grid-cols-2 lg:grid-cols-3"
-                    emptyMessage={
-                      todoStatusFilter === 'done'
-                        ? 'Chưa có công việc nào hoàn thành.'
-                        : 'Kế hoạch này chưa có công việc nào.'
-                    }
-                    isSubmitting={isTodoSubmitting}
-                    members={members}
-                    milestones={milestones}
-                    onAddVendor={(todo) => {
-                      setEditingVendorId(null);
-                      setVendorFormTodo(todo);
-                    }}
-                    onChangeStatus={handleChangeTodoStatus}
-                    onDeleteTodo={handleDeleteTodo}
-                    onEdit={(todo) => {
-                      setSelectedMilestoneId(todo.milestoneId);
-                      setEditingTodo(todo);
-                      setShowTodoForm(true);
-                    }}
-                    preserveOrder
-                    todos={allTodosFilteredAndSorted}
-                  />
-                )}
-              </div>
-            )}
             {showMilestoneForm ? (
               <>
                 <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
@@ -2200,8 +1791,261 @@ export default function PlanDetailPage() {
                 </div>
               </>
             ) : null}
+          </>
+        );
+      case 'weddingGuests':
+        return plan.planType === 'wedding' ? (
+          <WeddingGuestPanel currentMember={currentMember} plan={currentPlan} />
+        ) : null;
+      case 'members':
+        return (
+          <MembersTab
+            activeMemberCount={activeMembers.length}
+            canManageMembers={canManageMembers}
+            currentMember={currentMember}
+            invitations={invitations}
+            isSubmitting={isMemberActionSubmitting}
+            linkedMemberIds={linkedMemberIds}
+            memberActionError={memberActionError}
+            memberActionMessage={memberActionMessage}
+            members={members}
+            onCreateClaimInvitation={handleCreateClaimInvitation}
+            onDeleteMember={handleDeleteMember}
+            onReactivateMember={handleReactivateMember}
+            onRemoveMember={handleRemoveMember}
+            onRevokeInvitation={handleRevokeInvitation}
+            onUnlinkAccount={handleUnlinkAccount}
+            onUpdateAvatar={handleUpdateMemberAvatar}
+            onUpdateMember={handleUpdateMember}
+            plan={currentPlan}
+            planId={planId}
+          />
+        );
+      case 'travelItinerary':
+        return (
+          <TravelItineraryTab
+            activities={travelActivities}
+            canManage={canManageTravelActivities}
+            detailActivity={detailTravelActivity}
+            errorMessage={travelActionError}
+            isLoading={isTravelActivitiesLoading}
+            members={members}
+            onCreate={() => {
+              setEditingTravelActivity(null);
+              setShowTravelActivityForm(true);
+            }}
+            onDelete={(activity) => void handleDeleteTravelActivity(activity)}
+            onEdit={(activity) => {
+              setEditingTravelActivity(activity);
+              setShowTravelActivityForm(true);
+            }}
+            onSelect={setDetailTravelActivity}
+          />
+        );
+      case 'debtTracking':
+        return (
+          <DebtTrackingTab
+            canManage={canManageDebtTracking}
+            debts={debts}
+            detailDebt={detailDebt}
+            errorMessage={debtTrackingError}
+            isLoading={isDebtTrackingLoading}
+            members={members}
+            onCreate={() => setShowDebtForm(true)}
+            onRecordRepayment={setRepaymentDebt}
+            onSelect={setDetailDebt}
+            repaymentTotalsByDebtId={repaymentTotalsByDebtId}
+            repayments={repayments}
+            summary={debtTrackingSummary}
+          />
+        );
+      default:
+        return null;
+    }
+  })();
+
+  return (
+    <main className="flex flex-col gap-5">
+      <Breadcrumbs items={[{ label: currentPlan.name }]} />
+      {planError ||
+      milestoneError ||
+      todoError ||
+      memberError ||
+      invitationError ||
+      expenseError ||
+      incomeError ||
+      travelActivityError ||
+      debtTrackingError ||
+      settlementWatchError ? (
+        <AuthFormMessage
+          message={
+            planError ||
+            milestoneError ||
+            todoError ||
+            memberError ||
+            invitationError ||
+            expenseError ||
+            incomeError ||
+            travelActivityError ||
+            debtTrackingError ||
+            settlementWatchError ||
+            'Hiện chưa thể đồng bộ dữ liệu kế hoạch mới nhất.'
+          }
+          type="error"
+        />
+      ) : null}
+      {activeTab === 'overview' ? (
+        <div className="flex flex-col gap-6">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <h1 className="min-w-0 flex-1 truncate text-3xl font-semibold text-slate-950">
+                {plan.name}
+              </h1>
+              <div className="relative shrink-0">
+                <button
+                  aria-label="Tùy chọn kế hoạch"
+                  className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+                  onClick={() => setShowHeaderMenu((value) => !value)}
+                  type="button"
+                >
+                  <MoreVertical className="size-4" />
+                </button>
+                {showHeaderMenu ? (
+                  <>
+                    <div className="hidden md:block">
+                      <button
+                        aria-label="Đóng menu"
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowHeaderMenu(false)}
+                        type="button"
+                      />
+                      <Card className="absolute top-12 right-0 z-50 w-64 gap-1 p-2 shadow-[0_16px_60px_rgba(15,23,42,0.16)]">
+                        {headerMenuItems.map((item) => (
+                          <button
+                            className={cn(
+                              'flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition hover:bg-slate-100',
+                              item.destructive
+                                ? 'text-rose-600'
+                                : 'text-slate-700',
+                            )}
+                            key={item.key}
+                            onClick={item.onSelect}
+                            type="button"
+                          >
+                            <item.icon className="size-4 shrink-0" />
+                            {item.label}
+                          </button>
+                        ))}
+                      </Card>
+                    </div>
+                    <div className="md:hidden">
+                      <BottomSheet
+                        onClose={() => setShowHeaderMenu(false)}
+                        open={showHeaderMenu}
+                        title="Tùy chọn kế hoạch"
+                      >
+                        <div className="grid gap-1">
+                          {headerMenuItems.map((item) => (
+                            <button
+                              className={cn(
+                                'flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition hover:bg-slate-100',
+                                item.destructive
+                                  ? 'text-rose-600'
+                                  : 'text-slate-700',
+                              )}
+                              key={item.key}
+                              onClick={item.onSelect}
+                              type="button"
+                            >
+                              <item.icon className="size-4 shrink-0" />
+                              {item.label}
+                            </button>
+                          ))}
+                        </div>
+                      </BottomSheet>
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            </div>
+
+            <p className="text-sm text-slate-600">
+              {planTypeOptions.find((option) => option.value === plan.planType)
+                ?.label ?? plan.planType}{' '}
+              · {planStatusLabel[plan.status]}
+            </p>
+
+            {plan.description ? (
+              <p className="text-sm leading-6 text-slate-600">
+                {plan.description}
+              </p>
+            ) : null}
           </div>
-        ) : null}
+
+          <div className="flex items-end justify-between gap-4">
+            <div className="flex gap-8">
+              <div>
+                <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                  Tổng chi
+                </p>
+                <p className="mt-1 text-2xl font-semibold text-slate-950">
+                  {formatCompactCurrency(plan.totalExpense)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                  Dự kiến
+                </p>
+                <p className="mt-1 text-2xl font-semibold text-slate-600">
+                  {formatCompactCurrency(effectiveEstimatedTotal)}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                Thành viên
+              </p>
+              <MemberAvatarStack members={members} />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <Card className="gap-4">
+        <div className="flex items-center gap-2">
+          {planDetailTabs.map((tab) => {
+              const Icon = tabIcons[tab.id];
+              const isActive = activeTab === tab.id;
+
+              return (
+                <button
+                  key={tab.id}
+                  className={cn(
+                    'flex min-h-11 items-center justify-center gap-2 overflow-hidden rounded-full text-sm font-medium transition-[background-color,color,padding] duration-200',
+                    isActive
+                      ? 'flex-1 bg-slate-950 px-4 text-white'
+                      : 'bg-slate-100 px-3 text-slate-600 sm:flex-1 sm:px-4',
+                  )}
+                  onClick={() => openPlanTab(tab.id)}
+                  type="button"
+                >
+                  <Icon className="size-4 shrink-0" />
+                  <span
+                    className={cn(
+                      'overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-200',
+                      isActive
+                        ? 'max-w-[8rem] opacity-100'
+                        : 'max-w-0 opacity-0 sm:max-w-[8rem] sm:opacity-100',
+                    )}
+                    >
+                    {tab.label}
+                  </span>
+                </button>
+              );
+            })}
+        </div>
+        {activeTabContent}
         {detailTodo ? (
           <>
             <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
@@ -2221,9 +2065,7 @@ export default function PlanDetailPage() {
                       (member) => member.id === detailTodo.assigneeMemberId,
                     ) ?? null
                   }
-                  canManagePlan={
-                    permissions.canManagePlan && plan.status !== 'closed'
-                  }
+                  canManagePlan={isOwner && plan.status !== 'closed'}
                   isSubmitting={isTodoSubmitting}
                   milestoneOptions={sortedWorkMilestones.map((milestone) => ({
                     value: milestone.id,
@@ -2272,9 +2114,7 @@ export default function PlanDetailPage() {
                       (member) => member.id === detailTodo.assigneeMemberId,
                     ) ?? null
                   }
-                  canManagePlan={
-                    permissions.canManagePlan && plan.status !== 'closed'
-                  }
+                  canManagePlan={isOwner && plan.status !== 'closed'}
                   isSubmitting={isTodoSubmitting}
                   milestoneOptions={sortedWorkMilestones.map((milestone) => ({
                     value: milestone.id,
@@ -2331,7 +2171,7 @@ export default function PlanDetailPage() {
                     categories={[...categories, ...incomeCategories]}
                     expense={detailExpense}
                     members={members}
-                    milestones={milestones}
+                    milestones={visibleMilestones}
                   />
                   {expenseActionError ? (
                     <AuthFormMessage
@@ -2346,14 +2186,16 @@ export default function PlanDetailPage() {
                     >
                       Đóng
                     </Button>
-                    {permissions.canEditAllExpenses ||
-                    detailExpense.createdByUserId === user?.uid ? (
+                    {canEditAllExpenses ||
+                    (hasPlanCapability(currentMember, 'finance.editOwnExpense') &&
+                      detailExpense.createdByUserId === user?.uid) ? (
                       <Button onClick={() => openEditExpense(detailExpense)}>
                         Chỉnh sửa
                       </Button>
                     ) : null}
-                    {permissions.canDeleteAllExpenses ||
-                    detailExpense.createdByUserId === user?.uid ? (
+                    {hasPlanCapability(currentMember, 'finance.deleteAllExpense') ||
+                    (hasPlanCapability(currentMember, 'finance.deleteOwnExpense') &&
+                      detailExpense.createdByUserId === user?.uid) ? (
                       <Button
                         disabled={isDeletingExpenseInline}
                         onClick={() =>
@@ -2379,7 +2221,7 @@ export default function PlanDetailPage() {
                     categories={[...categories, ...incomeCategories]}
                     expense={detailExpense}
                     members={members}
-                    milestones={milestones}
+                    milestones={visibleMilestones}
                   />
                   {expenseActionError ? (
                     <AuthFormMessage
@@ -2394,14 +2236,16 @@ export default function PlanDetailPage() {
                     >
                       Đóng
                     </Button>
-                    {permissions.canEditAllExpenses ||
-                    detailExpense.createdByUserId === user?.uid ? (
+                    {canEditAllExpenses ||
+                    (hasPlanCapability(currentMember, 'finance.editOwnExpense') &&
+                      detailExpense.createdByUserId === user?.uid) ? (
                       <Button onClick={() => openEditExpense(detailExpense)}>
                         Chỉnh sửa
                       </Button>
                     ) : null}
-                    {permissions.canDeleteAllExpenses ||
-                    detailExpense.createdByUserId === user?.uid ? (
+                    {hasPlanCapability(currentMember, 'finance.deleteAllExpense') ||
+                    (hasPlanCapability(currentMember, 'finance.deleteOwnExpense') &&
+                      detailExpense.createdByUserId === user?.uid) ? (
                       <Button
                         disabled={isDeletingExpenseInline}
                         onClick={() =>
@@ -2512,7 +2356,164 @@ export default function PlanDetailPage() {
             </div>
           </>
         ) : null}
-        {headerModal === 'edit-plan' && permissions.canManagePlan ? (
+        {showTravelActivityForm && user ? (
+          <>
+            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
+              <button
+                aria-label="Đóng form hoạt động lịch trình"
+                className="absolute inset-0"
+                onClick={() => {
+                  setShowTravelActivityForm(false);
+                  setEditingTravelActivity(null);
+                }}
+                type="button"
+              />
+              <Dialog
+                className="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto"
+                description="Mỗi activity đại diện cho một chặng hoặc một điểm dừng trong itinerary."
+                title={
+                  editingTravelActivity
+                    ? 'Cập nhật activity'
+                    : 'Thêm activity vào itinerary'
+                }
+              >
+                <TravelActivityForm
+                  activity={editingTravelActivity ?? undefined}
+                  currentMember={currentMember}
+                  currentUser={user}
+                  members={members}
+                  onCancel={() => {
+                    setShowTravelActivityForm(false);
+                    setEditingTravelActivity(null);
+                  }}
+                  onSuccess={() => {
+                    setShowTravelActivityForm(false);
+                    setEditingTravelActivity(null);
+                  }}
+                  plan={ensuredPlan}
+                />
+              </Dialog>
+            </div>
+            <div className="md:hidden">
+              <BottomSheet
+                description="Mỗi activity đại diện cho một chặng hoặc một điểm dừng trong itinerary."
+                onClose={() => {
+                  setShowTravelActivityForm(false);
+                  setEditingTravelActivity(null);
+                }}
+                open={showTravelActivityForm}
+                title={
+                  editingTravelActivity
+                    ? 'Cập nhật activity'
+                    : 'Thêm activity vào itinerary'
+                }
+              >
+                <TravelActivityForm
+                  activity={editingTravelActivity ?? undefined}
+                  currentMember={currentMember}
+                  currentUser={user}
+                  members={members}
+                  onCancel={() => {
+                    setShowTravelActivityForm(false);
+                    setEditingTravelActivity(null);
+                  }}
+                  onSuccess={() => {
+                    setShowTravelActivityForm(false);
+                    setEditingTravelActivity(null);
+                  }}
+                  plan={ensuredPlan}
+                />
+              </BottomSheet>
+            </div>
+          </>
+        ) : null}
+        {showDebtForm && user ? (
+          <>
+            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
+              <button
+                aria-label="Đóng form khoản vay"
+                className="absolute inset-0"
+                onClick={() => setShowDebtForm(false)}
+                type="button"
+              />
+              <Dialog
+                className="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto"
+                description="Tạo khoản vay gốc để theo dõi dư nợ và lịch sử hoàn trả."
+                title="Tạo khoản vay"
+              >
+                <DebtForm
+                  currentMember={currentMember}
+                  currentUser={user}
+                  members={members}
+                  onCancel={() => setShowDebtForm(false)}
+                  onSuccess={() => setShowDebtForm(false)}
+                  plan={ensuredPlan}
+                />
+              </Dialog>
+            </div>
+            <div className="md:hidden">
+              <BottomSheet
+                description="Tạo khoản vay gốc để theo dõi dư nợ và lịch sử hoàn trả."
+                onClose={() => setShowDebtForm(false)}
+                open={showDebtForm}
+                title="Tạo khoản vay"
+              >
+                <DebtForm
+                  currentMember={currentMember}
+                  currentUser={user}
+                  members={members}
+                  onCancel={() => setShowDebtForm(false)}
+                  onSuccess={() => setShowDebtForm(false)}
+                  plan={ensuredPlan}
+                />
+              </BottomSheet>
+            </div>
+          </>
+        ) : null}
+        {repaymentDebt && user ? (
+          <>
+            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
+              <button
+                aria-label="Đóng form hoàn trả"
+                className="absolute inset-0"
+                onClick={() => setRepaymentDebt(null)}
+                type="button"
+              />
+              <Dialog
+                className="relative z-10 max-h-[90vh] w-full max-w-xl overflow-y-auto"
+                description="Ghi nhận từng lần trả nợ để module debt tự tính dư nợ còn lại."
+                title="Ghi nhận trả nợ"
+              >
+                <RepaymentForm
+                  currentMember={currentMember}
+                  currentUser={user}
+                  debt={repaymentDebt}
+                  onCancel={() => setRepaymentDebt(null)}
+                  onSuccess={() => setRepaymentDebt(null)}
+                  plan={ensuredPlan}
+                />
+              </Dialog>
+            </div>
+            <div className="md:hidden">
+              <BottomSheet
+                description="Ghi nhận từng lần trả nợ để module debt tự tính dư nợ còn lại."
+                onClose={() => setRepaymentDebt(null)}
+                open={Boolean(repaymentDebt)}
+                title="Ghi nhận trả nợ"
+              >
+                <RepaymentForm
+                  currentMember={currentMember}
+                  currentUser={user}
+                  debt={repaymentDebt}
+                  onCancel={() => setRepaymentDebt(null)}
+                  onSuccess={() => setRepaymentDebt(null)}
+                  plan={ensuredPlan}
+                />
+              </BottomSheet>
+            </div>
+          </>
+        ) : null}
+        {headerModal === 'edit-plan' && isOwner ? (
           <>
             <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
               <button
@@ -2804,7 +2805,7 @@ export default function PlanDetailPage() {
                 </div>
 
                 <div className="mt-4 flex flex-wrap justify-end gap-2">
-                  {permissions.canManagePlan ? (
+                  {isOwner ? (
                     <Button
                       className="border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                       disabled={isCompletingPlan || Boolean(isPlanEnded)}
@@ -2816,7 +2817,7 @@ export default function PlanDetailPage() {
                         : 'Hoàn thành kế hoạch'}
                     </Button>
                   ) : null}
-                  {permissions.canManagePlan ? (
+                  {isOwner ? (
                     <Button
                       className="border border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
                       disabled={isClosingPlan || Boolean(isPlanEnded)}
@@ -2887,7 +2888,7 @@ export default function PlanDetailPage() {
                 </div>
 
                 <div className="mt-4 flex flex-wrap justify-end gap-2">
-                  {permissions.canManagePlan ? (
+                  {isOwner ? (
                     <Button
                       className="border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                       disabled={isCompletingPlan || Boolean(isPlanEnded)}
@@ -2899,7 +2900,7 @@ export default function PlanDetailPage() {
                         : 'Hoàn thành kế hoạch'}
                     </Button>
                   ) : null}
-                  {permissions.canManagePlan ? (
+                  {isOwner ? (
                     <Button
                       className="border border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
                       disabled={isClosingPlan || Boolean(isPlanEnded)}
@@ -2966,19 +2967,19 @@ export default function PlanDetailPage() {
               <Dialog
                 className="relative z-10 w-full max-w-md"
                 description={
-                  permissions.canManagePlan
+                  isOwner
                     ? 'Xóa kế hoạch sẽ xóa vĩnh viễn toàn bộ dữ liệu — thành viên, mốc kế hoạch, công việc, khoản thu/chi, đối soát, lời mời. Hành động này không thể hoàn tác.'
                     : 'Tính năng này đang được phát triển và sẽ sớm ra mắt.'
                 }
                 title={
-                  permissions.canManagePlan ? 'Xóa kế hoạch' : 'Rời kế hoạch'
+                  isOwner ? 'Xóa kế hoạch' : 'Rời kế hoạch'
                 }
               >
                 <div className="flex justify-end gap-2">
                   <Button onClick={() => setHeaderModal(null)} variant="ghost">
-                    {permissions.canManagePlan ? 'Hủy' : 'Đã hiểu'}
+                    {isOwner ? 'Hủy' : 'Đã hiểu'}
                   </Button>
-                  {permissions.canManagePlan ? (
+                  {isOwner ? (
                     <Button
                       className="bg-red-600 text-white hover:bg-red-700"
                       onClick={() => {
@@ -2995,21 +2996,21 @@ export default function PlanDetailPage() {
             <div className="md:hidden">
               <BottomSheet
                 description={
-                  permissions.canManagePlan
+                  isOwner
                     ? 'Xóa kế hoạch sẽ xóa vĩnh viễn toàn bộ dữ liệu — thành viên, mốc kế hoạch, công việc, khoản thu/chi, đối soát, lời mời. Hành động này không thể hoàn tác.'
                     : 'Tính năng này đang được phát triển và sẽ sớm ra mắt.'
                 }
                 onClose={() => setHeaderModal(null)}
                 open={headerModal === 'leave-or-delete'}
                 title={
-                  permissions.canManagePlan ? 'Xóa kế hoạch' : 'Rời kế hoạch'
+                  isOwner ? 'Xóa kế hoạch' : 'Rời kế hoạch'
                 }
               >
                 <div className="flex justify-end gap-2">
                   <Button onClick={() => setHeaderModal(null)} variant="ghost">
-                    {permissions.canManagePlan ? 'Hủy' : 'Đã hiểu'}
+                    {isOwner ? 'Hủy' : 'Đã hiểu'}
                   </Button>
-                  {permissions.canManagePlan ? (
+                  {isOwner ? (
                     <Button
                       className="bg-red-600 text-white hover:bg-red-700"
                       onClick={() => {
@@ -3064,7 +3065,7 @@ export default function PlanDetailPage() {
                   suggestions.map((suggestion) => (
                     <SettlementSuggestionCard
                       canConfirm={
-                        permissions.canManageSettlements &&
+                        canManageSettlements &&
                         plan.status !== 'closed'
                       }
                       isSubmitting={isSettlementSubmitting}
@@ -3092,7 +3093,7 @@ export default function PlanDetailPage() {
               />
               <SettlementList
                 canCancel={
-                  permissions.canManageSettlements && plan.status !== 'closed'
+                  canManageSettlements && plan.status !== 'closed'
                 }
                 isSubmitting={isSettlementSubmitting}
                 members={members}
@@ -3120,7 +3121,7 @@ export default function PlanDetailPage() {
               expenses={statisticMemberDrilldownExpenses}
               incomes={[]}
               members={members}
-              milestones={milestones}
+              milestones={visibleMilestones}
               onSelectExpense={setDetailExpense}
               planId={planId}
             />
@@ -3158,62 +3159,6 @@ export default function PlanDetailPage() {
             />
           ) : null}
         </BottomSheet>
-        {activeTab === 'Khách mời' && plan.planType === 'wedding' ? (
-          <WeddingGuestPanel currentMember={currentMember} plan={currentPlan} />
-        ) : null}
-        {activeTab === 'Thành viên' ? (
-          <div className="space-y-5">
-            <SectionHeading
-              eyebrow="Thành viên"
-              title="Thành viên kế hoạch"
-              description="Thêm và quản lý những người tham gia kế hoạch."
-            />
-            {permissions.canManageMembers ? (
-              <MemberManagementPanel
-                currentMember={currentMember}
-                plan={currentPlan}
-              />
-            ) : (
-              <Card>
-                <p className="text-sm leading-6 text-slate-600">
-                  Bạn có thể xem danh sách thành viên, nhưng chỉ chủ kế hoạch
-                  mới được quản lý khách và lời mời.
-                </p>
-              </Card>
-            )}
-            <SectionHeading
-              eyebrow="Danh sách"
-              title={`Thành viên (${activeMembers.length})`}
-            />
-            {memberActionError ? (
-              <AuthFormMessage message={memberActionError} type="error" />
-            ) : null}
-            {memberActionMessage ? (
-              <AuthFormMessage message={memberActionMessage} type="success" />
-            ) : null}
-            <MemberList
-              canManageMembers={permissions.canManageMembers}
-              isSaving={isMemberActionSubmitting}
-              linkedMemberIds={linkedMemberIds}
-              members={members}
-              onCreateClaimInvitation={handleCreateClaimInvitation}
-              onDelete={handleDeleteMember}
-              onReactivate={handleReactivateMember}
-              onRemove={handleRemoveMember}
-              onUnlinkAccount={handleUnlinkAccount}
-              onUpdateAvatar={handleUpdateMemberAvatar}
-              onUpdateMember={handleUpdateMember}
-              planId={planId}
-            />
-            <SectionHeading eyebrow="Lời mời" title="Đang chờ tham gia" />
-            <InvitationList
-              canRevoke={permissions.canManageMembers}
-              invitations={invitations}
-              isSubmitting={isMemberActionSubmitting}
-              onRevoke={handleRevokeInvitation}
-            />
-          </div>
-        ) : null}
       </Card>
     </main>
   );

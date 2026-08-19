@@ -1,29 +1,66 @@
-import type {
-  PlanMemberDocument,
-  PlanRole,
-  ResolvedPlanPermissions,
-} from '@/modules/member/types/member';
+import type { PlanMemberDocument, PlanRole } from '@/modules/member/types/member';
+import type { PlanCapability } from '@/modules/plan/types/plan-modular';
 
-export function resolvePlanPermissions(member: PlanMemberDocument | null): ResolvedPlanPermissions {
+export function resolvePlanCapabilities(member: PlanMemberDocument | null): PlanCapability[] {
   const role: PlanRole | null = member?.role ?? null;
   const canEditAllExpenses = Boolean(member?.permissions.canEditAllExpenses);
   const isOwner = role === 'owner';
   const isEditor = role === 'editor';
+  const capabilities = new Set<PlanCapability>();
 
-  return {
-    canManagePlan: isOwner,
-    canManageMembers: isOwner,
-    canCreateExpense: isOwner || isEditor,
-    canEditOwnExpense: isOwner || isEditor,
-    canDeleteOwnExpense: isOwner || isEditor,
-    canEditAllExpenses: isOwner || canEditAllExpenses,
-    canDeleteAllExpenses: isOwner,
-    canCreateIncome: isOwner || isEditor,
-    canEditOwnIncome: isOwner || isEditor,
-    canDeleteOwnIncome: isOwner || isEditor,
-    canViewStatistics: role !== null,
-    canManageSettlements: isOwner,
-    canManageWeddingGuest: isOwner || isEditor,
-  };
+  if (role !== null) {
+    capabilities.add('overview.view');
+    capabilities.add('planning.view');
+    capabilities.add('finance.view');
+    capabilities.add('members.view');
+    capabilities.add('travelItinerary.view');
+    capabilities.add('debtTracking.view');
+  }
+
+  if (isOwner) {
+    capabilities.add('members.manage');
+    capabilities.add('planning.createMilestone');
+    capabilities.add('planning.createTodo');
+    capabilities.add('planning.editTodo');
+    capabilities.add('finance.createExpense');
+    capabilities.add('finance.editOwnExpense');
+    capabilities.add('finance.deleteOwnExpense');
+    capabilities.add('finance.editAllExpense');
+    capabilities.add('finance.deleteAllExpense');
+    capabilities.add('finance.createIncome');
+    capabilities.add('finance.editOwnIncome');
+    capabilities.add('finance.deleteOwnIncome');
+    capabilities.add('finance.manageSettlements');
+    capabilities.add('weddingGuests.manageGuest');
+    capabilities.add('travelItinerary.createActivity');
+    capabilities.add('travelItinerary.editActivity');
+    capabilities.add('travelItinerary.deleteActivity');
+    capabilities.add('debtTracking.createDebt');
+    capabilities.add('debtTracking.recordRepayment');
+  }
+
+  if (isEditor) {
+    capabilities.add('finance.createExpense');
+    capabilities.add('finance.editOwnExpense');
+    capabilities.add('finance.deleteOwnExpense');
+    capabilities.add('finance.createIncome');
+    capabilities.add('finance.editOwnIncome');
+    capabilities.add('finance.deleteOwnIncome');
+    capabilities.add('weddingGuests.manageGuest');
+    capabilities.add('travelItinerary.createActivity');
+    capabilities.add('travelItinerary.editActivity');
+    capabilities.add('debtTracking.createDebt');
+    capabilities.add('debtTracking.recordRepayment');
+  }
+
+  if (isOwner || canEditAllExpenses) {
+    capabilities.add('finance.editAllExpense');
+    capabilities.add('finance.deleteAllExpense');
+  }
+
+  return Array.from(capabilities);
 }
 
+export function hasPlanCapability(member: PlanMemberDocument | null, capability: PlanCapability): boolean {
+  return resolvePlanCapabilities(member).includes(capability);
+}

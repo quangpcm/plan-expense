@@ -2,7 +2,6 @@
 
 import {
   Timestamp,
-  collection,
   doc,
   increment,
   onSnapshot,
@@ -17,20 +16,21 @@ import type {
   UpdateExpensePersistenceInput,
 } from '@/modules/expense/repositories/expense.repository';
 import type { ExpenseDocument, ExpenseParticipant } from '@/modules/expense/types/expense';
+import { getPlanCollectionRef, getPlanDocumentRef, getPlanRootRef } from '@/modules/plan';
 import { diffRemovedAttachments } from '@/modules/storage/utils/diff-attachments';
 import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
 export class FirestoreExpenseRepository implements ExpenseRepository {
   generateExpenseId(planId: string): string {
-    return doc(collection(getFirebaseFirestore(), 'plans', planId, 'expenses')).id;
+    return doc(getPlanCollectionRef(getFirebaseFirestore(), planId, 'expenses')).id;
   }
 
   async createExpense(input: CreateExpensePersistenceInput) {
     const db = getFirebaseFirestore();
-    const expenseRef = doc(db, 'plans', input.planId, 'expenses', input.expenseId);
-    const planRef = doc(db, 'plans', input.planId);
-    const milestoneRef = doc(db, 'plans', input.planId, 'milestones', input.milestoneId);
+    const expenseRef = getPlanDocumentRef(db, input.planId, 'expenses', input.expenseId);
+    const planRef = getPlanRootRef(db, input.planId);
+    const milestoneRef = getPlanDocumentRef(db, input.planId, 'milestones', input.milestoneId);
     const now = Timestamp.now();
 
     const nextTotalExpense = await runTransaction(db, async (transaction) => {
@@ -93,8 +93,8 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
 
   async updateExpense(planId: string, input: UpdateExpensePersistenceInput, participants: ExpenseParticipant[]) {
     const db = getFirebaseFirestore();
-    const expenseRef = doc(db, 'plans', planId, 'expenses', input.expenseId);
-    const planRef = doc(db, 'plans', planId);
+    const expenseRef = getPlanDocumentRef(db, planId, 'expenses', input.expenseId);
+    const planRef = getPlanRootRef(db, planId);
     const now = Timestamp.now();
 
     const result = await runTransaction(db, async (transaction) => {
@@ -112,9 +112,9 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
           ? previousExpense.milestoneId
           : null;
       const previousMilestoneRef = previousMilestoneId
-        ? doc(db, 'plans', planId, 'milestones', previousMilestoneId)
+        ? getPlanDocumentRef(db, planId, 'milestones', previousMilestoneId)
         : null;
-      const nextMilestoneRef = doc(db, 'plans', planId, 'milestones', input.milestoneId);
+      const nextMilestoneRef = getPlanDocumentRef(db, planId, 'milestones', input.milestoneId);
       const previousMilestoneSnapshot = previousMilestoneRef ? await transaction.get(previousMilestoneRef) : null;
       const nextMilestoneSnapshot = await transaction.get(nextMilestoneRef);
 
@@ -181,8 +181,8 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
   async deleteExpense(planId: string, expenseId: string, actor: AuthUser) {
     void actor;
     const db = getFirebaseFirestore();
-    const expenseRef = doc(db, 'plans', planId, 'expenses', expenseId);
-    const planRef = doc(db, 'plans', planId);
+    const expenseRef = getPlanDocumentRef(db, planId, 'expenses', expenseId);
+    const planRef = getPlanRootRef(db, planId);
     const now = Timestamp.now();
 
     const result = await runTransaction(db, async (transaction) => {
@@ -194,7 +194,7 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
       }
 
       const expense = expenseSnapshot.data() as ExpenseDocument;
-      const milestoneRef = doc(db, 'plans', planId, 'milestones', expense.milestoneId);
+      const milestoneRef = getPlanDocumentRef(db, planId, 'milestones', expense.milestoneId);
       const milestoneSnapshot = await transaction.get(milestoneRef);
 
       if (!milestoneSnapshot.exists()) {
@@ -230,7 +230,7 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
 
   watchExpenses(planId: string, callback: (expenses: ExpenseDocument[]) => void, onError?: (error: Error) => void) {
     return onSnapshot(
-      collection(getFirebaseFirestore(), 'plans', planId, 'expenses'),
+      getPlanCollectionRef(getFirebaseFirestore(), planId, 'expenses'),
       (snapshot) => {
         const expenses = snapshot.docs
           .map((item) => item.data() as ExpenseDocument)
@@ -252,7 +252,7 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
     onError?: (error: Error) => void,
   ) {
     return onSnapshot(
-      doc(getFirebaseFirestore(), 'plans', planId, 'expenses', expenseId),
+      getPlanDocumentRef(getFirebaseFirestore(), planId, 'expenses', expenseId),
       (snapshot) => {
         callback(snapshot.exists() ? (snapshot.data() as ExpenseDocument) : null);
       },
