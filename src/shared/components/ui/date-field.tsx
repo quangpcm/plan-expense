@@ -1,7 +1,7 @@
 'use client';
 
 import { CalendarDays } from 'lucide-react';
-import type { InputHTMLAttributes } from 'react';
+import type { InputHTMLAttributes, MouseEvent } from 'react';
 
 import { cn } from '@/shared/utils/cn';
 import { formatDate } from '@/shared/utils/date';
@@ -21,7 +21,23 @@ function parseDateInputValue(value?: string) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
-export function DateField({ className, value, placeholder = 'Chọn ngày', disabled, id, ...props }: DateFieldProps) {
+function openPicker(event: MouseEvent<HTMLInputElement>) {
+  // Trên desktop, browser chỉ tự mở picker khi click đúng icon lịch gốc (rất nhỏ vì input
+  // đã bị kéo full-size và ẩn) — gọi showPicker() để bất kỳ click nào trong ô cũng mở được.
+  if (typeof event.currentTarget.showPicker === 'function') {
+    event.currentTarget.showPicker();
+  }
+}
+
+export function DateField({
+  className,
+  value,
+  placeholder = 'Chọn ngày',
+  disabled,
+  id,
+  onClick,
+  ...props
+}: DateFieldProps) {
   const parsedDate = parseDateInputValue(value);
   const displayValue = parsedDate ? formatDate(parsedDate) : placeholder;
 
@@ -43,6 +59,10 @@ export function DateField({ className, value, placeholder = 'Chọn ngày', disa
         className="absolute inset-0 h-full w-full cursor-pointer opacity-0 outline-none"
         disabled={disabled}
         id={id}
+        onClick={(event) => {
+          openPicker(event);
+          onClick?.(event);
+        }}
         type="date"
         value={value}
         {...props}

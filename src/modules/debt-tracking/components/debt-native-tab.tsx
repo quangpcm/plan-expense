@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { ArrowDown, ArrowUp, Landmark } from 'lucide-react';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
@@ -97,28 +98,42 @@ export function DebtNativeTab({
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       {actionErrorMessage ? <AuthFormMessage message={actionErrorMessage} type="error" /> : null}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Tổng phải thu</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-950">
-            {formatCompactCurrency(planSummary.totalReceivableOutstanding)}
-          </p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Card className="flex-row items-center gap-3 p-3">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--color-income-soft)] text-[color:var(--color-income)]">
+            <ArrowUp className="size-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-xs text-slate-500">Tổng phải thu</p>
+            <p className="truncate text-lg font-semibold text-[color:var(--color-income)]">
+              {formatCompactCurrency(planSummary.totalReceivableOutstanding)}
+            </p>
+          </div>
         </Card>
-        <Card>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Tổng phải trả</p>
-          <p className="mt-2 text-2xl font-semibold text-[var(--color-expense)]">
-            {formatCompactCurrency(planSummary.totalPayableOutstanding)}
-          </p>
+        <Card className="flex-row items-center gap-3 p-3">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--color-expense-soft)] text-[color:var(--color-expense)]">
+            <ArrowDown className="size-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-xs text-slate-500">Tổng phải trả</p>
+            <p className="truncate text-lg font-semibold text-[var(--color-expense)]">
+              {formatCompactCurrency(planSummary.totalPayableOutstanding)}
+            </p>
+          </div>
         </Card>
-        <Card>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Chênh lệch ròng</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-950">
-            {planSummary.netPosition >= 0 ? '+' : ''}
-            {formatCompactCurrency(planSummary.netPosition)}
-          </p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            {planSummary.activeCounterpartyCount} đối tượng đang có công nợ.
-          </p>
+        <Card className="flex-row items-center gap-3 border-transparent bg-[var(--color-primary)] p-3 text-white">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/10">
+            <Landmark className="size-4" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-xs text-white/70">
+              Chênh lệch ròng · {planSummary.activeCounterpartyCount} đối tượng
+            </p>
+            <p className="truncate text-lg font-semibold">
+              {planSummary.netPosition >= 0 ? '+' : ''}
+              {formatCompactCurrency(planSummary.netPosition)}
+            </p>
+          </div>
         </Card>
       </div>
 
@@ -130,6 +145,7 @@ export function DebtNativeTab({
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <div className="space-y-4">
+          <h3 className="text-base font-semibold text-slate-900">Danh sách đối tượng</h3>
           {isLoading ? (
             <Skeleton className="h-52 rounded-[28px]" />
           ) : (

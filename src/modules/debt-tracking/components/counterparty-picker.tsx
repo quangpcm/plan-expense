@@ -68,7 +68,7 @@ export function CounterpartyPicker({
   return (
     <div className="space-y-2">
       <DropdownSelect
-        disabled={disabled}
+        disabled={disabled ?? false}
         onValueChange={(next) => {
           if (next === ADD_NEW_VALUE) {
             setErrorMessage(null);

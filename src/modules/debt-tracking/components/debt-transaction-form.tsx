@@ -9,6 +9,10 @@ import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
 import { memberService } from '@/modules/member/services';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
 import { calculateOutstanding } from '@/modules/debt-tracking/calculators/debt-calculators';
+import {
+  getDebtTransactionCategoryOptions,
+  type DebtTransactionCategory,
+} from '@/modules/debt-tracking/constants/debt-transaction-category';
 import { createDebtTransactionSchema } from '@/modules/debt-tracking/schemas/create-debt-transaction.schema';
 import { updateDebtTransactionSchema } from '@/modules/debt-tracking/schemas/update-debt-transaction.schema';
 import { debtTransactionService } from '@/modules/debt-tracking/services';
@@ -18,8 +22,12 @@ import { AttachmentPicker, type AttachmentDraft } from '@/modules/storage';
 import { AmountInput } from '@/shared/components/ui/amount-input';
 import { Button } from '@/shared/components/ui/button';
 import { DateField } from '@/shared/components/ui/date-field';
+import { DateTimeInput } from '@/shared/components/ui/date-time-input';
+import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
+import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { formatCurrency } from '@/shared/utils/currency';
+import { formatDateTimeLocalInput, parseDateTimeLocalInput } from '@/shared/utils/date';
 import { cn } from '@/shared/utils/cn';
 
 function toDateInputValue(date: Date): string {
@@ -28,6 +36,10 @@ function toDateInputValue(date: Date): string {
 
 function parseDateInputValue(value: string): Date {
   return new Date(`${value}T00:00:00`);
+}
+
+function parseOccurredAtInputValue(value: string): Date {
+  return parseDateTimeLocalInput(value) ?? new Date();
 }
 
 type DebtTransactionFormProps = {
@@ -62,9 +74,14 @@ export function DebtTransactionForm({
   const [counterpartyMemberId, setCounterpartyMemberId] = useState(
     transaction?.counterpartyMemberId ?? fixedCounterpartyMemberId ?? '',
   );
+  const categoryOptions = useMemo(() => getDebtTransactionCategoryOptions(type), [type]);
+  const [title, setTitle] = useState(transaction?.title ?? '');
+  const [category, setCategory] = useState<DebtTransactionCategory>(
+    transaction?.category ?? categoryOptions[0]!.value,
+  );
   const [amount, setAmount] = useState(transaction?.amount ?? 0);
   const [occurredAt, setOccurredAt] = useState(
-    transaction ? toDateInputValue(transaction.occurredAt.toDate()) : toDateInputValue(new Date()),
+    transaction ? formatDateTimeLocalInput(transaction.occurredAt.toDate()) : formatDateTimeLocalInput(new Date()),
   );
   const [dueDate, setDueDate] = useState(
     transaction?.dueDate ? toDateInputValue(transaction.dueDate.toDate()) : '',
@@ -91,7 +108,7 @@ export function DebtTransactionForm({
     return calculateOutstanding(counterpartyTransactions, direction);
   }, [counterpartyMemberId, direction, transaction?.id, transactions]);
 
-  const title = type === 'loan' ? 'Ghi nhận khoản nợ' : 'Ghi nhận đã trả';
+  const submitLabel = type === 'loan' ? 'Ghi nhận khoản nợ' : 'Ghi nhận đã trả';
 
   async function handleAddGuest(nickname: string) {
     if (!user) {
@@ -115,6 +132,8 @@ export function DebtTransactionForm({
           counterpartyMemberId,
           direction,
           type,
+          title,
+          category,
           amount,
           occurredAt,
           dueDate: type === 'loan' ? dueDate : '',
@@ -127,8 +146,10 @@ export function DebtTransactionForm({
             counterpartyMemberId: parsed.counterpartyMemberId,
             direction: parsed.direction,
             type: parsed.type,
+            title: parsed.title,
+            category: parsed.category,
             amount: parsed.amount,
-            occurredAt: parseDateInputValue(parsed.occurredAt),
+            occurredAt: parseOccurredAtInputValue(parsed.occurredAt),
             dueDate: parsed.dueDate ? parseDateInputValue(parsed.dueDate) : null,
             note: parsed.note,
             attachments: parsed.attachments,
@@ -142,6 +163,8 @@ export function DebtTransactionForm({
         );
       } else {
         const parsed = updateDebtTransactionSchema.parse({
+          title,
+          category,
           amount,
           occurredAt,
           dueDate: transaction.type === 'loan' ? dueDate : '',
@@ -152,8 +175,10 @@ export function DebtTransactionForm({
         await debtTransactionService.updateDebtTransaction(
           {
             transactionId: transaction.id,
+            title: parsed.title,
+            category: parsed.category,
             amount: parsed.amount,
-            occurredAt: parseDateInputValue(parsed.occurredAt),
+            occurredAt: parseOccurredAtInputValue(parsed.occurredAt),
             dueDate: parsed.dueDate ? parseDateInputValue(parsed.dueDate) : null,
             note: parsed.note,
             attachments: parsed.attachments,
@@ -189,6 +214,30 @@ export function DebtTransactionForm({
           Số tiền (VND)
         </label>
         <AmountInput id="debt-amount" onChange={setAmount} value={amount} />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700" htmlFor="debt-title">
+          Tên giao dịch
+        </label>
+        <Input
+          id="debt-title"
+          onChange={(event) => setTitle(event.target.value)}
+          placeholder={type === 'loan' ? 'Ví dụ: Cho anh A mượn tiền mua xe' : 'Ví dụ: Anh A trả tiền đợt 1'}
+          value={title}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700" htmlFor="debt-category">
+          Danh mục
+        </label>
+        <DropdownSelect
+          id="debt-category"
+          onValueChange={(value) => setCategory(value as DebtTransactionCategory)}
+          options={categoryOptions}
+          value={category}
+        />
       </div>
 
       {type === 'loan' && !isDirectionLocked ? (
@@ -245,7 +294,11 @@ export function DebtTransactionForm({
           <label className="text-sm font-medium text-slate-700" htmlFor="debt-occurredAt">
             {type === 'loan' ? 'Ngày vay' : 'Ngày trả'}
           </label>
-          <DateField id="debt-occurredAt" onChange={(event) => setOccurredAt(event.target.value)} value={occurredAt} />
+          <DateTimeInput
+            id="debt-occurredAt"
+            onChange={(event) => setOccurredAt(event.target.value)}
+            value={occurredAt}
+          />
         </div>
         {type === 'loan' ? (
           <div className="space-y-2">
@@ -283,11 +336,11 @@ export function DebtTransactionForm({
           </Button>
         ) : null}
         <Button
-          disabled={isSubmitting || !counterpartyMemberId || amount <= 0}
+          disabled={isSubmitting || !counterpartyMemberId || amount <= 0 || !title.trim()}
           onClick={handleSubmit}
           type="button"
         >
-          {isSubmitting ? 'Đang lưu...' : title}
+          {isSubmitting ? 'Đang lưu...' : submitLabel}
         </Button>
       </div>
     </div>

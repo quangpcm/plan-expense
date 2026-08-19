@@ -2,6 +2,7 @@
 
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { CounterpartyDebtLedger } from '@/modules/debt-tracking/calculators/debt-calculators';
+import { Avatar } from '@/shared/components/ui/avatar';
 import { Card } from '@/shared/components/ui/card';
 import { formatCompactCurrency } from '@/shared/utils/currency';
 import { formatDate } from '@/shared/utils/date';
@@ -44,25 +45,36 @@ export function DebtNativeList({ ledgers, members, selectedMemberId, onSelect }:
               type="button"
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-lg font-semibold text-slate-950">
-                    {counterpart?.nickname ?? 'Chưa rõ đối tượng'}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Net {ledger.netPosition >= 0 ? '+' : ''}
-                    {formatCompactCurrency(ledger.netPosition)}
-                  </p>
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <Avatar
+                    initials={(counterpart?.nickname ?? '?').slice(0, 2).toUpperCase()}
+                    src={counterpart?.avatarUrl ?? null}
+                  />
+                  <div className="min-w-0">
+                    <p className="truncate text-base font-semibold text-slate-950">
+                      {counterpart?.nickname ?? 'Chưa rõ đối tượng'}
+                    </p>
+                    <p className="mt-0.5 text-sm text-slate-500">
+                      {lastTransactionAt ? formatDate(lastTransactionAt) : 'Chưa có ngày'}
+                    </p>
+                  </div>
                 </div>
-                <p className="mt-1 text-sm text-slate-500">
-                  {lastTransactionAt ? formatDate(lastTransactionAt) : 'Chưa có ngày'}
+                <p
+                  className={cn(
+                    'shrink-0 text-base font-semibold',
+                    ledger.netPosition >= 0 ? 'text-[color:var(--color-income)]' : 'text-[color:var(--color-expense)]',
+                  )}
+                >
+                  {ledger.netPosition >= 0 ? '+' : ''}
+                  {formatCompactCurrency(ledger.netPosition)}
                 </p>
               </div>
-              <div className="grid gap-2 pt-3 md:grid-cols-2">
+              <div className="grid gap-2 border-t border-slate-100 pt-3 md:grid-cols-2">
                 <p className="text-sm text-slate-600">
-                  Phải thu: {formatCompactCurrency(ledger.receivableOutstanding)}
+                  Phải thu <span className="ml-1 font-medium text-slate-900">{formatCompactCurrency(ledger.receivableOutstanding)}</span>
                 </p>
                 <p className="text-sm text-slate-600">
-                  Phải trả: {formatCompactCurrency(ledger.payableOutstanding)}
+                  Phải trả <span className="ml-1 font-medium text-slate-900">{formatCompactCurrency(ledger.payableOutstanding)}</span>
                 </p>
               </div>
             </button>

@@ -1,6 +1,7 @@
 import type { Timestamp } from 'firebase/firestore';
 
 import type { AttachmentDraft, MediaAttachment } from '@/modules/storage/types/attachment';
+import type { DebtTransactionCategory } from '@/modules/debt-tracking/constants/debt-transaction-category';
 
 export type DebtDirection = 'receivable' | 'payable';
 export type DebtTransactionType = 'loan' | 'repayment';
@@ -11,6 +12,8 @@ export type DebtTransaction = {
   counterpartyMemberId: string;
   direction: DebtDirection;
   type: DebtTransactionType;
+  title: string;
+  category: DebtTransactionCategory;
   amount: number;
   occurredAt: Timestamp;
   dueDate: Timestamp | null;
@@ -26,6 +29,8 @@ export type CreateDebtTransactionInput = {
   counterpartyMemberId: string;
   direction: DebtDirection;
   type: DebtTransactionType;
+  title: string;
+  category: DebtTransactionCategory;
   amount: number;
   occurredAt: Date;
   dueDate?: Date | null | undefined;
@@ -35,6 +40,8 @@ export type CreateDebtTransactionInput = {
 
 export type UpdateDebtTransactionInput = {
   transactionId: string;
+  title: string;
+  category: DebtTransactionCategory;
   amount: number;
   occurredAt: Date;
   dueDate?: Date | null | undefined;

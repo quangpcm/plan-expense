@@ -25,6 +25,15 @@ function signedAmountFor(type: DebtTransactionType, amount: number): number {
   return type === 'loan' ? amount : -amount;
 }
 
+// title/category được thêm sau khi tính năng đã live — data cũ không có 2 field này.
+function normalizeDebtTransaction(data: DebtTransaction): DebtTransaction {
+  return {
+    ...data,
+    title: data.title ?? '',
+    category: data.category ?? 'other',
+  };
+}
+
 export class FirestoreDebtTransactionRepository implements DebtTransactionRepository {
   generateDebtTransactionId(planId: string): string {
     return doc(getPlanCollectionRef(getFirebaseFirestore(), planId, 'debtTransactions')).id;
@@ -49,6 +58,8 @@ export class FirestoreDebtTransactionRepository implements DebtTransactionReposi
         counterpartyMemberId: input.counterpartyMemberId,
         direction: input.direction,
         type: input.type,
+        title: input.title,
+        category: input.category,
         amount: input.amount,
         occurredAt: Timestamp.fromDate(input.occurredAt),
         dueDate: input.dueDate ? Timestamp.fromDate(input.dueDate) : null,
@@ -95,6 +106,8 @@ export class FirestoreDebtTransactionRepository implements DebtTransactionReposi
       const updatedOutstanding = currentOutstanding + delta;
 
       transaction.update(transactionRef, {
+        title: input.title,
+        category: input.category,
         amount: input.amount,
         occurredAt: Timestamp.fromDate(input.occurredAt),
         dueDate: input.dueDate ? Timestamp.fromDate(input.dueDate) : null,
@@ -164,7 +177,7 @@ export class FirestoreDebtTransactionRepository implements DebtTransactionReposi
       getPlanCollectionRef(getFirebaseFirestore(), planId, 'debtTransactions'),
       (snapshot) => {
         const transactions = snapshot.docs
-          .map((item) => item.data() as DebtTransaction)
+          .map((item) => normalizeDebtTransaction(item.data() as DebtTransaction))
           .sort((a, b) => b.occurredAt.toMillis() - a.occurredAt.toMillis());
 
         callback(transactions);

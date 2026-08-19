@@ -1,7 +1,7 @@
 'use client';
 
 import { CalendarDays } from 'lucide-react';
-import type { InputHTMLAttributes } from 'react';
+import type { InputHTMLAttributes, MouseEvent } from 'react';
 
 import { cn } from '@/shared/utils/cn';
 import { formatDateTimePickerDisplay, parseDateTimeLocalInput } from '@/shared/utils/date';
@@ -11,12 +11,21 @@ type DateTimeInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & 
   placeholder?: string;
 };
 
+function openPicker(event: MouseEvent<HTMLInputElement>) {
+  // Trên desktop, browser chỉ tự mở picker khi click đúng icon lịch gốc (rất nhỏ vì input
+  // đã bị kéo full-size và ẩn) — gọi showPicker() để bất kỳ click nào trong ô cũng mở được.
+  if (typeof event.currentTarget.showPicker === 'function') {
+    event.currentTarget.showPicker();
+  }
+}
+
 export function DateTimeInput({
   className,
   value,
   placeholder = 'Chọn thời gian',
   disabled,
   id,
+  onClick,
   ...props
 }: DateTimeInputProps) {
   const parsedDate = parseDateTimeLocalInput(value);
@@ -40,6 +49,10 @@ export function DateTimeInput({
         className="absolute inset-0 h-full w-full cursor-pointer opacity-0 outline-none"
         disabled={disabled}
         id={id}
+        onClick={(event) => {
+          openPicker(event);
+          onClick?.(event);
+        }}
         type="datetime-local"
         value={value}
         {...props}

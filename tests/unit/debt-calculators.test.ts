@@ -19,6 +19,8 @@ function makeTransaction(overrides: Partial<DebtTransaction> & Pick<DebtTransact
     id: overrides.id ?? `transaction-${sequence}`,
     planId: 'plan-1',
     counterpartyMemberId: overrides.counterpartyMemberId ?? 'member-a',
+    title: overrides.title ?? '',
+    category: overrides.category ?? 'other',
     occurredAt: overrides.occurredAt ?? Timestamp.fromDate(new Date(`2026-02-${String(10 + sequence).padStart(2, '0')}T00:00:00+07:00`)),
     dueDate: overrides.dueDate ?? null,
     note: overrides.note ?? null,

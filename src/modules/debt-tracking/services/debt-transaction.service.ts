@@ -76,6 +76,8 @@ export class DebtTransactionService {
       counterpartyMemberId: input.counterpartyMemberId,
       direction: input.direction,
       type: input.type,
+      title: input.title.trim(),
+      category: input.category,
       amount: input.amount,
       occurredAt: input.occurredAt,
       dueDate: input.type === 'loan' ? input.dueDate ?? null : null,
@@ -119,6 +121,8 @@ export class DebtTransactionService {
 
     const { orphanedAttachments } = await this.debtTransactionRepository.updateDebtTransaction(context.plan.id, {
       transactionId: input.transactionId,
+      title: input.title.trim(),
+      category: input.category,
       amount: input.amount,
       occurredAt: input.occurredAt,
       dueDate: transaction.type === 'loan' ? input.dueDate ?? null : null,
