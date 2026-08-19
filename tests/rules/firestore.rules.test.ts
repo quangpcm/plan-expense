@@ -1470,4 +1470,146 @@ describe('firestore rules', () => {
       }),
     );
   });
+
+  describe('debtTransactions (native_debt)', () => {
+    function debtTransaction(overrides: Record<string, unknown> = {}) {
+      return {
+        id: 'debt-transaction-1',
+        planId: 'plan-2',
+        counterpartyMemberId: 'member-editor-2',
+        direction: 'receivable',
+        type: 'loan',
+        amount: 10_000_000,
+        occurredAt: now,
+        dueDate: null,
+        note: null,
+        attachments: [],
+        createdByUserId: 'owner-user',
+        createdByMemberId: 'member-owner-2',
+        createdAt: now,
+        updatedAt: now,
+        ...overrides,
+      };
+    }
+
+    it('allows the plan owner to create a debt transaction', async () => {
+      const db = testEnv.authenticatedContext('owner-user').firestore();
+      await assertSucceeds(
+        setDoc(doc(db, 'plans', 'plan-2', 'debtTransactions', 'debt-transaction-1'), debtTransaction()),
+      );
+    });
+
+    it('blocks an editor from creating a debt transaction', async () => {
+      const db = testEnv.authenticatedContext('editor-user').firestore();
+      await assertFails(
+        setDoc(
+          doc(db, 'plans', 'plan-2', 'debtTransactions', 'debt-transaction-editor'),
+          debtTransaction({
+            id: 'debt-transaction-editor',
+            createdByUserId: 'editor-user',
+            createdByMemberId: 'member-editor-2',
+          }),
+        ),
+      );
+    });
+
+    it('blocks a debt transaction whose counterparty belongs to a different plan', async () => {
+      const db = testEnv.authenticatedContext('owner-user').firestore();
+      await assertFails(
+        setDoc(
+          doc(db, 'plans', 'plan-2', 'debtTransactions', 'debt-transaction-cross-plan'),
+          debtTransaction({ id: 'debt-transaction-cross-plan', counterpartyMemberId: 'member-owner' }),
+        ),
+      );
+    });
+
+    it('allows editing amount/note but blocks changing direction, type, or counterparty', async () => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(
+          doc(context.firestore(), 'plans', 'plan-2', 'debtTransactions', 'debt-transaction-edit'),
+          debtTransaction({ id: 'debt-transaction-edit' }),
+        );
+      });
+
+      const db = testEnv.authenticatedContext('owner-user').firestore();
+      await assertSucceeds(
+        updateDoc(doc(db, 'plans', 'plan-2', 'debtTransactions', 'debt-transaction-edit'), {
+          amount: 12_000_000,
+          note: 'Adjusted amount',
+          updatedAt: now,
+        }),
+      );
+      await assertFails(
+        updateDoc(doc(db, 'plans', 'plan-2', 'debtTransactions', 'debt-transaction-edit'), {
+          direction: 'payable',
+          updatedAt: now,
+        }),
+      );
+      await assertFails(
+        updateDoc(doc(db, 'plans', 'plan-2', 'debtTransactions', 'debt-transaction-edit'), {
+          type: 'repayment',
+          updatedAt: now,
+        }),
+      );
+      await assertFails(
+        updateDoc(doc(db, 'plans', 'plan-2', 'debtTransactions', 'debt-transaction-edit'), {
+          counterpartyMemberId: 'member-owner-2',
+          updatedAt: now,
+        }),
+      );
+    });
+
+    it('allows the owner to delete a debt transaction but blocks an editor', async () => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(
+          doc(context.firestore(), 'plans', 'plan-2', 'debtTransactions', 'debt-transaction-delete'),
+          debtTransaction({ id: 'debt-transaction-delete' }),
+        );
+      });
+
+      const editorDb = testEnv.authenticatedContext('editor-user').firestore();
+      await assertFails(deleteDoc(doc(editorDb, 'plans', 'plan-2', 'debtTransactions', 'debt-transaction-delete')));
+
+      const ownerDb = testEnv.authenticatedContext('owner-user').firestore();
+      await assertSucceeds(deleteDoc(doc(ownerDb, 'plans', 'plan-2', 'debtTransactions', 'debt-transaction-delete')));
+    });
+
+    it('blocks debt transaction creation when the plan is closed', async () => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await updateDoc(doc(context.firestore(), 'plans', 'plan-2'), {
+          status: 'closed',
+          closedAt: now,
+        });
+        await updateDoc(doc(context.firestore(), 'userPlans', 'owner-user', 'plans', 'plan-2'), {
+          planStatus: 'closed',
+        });
+      });
+
+      const db = testEnv.authenticatedContext('owner-user').firestore();
+      await assertFails(
+        setDoc(doc(db, 'plans', 'plan-2', 'debtTransactions', 'debt-transaction-closed'), debtTransaction({ id: 'debt-transaction-closed' })),
+      );
+    });
+  });
+
+  it('blocks changing debtModel through the edit-plan-details update path', async () => {
+    const db = testEnv.authenticatedContext('owner-user').firestore();
+    await assertFails(
+      updateDoc(doc(db, 'plans', 'plan-2'), {
+        name: 'Debt Plan',
+        description: null,
+        planType: 'debt',
+        debtModel: 'native_debt',
+        status: 'active',
+        startDate: null,
+        endDate: null,
+        budgetAmount: null,
+        savingGoalAmount: null,
+        savingTargetDate: null,
+        closedAt: null,
+        archivedAt: null,
+        updatedAt: now,
+      }),
+    );
+  });
 });

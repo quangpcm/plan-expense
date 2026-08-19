@@ -22,4 +22,5 @@ export type AttachmentUploadContext =
   | { mediaType: 'income-attachment'; planId: string; incomeId: string }
   | { mediaType: 'settlement-attachment'; planId: string; settlementId: string }
   | { mediaType: 'todo-attachment'; planId: string; todoId: string }
-  | { mediaType: 'todo-vendor-attachment'; planId: string; todoId: string; vendorId: string };
+  | { mediaType: 'todo-vendor-attachment'; planId: string; todoId: string; vendorId: string }
+  | { mediaType: 'debt-transaction-attachment'; planId: string; transactionId: string };

@@ -24,6 +24,7 @@ export {
   getPlanModuleDefinitions,
   getResolvedPlanTypeConfig,
   hasPlanModule,
+  resolvePlanDebtModel,
 } from './utils/plan-type-config';
 export { getPlanDetailTabs, resolvePlanDetailTab } from './utils/plan-navigation';
 export {

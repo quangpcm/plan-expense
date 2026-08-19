@@ -13,6 +13,7 @@ import { formatDate } from '@/shared/utils/date';
 import { formatCompactCurrency, formatCurrency } from '@/shared/utils/currency';
 import type { OverviewWidgetDefinition, OverviewWidgetId } from '@/modules/plan/types/plan-modular';
 import type { OverviewRendererProps } from '@/modules/plan/components/overview-renderer';
+import { resolvePlanDebtModel } from '@/modules/plan/utils/plan-type-config';
 
 type OverviewWidgetComponent = (props: OverviewRendererProps) => React.JSX.Element;
 
@@ -244,12 +245,61 @@ function TravelItinerarySummaryWidget({
   );
 }
 
-function DebtSummaryWidget({
-  debtTrackingError,
-  debtTrackingSummary,
-  isDebtTrackingLoading,
-  onOpenDebtTracking,
-}: OverviewRendererProps) {
+function DebtSummaryWidget(props: OverviewRendererProps) {
+  const {
+    debtTrackingError,
+    debtTrackingSummary,
+    isDebtTrackingLoading,
+    nativeDebtError,
+    nativeDebtSummary,
+    isNativeDebtLoading,
+    onOpenDebtTracking,
+    plan,
+  } = props;
+  const isNativeDebt = resolvePlanDebtModel(plan) === 'native_debt';
+
+  if (isNativeDebt) {
+    return (
+      <Card className="transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
+        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Khoản nợ</p>
+        {nativeDebtError ? (
+          <p className="mt-2 text-sm text-rose-600">{nativeDebtError}</p>
+        ) : isNativeDebtLoading || !nativeDebtSummary ? (
+          <Skeleton className="mt-3 h-20 rounded-2xl" />
+        ) : (
+          <>
+            <div className="mt-2 grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs text-slate-500">Phải thu</p>
+                <p className="text-lg font-semibold text-slate-950">
+                  {formatCompactCurrency(nativeDebtSummary.totalReceivableOutstanding)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-500">Phải trả</p>
+                <p className="text-lg font-semibold text-slate-950">
+                  {formatCompactCurrency(nativeDebtSummary.totalPayableOutstanding)}
+                </p>
+              </div>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Chênh lệch ròng {nativeDebtSummary.netPosition >= 0 ? '+' : ''}
+              {formatCompactCurrency(nativeDebtSummary.netPosition)} ·{' '}
+              {nativeDebtSummary.activeCounterpartyCount} đối tượng đang có công nợ
+            </p>
+            <button
+              className="mt-3 text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+              onClick={onOpenDebtTracking}
+              type="button"
+            >
+              Mở sổ công nợ
+            </button>
+          </>
+        )}
+      </Card>
+    );
+  }
+
   return (
     <Card className="transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
       <p className="text-xs uppercase tracking-[0.16em] text-slate-400">

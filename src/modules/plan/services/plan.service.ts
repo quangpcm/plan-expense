@@ -48,6 +48,7 @@ export class PlanService {
       name: normalizedName,
       description: input.description?.trim() || null,
       planType: input.planType,
+      debtModel: input.planType === 'debt' ? 'native_debt' : undefined,
       startDate,
       endDate,
       budgetAmount,

@@ -17,11 +17,14 @@ export type PlanType =
 
 export type CurrencyCode = 'VND';
 
+export type DebtModel = 'finance_aggregate' | 'native_debt';
+
 export type PlanDocument = {
   id: string;
   name: string;
   description: string | null;
   planType: PlanType;
+  debtModel?: DebtModel | undefined;
   ownerUserId: string;
   ownerMemberId: string;
   currency: CurrencyCode;
@@ -45,6 +48,8 @@ export type PlanDocument = {
   settlementCount: number;
   totalExpense: number;
   totalIncome: number;
+  debtReceivableOutstanding?: number | undefined;
+  debtPayableOutstanding?: number | undefined;
   createdAt: Timestamp;
   updatedAt: Timestamp;
   closedAt: Timestamp | null;
@@ -57,6 +62,7 @@ export type UserPlanDocument = {
   userId: string;
   planName: string;
   planType: PlanType;
+  debtModel?: DebtModel | undefined;
   role: PlanRole;
   memberId: string;
   memberStatus: PlanMemberStatus;
@@ -74,6 +80,8 @@ export type UserPlanDocument = {
   completedTodoCount: number;
   totalExpense: number;
   totalIncome: number;
+  debtReceivableOutstanding?: number | undefined;
+  debtPayableOutstanding?: number | undefined;
   isLocked: boolean;
   memberCount: number;
   joinedAt: Timestamp | null;
@@ -110,6 +118,7 @@ export type PlanSummary = {
   planId: string;
   planName: string;
   planType: PlanType;
+  debtModel?: DebtModel | undefined;
   role: PlanRole;
   memberStatus: PlanMemberStatus;
   planStatus: PlanStatus;
@@ -126,6 +135,8 @@ export type PlanSummary = {
   completedTodoCount: number;
   totalExpense: number;
   totalIncome: number;
+  debtReceivableOutstanding?: number | undefined;
+  debtPayableOutstanding?: number | undefined;
   isLocked: boolean;
   memberCount: number;
   joinedAt: Timestamp | null;

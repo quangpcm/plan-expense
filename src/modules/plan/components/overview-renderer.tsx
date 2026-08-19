@@ -1,6 +1,7 @@
 'use client';
 
 import type { DebtTrackingSummary } from '@/modules/debt-tracking/types/debt-tracking';
+import type { PlanDebtSummary } from '@/modules/debt-tracking/calculators/debt-calculators';
 import { overviewWidgetRegistry } from '@/modules/plan/constants/overview-widget-registry';
 import { getResolvedPlanTypeConfig } from '@/modules/plan/utils/plan-type-config';
 import type { PlanDocument, PlanStatus, PlanType } from '@/modules/plan/types/plan';
@@ -18,6 +19,9 @@ export type OverviewRendererProps = {
   estimatedByMilestoneId: Record<string, number>;
   isDebtTrackingEnabled: boolean;
   isDebtTrackingLoading: boolean;
+  nativeDebtSummary: PlanDebtSummary | null;
+  isNativeDebtLoading: boolean;
+  nativeDebtError: string | null;
   isMilestonesLoading: boolean;
   isPlanEnded: boolean;
   isTodoSubmitting: boolean;
@@ -36,7 +40,7 @@ export type OverviewRendererProps = {
   onSelectMilestoneDrilldown: (milestoneId: string, memberId: string) => void;
   onSelectUpcomingMilestone: (milestoneId: string) => void;
   onToggleTodoStatus: (todo: TodoDocument, status: TodoDocument['status']) => void;
-  plan: Pick<PlanDocument, 'planType' | 'status'> | PlanType;
+  plan: Pick<PlanDocument, 'planType' | 'status' | 'debtModel'> | PlanType;
   planStatus: PlanStatus;
   selectedMilestoneId: string | null;
   statistic: StatisticResult;
@@ -49,7 +53,7 @@ export type OverviewRendererProps = {
 };
 
 export function resolveOverviewWidgets(
-  plan: Pick<PlanDocument, 'planType'> | PlanType,
+  plan: Pick<PlanDocument, 'planType' | 'debtModel'> | PlanType,
   props: OverviewRendererProps,
 ) {
   const config = getResolvedPlanTypeConfig(plan);

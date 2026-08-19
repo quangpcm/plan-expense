@@ -118,7 +118,11 @@ service cloud.firestore {
         request.resource.data.startDate == resource.data.startDate &&
         request.resource.data.endDate == resource.data.endDate &&
         request.resource.data.coverImageUrl == resource.data.coverImageUrl &&
-        request.resource.data.coverImageStoragePath == resource.data.coverImageStoragePath;
+        request.resource.data.coverImageStoragePath == resource.data.coverImageStoragePath &&
+        // debtModel is a migration/compatibility marker (docs/debt-plan-specs.md #25):
+        // set once at plan creation, never editable afterwards.
+        (!('debtModel' in request.resource.data) == !('debtModel' in resource.data)) &&
+        (!('debtModel' in request.resource.data) || request.resource.data.debtModel == resource.data.debtModel);
     }
 
     function isAggregatePlanUpdate() {
@@ -133,7 +137,9 @@ service cloud.firestore {
         request.resource.data.settlementCount is int &&
         (!('estimatedAmount' in request.resource.data) || request.resource.data.estimatedAmount is int) &&
         request.resource.data.totalExpense is int &&
-        request.resource.data.totalIncome is int;
+        request.resource.data.totalIncome is int &&
+        (!('debtReceivableOutstanding' in request.resource.data) || request.resource.data.debtReceivableOutstanding is int) &&
+        (!('debtPayableOutstanding' in request.resource.data) || request.resource.data.debtPayableOutstanding is int);
     }
 
     function isClosePlanUpdate() {
@@ -148,7 +154,11 @@ service cloud.firestore {
         request.resource.data.incomeCount == resource.data.incomeCount &&
         request.resource.data.settlementCount == resource.data.settlementCount &&
         request.resource.data.totalExpense == resource.data.totalExpense &&
-        request.resource.data.totalIncome == resource.data.totalIncome;
+        request.resource.data.totalIncome == resource.data.totalIncome &&
+        (!('debtReceivableOutstanding' in request.resource.data) == !('debtReceivableOutstanding' in resource.data)) &&
+        (!('debtReceivableOutstanding' in request.resource.data) || request.resource.data.debtReceivableOutstanding == resource.data.debtReceivableOutstanding) &&
+        (!('debtPayableOutstanding' in request.resource.data) == !('debtPayableOutstanding' in resource.data)) &&
+        (!('debtPayableOutstanding' in request.resource.data) || request.resource.data.debtPayableOutstanding == resource.data.debtPayableOutstanding);
     }
 
     function planCountersUnchanged() {
@@ -162,7 +172,11 @@ service cloud.firestore {
         request.resource.data.settlementCount == resource.data.settlementCount &&
         request.resource.data.estimatedAmount == resource.data.estimatedAmount &&
         request.resource.data.totalExpense == resource.data.totalExpense &&
-        request.resource.data.totalIncome == resource.data.totalIncome;
+        request.resource.data.totalIncome == resource.data.totalIncome &&
+        (!('debtReceivableOutstanding' in request.resource.data) == !('debtReceivableOutstanding' in resource.data)) &&
+        (!('debtReceivableOutstanding' in request.resource.data) || request.resource.data.debtReceivableOutstanding == resource.data.debtReceivableOutstanding) &&
+        (!('debtPayableOutstanding' in request.resource.data) == !('debtPayableOutstanding' in resource.data)) &&
+        (!('debtPayableOutstanding' in request.resource.data) || request.resource.data.debtPayableOutstanding == resource.data.debtPayableOutstanding);
     }
 
     // The owner-facing "edit plan" form: name/description/planType/dates/
@@ -182,6 +196,8 @@ service cloud.firestore {
         request.resource.data.coverImageStoragePath == resource.data.coverImageStoragePath &&
         request.resource.data.status == resource.data.status &&
         request.resource.data.closedAt == resource.data.closedAt &&
+        (!('debtModel' in request.resource.data) == !('debtModel' in resource.data)) &&
+        (!('debtModel' in request.resource.data) || request.resource.data.debtModel == resource.data.debtModel) &&
         request.resource.data.name is string &&
         request.resource.data.planType in
           ['debt', 'travel', 'wedding', 'saving', 'birthday', 'event', 'shared_living', 'project', 'general'] &&
@@ -631,6 +647,37 @@ service cloud.firestore {
         request.resource.data.status == 'cancelled' &&
         request.resource.data.cancelledByUserId == request.auth.uid &&
         request.resource.data.cancelledAt != null;
+      allow delete: if isPlanOwner(planId);
+    }
+
+    // docs/debt-plan-specs.md (native_debt): flat ledger, owner-only writes —
+    // debt plans are personal (no editor/viewer write access in this MVP).
+    match /plans/{planId}/debtTransactions/{transactionId} {
+      allow read: if isPlanVisible(planId);
+      allow create: if isPlanOwner(planId) &&
+        isPlanActive(planId) &&
+        request.resource.data.planId == planId &&
+        request.resource.data.id == transactionId &&
+        request.resource.data.createdByUserId == request.auth.uid &&
+        request.resource.data.createdByMemberId == currentUserPlanDoc(planId).data.memberId &&
+        request.resource.data.direction in ['receivable', 'payable'] &&
+        request.resource.data.type in ['loan', 'repayment'] &&
+        request.resource.data.amount is int &&
+        request.resource.data.amount > 0 &&
+        request.resource.data.counterpartyMemberId is string &&
+        memberDoc(planId, request.resource.data.counterpartyMemberId).data.planId == planId;
+      allow update: if isPlanOwner(planId) &&
+        isPlanActive(planId) &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.planId == resource.data.planId &&
+        request.resource.data.createdByUserId == resource.data.createdByUserId &&
+        request.resource.data.createdByMemberId == resource.data.createdByMemberId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.direction == resource.data.direction &&
+        request.resource.data.type == resource.data.type &&
+        request.resource.data.counterpartyMemberId == resource.data.counterpartyMemberId &&
+        request.resource.data.amount is int &&
+        request.resource.data.amount > 0;
       allow delete: if isPlanOwner(planId);
     }
 

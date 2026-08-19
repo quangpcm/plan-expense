@@ -60,6 +60,7 @@ import {
   getPlanDetailTabs,
   hasPlanModule,
   OverviewTab,
+  resolvePlanDebtModel,
   resolvePlanDetailTab,
 } from '@/modules/plan';
 import type { PlanStatus } from '@/modules/plan/types/plan';
@@ -97,8 +98,10 @@ import {
 } from '@/modules/travel-activity';
 import type { TravelActivityDocument } from '@/modules/travel-activity';
 import {
-  DebtTrackingTab,
+  DebtTrackingPanel,
+  useDebtLedger,
   useDebtTracking,
+  useDebtTransactions,
 } from '@/modules/debt-tracking';
 import type { MemberDebtSnapshot } from '@/modules/debt-tracking';
 import { CategoryBreakdown } from '@/modules/statistic/components/category-breakdown';
@@ -260,6 +263,14 @@ export default function PlanDetailPage() {
     expenses,
     incomes,
   });
+  const isNativeDebtPlan = Boolean(plan && resolvePlanDebtModel(plan) === 'native_debt');
+  const {
+    transactions: debtTransactions,
+    isLoading: isNativeDebtLoading,
+    errorMessage: nativeDebtError,
+  } = useDebtTransactions(planId, { enabled: isDebtTrackingEnabled && isNativeDebtPlan });
+  const { counterpartyLedgers: nativeDebtCounterpartyLedgers, planSummary: nativeDebtSummary } =
+    useDebtLedger(debtTransactions);
   const isPlanEnded = plan?.status === 'completed' || plan?.status === 'closed';
   const canManageMembers = hasCapability('members.manage');
   const canManageSettlements = hasCapability('finance.manageSettlements');
@@ -1537,6 +1548,9 @@ export default function PlanDetailPage() {
             estimatedByMilestoneId={estimatedByMilestoneId}
             isDebtTrackingEnabled={isDebtTrackingEnabled}
             isDebtTrackingLoading={isDebtTrackingLoading}
+            isNativeDebtLoading={isNativeDebtLoading}
+            nativeDebtError={nativeDebtError}
+            nativeDebtSummary={nativeDebtSummary}
             isMilestonesLoading={isMilestonesLoading}
             isPlanEnded={Boolean(isPlanEnded)}
             isTodoSubmitting={isTodoSubmitting}
@@ -1875,14 +1889,26 @@ export default function PlanDetailPage() {
         );
       case 'debtTracking':
         return (
-          <DebtTrackingTab
-            aggregates={debtAggregates}
-            detailSnapshot={detailDebt}
-            errorMessage={debtTrackingError}
-            isLoading={isDebtTrackingLoading}
-            members={members}
-            onSelect={setDetailDebt}
-            summary={debtTrackingSummary}
+          <DebtTrackingPanel
+            legacyProps={{
+              aggregates: debtAggregates,
+              detailSnapshot: detailDebt,
+              errorMessage: debtTrackingError,
+              isLoading: isDebtTrackingLoading,
+              members,
+              onSelect: setDetailDebt,
+              summary: debtTrackingSummary,
+            }}
+            nativeProps={{
+              planId,
+              members,
+              transactions: debtTransactions,
+              counterpartyLedgers: nativeDebtCounterpartyLedgers,
+              planSummary: nativeDebtSummary,
+              isLoading: isNativeDebtLoading,
+              errorMessage: nativeDebtError,
+            }}
+            plan={ensuredPlan}
           />
         );
       default:

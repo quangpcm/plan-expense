@@ -13,7 +13,8 @@ export type PlanOwnedCollectionPath =
   | 'weddingGuests'
   | 'weddingGuestGroups'
   | 'guestInvitations'
-  | 'travelActivities';
+  | 'travelActivities'
+  | 'debtTransactions';
 
 export function getPlanCollectionPath(planId: string, collectionPath: PlanOwnedCollectionPath): string {
   return `plans/${planId}/${collectionPath}`;

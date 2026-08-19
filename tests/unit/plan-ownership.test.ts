@@ -22,12 +22,12 @@ describe('plan ownership metadata', () => {
   });
 
   it('keeps registry-backed debt cleanup collections visible to deletePlan', () => {
-    expect(planModuleRegistry.debtTracking.collections).toEqual([
-      { path: 'debts' },
-      { path: 'repayments' },
-    ]);
+    // docs/debt-plan-specs.md (native_debt): debtTracking owns the flat
+    // debtTransactions ledger; expenses/incomes/settlements stay owned by the
+    // finance module (still enabled for legacy finance_aggregate debt plans).
+    expect(planModuleRegistry.debtTracking.collections).toEqual([{ path: 'debtTransactions' }]);
     expect(getPlanOwnedCollectionPaths('debt')).toEqual(
-      expect.arrayContaining(['members', 'invitations', 'expenses', 'incomes', 'settlements', 'debts', 'repayments']),
+      expect.arrayContaining(['members', 'invitations', 'expenses', 'incomes', 'settlements', 'debtTransactions']),
     );
   });
 });

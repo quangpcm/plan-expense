@@ -56,6 +56,12 @@ const requestSchema = z.discriminatedUnion('mediaType', [
     vendorId: z.string().min(1),
     ...baseSchema,
   }),
+  z.object({
+    mediaType: z.literal('debt-transaction-attachment'),
+    planId: z.string().min(1),
+    transactionId: z.string().min(1),
+    ...baseSchema,
+  }),
 ]);
 
 async function resolveActiveMember(planId: string, uid: string): Promise<PlanMemberDocument> {
@@ -126,6 +132,13 @@ async function assertPermission(input: RequestUploadUrlInput, uid: string): Prom
     member.role !== 'owner'
   ) {
     throw new AppError('Only the plan owner can manage todo attachments.', 'STORAGE_PERMISSION_DENIED', 403);
+  }
+
+  if (
+    input.mediaType === 'debt-transaction-attachment' &&
+    !hasPlanCapability(member, 'debtTracking.manageTransaction')
+  ) {
+    throw new AppError('You do not have permission to add debt transaction attachments.', 'STORAGE_PERMISSION_DENIED', 403);
   }
 }
 

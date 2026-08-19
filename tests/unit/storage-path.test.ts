@@ -80,4 +80,14 @@ describe('buildStoragePath', () => {
     };
     expect(buildStoragePath(input, 'file1')).toBe('plans/plan1/todos/todo1/vendors/vendor1/file1.png');
   });
+
+  it('builds the debt transaction attachment path', () => {
+    const input: RequestUploadUrlInput = {
+      ...base,
+      mediaType: 'debt-transaction-attachment',
+      planId: 'plan1',
+      transactionId: 'transaction1',
+    };
+    expect(buildStoragePath(input, 'file1')).toBe('plans/plan1/debt-transactions/transaction1/file1.png');
+  });
 });

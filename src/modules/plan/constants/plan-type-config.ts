@@ -5,7 +5,7 @@ import type {
   PlanTypeConfigFallbackMap,
   SupportedPlanTypeConfigMap,
 } from '@/modules/plan/types/plan-modular';
-import type { PlanType } from '@/modules/plan/types/plan';
+import type { DebtModel, PlanType } from '@/modules/plan/types/plan';
 
 export const modularPlanTypeFallbackMap: PlanTypeConfigFallbackMap = {
   saving: 'general',
@@ -94,6 +94,25 @@ export const planTypeConfigMap: SupportedPlanTypeConfigMap = {
   },
 };
 
+// Debt V2 ("native_debt"): DebtTracking is its own ledger, Finance stays off.
+// Legacy debt plans (missing debtModel, or debtModel === 'finance_aggregate')
+// keep using planTypeConfigMap.debt above unchanged.
+const debtNativeConfig: PlanTypeConfig = {
+  type: 'debt',
+  label: 'Vay & trả',
+  modules: [
+    { moduleId: 'overview', enabled: true, order: 0, label: 'Tổng quan' },
+    { moduleId: 'debtTracking', enabled: true, order: 10, label: 'Khoản vay' },
+    { moduleId: 'members', enabled: true, order: 20, label: 'Đối tượng' },
+  ],
+  overview: {
+    widgets: [
+      { widgetId: 'planSummary', enabled: true, order: 0 },
+      { widgetId: 'debtSummary', enabled: true, order: 10 },
+    ],
+  },
+};
+
 export function isSupportedModularPlanType(planType: PlanType): planType is ModularPlanType {
   return supportedModularPlanTypes.includes(planType as ModularPlanType);
 }
@@ -106,6 +125,12 @@ export function resolveModularPlanType(planType: PlanType): ModularPlanType {
   return modularPlanTypeFallbackMap[planType] ?? 'general';
 }
 
-export function getPlanTypeConfig(planType: PlanType): PlanTypeConfig {
-  return planTypeConfigMap[resolveModularPlanType(planType)];
+export function getPlanTypeConfig(planType: PlanType, debtModel?: DebtModel): PlanTypeConfig {
+  const modularPlanType = resolveModularPlanType(planType);
+
+  if (modularPlanType === 'debt' && debtModel === 'native_debt') {
+    return debtNativeConfig;
+  }
+
+  return planTypeConfigMap[modularPlanType];
 }

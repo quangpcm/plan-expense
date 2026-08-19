@@ -9,6 +9,7 @@ import {
   getEffectiveBudgetAmount,
   isEffectiveBudgetEstimated,
 } from '@/modules/plan/utils/get-effective-budget-amount';
+import { resolvePlanDebtModel } from '@/modules/plan/utils/plan-type-config';
 import { formatCurrency } from '@/shared/utils/currency';
 import {
   formatDate,
@@ -50,6 +51,14 @@ function getSafeCurrency(value: number | null | undefined) {
 
 function getSafeBalance(plan: PlanSummary) {
   return getSafeNumber(plan.totalIncome) - getSafeNumber(plan.totalExpense);
+}
+
+function getSafeDebtReceivableOutstanding(plan: PlanSummary) {
+  return getSafeNumber(plan.debtReceivableOutstanding);
+}
+
+function getSafeDebtPayableOutstanding(plan: PlanSummary) {
+  return getSafeNumber(plan.debtPayableOutstanding);
 }
 
 function getSafeEffectiveBudget(plan: PlanSummary) {
@@ -414,28 +423,46 @@ function buildEndedSummaryConfig(plan: PlanSummary) {
 }
 
 export const planCardConfigByType: Record<PlanType, PlanCardTypeConfig> = {
-  debt: {
-    primaryMetric: ({ plan }) => ({
-      label: 'Dòng tiền ròng',
-      value: getSafeCurrency(getSafeBalance(plan)),
-      tone: getSafeBalance(plan) >= 0 ? 'warning' : 'danger',
-      isMonetary: true,
-    }),
-    secondaryMetric: ({ plan }) => ({
-      label: 'Đã nhận giải ngân',
-      value: getSafeCurrency(plan.totalIncome),
-      detail: `Đã trả / chi ${getSafeCurrency(plan.totalExpense)}`,
-      isMonetary: true,
-      detailIsMonetary: true,
-    }),
-    progress: ({ plan }) => buildBalanceProgress(plan),
-    footerLeft: ({ plan }) => ({
-      label: 'Theo dõi nợ',
-      value: isEndedPlan(plan)
-        ? buildEndedFooter(plan).value
-        : getSafeCountLabel(plan.memberCount, 'thành viên liên quan'),
-    }),
-  },
+  debt:
+    // native_debt (docs/debt-plan-specs.md): công nợ derive từ debtTransactions, không còn Finance,
+    // nên card đọc từ debtReceivableOutstanding/debtPayableOutstanding thay vì totalIncome/totalExpense.
+    {
+      primaryMetric: ({ plan }) =>
+        resolvePlanDebtModel(plan) === 'native_debt'
+          ? {
+              label: 'Phải thu',
+              value: getSafeCurrency(getSafeDebtReceivableOutstanding(plan)),
+              tone: 'primary',
+              isMonetary: true,
+            }
+          : {
+              label: 'Dòng tiền ròng',
+              value: getSafeCurrency(getSafeBalance(plan)),
+              tone: getSafeBalance(plan) >= 0 ? 'warning' : 'danger',
+              isMonetary: true,
+            },
+      secondaryMetric: ({ plan }) =>
+        resolvePlanDebtModel(plan) === 'native_debt'
+          ? {
+              label: 'Phải trả',
+              value: getSafeCurrency(getSafeDebtPayableOutstanding(plan)),
+              isMonetary: true,
+            }
+          : {
+              label: 'Đã nhận giải ngân',
+              value: getSafeCurrency(plan.totalIncome),
+              detail: `Đã trả / chi ${getSafeCurrency(plan.totalExpense)}`,
+              isMonetary: true,
+              detailIsMonetary: true,
+            },
+      progress: ({ plan }) => (resolvePlanDebtModel(plan) === 'native_debt' ? null : buildBalanceProgress(plan)),
+      footerLeft: ({ plan }) => ({
+        label: 'Theo dõi nợ',
+        value: isEndedPlan(plan)
+          ? buildEndedFooter(plan).value
+          : getSafeCountLabel(plan.memberCount, 'thành viên liên quan'),
+      }),
+    },
   travel: {
     primaryMetric: ({ plan }) => ({
       label: 'Ngân sách',

@@ -37,6 +37,7 @@ export function resolvePlanCapabilities(member: PlanMemberDocument | null): Plan
     capabilities.add('travelItinerary.createActivity');
     capabilities.add('travelItinerary.editActivity');
     capabilities.add('travelItinerary.deleteActivity');
+    capabilities.add('debtTracking.manageTransaction');
   }
 
   if (isEditor) {

@@ -50,8 +50,7 @@ export class FirestoreMemberRepository implements MemberRepository {
     const now = Timestamp.now();
     const batch = writeBatch(db);
     const memberRef = doc(getPlanCollectionRef(db, planId, 'members'));
-
-    batch.set(memberRef, {
+    const member: PlanMemberDocument = {
       id: memberRef.id,
       planId,
       memberType: 'guest',
@@ -72,10 +71,14 @@ export class FirestoreMemberRepository implements MemberRepository {
       createdByUserId: actor.uid,
       createdAt: now,
       updatedAt: now,
-    });
+    };
+
+    batch.set(memberRef, member);
 
     await batch.commit();
     await syncPlanMemberCountAggregate(planId, now);
+
+    return member;
   }
 
   async updateMember(planId: string, input: UpdateMemberInput) {

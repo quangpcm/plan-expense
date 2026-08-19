@@ -77,7 +77,7 @@ export class FirestorePlanRepository implements PlanRepository {
     const planRef = doc(collection(db, 'plans'));
     const ownerMemberRef = doc(collection(db, 'plans', planRef.id, 'members'));
     const userPlanRef = doc(db, 'userPlans', input.owner.uid, 'plans', planRef.id);
-    const planTypeConfig = getPlanTypeConfig(input.planType);
+    const planTypeConfig = getPlanTypeConfig(input.planType, input.debtModel);
     const hasPlanningModule = planTypeConfig.modules.some(
       (moduleConfig) => moduleConfig.enabled && moduleConfig.moduleId === 'planning',
     );
@@ -92,6 +92,7 @@ export class FirestorePlanRepository implements PlanRepository {
       name: input.name,
       description: input.description,
       planType: input.planType,
+      ...(input.debtModel ? { debtModel: input.debtModel } : {}),
       ownerUserId: input.owner.uid,
       ownerMemberId: ownerMemberRef.id,
       currency: 'VND',
@@ -115,6 +116,8 @@ export class FirestorePlanRepository implements PlanRepository {
       settlementCount: 0,
       totalExpense: 0,
       totalIncome: 0,
+      debtReceivableOutstanding: 0,
+      debtPayableOutstanding: 0,
       createdAt: now,
       updatedAt: now,
       closedAt: null,
@@ -150,6 +153,7 @@ export class FirestorePlanRepository implements PlanRepository {
       userId: input.owner.uid,
       planName: input.name,
       planType: input.planType,
+      ...(input.debtModel ? { debtModel: input.debtModel } : {}),
       role: 'owner',
       memberId: ownerMemberRef.id,
       memberStatus: 'active',
@@ -167,6 +171,8 @@ export class FirestorePlanRepository implements PlanRepository {
       completedTodoCount: 0,
       totalExpense: 0,
       totalIncome: 0,
+      debtReceivableOutstanding: 0,
+      debtPayableOutstanding: 0,
       isLocked: false,
       memberCount: 1,
       joinedAt: now,

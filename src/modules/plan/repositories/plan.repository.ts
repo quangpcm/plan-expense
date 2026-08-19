@@ -5,6 +5,7 @@ export type CreatePlanPersistenceInput = {
   name: string;
   description: string | null;
   planType: PlanDocument['planType'];
+  debtModel?: PlanDocument['debtModel'];
   startDate: Date | null;
   endDate: Date | null;
   budgetAmount: number | null;

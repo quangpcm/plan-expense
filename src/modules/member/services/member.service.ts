@@ -26,7 +26,7 @@ export class MemberService {
       throw new AppError('You do not have permission to add members.', 'MEMBER_PERMISSION_DENIED', 403);
     }
 
-    await this.memberRepository.addGuest(planId, input, actor);
+    return this.memberRepository.addGuest(planId, input, actor);
   }
 
   async updateMember(
