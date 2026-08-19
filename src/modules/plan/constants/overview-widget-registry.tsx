@@ -265,8 +265,8 @@ function DebtSummaryWidget({
             {formatCompactCurrency(debtTrackingSummary.outstandingAmount)}
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            {debtTrackingSummary.activeDebtCount} khoản đang mở,{' '}
-            {debtTrackingSummary.paidDebtCount} khoản đã tất toán
+            {debtTrackingSummary.activeCounterpartCount} thành viên còn dư nợ,{' '}
+            {debtTrackingSummary.settledCounterpartCount} thành viên đã cân bằng
           </p>
           <button
             className="mt-3 text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"

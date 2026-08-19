@@ -60,6 +60,7 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
   const { milestones } = useMilestones(planId);
   const { members, currentMember } = usePlanMembers(planId);
   const categories = useMemo(() => (plan ? getExpenseCategories(plan.planType) : []), [plan]);
+  const isDebtPlan = plan?.planType === 'debt';
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPaidByOpen, setIsPaidByOpen] = useState(false);
@@ -76,9 +77,20 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
   );
   const defaultPaidByMemberId =
     expense?.paidByMemberId || currentMember?.id || activeMembers[0]?.id || '';
+  const counterpartMembers = useMemo(
+    () => activeMembers.filter((member) => member.id !== currentMember?.id),
+    [activeMembers, currentMember?.id],
+  );
   const creatorDefaultParticipantIds = useMemo(
-    () => (defaultPaidByMemberId ? [defaultPaidByMemberId] : []),
-    [defaultPaidByMemberId],
+    () =>
+      isDebtPlan
+        ? counterpartMembers[0]?.id
+          ? [counterpartMembers[0].id]
+          : []
+        : defaultPaidByMemberId
+          ? [defaultPaidByMemberId]
+          : [],
+    [counterpartMembers, defaultPaidByMemberId, isDebtPlan],
   );
   const defaultParticipantIds =
     expense?.participants.map((participant) => participant.memberId) ||
@@ -154,6 +166,7 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
     paidByMemberIdWatched && paidByMemberIdWatched === currentMember?.id
       ? 'Bạn (Mặc định)'
       : paidByMember?.nickname || 'Chọn người chi trả';
+  const selectedCounterpartMember = counterpartMembers.find((member) => member.id === selectedMembers[0]);
   const selfSplitLabel = `${currentMember?.nickname || paidByMember?.nickname || 'Người tạo'}`;
 
   useEffect(() => {
@@ -199,6 +212,21 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
     if (!form.getValues('spentAt') && defaultSpentAt) {
       form.setValue('spentAt', defaultSpentAt, { shouldValidate: true });
     }
+
+    if (isDebtPlan) {
+      if (currentMember?.id && form.getValues('paidByMemberId') !== currentMember.id) {
+        form.setValue('paidByMemberId', currentMember.id, { shouldValidate: true });
+      }
+
+      if (form.getValues('splitMethod') !== splitMethods.self) {
+        form.setValue('splitMethod', splitMethods.self, { shouldValidate: true });
+      }
+
+      const currentCounterpartId = form.getValues('participantMemberIds')[0];
+      if ((!currentCounterpartId || currentCounterpartId === currentMember?.id) && counterpartMembers[0]?.id) {
+        form.setValue('participantMemberIds', [counterpartMembers[0].id], { shouldValidate: true });
+      }
+    }
   }, [
     defaultCategoryId,
     resolvedDefaultMilestoneId,
@@ -206,6 +234,9 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
     defaultParticipantIds,
     defaultSpentAt,
     form,
+    counterpartMembers,
+    currentMember?.id,
+    isDebtPlan,
     shouldHideMilestoneSelector,
   ]);
 
@@ -288,9 +319,13 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700" htmlFor="title">
-          Tên khoản chi
+          {isDebtPlan ? 'Tên khoản cho mượn' : 'Tên khoản chi'}
         </label>
-        <Input id="title" placeholder="Ăn sáng, khách sạn, vé..." {...form.register('title')} />
+        <Input
+          id="title"
+          placeholder={isDebtPlan ? 'Ví dụ: Cho anh A mượn tiền đợt 1' : 'Ăn sáng, khách sạn, vé...'}
+          {...form.register('title')}
+        />
       </div>
 
       {!shouldHideMilestoneSelector ? (
@@ -328,7 +363,7 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700" htmlFor="spentAt">
-            Thời gian chi
+            {isDebtPlan ? 'Thời gian cho mượn' : 'Thời gian chi'}
           </label>
           <DateTimeInput
             id="spentAt"
@@ -338,88 +373,115 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
         </div>
       </div>
 
-      <button
-        className="flex w-full items-center justify-between rounded-2xl border border-[#c2c6d8] bg-white px-4 py-3 text-left"
-        onClick={() => setIsPaidByOpen(true)}
-        type="button"
-      >
-        <span className="flex items-center gap-3">
-          <span className="flex size-9 items-center justify-center rounded-full bg-[#0050cb]/10 text-[#0050cb]">
-            <User className="size-4" />
-          </span>
-          <span>
-            <span className="block text-xs text-[#727687]">Người chi trả</span>
-            <span className="block text-sm font-medium text-[#191c1e]">{paidByLabel}</span>
-          </span>
-        </span>
-        <ChevronRight className="size-4 text-[#727687]" />
-      </button>
-
-      <BottomSheet
-        onClose={() => setIsPaidByOpen(false)}
-        open={isPaidByOpen}
-        title="Chọn người chi trả"
-      >
-        <div className="grid gap-2">
-          {activeMembers.map((member) => {
-            const isSelected = member.id === paidByMemberIdWatched;
-
-            return (
-              <button
-                key={member.id}
-                className={cn(
-                  'flex min-h-11 items-center justify-between rounded-2xl border px-4 py-2 text-sm',
-                  isSelected ? 'border-[#0050cb] bg-[#0050cb]/10' : 'border-[#c2c6d8] bg-white',
-                )}
-                onClick={() => {
-                  form.setValue('paidByMemberId', member.id, { shouldValidate: true, shouldDirty: true });
-                  setIsPaidByOpen(false);
-                }}
-                type="button"
-              >
-                <span className="text-[#191c1e]">
-                  {member.nickname}
-                  {member.id === currentMember?.id ? ' (Mặc định)' : ''}
-                </span>
-                {isSelected ? <Check className="size-4 text-[#0050cb]" /> : null}
-              </button>
-            );
-          })}
+      {isDebtPlan ? (
+        <div className="rounded-2xl border border-[#c2c6d8] bg-white px-4 py-3 text-sm text-slate-700">
+          <span className="block text-xs text-[#727687]">Người cho mượn</span>
+          <span className="mt-1 block font-medium text-[#191c1e]">{currentMember?.nickname || paidByLabel}</span>
         </div>
-      </BottomSheet>
+      ) : (
+        <>
+          <button
+            className="flex w-full items-center justify-between rounded-2xl border border-[#c2c6d8] bg-white px-4 py-3 text-left"
+            onClick={() => setIsPaidByOpen(true)}
+            type="button"
+          >
+            <span className="flex items-center gap-3">
+              <span className="flex size-9 items-center justify-center rounded-full bg-[#0050cb]/10 text-[#0050cb]">
+                <User className="size-4" />
+              </span>
+              <span>
+                <span className="block text-xs text-[#727687]">Người chi trả</span>
+                <span className="block text-sm font-medium text-[#191c1e]">{paidByLabel}</span>
+              </span>
+            </span>
+            <ChevronRight className="size-4 text-[#727687]" />
+          </button>
+
+          <BottomSheet
+            onClose={() => setIsPaidByOpen(false)}
+            open={isPaidByOpen}
+            title="Chọn người chi trả"
+          >
+            <div className="grid gap-2">
+              {activeMembers.map((member) => {
+                const isSelected = member.id === paidByMemberIdWatched;
+
+                return (
+                  <button
+                    key={member.id}
+                    className={cn(
+                      'flex min-h-11 items-center justify-between rounded-2xl border px-4 py-2 text-sm',
+                      isSelected ? 'border-[#0050cb] bg-[#0050cb]/10' : 'border-[#c2c6d8] bg-white',
+                    )}
+                    onClick={() => {
+                      form.setValue('paidByMemberId', member.id, { shouldValidate: true, shouldDirty: true });
+                      setIsPaidByOpen(false);
+                    }}
+                    type="button"
+                  >
+                    <span className="text-[#191c1e]">
+                      {member.nickname}
+                      {member.id === currentMember?.id ? ' (Mặc định)' : ''}
+                    </span>
+                    {isSelected ? <Check className="size-4 text-[#0050cb]" /> : null}
+                  </button>
+                );
+              })}
+            </div>
+          </BottomSheet>
+        </>
+      )}
 
       <details className="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
         <summary className="cursor-pointer text-sm font-semibold text-slate-800">Thiết lập nâng cao</summary>
         <div className="mt-4 space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700" htmlFor="splitMethod">
-              Chia tiền
+              {isDebtPlan ? 'Thành viên nhận tiền' : 'Chia tiền'}
             </label>
-            <DropdownSelect
-              id="splitMethod"
-              onValueChange={(value) =>
-                form.setValue('splitMethod', value as CreateExpenseSchema['splitMethod'], {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                })
-              }
-              options={[
-                { value: splitMethods.self, label: selfSplitLabel },
-                { value: splitMethods.equal, label: 'Chia đều' },
-                { value: splitMethods.exact, label: 'Số tiền cụ thể' },
-                { value: splitMethods.percentage, label: 'Theo phần trăm' },
-                { value: splitMethods.shares, label: 'Theo số phần' },
-              ]}
-              value={selectedSplitMethod}
-            />
+            {isDebtPlan ? (
+              <DropdownSelect
+                id="participantMemberIds"
+                onValueChange={(value) =>
+                  form.setValue('participantMemberIds', value ? [value] : [], {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  })
+                }
+                options={counterpartMembers.map((member) => ({
+                  value: member.id,
+                  label: member.nickname,
+                }))}
+                placeholder="Chọn thành viên đang mượn tiền"
+                value={selectedCounterpartMember?.id || ''}
+              />
+            ) : (
+              <DropdownSelect
+                id="splitMethod"
+                onValueChange={(value) =>
+                  form.setValue('splitMethod', value as CreateExpenseSchema['splitMethod'], {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  })
+                }
+                options={[
+                  { value: splitMethods.self, label: selfSplitLabel },
+                  { value: splitMethods.equal, label: 'Chia đều' },
+                  { value: splitMethods.exact, label: 'Số tiền cụ thể' },
+                  { value: splitMethods.percentage, label: 'Theo phần trăm' },
+                  { value: splitMethods.shares, label: 'Theo số phần' },
+                ]}
+                value={selectedSplitMethod}
+              />
+            )}
           </div>
-          {selectedSplitMethod === splitMethods.self ? (
+          {!isDebtPlan && selectedSplitMethod === splitMethods.self ? (
             <div className="px-1 py-1 text-sm italic text-[#7a8094]">
               Khoản chi này mặc định được tính cho{' '}
               <span className="font-medium text-amber-600 not-italic">{selfSplitLabel}</span>.
             </div>
           ) : null}
-          {selectedSplitMethod !== splitMethods.self ? (
+          {!isDebtPlan && selectedSplitMethod !== splitMethods.self ? (
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">Người tham gia</label>
               <div className="grid gap-2">
@@ -448,7 +510,7 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
               </div>
             </div>
           ) : null}
-          {selectedSplitMethod !== splitMethods.self && selectedSplitMethod !== 'equal' ? (
+          {!isDebtPlan && selectedSplitMethod !== splitMethods.self && selectedSplitMethod !== 'equal' ? (
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">
                 {selectedSplitMethod === 'exact'
@@ -487,15 +549,23 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700" htmlFor="merchantName">
-                Cửa hàng / đơn vị
+                {isDebtPlan ? 'Nguồn / bối cảnh giao dịch' : 'Cửa hàng / đơn vị'}
               </label>
-              <Input id="merchantName" placeholder="Tên cửa hàng hoặc dịch vụ" {...form.register('merchantName')} />
+              <Input
+                id="merchantName"
+                placeholder={isDebtPlan ? 'Ví dụ: Chuyển khoản cá nhân, ứng tiền mặt...' : 'Tên cửa hàng hoặc dịch vụ'}
+                {...form.register('merchantName')}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700" htmlFor="locationName">
-                Địa điểm
+                {isDebtPlan ? 'Nơi phát sinh' : 'Địa điểm'}
               </label>
-              <Input id="locationName" placeholder="Nơi phát sinh khoản chi" {...form.register('locationName')} />
+              <Input
+                id="locationName"
+                placeholder={isDebtPlan ? 'Ví dụ: Gặp trực tiếp, chuyển khoản online...' : 'Nơi phát sinh khoản chi'}
+                {...form.register('locationName')}
+              />
             </div>
           </div>
           <div className="space-y-2">
@@ -535,11 +605,23 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
         ) : null}
         <Button disabled={isSubmitting} type="submit">
           {isSubmitting ? (
-            mode === 'create' ? 'Đang tạo khoản chi...' : 'Đang lưu khoản chi...'
+            isDebtPlan
+              ? mode === 'create'
+                ? 'Đang ghi nhận khoản cho mượn...'
+                : 'Đang lưu khoản cho mượn...'
+              : mode === 'create'
+                ? 'Đang tạo khoản chi...'
+                : 'Đang lưu khoản chi...'
           ) : (
             <>
               <CheckCircle2 className="size-4" />
-              {mode === 'create' ? 'Lưu khoản chi' : 'Lưu thay đổi'}
+              {isDebtPlan
+                ? mode === 'create'
+                  ? 'Lưu khoản cho mượn'
+                  : 'Lưu thay đổi'
+                : mode === 'create'
+                  ? 'Lưu khoản chi'
+                  : 'Lưu thay đổi'}
             </>
           )}
         </Button>

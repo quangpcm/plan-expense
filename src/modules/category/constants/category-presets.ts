@@ -12,16 +12,16 @@ function withTone(preset: CategoryPreset): Category {
 
 const rawCategoryPresetsByPlanType: Record<PlanType, CategoryPreset[]> = {
   debt: [
-    { id: 'debt_lent_out', name: 'Tiền tôi cho mượn', categoryType: 'expense', icon: 'HandCoins' },
-    { id: 'debt_principal_repayment', name: 'Người khác trả gốc', categoryType: 'income', icon: 'ReceiptText' },
+    { id: 'debt_lent_out', name: 'Cho thành viên mượn', categoryType: 'expense', icon: 'HandCoins' },
+    { id: 'debt_principal_repayment', name: 'Thành viên hoàn trả', categoryType: 'income', icon: 'ReceiptText' },
     { id: 'debt_partial_collection', name: 'Thu hồi một phần', categoryType: 'income', icon: 'CircleDollarSign' },
-    { id: 'debt_refund_adjustment', name: 'Hoàn / điều chỉnh', categoryType: 'income', icon: 'RotateCcw' },
-    { id: 'debt_fee_expense', name: 'Phí phát sinh', categoryType: 'expense', icon: 'FileText' },
-    { id: 'debt_reminder_cost', name: 'Chi nhắc nợ / đi lại', categoryType: 'expense', icon: 'ShieldAlert' },
-    { id: 'debt_borrowed_in', name: 'Tiền tôi mượn', categoryType: 'income', icon: 'WalletCards' },
-    { id: 'debt_repayment_out', name: 'Tôi trả nợ', categoryType: 'expense', icon: 'ArrowUpCircle' },
-    { id: 'debt_other_expense', name: 'Chi khác liên quan khoản nợ', categoryType: 'expense', icon: 'CircleEllipsis' },
-    { id: 'debt_other_income', name: 'Thu khác liên quan khoản nợ', categoryType: 'income', icon: 'CircleEllipsis' },
+    { id: 'debt_refund_adjustment', name: 'Hoàn / điều chỉnh thu', categoryType: 'income', icon: 'RotateCcw' },
+    { id: 'debt_fee_expense', name: 'Phí xử lý công nợ', categoryType: 'expense', icon: 'FileText' },
+    { id: 'debt_reminder_cost', name: 'Chi nhắc / thu hồi nợ', categoryType: 'expense', icon: 'ShieldAlert' },
+    { id: 'debt_borrowed_in', name: 'Thu điều chỉnh công nợ', categoryType: 'income', icon: 'WalletCards' },
+    { id: 'debt_repayment_out', name: 'Chi điều chỉnh công nợ', categoryType: 'expense', icon: 'ArrowUpCircle' },
+    { id: 'debt_other_expense', name: 'Chi khác liên quan công nợ', categoryType: 'expense', icon: 'CircleEllipsis' },
+    { id: 'debt_other_income', name: 'Thu khác liên quan công nợ', categoryType: 'income', icon: 'CircleEllipsis' },
   ],
   travel: [
     { id: 'travel_food', name: 'Ăn uống', categoryType: 'expense', icon: 'Utensils' },

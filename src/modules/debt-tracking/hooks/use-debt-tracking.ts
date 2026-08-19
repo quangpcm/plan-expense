@@ -1,144 +1,188 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { Timestamp } from 'firebase/firestore';
 
-import { debtTrackingService } from '@/modules/debt-tracking/services';
+import type { ExpenseDocument } from '@/modules/expense/types/expense';
+import type { IncomeDocument } from '@/modules/income/types/income';
 import type {
-  DebtDocument,
   DebtTrackingSummary,
-  RepaymentDocument,
+  MemberDebtAggregate,
+  MemberDebtSnapshot,
+  MemberDebtTransaction,
 } from '@/modules/debt-tracking/types/debt-tracking';
 
-export function useDebtTracking(planId: string, enabled = true) {
-  const [debts, setDebts] = useState<DebtDocument[]>([]);
-  const [repayments, setRepayments] = useState<RepaymentDocument[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const isActive = Boolean(planId && enabled);
+type UseDebtTrackingParams = {
+  currentMemberId: string | null;
+  enabled?: boolean;
+  expenses: ExpenseDocument[];
+  incomes: IncomeDocument[];
+};
 
-  useEffect(() => {
-    if (!isActive) {
-      return undefined;
+function maxTimestamp(left: Timestamp | null, right: Timestamp | null) {
+  if (!left) {
+    return right;
+  }
+
+  if (!right) {
+    return left;
+  }
+
+  return left.toMillis() >= right.toMillis() ? left : right;
+}
+
+export function useDebtTracking({
+  currentMemberId,
+  enabled = true,
+  expenses,
+  incomes,
+}: UseDebtTrackingParams) {
+  const isActive = Boolean(enabled && currentMemberId);
+
+  const aggregates = useMemo<MemberDebtAggregate[]>(() => {
+    if (!isActive || !currentMemberId) {
+      return [];
     }
-    let pendingSubscriptions = 2;
 
-    const markLoaded = () => {
-      pendingSubscriptions -= 1;
+    const aggregateMap = new Map<string, MemberDebtAggregate>();
 
-      if (pendingSubscriptions <= 0) {
-        setIsLoading(false);
+    const upsert = (memberId: string) => {
+      const existing = aggregateMap.get(memberId);
+
+      if (existing) {
+        return existing;
       }
+
+      const created: MemberDebtAggregate = {
+        snapshot: {
+          memberId,
+          totalLentAmount: 0,
+          totalRepaidAmount: 0,
+          outstandingAmount: 0,
+          transactionCount: 0,
+          lastTransactionAt: null,
+          lastExpenseAt: null,
+          lastIncomeAt: null,
+        },
+        transactions: [],
+      };
+
+      aggregateMap.set(memberId, created);
+      return created;
     };
 
-    const unsubscribeDebts = debtTrackingService.watchDebts(
-      planId,
-      (items) => {
-        setDebts(items);
-        setErrorMessage(null);
-        markLoaded();
-      },
-      (error) => {
-        setDebts([]);
-        setErrorMessage(error.message);
-        markLoaded();
-      },
-    );
+    for (const expense of expenses) {
+      if (expense.paidByMemberId !== currentMemberId) {
+        continue;
+      }
 
-    const unsubscribeRepayments = debtTrackingService.watchRepayments(
-      planId,
-      (items) => {
-        setRepayments(items);
-        setErrorMessage(null);
-        markLoaded();
-      },
-      (error) => {
-        setRepayments([]);
-        setErrorMessage(error.message);
-        markLoaded();
-      },
-    );
+      const counterpartMemberId =
+        expense.participants.find((participant) => participant.memberId !== currentMemberId)?.memberId ?? null;
 
-    return () => {
-      unsubscribeDebts();
-      unsubscribeRepayments();
-    };
-  }, [isActive, planId]);
+      if (!counterpartMemberId) {
+        continue;
+      }
 
-  const repaymentTotalsByDebtId = useMemo(() => {
-    const totals: Record<string, number> = {};
+      const aggregate = upsert(counterpartMemberId);
 
-    for (const repayment of repayments) {
-      totals[repayment.debtId] = (totals[repayment.debtId] ?? 0) + repayment.amount;
+      aggregate.snapshot.totalLentAmount += expense.amount;
+      aggregate.snapshot.transactionCount += 1;
+      aggregate.snapshot.lastExpenseAt = maxTimestamp(aggregate.snapshot.lastExpenseAt, expense.spentAt);
+      aggregate.snapshot.lastTransactionAt = maxTimestamp(aggregate.snapshot.lastTransactionAt, expense.spentAt);
+      aggregate.transactions.push({
+        transactionId: expense.id,
+        memberId: counterpartMemberId,
+        kind: 'expense',
+        amount: expense.amount,
+        occurredAt: expense.spentAt,
+        title: expense.title,
+        note: expense.note,
+      });
     }
 
-    return totals;
-  }, [repayments]);
+    for (const income of incomes) {
+      if (income.contributedByMemberId === currentMemberId) {
+        continue;
+      }
+
+      const aggregate = upsert(income.contributedByMemberId);
+
+      aggregate.snapshot.totalRepaidAmount += income.amount;
+      aggregate.snapshot.transactionCount += 1;
+      aggregate.snapshot.lastIncomeAt = maxTimestamp(aggregate.snapshot.lastIncomeAt, income.receivedAt);
+      aggregate.snapshot.lastTransactionAt = maxTimestamp(aggregate.snapshot.lastTransactionAt, income.receivedAt);
+      aggregate.transactions.push({
+        transactionId: income.id,
+        memberId: income.contributedByMemberId,
+        kind: 'income',
+        amount: income.amount,
+        occurredAt: income.receivedAt,
+        title: income.title,
+        note: income.note,
+      });
+    }
+
+    return Array.from(aggregateMap.values())
+      .map((aggregate) => ({
+        snapshot: {
+          ...aggregate.snapshot,
+          outstandingAmount: Math.max(
+            aggregate.snapshot.totalLentAmount - aggregate.snapshot.totalRepaidAmount,
+            0,
+          ),
+        },
+        transactions: aggregate.transactions.sort(
+          (left, right) => right.occurredAt.toMillis() - left.occurredAt.toMillis(),
+        ),
+      }))
+      .sort(
+        (left, right) =>
+          (right.snapshot.lastTransactionAt?.toMillis() ?? 0) - (left.snapshot.lastTransactionAt?.toMillis() ?? 0),
+      );
+  }, [currentMemberId, expenses, incomes, isActive]);
+
+  const snapshots = useMemo<MemberDebtSnapshot[]>(
+    () => aggregates.map((aggregate) => aggregate.snapshot),
+    [aggregates],
+  );
 
   const summary = useMemo<DebtTrackingSummary>(() => {
-    const totalPrincipalAmount = debts.reduce(
-      (total, debt) => total + debt.principalAmount,
-      0,
-    );
-    const totalRepaidAmount = repayments.reduce(
-      (total, repayment) => total + repayment.amount,
-      0,
-    );
-    const lentOutstandingAmount = debts.reduce((total, debt) => {
-      const repaidAmount = repaymentTotalsByDebtId[debt.id] ?? 0;
-      const remainingAmount = Math.max(debt.principalAmount - repaidAmount, 0);
-
-      if (debt.lenderMemberId === debt.createdByMemberId) {
-        return total + remainingAmount;
-      }
-
-      return total;
-    }, 0);
-    const borrowedOutstandingAmount = debts.reduce((total, debt) => {
-      const repaidAmount = repaymentTotalsByDebtId[debt.id] ?? 0;
-      const remainingAmount = Math.max(debt.principalAmount - repaidAmount, 0);
-
-      if (debt.borrowerMemberId === debt.createdByMemberId) {
-        return total + remainingAmount;
-      }
-
-      return total;
-    }, 0);
-    const outstandingAmount = debts.reduce((total, debt) => {
-      const repaidAmount = repaymentTotalsByDebtId[debt.id] ?? 0;
-      return total + Math.max(debt.principalAmount - repaidAmount, 0);
-    }, 0);
-    const activeDebtCount = debts.filter((debt) => debt.status === 'active').length;
-    const paidDebtCount = debts.filter((debt) => debt.status === 'paid').length;
+    const totalLentAmount = snapshots.reduce((total, snapshot) => total + snapshot.totalLentAmount, 0);
+    const totalRepaidAmount = snapshots.reduce((total, snapshot) => total + snapshot.totalRepaidAmount, 0);
+    const outstandingAmount = snapshots.reduce((total, snapshot) => total + snapshot.outstandingAmount, 0);
 
     return {
-      totalPrincipalAmount,
+      totalLentAmount,
       totalRepaidAmount,
       outstandingAmount,
-      activeDebtCount,
-      paidDebtCount,
-      repaymentCount: repayments.length,
-      lentOutstandingAmount,
-      borrowedOutstandingAmount,
+      counterpartCount: snapshots.length,
+      activeCounterpartCount: snapshots.filter((snapshot) => snapshot.outstandingAmount > 0).length,
+      settledCounterpartCount: snapshots.filter(
+        (snapshot) => snapshot.outstandingAmount <= 0 && snapshot.totalRepaidAmount > 0,
+      ).length,
+      transactionCount: snapshots.reduce((total, snapshot) => total + snapshot.transactionCount, 0),
+      lentOutstandingAmount: outstandingAmount,
+      borrowedOutstandingAmount: 0,
     };
-  }, [debts, repaymentTotalsByDebtId, repayments]);
+  }, [snapshots]);
 
   return {
-    debts: isActive ? debts : [],
-    repayments: isActive ? repayments : [],
-    repaymentTotalsByDebtId: isActive ? repaymentTotalsByDebtId : {},
+    aggregates,
+    snapshots,
     summary: isActive
       ? summary
       : {
-          totalPrincipalAmount: 0,
+          totalLentAmount: 0,
           totalRepaidAmount: 0,
           outstandingAmount: 0,
-          activeDebtCount: 0,
-          paidDebtCount: 0,
-          repaymentCount: 0,
+          counterpartCount: 0,
+          activeCounterpartCount: 0,
+          settledCounterpartCount: 0,
+          transactionCount: 0,
           lentOutstandingAmount: 0,
           borrowedOutstandingAmount: 0,
         },
-    isLoading: isActive ? isLoading : false,
-    errorMessage: isActive ? errorMessage : null,
+    isLoading: false,
+    errorMessage: null,
   };
 }

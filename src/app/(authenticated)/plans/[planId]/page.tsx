@@ -97,12 +97,10 @@ import {
 } from '@/modules/travel-activity';
 import type { TravelActivityDocument } from '@/modules/travel-activity';
 import {
-  DebtForm,
   DebtTrackingTab,
-  RepaymentForm,
   useDebtTracking,
 } from '@/modules/debt-tracking';
-import type { DebtDocument } from '@/modules/debt-tracking';
+import type { MemberDebtSnapshot } from '@/modules/debt-tracking';
 import { CategoryBreakdown } from '@/modules/statistic/components/category-breakdown';
 import { ExpenseTimelineChart } from '@/modules/statistic/components/expense-timeline-chart';
 import { MemberBalanceTable } from '@/modules/statistic/components/member-balance-table';
@@ -251,21 +249,23 @@ export default function PlanDetailPage() {
     errorMessage: travelActivityError,
   } = useTravelActivities(planId, isTravelItineraryEnabled);
   const {
-    debts,
-    repayments,
-    repaymentTotalsByDebtId,
+    aggregates: debtAggregates,
+    snapshots: debtSnapshots,
     summary: debtTrackingSummary,
     isLoading: isDebtTrackingLoading,
     errorMessage: debtTrackingError,
-  } = useDebtTracking(planId, isDebtTrackingEnabled);
+  } = useDebtTracking({
+    currentMemberId: currentMember?.id ?? null,
+    enabled: isDebtTrackingEnabled,
+    expenses,
+    incomes,
+  });
   const isPlanEnded = plan?.status === 'completed' || plan?.status === 'closed';
   const canManageMembers = hasCapability('members.manage');
   const canManageSettlements = hasCapability('finance.manageSettlements');
   const canEditAllExpenses = hasCapability('finance.editAllExpense');
   const canManageTravelActivities =
     hasCapability('travelItinerary.createActivity') && !isPlanEnded;
-  const canManageDebtTracking =
-    hasCapability('debtTracking.createDebt') && !isPlanEnded;
   const canManagePlanning = isOwner && !isPlanEnded;
   const { settlements, errorMessage: settlementWatchError } =
     useSettlements(planId);
@@ -345,9 +345,7 @@ export default function PlanDetailPage() {
     useState<TravelActivityDocument | null>(null);
   const [detailTravelActivity, setDetailTravelActivity] =
     useState<TravelActivityDocument | null>(null);
-  const [showDebtForm, setShowDebtForm] = useState(false);
-  const [detailDebt, setDetailDebt] = useState<DebtDocument | null>(null);
-  const [repaymentDebt, setRepaymentDebt] = useState<DebtDocument | null>(null);
+  const [detailDebt, setDetailDebt] = useState<MemberDebtSnapshot | null>(null);
   const [workViewMode, setWorkViewMode] = useState<'milestones' | 'todos'>(
     'milestones',
   );
@@ -724,7 +722,8 @@ export default function PlanDetailPage() {
       return;
     }
 
-    const nextDebt = debts.find((debt) => debt.id === detailDebt.id) ?? null;
+    const nextDebt =
+      debtSnapshots.find((snapshot) => snapshot.memberId === detailDebt.memberId) ?? null;
 
     if (!nextDebt) {
       setDetailDebt(null);
@@ -734,7 +733,7 @@ export default function PlanDetailPage() {
     if (nextDebt !== detailDebt) {
       setDetailDebt(nextDebt);
     }
-  }, [debts, detailDebt]);
+  }, [debtSnapshots, detailDebt]);
 
   useEffect(() => {
     if (!todoToRestoreAfterVendor) {
@@ -1877,18 +1876,12 @@ export default function PlanDetailPage() {
       case 'debtTracking':
         return (
           <DebtTrackingTab
-            canManage={canManageDebtTracking}
-            currentMemberId={currentMember?.id ?? null}
-            debts={debts}
-            detailDebt={detailDebt}
+            aggregates={debtAggregates}
+            detailSnapshot={detailDebt}
             errorMessage={debtTrackingError}
             isLoading={isDebtTrackingLoading}
             members={members}
-            onCreate={() => setShowDebtForm(true)}
-            onRecordRepayment={setRepaymentDebt}
             onSelect={setDetailDebt}
-            repaymentTotalsByDebtId={repaymentTotalsByDebtId}
-            repayments={repayments}
             summary={debtTrackingSummary}
           />
         );
@@ -2458,92 +2451,6 @@ export default function PlanDetailPage() {
                     setShowTravelActivityForm(false);
                     setEditingTravelActivity(null);
                   }}
-                  plan={ensuredPlan}
-                />
-              </BottomSheet>
-            </div>
-          </>
-        ) : null}
-        {showDebtForm && user ? (
-          <>
-            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
-              <button
-                aria-label="Đóng form khoản vay"
-                className="absolute inset-0"
-                onClick={() => setShowDebtForm(false)}
-                type="button"
-              />
-              <Dialog
-                className="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto"
-                description="Tạo khoản vay gốc để theo dõi dư nợ và lịch sử hoàn trả."
-                title="Tạo khoản vay"
-              >
-                <DebtForm
-                  currentMember={currentMember}
-                  currentUser={user}
-                  members={members}
-                  onCancel={() => setShowDebtForm(false)}
-                  onSuccess={() => setShowDebtForm(false)}
-                  plan={ensuredPlan}
-                />
-              </Dialog>
-            </div>
-            <div className="md:hidden">
-              <BottomSheet
-                description="Tạo khoản vay gốc để theo dõi dư nợ và lịch sử hoàn trả."
-                onClose={() => setShowDebtForm(false)}
-                open={showDebtForm}
-                title="Tạo khoản vay"
-              >
-                <DebtForm
-                  currentMember={currentMember}
-                  currentUser={user}
-                  members={members}
-                  onCancel={() => setShowDebtForm(false)}
-                  onSuccess={() => setShowDebtForm(false)}
-                  plan={ensuredPlan}
-                />
-              </BottomSheet>
-            </div>
-          </>
-        ) : null}
-        {repaymentDebt && user ? (
-          <>
-            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
-              <button
-                aria-label="Đóng form hoàn trả"
-                className="absolute inset-0"
-                onClick={() => setRepaymentDebt(null)}
-                type="button"
-              />
-              <Dialog
-                className="relative z-10 max-h-[90vh] w-full max-w-xl overflow-y-auto"
-                description="Ghi nhận từng lần trả nợ để module debt tự tính dư nợ còn lại."
-                title="Ghi nhận trả nợ"
-              >
-                <RepaymentForm
-                  currentMember={currentMember}
-                  currentUser={user}
-                  debt={repaymentDebt}
-                  onCancel={() => setRepaymentDebt(null)}
-                  onSuccess={() => setRepaymentDebt(null)}
-                  plan={ensuredPlan}
-                />
-              </Dialog>
-            </div>
-            <div className="md:hidden">
-              <BottomSheet
-                description="Ghi nhận từng lần trả nợ để module debt tự tính dư nợ còn lại."
-                onClose={() => setRepaymentDebt(null)}
-                open={Boolean(repaymentDebt)}
-                title="Ghi nhận trả nợ"
-              >
-                <RepaymentForm
-                  currentMember={currentMember}
-                  currentUser={user}
-                  debt={repaymentDebt}
-                  onCancel={() => setRepaymentDebt(null)}
-                  onSuccess={() => setRepaymentDebt(null)}
                   plan={ensuredPlan}
                 />
               </BottomSheet>

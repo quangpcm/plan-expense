@@ -1,61 +1,41 @@
 import type { Timestamp } from 'firebase/firestore';
 
-export type DebtStatus = 'active' | 'paid';
-export type DebtDirection = 'lent' | 'borrowed';
+export type DebtTransactionKind = 'expense' | 'income';
 
-export type DebtDocument = {
-  id: string;
-  planId: string;
-  title: string;
-  borrowerMemberId: string | null;
-  lenderMemberId: string | null;
-  principalAmount: number;
-  note: string | null;
-  dueDate: Timestamp | null;
-  status: DebtStatus;
-  createdByUserId: string;
-  createdByMemberId: string;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-  closedAt: Timestamp | null;
-};
-
-export type RepaymentDocument = {
-  id: string;
-  planId: string;
-  debtId: string;
+export type MemberDebtTransaction = {
+  transactionId: string;
+  memberId: string;
+  kind: DebtTransactionKind;
   amount: number;
-  note: string | null;
-  paidAt: Timestamp;
-  createdByUserId: string;
-  createdByMemberId: string;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-};
-
-export type CreateDebtInput = {
+  occurredAt: Timestamp;
   title: string;
-  counterpartMemberId: string;
-  direction: DebtDirection;
-  principalAmount: number;
-  note?: string | undefined;
-  dueDate?: string | undefined;
+  note: string | null;
 };
 
-export type RecordRepaymentInput = {
-  debtId: string;
-  amount: number;
-  note?: string | undefined;
-  paidAt: string;
+export type MemberDebtSnapshot = {
+  memberId: string;
+  totalLentAmount: number;
+  totalRepaidAmount: number;
+  outstandingAmount: number;
+  transactionCount: number;
+  lastTransactionAt: Timestamp | null;
+  lastExpenseAt: Timestamp | null;
+  lastIncomeAt: Timestamp | null;
+};
+
+export type MemberDebtAggregate = {
+  snapshot: MemberDebtSnapshot;
+  transactions: MemberDebtTransaction[];
 };
 
 export type DebtTrackingSummary = {
-  totalPrincipalAmount: number;
+  totalLentAmount: number;
   totalRepaidAmount: number;
   outstandingAmount: number;
-  activeDebtCount: number;
-  paidDebtCount: number;
-  repaymentCount: number;
+  counterpartCount: number;
+  activeCounterpartCount: number;
+  settledCounterpartCount: number;
+  transactionCount: number;
   lentOutstandingAmount: number;
   borrowedOutstandingAmount: number;
 };

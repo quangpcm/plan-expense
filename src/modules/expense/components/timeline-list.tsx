@@ -76,20 +76,24 @@ export function TimelineList({
     [incomes, selectedMilestoneId],
   );
 
-  const entries: TimelineEntry[] = [
-    ...filteredExpenses.map((expense): TimelineEntry => ({
-      kind: 'expense',
-      id: expense.id,
-      timestamp: timestampToDate(expense.spentAt) ?? new Date(0),
-      data: expense,
-    })),
-    ...filteredIncomes.map((income): TimelineEntry => ({
-      kind: 'income',
-      id: income.id,
-      timestamp: timestampToDate(income.receivedAt) ?? new Date(0),
-      data: income,
-    })),
-  ];
+  const entries = useMemo(
+    () =>
+      [
+        ...filteredExpenses.map((expense): TimelineEntry => ({
+          kind: 'expense',
+          id: expense.id,
+          timestamp: timestampToDate(expense.spentAt) ?? new Date(0),
+          data: expense,
+        })),
+        ...filteredIncomes.map((income): TimelineEntry => ({
+          kind: 'income',
+          id: income.id,
+          timestamp: timestampToDate(income.receivedAt) ?? new Date(0),
+          data: income,
+        })),
+      ].sort((left, right) => right.timestamp.getTime() - left.timestamp.getTime()),
+    [filteredExpenses, filteredIncomes],
+  );
 
   if (entries.length === 0) {
     return (
@@ -122,16 +126,22 @@ export function TimelineList({
     );
   }
 
-  const grouped = entries.reduce<Record<string, TimelineEntry[]>>((accumulator, entry) => {
-    const dayKey = formatDate(entry.timestamp);
-    accumulator[dayKey] ??= [];
-    accumulator[dayKey].push(entry);
-    return accumulator;
-  }, {});
+  const groupedEntries = useMemo(() => {
+    const grouped = entries.reduce<Map<string, TimelineEntry[]>>((accumulator, entry) => {
+      const dayKey = formatDate(entry.timestamp);
+      const dayEntries = accumulator.get(dayKey);
 
-  Object.values(grouped).forEach((dayEntries) => {
-    dayEntries.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-  });
+      if (dayEntries) {
+        dayEntries.push(entry);
+      } else {
+        accumulator.set(dayKey, [entry]);
+      }
+
+      return accumulator;
+    }, new Map<string, TimelineEntry[]>());
+
+    return Array.from(grouped.entries());
+  }, [entries]);
 
   return (
     <div className="space-y-5">
@@ -152,7 +162,7 @@ export function TimelineList({
         </div>
       ) : null}
       <div className="space-y-8">
-        {Object.entries(grouped).map(([day, dayEntries]) => (
+        {groupedEntries.map(([day, dayEntries]) => (
           <div key={day} className="relative">
             <span className="absolute top-3 bottom-3 left-[11px] w-px bg-[var(--color-border-strong)]" />
 

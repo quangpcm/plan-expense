@@ -61,6 +61,48 @@ export class ExpenseService {
     return milestone;
   }
 
+  private assertDebtExpenseSemantics(
+    plan: PlanDocument,
+    currentMember: PlanMemberDocument | null,
+    paidByMemberId: string,
+    participantIds: string[],
+    splitMethod: SplitMethod,
+  ) {
+    if (plan.planType !== 'debt') {
+      return;
+    }
+
+    if (!currentMember) {
+      throw new AppError('Unable to resolve your plan membership.', 'MEMBER_NOT_FOUND', 400);
+    }
+
+    if (paidByMemberId !== currentMember.id) {
+      throw new AppError(
+        'Trong debt mode, khoản chi phải do bạn là người đưa tiền ra.',
+        'DEBT_EXPENSE_INVALID_PAYER',
+        400,
+      );
+    }
+
+    const counterpartIds = participantIds.filter((memberId) => memberId !== currentMember.id);
+
+    if (counterpartIds.length !== 1 || participantIds.length !== 1) {
+      throw new AppError(
+        'Trong debt mode, mỗi khoản chi chỉ được gắn với đúng 1 thành viên đang mượn tiền.',
+        'DEBT_EXPENSE_COUNTERPART_REQUIRED',
+        400,
+      );
+    }
+
+    if (splitMethod !== 'self') {
+      throw new AppError(
+        'Trong debt mode, khoản chi cho mượn phải dùng chế độ 1 người nhận tiền.',
+        'DEBT_EXPENSE_SPLIT_METHOD_INVALID',
+        400,
+      );
+    }
+  }
+
   private buildParticipants(
     input: { amount: number; splitMethod: SplitMethod; splitValues?: Record<string, number> | undefined },
     participantIds: string[],
@@ -103,6 +145,13 @@ export class ExpenseService {
     const milestone = this.assertValidMilestone(context.plan.id, input.milestoneId, context.milestones);
     const participantIds = input.participantMemberIds.filter((memberId) =>
       activeMembers.some((member) => member.id === memberId),
+    );
+    this.assertDebtExpenseSemantics(
+      context.plan,
+      context.currentMember,
+      input.paidByMemberId,
+      participantIds,
+      input.splitMethod,
     );
 
     if (!activeMembers.some((member) => member.id === input.paidByMemberId)) {
@@ -159,6 +208,13 @@ export class ExpenseService {
     const milestone = this.assertValidMilestone(context.plan.id, input.milestoneId, context.milestones);
     const participantIds = input.participantMemberIds.filter((memberId) =>
       activeMembers.some((member) => member.id === memberId),
+    );
+    this.assertDebtExpenseSemantics(
+      context.plan,
+      context.currentMember,
+      input.paidByMemberId,
+      participantIds,
+      input.splitMethod,
     );
     const participants = this.buildParticipants(input, participantIds);
     const attachments = await resolveAttachmentDrafts(

@@ -20,6 +20,28 @@ type IncomeContext = {
 export class IncomeService {
   constructor(private readonly incomeRepository: IncomeRepository) {}
 
+  private assertDebtIncomeSemantics(
+    plan: PlanDocument,
+    currentMember: PlanMemberDocument | null,
+    contributedByMemberId: string,
+  ) {
+    if (plan.planType !== 'debt') {
+      return;
+    }
+
+    if (!currentMember) {
+      throw new AppError('Unable to resolve your plan membership.', 'MEMBER_NOT_FOUND', 400);
+    }
+
+    if (contributedByMemberId === currentMember.id) {
+      throw new AppError(
+        'Trong debt mode, khoản thu phải do thành viên trả lại cho bạn.',
+        'DEBT_INCOME_INVALID_CONTRIBUTOR',
+        400,
+      );
+    }
+  }
+
   private assertValidMilestone(planId: string, milestoneId: string, milestones: MilestoneDocument[]) {
     const milestone = milestones.find((item) => item.id === milestoneId);
 
@@ -54,6 +76,7 @@ export class IncomeService {
     if (!activeMembers.some((member) => member.id === input.contributedByMemberId)) {
       throw new AppError('Contributor must be active in this plan.', 'INCOME_INVALID_CONTRIBUTOR', 400);
     }
+    this.assertDebtIncomeSemantics(context.plan, context.currentMember, input.contributedByMemberId);
 
     const milestone = this.assertValidMilestone(context.plan.id, input.milestoneId, context.milestones);
 
@@ -86,6 +109,7 @@ export class IncomeService {
     if (!activeMembers.some((member) => member.id === input.contributedByMemberId)) {
       throw new AppError('Contributor must be active in this plan.', 'INCOME_INVALID_CONTRIBUTOR', 400);
     }
+    this.assertDebtIncomeSemantics(context.plan, context.currentMember, input.contributedByMemberId);
 
     this.assertValidMilestone(context.plan.id, input.milestoneId, context.milestones);
 

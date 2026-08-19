@@ -1,87 +1,61 @@
 'use client';
 
 import type { PlanMemberDocument } from '@/modules/member/types/member';
-import type { DebtDocument } from '@/modules/debt-tracking/types/debt-tracking';
-import {
-  formatDebtDirectionLabel,
-  resolveDebtCounterpart,
-  resolveDebtDirection,
-} from '@/modules/debt-tracking/utils/debt-perspective';
-import { Button } from '@/shared/components/ui/button';
+import type { MemberDebtSnapshot } from '@/modules/debt-tracking/types/debt-tracking';
 import { Card } from '@/shared/components/ui/card';
 import { formatCompactCurrency } from '@/shared/utils/currency';
+import { formatDate } from '@/shared/utils/date';
+import { timestampToDate } from '@/shared/utils/firebase';
 
 type DebtListProps = {
-  debts: DebtDocument[];
-  repaymentTotalsByDebtId: Record<string, number>;
+  snapshots: MemberDebtSnapshot[];
   members: PlanMemberDocument[];
-  currentMemberId: string | null;
-  canManage: boolean;
-  onCreate: () => void;
-  onSelect: (debt: DebtDocument) => void;
-  onRecordRepayment: (debt: DebtDocument) => void;
+  onSelect: (snapshot: MemberDebtSnapshot) => void;
 };
 
 export function DebtList({
-  debts,
-  repaymentTotalsByDebtId,
+  snapshots,
   members,
-  currentMemberId,
-  canManage,
-  onCreate,
   onSelect,
-  onRecordRepayment,
 }: DebtListProps) {
-  if (debts.length === 0) {
+  if (snapshots.length === 0) {
     return (
       <Card className="border-slate-200 bg-slate-50 shadow-none">
         <p className="text-sm leading-6 text-slate-600">
-          Chưa có khoản vay nào được theo dõi trong plan này.
+          Chưa có công nợ nào được suy ra từ finance. Hãy tạo khoản chi khi bạn cho mượn tiền hoặc khoản thu khi thành viên trả lại tiền.
         </p>
-        {canManage ? (
-          <div>
-            <Button onClick={onCreate} variant="secondary">
-              Tạo khoản vay
-            </Button>
-          </div>
-        ) : null}
       </Card>
     );
   }
 
   return (
     <div className="space-y-3">
-      {canManage ? (
-        <div className="flex justify-end">
-          <Button onClick={onCreate}>Tạo khoản vay</Button>
-        </div>
-      ) : null}
-      {debts.map((debt) => {
-        const direction = resolveDebtDirection(debt, currentMemberId);
-        const counterpart = resolveDebtCounterpart(debt, members, currentMemberId);
-        const repaidAmount = repaymentTotalsByDebtId[debt.id] ?? 0;
-        const remainingAmount = Math.max(debt.principalAmount - repaidAmount, 0);
+      {snapshots.map((snapshot) => {
+        const counterpart = members.find((member) => member.id === snapshot.memberId);
+        const lastTransactionAt = timestampToDate(snapshot.lastTransactionAt);
 
         return (
-          <Card className="gap-3" key={debt.id}>
-            <div className="flex items-start justify-between gap-3">
-              <button className="min-w-0 flex-1 text-left" onClick={() => onSelect(debt)} type="button">
-                <p className="text-lg font-semibold text-slate-950">{debt.title}</p>
+          <Card className="gap-3" key={snapshot.memberId}>
+            <button className="min-w-0 text-left" onClick={() => onSelect(snapshot)} type="button">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-lg font-semibold text-slate-950">
+                    {counterpart?.nickname ?? 'Chưa rõ thành viên'}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {snapshot.outstandingAmount > 0 ? 'Còn đang nợ bạn' : 'Đã cân bằng công nợ'}
+                  </p>
+                </div>
                 <p className="mt-1 text-sm text-slate-500">
-                  {formatDebtDirectionLabel(direction)} · {counterpart?.nickname ?? 'Chưa rõ thành viên còn lại'}
+                  {lastTransactionAt ? formatDate(lastTransactionAt) : 'Chưa có ngày'}
                 </p>
-              </button>
-              {canManage && debt.status !== 'paid' ? (
-                <Button onClick={() => onRecordRepayment(debt)} variant="ghost">
-                  Trả nợ
-                </Button>
-              ) : null}
-            </div>
-            <div className="grid gap-2 md:grid-cols-3">
-              <p className="text-sm text-slate-600">Gốc: {formatCompactCurrency(debt.principalAmount)}</p>
-              <p className="text-sm text-slate-600">Đã trả: {formatCompactCurrency(repaidAmount)}</p>
-              <p className="text-sm font-medium text-slate-900">Còn lại: {formatCompactCurrency(remainingAmount)}</p>
-            </div>
+              </div>
+              <div className="grid gap-2 pt-3 md:grid-cols-3">
+                <p className="text-sm text-slate-600">Đã cho mượn: {formatCompactCurrency(snapshot.totalLentAmount)}</p>
+                <p className="text-sm text-slate-600">Đã trả: {formatCompactCurrency(snapshot.totalRepaidAmount)}</p>
+                <p className="text-sm font-medium text-slate-900">Còn thiếu: {formatCompactCurrency(snapshot.outstandingAmount)}</p>
+              </div>
+            </button>
           </Card>
         );
       })}

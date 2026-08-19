@@ -35,8 +35,8 @@ export type PlanCapability =
   | 'travelItinerary.editActivity'
   | 'travelItinerary.deleteActivity'
   | 'debtTracking.view'
-  | 'debtTracking.createDebt'
-  | 'debtTracking.recordRepayment';
+  | 'debtTracking.viewMemberSnapshot'
+  | 'debtTracking.viewMemberTransaction';
 
 export type OverviewWidgetId =
   | 'planSummary'

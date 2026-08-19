@@ -15,6 +15,8 @@ export function resolvePlanCapabilities(member: PlanMemberDocument | null): Plan
     capabilities.add('members.view');
     capabilities.add('travelItinerary.view');
     capabilities.add('debtTracking.view');
+    capabilities.add('debtTracking.viewMemberSnapshot');
+    capabilities.add('debtTracking.viewMemberTransaction');
   }
 
   if (isOwner) {
@@ -35,8 +37,6 @@ export function resolvePlanCapabilities(member: PlanMemberDocument | null): Plan
     capabilities.add('travelItinerary.createActivity');
     capabilities.add('travelItinerary.editActivity');
     capabilities.add('travelItinerary.deleteActivity');
-    capabilities.add('debtTracking.createDebt');
-    capabilities.add('debtTracking.recordRepayment');
   }
 
   if (isEditor) {
@@ -49,8 +49,6 @@ export function resolvePlanCapabilities(member: PlanMemberDocument | null): Plan
     capabilities.add('weddingGuests.manageGuest');
     capabilities.add('travelItinerary.createActivity');
     capabilities.add('travelItinerary.editActivity');
-    capabilities.add('debtTracking.createDebt');
-    capabilities.add('debtTracking.recordRepayment');
   }
 
   if (isOwner || canEditAllExpenses) {

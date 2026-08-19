@@ -21,6 +21,7 @@ export const createPlanSchema = z
     name: z.string().trim().min(2).max(120),
     description: z.string().trim().max(300).optional().or(z.literal('')),
     planType: z.enum([
+      'debt',
       'travel',
       'wedding',
       'saving',

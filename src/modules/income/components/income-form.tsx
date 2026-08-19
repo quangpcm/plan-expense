@@ -54,9 +54,14 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
   const { members, currentMember } = usePlanMembers(planId);
   const { milestones } = useMilestones(planId);
   const categories = useMemo(() => (plan ? getIncomeCategories(plan.planType) : []), [plan]);
+  const isDebtPlan = plan?.planType === 'debt';
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const activeMembers = members.filter((member) => member.status === 'active');
+  const counterpartMembers = useMemo(
+    () => activeMembers.filter((member) => member.id !== currentMember?.id),
+    [activeMembers, currentMember?.id],
+  );
   const visibleMilestones = useMemo(() => getVisibleMilestones(milestones), [milestones]);
   const shouldHideMilestoneSelector = plan ? planUsesHiddenMilestone(plan) : false;
   const milestoneIdFromQuery = searchParams.get('milestoneId') || '';
@@ -70,7 +75,11 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
       amount: income?.amount || 0,
       milestoneId: defaultMilestoneId,
       categoryId: toSafeString(income?.categoryId),
-      contributedByMemberId: income?.contributedByMemberId || currentMember?.id || activeMembers[0]?.id || '',
+      contributedByMemberId:
+        income?.contributedByMemberId ||
+        (isDebtPlan ? counterpartMembers[0]?.id : currentMember?.id) ||
+        activeMembers[0]?.id ||
+        '',
       note: toSafeString(income?.note),
       receivedAt: income ? formatDateTimeLocalInput(income.receivedAt.toDate()) : '',
     },
@@ -87,12 +96,34 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
       form.setValue('milestoneId', defaultMilestoneId, { shouldValidate: true });
     }
 
-    if (!form.getValues('contributedByMemberId') && (currentMember?.id || activeMembers[0]?.id)) {
-      form.setValue('contributedByMemberId', currentMember?.id || activeMembers[0]?.id || '', {
+    const defaultContributorId =
+      (isDebtPlan ? counterpartMembers[0]?.id : currentMember?.id) || activeMembers[0]?.id || '';
+
+    if (!form.getValues('contributedByMemberId') && defaultContributorId) {
+      form.setValue('contributedByMemberId', defaultContributorId, {
         shouldValidate: true,
       });
     }
-  }, [activeMembers, currentMember?.id, defaultMilestoneId, form, shouldHideMilestoneSelector]);
+
+    if (
+      isDebtPlan &&
+      currentMember?.id &&
+      form.getValues('contributedByMemberId') === currentMember.id &&
+      counterpartMembers[0]?.id
+    ) {
+      form.setValue('contributedByMemberId', counterpartMembers[0].id, {
+        shouldValidate: true,
+      });
+    }
+  }, [
+    activeMembers,
+    counterpartMembers,
+    currentMember?.id,
+    defaultMilestoneId,
+    form,
+    isDebtPlan,
+    shouldHideMilestoneSelector,
+  ]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     if (!plan || !user) {
@@ -177,7 +208,16 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
           value={Number(amountWatched) || 0}
         />
       </div>
-      <Input placeholder="Đóng quỹ, nạp thêm..." {...form.register('title')} />
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700" htmlFor="title">
+          {isDebtPlan ? 'Tên khoản hoàn trả' : 'Tên khoản thu'}
+        </label>
+        <Input
+          id="title"
+          placeholder={isDebtPlan ? 'Ví dụ: Anh A hoàn trả đợt 1' : 'Đóng quỹ, nạp thêm...'}
+          {...form.register('title')}
+        />
+      </div>
 
       {!shouldHideMilestoneSelector ? (
         <div className="space-y-2">
@@ -225,23 +265,38 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700" htmlFor="contributedByMemberId">
-          Người nạp
+          {isDebtPlan ? 'Thành viên hoàn trả' : 'Người nạp'}
         </label>
         <DropdownSelect
           id="contributedByMemberId"
           onValueChange={(value) =>
             form.setValue('contributedByMemberId', value, { shouldValidate: true, shouldDirty: true })
           }
-          options={activeMembers.map((member) => ({
+          options={activeMembers
+            .filter((member) => !isDebtPlan || member.id !== currentMember?.id)
+            .map((member) => ({
             value: member.id,
-            label: member.id === currentMember?.id ? `${member.nickname} (Mặc định)` : member.nickname,
+            label:
+              member.id === currentMember?.id
+                ? isDebtPlan
+                  ? `${member.nickname} (Bạn)`
+                  : `${member.nickname} (Mặc định)`
+                : member.nickname,
           }))}
-          placeholder="Chọn người nạp"
+          placeholder={isDebtPlan ? 'Chọn thành viên đang hoàn trả cho bạn' : 'Chọn người nạp'}
           value={contributedByMemberIdWatched || selectedContributor?.id || ''}
         />
       </div>
-      <DateTimeInput {...form.register('receivedAt')} />
-      <Textarea placeholder="Ghi chú thêm (không bắt buộc)" {...form.register('note')} />
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700" htmlFor="receivedAt">
+          {isDebtPlan ? 'Thời gian hoàn trả' : 'Thời gian nhận'}
+        </label>
+        <DateTimeInput id="receivedAt" {...form.register('receivedAt')} />
+      </div>
+      <Textarea
+        placeholder={isDebtPlan ? 'Ghi chú thêm về lần hoàn trả này (không bắt buộc)' : 'Ghi chú thêm (không bắt buộc)'}
+        {...form.register('note')}
+      />
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
         <Button
@@ -259,9 +314,13 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
         <Button disabled={isSubmitting} type="submit">
           <Landmark className="size-4" />
           {isSubmitting
-            ? 'Đang lưu khoản thu...'
+            ? isDebtPlan
+              ? 'Đang lưu khoản hoàn trả...'
+              : 'Đang lưu khoản thu...'
             : mode === 'create'
-              ? 'Lưu khoản thu'
+              ? isDebtPlan
+                ? 'Lưu khoản hoàn trả'
+                : 'Lưu khoản thu'
               : 'Lưu thay đổi'}
         </Button>
       </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
-import type { DebtTrackingSummary, DebtDocument, RepaymentDocument } from '@/modules/debt-tracking/types/debt-tracking';
+import type { DebtTrackingSummary, MemberDebtAggregate, MemberDebtSnapshot } from '@/modules/debt-tracking/types/debt-tracking';
 import { DebtDetail, DebtList } from '@/modules/debt-tracking';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import { Card } from '@/shared/components/ui/card';
@@ -10,42 +10,35 @@ import { Skeleton } from '@/shared/components/ui/skeleton';
 import { formatCompactCurrency } from '@/shared/utils/currency';
 
 type DebtTrackingTabProps = {
-  canManage: boolean;
-  currentMemberId: string | null;
-  debts: DebtDocument[];
-  detailDebt: DebtDocument | null;
+  aggregates: MemberDebtAggregate[];
+  detailSnapshot: MemberDebtSnapshot | null;
   errorMessage: string | null;
   isLoading: boolean;
   members: PlanMemberDocument[];
-  onCreate: () => void;
-  onRecordRepayment: (debt: DebtDocument) => void;
-  onSelect: (debt: DebtDocument) => void;
-  repaymentTotalsByDebtId: Record<string, number>;
-  repayments: RepaymentDocument[];
+  onSelect: (snapshot: MemberDebtSnapshot) => void;
   summary: DebtTrackingSummary;
 };
 
 export function DebtTrackingTab({
-  canManage,
-  currentMemberId,
-  debts,
-  detailDebt,
+  aggregates,
+  detailSnapshot,
   errorMessage,
   isLoading,
   members,
-  onCreate,
-  onRecordRepayment,
   onSelect,
-  repaymentTotalsByDebtId,
-  repayments,
   summary,
 }: DebtTrackingTabProps) {
+  const detailAggregate =
+    detailSnapshot
+      ? aggregates.find((aggregate) => aggregate.snapshot.memberId === detailSnapshot.memberId) ?? null
+      : null;
+
   return (
     <div className="space-y-5">
       <SectionHeading
         eyebrow="Khoản vay"
-        title="Theo dõi nợ giữa tôi và thành viên"
-        description="Theo dõi các khoản tôi cho mượn hoặc tôi đi mượn, số còn lại và lịch sử hoàn trả theo thời gian thực."
+        title="Sổ công nợ theo thành viên"
+        description="Tổng hợp từ các khoản chi và khoản thu trong debt mode để biết mỗi thành viên đã mượn bao nhiêu, trả bao nhiêu và còn thiếu bao nhiêu."
       />
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -62,24 +55,24 @@ export function DebtTrackingTab({
         </Card>
         <Card>
           <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
-            Tôi cho mượn
+            Đã cho mượn
           </p>
           <p className="mt-2 text-2xl font-semibold text-slate-950">
-            {formatCompactCurrency(summary.lentOutstandingAmount)}
+            {formatCompactCurrency(summary.totalLentAmount)}
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Dư nợ còn lại của các khoản mà tôi là người cho mượn.
+            Tổng số tiền bạn đã chi ra để cho các thành viên trong plan mượn.
           </p>
         </Card>
         <Card>
           <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
-            Tôi đi mượn
+            Đã được hoàn trả
           </p>
           <p className="mt-2 text-2xl font-semibold text-[var(--color-expense)]">
-            {formatCompactCurrency(summary.borrowedOutstandingAmount)}
+            {formatCompactCurrency(summary.totalRepaidAmount)}
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            {summary.repaymentCount} giao dịch hoàn trả, {summary.activeDebtCount} khoản đang mở, {summary.paidDebtCount} khoản đã tất toán.
+            {summary.transactionCount} giao dịch liên quan, {summary.activeCounterpartCount} thành viên còn dư nợ, {summary.settledCounterpartCount} thành viên đã cân bằng.
           </p>
         </Card>
       </div>
@@ -89,29 +82,23 @@ export function DebtTrackingTab({
             <Skeleton className="h-52 rounded-[28px]" />
           ) : (
             <DebtList
-              canManage={canManage}
-              currentMemberId={currentMemberId}
-              debts={debts}
               members={members}
-              onCreate={onCreate}
-              onRecordRepayment={onRecordRepayment}
+              snapshots={aggregates.map((aggregate) => aggregate.snapshot)}
               onSelect={onSelect}
-              repaymentTotalsByDebtId={repaymentTotalsByDebtId}
             />
           )}
         </div>
         <div className="space-y-4">
-          {detailDebt ? (
+          {detailAggregate ? (
             <DebtDetail
-              currentMemberId={currentMemberId}
-              debt={detailDebt}
               members={members}
-              repayments={repayments}
+              snapshot={detailAggregate.snapshot}
+              transactions={detailAggregate.transactions}
             />
           ) : (
             <Card className="border-slate-200 bg-slate-50 shadow-none">
               <p className="text-sm leading-6 text-slate-600">
-                Chọn một khoản vay để xem chi tiết và lịch sử hoàn trả.
+                Chọn một thành viên để xem snapshot công nợ và lịch sử giao dịch liên quan.
               </p>
             </Card>
           )}

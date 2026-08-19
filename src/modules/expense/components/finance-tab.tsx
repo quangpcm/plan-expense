@@ -63,15 +63,17 @@ export function FinanceTab({
   const emptyStateDescription = isDebtPlan
     ? `Chưa có giao dịch finance nào cho khoản nợ này${
         selectedMilestoneId !== 'all' ? ' trong bộ lọc hiện tại' : ''
-      }. Hãy thêm khoản chi khi bạn cho mượn hoặc thêm khoản thu khi bạn thu hồi tiền.`
+      }. Hãy ghi nhận khoản cho mượn khi bạn đưa tiền cho thành viên, hoặc ghi nhận khoản hoàn trả khi thành viên trả tiền lại cho bạn.`
     : null;
+  const incomeActionLabel = isDebtPlan ? '+ Hoàn trả' : '+ Khoản Thu';
+  const expenseActionLabel = isDebtPlan ? '+ Cho mượn' : '+ Khoản Chi';
 
   return (
     <>
       <div className="flex flex-col gap-4">
         <SectionHeading
-          eyebrow={isDebtPlan ? 'Dòng tiền khoản nợ' : 'Thu chi'}
-          title={isDebtPlan ? 'Ghi nhận cho mượn, thu hồi và hoàn trả' : 'Dòng tiền kế hoạch'}
+          eyebrow={isDebtPlan ? 'Công nợ theo giao dịch' : 'Thu chi'}
+          title={isDebtPlan ? 'Ghi nhận cho mượn và các khoản thành viên hoàn trả' : 'Dòng tiền kế hoạch'}
         />
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)]">
           <div className="grid grid-cols-3 gap-2 lg:hidden">
@@ -85,7 +87,7 @@ export function FinanceTab({
             </Button>
             {isPlanEnded ? (
               <Button className="min-w-0 px-3" disabled variant="secondary">
-                + Khoản Thu
+                {incomeActionLabel}
               </Button>
             ) : (
               <Button
@@ -93,19 +95,19 @@ export function FinanceTab({
                 href={incomeHref}
                 variant="secondary"
               >
-                + Khoản Thu
+                {incomeActionLabel}
               </Button>
             )}
             {isPlanEnded ? (
               <Button className="min-w-0 px-3" disabled>
-                + Khoản Chi
+                {expenseActionLabel}
               </Button>
             ) : (
               <Button
                 className="min-w-0 justify-center bg-[color:color-mix(in_srgb,var(--color-primary)_92%,white)] px-3"
                 onClick={() => onOpenCreateExpense(selectedMilestoneId ?? '')}
               >
-                + Khoản Chi
+                {expenseActionLabel}
               </Button>
             )}
           </div>
@@ -124,7 +126,7 @@ export function FinanceTab({
             <div className="grid grid-cols-2 gap-2">
               {isPlanEnded ? (
                 <Button className="min-w-0 px-3" disabled variant="secondary">
-                  + Khoản Thu
+                  {incomeActionLabel}
                 </Button>
               ) : (
                 <Button
@@ -132,19 +134,19 @@ export function FinanceTab({
                   href={incomeHref}
                   variant="secondary"
                 >
-                  + Khoản Thu
+                  {incomeActionLabel}
                 </Button>
               )}
               {isPlanEnded ? (
                 <Button className="min-w-0 px-3" disabled>
-                  + Khoản Chi
+                  {expenseActionLabel}
                 </Button>
               ) : (
                 <Button
                   className="min-w-0 justify-center bg-[color:color-mix(in_srgb,var(--color-primary)_92%,white)]"
                   href={expenseHref}
                 >
-                  + Khoản Chi
+                  {expenseActionLabel}
                 </Button>
               )}
             </div>

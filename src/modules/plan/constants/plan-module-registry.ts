@@ -103,9 +103,9 @@ export const planModuleRegistry: Record<PlanModuleId, PlanModuleDefinition> = {
     id: 'debtTracking',
     defaultLabel: 'Khoản vay',
     navigation: { enabled: true },
-    permissions: ['debtTracking.view', 'debtTracking.createDebt', 'debtTracking.recordRepayment'],
+    permissions: ['debtTracking.view', 'debtTracking.viewMemberSnapshot', 'debtTracking.viewMemberTransaction'],
     routes: [{ key: 'debtTracking.tab', pathname: '/plans/[planId]?tab=debtTracking' }],
-    collections: [{ path: 'debts' }, { path: 'repayments' }],
+    collections: [{ path: 'expenses' }, { path: 'incomes' }],
     overviewWidgets: [overviewWidgets.debtSummary!],
   },
 };
