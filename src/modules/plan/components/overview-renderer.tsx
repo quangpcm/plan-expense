@@ -46,6 +46,8 @@ export type OverviewRendererProps = {
   onOpenPlanningTodo: (todo: TodoDocument) => void;
   onOpenPlanningTodos: () => void;
   onOpenDebtTracking: () => void;
+  onOpenWeddingGuests: () => void;
+  onOpenFinance: () => void;
   onSelectMemberDrilldown: (memberId: string) => void;
   onSelectMilestoneDrilldown: (milestoneId: string, memberId: string) => void;
   onSelectUpcomingMilestone: (milestoneId: string) => void;
@@ -54,9 +56,12 @@ export type OverviewRendererProps = {
     status: TodoDocument['status'],
   ) => void;
   plan: Pick<PlanDocument, 'planType' | 'status' | 'debtModel'> | PlanType;
+  planId: string;
   planStatus: PlanStatus;
   selectedMilestoneId: string | null;
   statistic: StatisticResult;
+  estimatedTotal: number;
+  todos: TodoDocument[];
   todoActionError: string | null;
   travelActivities: TravelActivityDocument[];
   travelActivityError: string | null;

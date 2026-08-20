@@ -267,6 +267,9 @@ export default function PlanDetailPage() {
   const isNativeDebtPlan = Boolean(
     plan && resolvePlanDebtModel(plan) === 'native_debt',
   );
+  const isWeddingPlan = plan?.planType === 'wedding';
+  const spentLabel = isWeddingPlan ? 'Đã chi' : 'Tổng chi';
+  const estimatedLabel = isWeddingPlan ? 'Dự kiến chi' : 'Dự kiến';
   const {
     transactions: debtTransactions,
     isLoading: isNativeDebtLoading,
@@ -1614,6 +1617,8 @@ export default function PlanDetailPage() {
             }}
             onOpenPlanningTodos={() => openPlanTab('planning')}
             onOpenDebtTracking={() => openPlanTab('debtTracking')}
+            onOpenWeddingGuests={() => openPlanTab('weddingGuests')}
+            onOpenFinance={() => openPlanTab('finance')}
             onSelectMemberDrilldown={(memberId) =>
               setStatisticMemberDrilldown({ memberId })
             }
@@ -1627,9 +1632,12 @@ export default function PlanDetailPage() {
             }}
             onToggleTodoStatus={handleChangeTodoStatus}
             plan={plan}
+            planId={planId}
             planStatus={plan.status}
             selectedMilestoneId={selectedMilestone?.id ?? null}
             statistic={statistic}
+            estimatedTotal={effectiveEstimatedTotal}
+            todos={todos}
             todoActionError={todoActionError}
             travelActivities={travelActivities}
             travelActivityError={travelActivityError}
@@ -2100,7 +2108,7 @@ export default function PlanDetailPage() {
                 <>
                   <div>
                     <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
-                      Tổng chi
+                      {spentLabel}
                     </p>
                     <p className="mt-1 text-2xl font-semibold text-slate-950">
                       {formatCompactCurrency(plan.totalExpense)}
@@ -2108,7 +2116,7 @@ export default function PlanDetailPage() {
                   </div>
                   <div>
                     <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
-                      Dự kiến
+                      {estimatedLabel}
                     </p>
                     <p className="mt-1 text-2xl font-semibold text-slate-600">
                       {formatCompactCurrency(effectiveEstimatedTotal)}

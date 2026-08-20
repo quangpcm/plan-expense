@@ -76,13 +76,16 @@ export const planTypeConfigMap: SupportedPlanTypeConfigMap = {
       },
       { moduleId: 'members', enabled: true, order: 40, label: 'Thành viên' },
     ],
+    // Wedding có composition Overview riêng (widget dashboard: Cần chú ý → Mốc kế
+    // hoạch → Công việc → Khách mời → Tài chính) — không dùng lại planSummary/
+    // planningSnapshot/financeSummary/memberSummary chung với general/travel/debt.
     overview: {
       widgets: [
-        { widgetId: 'planSummary', enabled: true, order: 0 },
-        { widgetId: 'planningSnapshot', enabled: true, order: 10 },
-        { widgetId: 'financeSummary', enabled: true, order: 20 },
+        { widgetId: 'weddingAttentionSummary', enabled: true, order: 0 },
+        { widgetId: 'weddingMilestoneSnapshot', enabled: true, order: 10 },
+        { widgetId: 'weddingTodoSnapshot', enabled: true, order: 20 },
         { widgetId: 'weddingGuestSummary', enabled: true, order: 30 },
-        { widgetId: 'memberSummary', enabled: true, order: 40 },
+        { widgetId: 'weddingFinanceSummary', enabled: true, order: 40 },
       ],
     },
   },

@@ -26,6 +26,7 @@ import type {
 } from '@/modules/plan/types/plan-modular';
 import type { OverviewRendererProps } from '@/modules/plan/components/overview-renderer';
 import { resolvePlanDebtModel } from '@/modules/plan/utils/plan-type-config';
+import { weddingOverviewWidgetRegistry } from '@/modules/plan/constants/overview-widget-registry.wedding';
 
 type OverviewWidgetComponent = (
   props: OverviewRendererProps,
@@ -594,4 +595,5 @@ export const overviewWidgetRegistry: Partial<
       props.isDebtTrackingEnabled &&
       resolvePlanDebtModel(props.plan) === 'native_debt',
   },
+  ...weddingOverviewWidgetRegistry,
 };
