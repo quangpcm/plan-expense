@@ -5,9 +5,15 @@ import { ArrowDown, ArrowUp, Landmark } from 'lucide-react';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
-import type { CounterpartyDebtLedger, PlanDebtSummary } from '@/modules/debt-tracking/calculators/debt-calculators';
+import type {
+  CounterpartyDebtLedger,
+  PlanDebtSummary,
+} from '@/modules/debt-tracking/calculators/debt-calculators';
 import { debtTransactionService } from '@/modules/debt-tracking/services';
-import type { DebtDirection, DebtTransaction } from '@/modules/debt-tracking/types/debt-transaction';
+import type {
+  DebtDirection,
+  DebtTransaction,
+} from '@/modules/debt-tracking/types/debt-transaction';
 import { DebtNativeDetail } from '@/modules/debt-tracking/components/debt-native-detail';
 import { DebtNativeList } from '@/modules/debt-tracking/components/debt-native-list';
 import { DebtTransactionForm } from '@/modules/debt-tracking/components/debt-transaction-form';
@@ -31,10 +37,41 @@ type DebtNativeTabProps = {
 };
 
 type SheetState =
-  | { mode: 'create-loan' }
-  | { mode: 'record-repayment'; counterpartyMemberId: string; direction: DebtDirection }
+  // counterpartyMemberId/direction chỉ có khi mở từ "+ Ghi khoản nợ" trong counterparty
+  // detail (đã biết sẵn người đang xem) — nút "+ Ghi nhận khoản nợ" ở đầu trang vẫn mở
+  // mode này nhưng không truyền gì, để user tự chọn người/chiều nợ từ đầu.
+  | {
+      mode: 'create-loan';
+      counterpartyMemberId?: string;
+      direction?: DebtDirection;
+    }
+  | {
+      mode: 'record-repayment';
+      counterpartyMemberId: string;
+      direction: DebtDirection;
+    }
   | { mode: 'edit'; transaction: DebtTransaction }
   | null;
+
+function resolveSheetCounterpartyName(
+  sheet: SheetState,
+  members: PlanMemberDocument[],
+): string | undefined {
+  if (!sheet) {
+    return undefined;
+  }
+
+  const counterpartyMemberId =
+    sheet.mode === 'edit'
+      ? sheet.transaction.counterpartyMemberId
+      : sheet.counterpartyMemberId;
+
+  if (!counterpartyMemberId) {
+    return undefined;
+  }
+
+  return members.find((member) => member.id === counterpartyMemberId)?.nickname;
+}
 
 export function DebtNativeTab({
   planId,
@@ -47,16 +84,22 @@ export function DebtNativeTab({
 }: DebtNativeTabProps) {
   const { plan } = usePlan(planId);
   const { currentMember } = usePlanMembers(planId);
-  const [requestedMemberId, setRequestedMemberId] = useState<string | null>(null);
+  const [requestedMemberId, setRequestedMemberId] = useState<string | null>(
+    null,
+  );
   const [sheet, setSheet] = useState<SheetState>(null);
-  const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(null);
+  const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(
+    null,
+  );
 
   // Falls back to the first counterparty when nothing is explicitly selected yet,
   // or when the previously selected one no longer has any ledger (e.g. deleted).
   const selectedMemberId = useMemo(() => {
     if (
       requestedMemberId &&
-      counterpartyLedgers.some((ledger) => ledger.counterpartyMemberId === requestedMemberId)
+      counterpartyLedgers.some(
+        (ledger) => ledger.counterpartyMemberId === requestedMemberId,
+      )
     ) {
       return requestedMemberId;
     }
@@ -65,14 +108,23 @@ export function DebtNativeTab({
   }, [counterpartyLedgers, requestedMemberId]);
 
   const selectedLedger = useMemo(
-    () => counterpartyLedgers.find((ledger) => ledger.counterpartyMemberId === selectedMemberId) ?? null,
+    () =>
+      counterpartyLedgers.find(
+        (ledger) => ledger.counterpartyMemberId === selectedMemberId,
+      ) ?? null,
     [counterpartyLedgers, selectedMemberId],
   );
   const selectedTransactions = useMemo(
-    () => transactions.filter((transaction) => transaction.counterpartyMemberId === selectedMemberId),
+    () =>
+      transactions.filter(
+        (transaction) => transaction.counterpartyMemberId === selectedMemberId,
+      ),
     [transactions, selectedMemberId],
   );
-  const selectedCounterpart = members.find((member) => member.id === selectedMemberId);
+  const selectedCounterpart = members.find(
+    (member) => member.id === selectedMemberId,
+  );
+  const sheetCounterpartyName = resolveSheetCounterpartyName(sheet, members);
 
   async function handleDeleteTransaction(transaction: DebtTransaction) {
     if (!plan) {
@@ -82,9 +134,15 @@ export function DebtNativeTab({
     setActionErrorMessage(null);
 
     try {
-      await debtTransactionService.deleteDebtTransaction(plan, transaction, currentMember);
+      await debtTransactionService.deleteDebtTransaction(
+        plan,
+        transaction,
+        currentMember,
+      );
     } catch (error) {
-      setActionErrorMessage(error instanceof Error ? error.message : 'Không thể xoá giao dịch này.');
+      setActionErrorMessage(
+        error instanceof Error ? error.message : 'Không thể xoá giao dịch này.',
+      );
     }
   }
 
@@ -95,8 +153,12 @@ export function DebtNativeTab({
         eyebrow="Khoản nợ"
         title="Sổ công nợ"
       />
-      {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
-      {actionErrorMessage ? <AuthFormMessage message={actionErrorMessage} type="error" /> : null}
+      {errorMessage ? (
+        <AuthFormMessage message={errorMessage} type="error" />
+      ) : null}
+      {actionErrorMessage ? (
+        <AuthFormMessage message={actionErrorMessage} type="error" />
+      ) : null}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Card className="flex-row items-center gap-3 p-3">
@@ -145,7 +207,9 @@ export function DebtNativeTab({
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <div className="space-y-4">
-          <h3 className="text-base font-semibold text-slate-900">Danh sách đối tượng</h3>
+          <h3 className="text-base font-semibold text-slate-900">
+            Danh sách đối tượng
+          </h3>
           {isLoading ? (
             <Skeleton className="h-52 rounded-[28px]" />
           ) : (
@@ -157,17 +221,35 @@ export function DebtNativeTab({
             />
           )}
         </div>
-        <div className="space-y-4">
+        <div className="space-y-4 border-t border-slate-200 pt-5 xl:border-0 xl:pt-0">
+          <h3 className="text-base font-semibold text-slate-900">
+            Chi tiết giao dịch
+          </h3>
           {selectedLedger ? (
             <DebtNativeDetail
               counterpart={selectedCounterpart}
+              key={selectedLedger.counterpartyMemberId}
               ledger={selectedLedger}
               onDeleteTransaction={handleDeleteTransaction}
-              onEditTransaction={(transaction) => setSheet({ mode: 'edit', transaction })}
-              onRecordLoan={() => setSheet({ mode: 'create-loan' })}
+              onEditTransaction={(transaction) =>
+                setSheet({ mode: 'edit', transaction })
+              }
+              onRecordLoan={(direction) =>
+                selectedMemberId
+                  ? setSheet({
+                      mode: 'create-loan',
+                      counterpartyMemberId: selectedMemberId,
+                      direction,
+                    })
+                  : setSheet({ mode: 'create-loan' })
+              }
               onRecordRepayment={(direction) =>
                 selectedMemberId
-                  ? setSheet({ mode: 'record-repayment', counterpartyMemberId: selectedMemberId, direction })
+                  ? setSheet({
+                      mode: 'record-repayment',
+                      counterpartyMemberId: selectedMemberId,
+                      direction,
+                    })
                   : undefined
               }
               transactions={selectedTransactions}
@@ -175,7 +257,8 @@ export function DebtNativeTab({
           ) : (
             <Card className="border-slate-200 bg-slate-50 shadow-none">
               <p className="text-sm leading-6 text-slate-600">
-                Chọn một đối tượng để xem chi tiết công nợ, hoặc ghi nhận khoản nợ đầu tiên.
+                Chọn một đối tượng để xem chi tiết công nợ, hoặc ghi nhận khoản
+                nợ đầu tiên.
               </p>
             </Card>
           )}
@@ -183,6 +266,9 @@ export function DebtNativeTab({
       </div>
 
       <BottomSheet
+        {...(sheetCounterpartyName
+          ? { description: `Với ${sheetCounterpartyName}` }
+          : {})}
         onClose={() => setSheet(null)}
         open={sheet !== null}
         showCloseButton
@@ -199,15 +285,30 @@ export function DebtNativeTab({
         {sheet ? (
           <DebtTransactionForm
             fixedCounterpartyMemberId={
-              sheet.mode === 'record-repayment' ? sheet.counterpartyMemberId : undefined
+              sheet.mode === 'record-repayment'
+                ? sheet.counterpartyMemberId
+                : sheet.mode === 'create-loan'
+                  ? sheet.counterpartyMemberId
+                  : undefined
             }
-            fixedDirection={sheet.mode === 'record-repayment' ? sheet.direction : undefined}
+            fixedDirection={
+              sheet.mode === 'record-repayment' ? sheet.direction : undefined
+            }
+            initialDirection={
+              sheet.mode === 'create-loan' ? sheet.direction : undefined
+            }
             onCancel={() => setSheet(null)}
             onSuccess={() => setSheet(null)}
             planId={planId}
             transaction={sheet.mode === 'edit' ? sheet.transaction : undefined}
             transactions={transactions}
-            type={sheet.mode === 'record-repayment' ? 'repayment' : sheet.mode === 'edit' ? sheet.transaction.type : 'loan'}
+            type={
+              sheet.mode === 'record-repayment'
+                ? 'repayment'
+                : sheet.mode === 'edit'
+                  ? sheet.transaction.type
+                  : 'loan'
+            }
           />
         ) : null}
       </BottomSheet>

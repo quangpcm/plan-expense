@@ -69,7 +69,7 @@ export function DebtNativeList({ ledgers, members, selectedMemberId, onSelect }:
                   {formatCompactCurrency(ledger.netPosition)}
                 </p>
               </div>
-              <div className="grid gap-2 border-t border-slate-100 pt-3 md:grid-cols-2">
+              <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
                 <p className="text-sm text-slate-600">
                   Phải thu <span className="ml-1 font-medium text-slate-900">{formatCompactCurrency(ledger.receivableOutstanding)}</span>
                 </p>

@@ -16,7 +16,10 @@ import {
 import { createDebtTransactionSchema } from '@/modules/debt-tracking/schemas/create-debt-transaction.schema';
 import { updateDebtTransactionSchema } from '@/modules/debt-tracking/schemas/update-debt-transaction.schema';
 import { debtTransactionService } from '@/modules/debt-tracking/services';
-import type { DebtDirection, DebtTransaction } from '@/modules/debt-tracking/types/debt-transaction';
+import type {
+  DebtDirection,
+  DebtTransaction,
+} from '@/modules/debt-tracking/types/debt-transaction';
 import { CounterpartyPicker } from '@/modules/debt-tracking/components/counterparty-picker';
 import { AttachmentPicker, type AttachmentDraft } from '@/modules/storage';
 import { AmountInput } from '@/shared/components/ui/amount-input';
@@ -27,7 +30,10 @@ import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { formatCurrency } from '@/shared/utils/currency';
-import { formatDateTimeLocalInput, parseDateTimeLocalInput } from '@/shared/utils/date';
+import {
+  formatDateTimeLocalInput,
+  parseDateTimeLocalInput,
+} from '@/shared/utils/date';
 import { cn } from '@/shared/utils/cn';
 
 function toDateInputValue(date: Date): string {
@@ -49,6 +55,10 @@ type DebtTransactionFormProps = {
   // Ghi nhận repayment mở từ counterparty detail đã biết sẵn người + chiều nợ.
   fixedCounterpartyMemberId?: string | undefined;
   fixedDirection?: DebtDirection | undefined;
+  // Khác fixedDirection: chỉ set giá trị mặc định ban đầu cho toggle, KHÔNG khoá UI —
+  // dùng khi ghi khoản nợ mới từ counterparty detail (đã biết người, nhưng chiều nợ vẫn
+  // có thể là receivable hoặc payable nên cần cho phép đổi).
+  initialDirection?: DebtDirection | undefined;
   transaction?: DebtTransaction | undefined;
   onSuccess?: (() => void) | undefined;
   onCancel?: (() => void) | undefined;
@@ -60,6 +70,7 @@ export function DebtTransactionForm({
   transactions,
   fixedCounterpartyMemberId,
   fixedDirection,
+  initialDirection,
   transaction,
   onSuccess,
   onCancel,
@@ -69,31 +80,50 @@ export function DebtTransactionForm({
   const { members, currentMember } = usePlanMembers(planId);
 
   const [direction, setDirection] = useState<DebtDirection>(
-    transaction?.direction ?? fixedDirection ?? 'receivable',
+    transaction?.direction ??
+      fixedDirection ??
+      initialDirection ??
+      'receivable',
   );
   const [counterpartyMemberId, setCounterpartyMemberId] = useState(
     transaction?.counterpartyMemberId ?? fixedCounterpartyMemberId ?? '',
   );
-  const categoryOptions = useMemo(() => getDebtTransactionCategoryOptions(type), [type]);
+  const categoryOptions = useMemo(
+    () => getDebtTransactionCategoryOptions(type),
+    [type],
+  );
   const [title, setTitle] = useState(transaction?.title ?? '');
+  // Repayment không còn danh mục để chọn (field bị ẩn ở dưới) — luôn ép về giá trị
+  // duy nhất hợp lệ, kể cả khi transaction đang sửa còn lưu category cũ (cash_repayment,
+  // offset...) từ trước khi đổi taxonomy. Nhờ vậy transaction cũ tự "lành" ngay khi
+  // được sửa lần tới mà không cần migrate dữ liệu.
   const [category, setCategory] = useState<DebtTransactionCategory>(
-    transaction?.category ?? categoryOptions[0]!.value,
+    type === 'loan'
+      ? (transaction?.category ?? categoryOptions[0]!.value)
+      : categoryOptions[0]!.value,
   );
   const [amount, setAmount] = useState(transaction?.amount ?? 0);
   const [occurredAt, setOccurredAt] = useState(
-    transaction ? formatDateTimeLocalInput(transaction.occurredAt.toDate()) : formatDateTimeLocalInput(new Date()),
+    transaction
+      ? formatDateTimeLocalInput(transaction.occurredAt.toDate())
+      : formatDateTimeLocalInput(new Date()),
   );
   const [dueDate, setDueDate] = useState(
     transaction?.dueDate ? toDateInputValue(transaction.dueDate.toDate()) : '',
   );
   const [note, setNote] = useState(transaction?.note ?? '');
   const [attachments, setAttachments] = useState<AttachmentDraft[]>(
-    (transaction?.attachments ?? []).map((attachment) => ({ kind: 'existing', id: attachment.id, attachment })),
+    (transaction?.attachments ?? []).map((attachment) => ({
+      kind: 'existing',
+      id: attachment.id,
+      attachment,
+    })),
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isCounterpartyLocked = Boolean(fixedCounterpartyMemberId) || Boolean(transaction);
+  const isCounterpartyLocked =
+    Boolean(fixedCounterpartyMemberId) || Boolean(transaction);
   const isDirectionLocked = Boolean(fixedDirection) || Boolean(transaction);
 
   const outstanding = useMemo(() => {
@@ -102,7 +132,9 @@ export function DebtTransactionForm({
     }
 
     const counterpartyTransactions = transactions.filter(
-      (item) => item.counterpartyMemberId === counterpartyMemberId && item.id !== transaction?.id,
+      (item) =>
+        item.counterpartyMemberId === counterpartyMemberId &&
+        item.id !== transaction?.id,
     );
 
     return calculateOutstanding(counterpartyTransactions, direction);
@@ -115,7 +147,12 @@ export function DebtTransactionForm({
       throw new Error('Bạn cần đăng nhập để thêm đối tượng mới.');
     }
 
-    return memberService.addGuest(planId, { nickname, role: 'viewer' }, user, currentMember);
+    return memberService.addGuest(
+      planId,
+      { nickname, role: 'viewer' },
+      user,
+      currentMember,
+    );
   }
 
   async function handleSubmit() {
@@ -150,7 +187,9 @@ export function DebtTransactionForm({
             category: parsed.category,
             amount: parsed.amount,
             occurredAt: parseOccurredAtInputValue(parsed.occurredAt),
-            dueDate: parsed.dueDate ? parseDateInputValue(parsed.dueDate) : null,
+            dueDate: parsed.dueDate
+              ? parseDateInputValue(parsed.dueDate)
+              : null,
             note: parsed.note,
             attachments: parsed.attachments,
           },
@@ -179,7 +218,9 @@ export function DebtTransactionForm({
             category: parsed.category,
             amount: parsed.amount,
             occurredAt: parseOccurredAtInputValue(parsed.occurredAt),
-            dueDate: parsed.dueDate ? parseDateInputValue(parsed.dueDate) : null,
+            dueDate: parsed.dueDate
+              ? parseDateInputValue(parsed.dueDate)
+              : null,
             note: parsed.note,
             attachments: parsed.attachments,
           },
@@ -196,7 +237,10 @@ export function DebtTransactionForm({
       onSuccess?.();
     } catch (error) {
       if (error instanceof ZodError) {
-        setErrorMessage(error.issues.map((issue) => issue.message).join(' | ') || 'Vui lòng kiểm tra lại thông tin.');
+        setErrorMessage(
+          error.issues.map((issue) => issue.message).join(' | ') ||
+            'Vui lòng kiểm tra lại thông tin.',
+        );
       } else if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
@@ -210,35 +254,52 @@ export function DebtTransactionForm({
   return (
     <div className="space-y-5">
       <div className="space-y-1 text-center">
-        <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#727687]" htmlFor="debt-amount">
+        <label
+          className="text-xs font-semibold uppercase tracking-[0.16em] text-[#727687]"
+          htmlFor="debt-amount"
+        >
           Số tiền (VND)
         </label>
         <AmountInput id="debt-amount" onChange={setAmount} value={amount} />
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700" htmlFor="debt-title">
+        <label
+          className="text-sm font-medium text-slate-700"
+          htmlFor="debt-title"
+        >
           Tên giao dịch
         </label>
         <Input
           id="debt-title"
           onChange={(event) => setTitle(event.target.value)}
-          placeholder={type === 'loan' ? 'Ví dụ: Cho anh A mượn tiền mua xe' : 'Ví dụ: Anh A trả tiền đợt 1'}
+          placeholder={
+            type === 'loan'
+              ? 'Ví dụ: Cho anh A mượn tiền mua xe'
+              : 'Ví dụ: Anh A trả tiền đợt 1'
+          }
           value={title}
         />
       </div>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700" htmlFor="debt-category">
-          Danh mục
-        </label>
-        <DropdownSelect
-          id="debt-category"
-          onValueChange={(value) => setCategory(value as DebtTransactionCategory)}
-          options={categoryOptions}
-          value={category}
-        />
-      </div>
+      {type === 'loan' ? (
+        <div className="space-y-2">
+          <label
+            className="text-sm font-medium text-slate-700"
+            htmlFor="debt-category"
+          >
+            Danh mục
+          </label>
+          <DropdownSelect
+            id="debt-category"
+            onValueChange={(value) =>
+              setCategory(value as DebtTransactionCategory)
+            }
+            options={categoryOptions}
+            value={category}
+          />
+        </div>
+      ) : null}
 
       {type === 'loan' && !isDirectionLocked ? (
         <div className="grid grid-cols-2 gap-2">
@@ -285,13 +346,18 @@ export function DebtTransactionForm({
       {type === 'repayment' && counterpartyMemberId ? (
         <div className="rounded-2xl border border-[#c2c6d8] bg-white px-4 py-3 text-sm text-slate-700">
           <span className="block text-xs text-[#727687]">Còn nợ</span>
-          <span className="mt-1 block font-medium text-[#191c1e]">{formatCurrency(outstanding)}</span>
+          <span className="mt-1 block font-medium text-[#191c1e]">
+            {formatCurrency(outstanding)}
+          </span>
         </div>
       ) : null}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="debt-occurredAt">
+          <label
+            className="text-sm font-medium text-slate-700"
+            htmlFor="debt-occurredAt"
+          >
             {type === 'loan' ? 'Ngày vay' : 'Ngày trả'}
           </label>
           <DateTimeInput
@@ -302,16 +368,29 @@ export function DebtTransactionForm({
         </div>
         {type === 'loan' ? (
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700" htmlFor="debt-dueDate">
-              Hạn trả <span className="font-normal text-slate-400">(không bắt buộc)</span>
+            <label
+              className="text-sm font-medium text-slate-700"
+              htmlFor="debt-dueDate"
+            >
+              Hạn trả{' '}
+              <span className="font-normal text-slate-400">
+                (không bắt buộc)
+              </span>
             </label>
-            <DateField id="debt-dueDate" onChange={(event) => setDueDate(event.target.value)} value={dueDate} />
+            <DateField
+              id="debt-dueDate"
+              onChange={(event) => setDueDate(event.target.value)}
+              value={dueDate}
+            />
           </div>
         ) : null}
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700" htmlFor="debt-note">
+        <label
+          className="text-sm font-medium text-slate-700"
+          htmlFor="debt-note"
+        >
           Ghi chú
         </label>
         <Textarea
@@ -324,10 +403,17 @@ export function DebtTransactionForm({
 
       <div className="space-y-2">
         <p className="text-sm font-medium text-slate-700">Đính kèm</p>
-        <AttachmentPicker label="Thêm ảnh" maxCount={5} onChange={setAttachments} value={attachments} />
+        <AttachmentPicker
+          label="Thêm ảnh"
+          maxCount={5}
+          onChange={setAttachments}
+          value={attachments}
+        />
       </div>
 
-      {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
+      {errorMessage ? (
+        <AuthFormMessage message={errorMessage} type="error" />
+      ) : null}
 
       <div className="flex items-center justify-end gap-2">
         {onCancel ? (
@@ -336,7 +422,12 @@ export function DebtTransactionForm({
           </Button>
         ) : null}
         <Button
-          disabled={isSubmitting || !counterpartyMemberId || amount <= 0 || !title.trim()}
+          disabled={
+            isSubmitting ||
+            !counterpartyMemberId ||
+            amount <= 0 ||
+            !title.trim()
+          }
           onClick={handleSubmit}
           type="button"
         >
