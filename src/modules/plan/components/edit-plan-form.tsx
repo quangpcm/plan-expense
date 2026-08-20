@@ -83,11 +83,13 @@ export function EditPlanForm({ plan, currentMember, onClose }: EditPlanFormProps
     label: option.label,
     icon: planCardVisualsByType[option.value].icon,
   }));
-  const planStatusDropdownOptions = planStatusOptions.map((option) => ({
-    value: option.value,
-    label: option.label,
-    icon: option.icon,
-  }));
+  const planStatusDropdownOptions = planStatusOptions
+    .filter((option) => option.value !== 'archived')
+    .map((option) => ({
+      value: option.value,
+      label: option.label,
+      icon: option.icon,
+    }));
 
   const onSubmit = handleSubmit(async (values) => {
     setErrorMessage(null);

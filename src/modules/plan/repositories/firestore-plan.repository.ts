@@ -158,6 +158,7 @@ export class FirestorePlanRepository implements PlanRepository {
       memberId: ownerMemberRef.id,
       memberStatus: 'active',
       planStatus: 'active',
+      archivedAt: null,
       coverImageUrl: null,
       startDate: input.startDate ? Timestamp.fromDate(input.startDate) : null,
       endDate: input.endDate ? Timestamp.fromDate(input.endDate) : null,
@@ -309,6 +310,32 @@ export class FirestorePlanRepository implements PlanRepository {
     await syncUserPlansAggregate(planId, { planStatus: 'closed', updatedAt: now });
   }
 
+  async archivePlan(planId: string) {
+    const db = getFirebaseFirestore();
+    const now = Timestamp.now();
+    const planRef = getPlanRootRef(db, planId);
+
+    await updateDoc(planRef, {
+      status: 'archived',
+      archivedAt: now,
+      updatedAt: now,
+    });
+    await syncUserPlansAggregate(planId, { planStatus: 'archived', archivedAt: now, updatedAt: now });
+  }
+
+  async unarchivePlan(planId: string) {
+    const db = getFirebaseFirestore();
+    const now = Timestamp.now();
+    const planRef = getPlanRootRef(db, planId);
+
+    await updateDoc(planRef, {
+      status: 'active',
+      archivedAt: null,
+      updatedAt: now,
+    });
+    await syncUserPlansAggregate(planId, { planStatus: 'active', archivedAt: null, updatedAt: now });
+  }
+
   async setPlanSecurityForUser(userId: string, planId: string, isLocked: boolean) {
     const db = getFirebaseFirestore();
     const now = Timestamp.now();
@@ -398,6 +425,18 @@ export class FirestorePlanRepository implements PlanRepository {
     }
   }
 
+  async backfillArchivedAt(userId: string, planId: string) {
+    const db = getFirebaseFirestore();
+    const userPlanRef = doc(db, 'userPlans', userId, 'plans', planId);
+
+    // Mirror docs archived before this field existed (or edited by hand)
+    // have no archivedAt, which would otherwise make the retention countdown
+    // never start. Stamp it with "now" the first time it's noticed. Only
+    // ever called for the plan owner viewing their own archived list, so the
+    // write is allowed by the owner-sync branch of the userPlans rules.
+    await updateDoc(userPlanRef, { archivedAt: Timestamp.now() });
+  }
+
   watchUserPlans(userId: string, callback: (plans: PlanSummary[]) => void, onError?: (error: Error) => void) {
     const plansQuery = query(
       collection(getFirebaseFirestore(), 'userPlans', userId, 'plans'),
@@ -409,12 +448,37 @@ export class FirestorePlanRepository implements PlanRepository {
       (snapshot) => {
         const plans = snapshot.docs
           .map((item) => item.data() as PlanSummary)
-          .filter((item) => item.memberStatus === 'active');
+          .filter((item) => item.memberStatus === 'active' && item.planStatus !== 'archived');
 
         callback(plans);
       },
       (error) => {
         onError?.(mapFirebaseError(error, 'Unable to load your plans.', 'USER_PLANS_WATCH_FAILED'));
+      },
+    );
+  }
+
+  watchArchivedUserPlans(
+    userId: string,
+    callback: (plans: PlanSummary[]) => void,
+    onError?: (error: Error) => void,
+  ) {
+    const plansQuery = query(
+      collection(getFirebaseFirestore(), 'userPlans', userId, 'plans'),
+      orderBy('updatedAt', 'desc'),
+    );
+
+    return onSnapshot(
+      plansQuery,
+      (snapshot) => {
+        const plans = snapshot.docs
+          .map((item) => item.data() as PlanSummary)
+          .filter((item) => item.memberStatus === 'active' && item.planStatus === 'archived');
+
+        callback(plans);
+      },
+      (error) => {
+        onError?.(mapFirebaseError(error, 'Unable to load your archived plans.', 'ARCHIVED_PLANS_WATCH_FAILED'));
       },
     );
   }

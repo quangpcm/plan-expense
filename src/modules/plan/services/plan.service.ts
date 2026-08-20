@@ -126,6 +126,54 @@ export class PlanService {
     await this.planRepository.completePlan(plan.id);
   }
 
+  async archivePlan(plan: PlanDocument, currentMember: PlanMemberDocument | null) {
+    if (currentMember?.role !== 'owner') {
+      throw new AppError('Only the owner can archive this plan.', 'PLAN_ARCHIVE_PERMISSION_DENIED', 403);
+    }
+
+    if (plan.status !== 'active') {
+      throw new AppError('Only active plans can be archived.', 'PLAN_ARCHIVE_INVALID_STATUS', 400);
+    }
+
+    await this.planRepository.archivePlan(plan.id);
+  }
+
+  async unarchivePlan(userId: string, plan: PlanSummary) {
+    if (plan.role !== 'owner') {
+      throw new AppError('Only the owner can restore this plan.', 'PLAN_UNARCHIVE_PERMISSION_DENIED', 403);
+    }
+
+    if (plan.planStatus !== 'archived') {
+      throw new AppError('Only archived plans can be restored.', 'PLAN_UNARCHIVE_INVALID_STATUS', 400);
+    }
+
+    await this.planRepository.unarchivePlan(plan.planId);
+  }
+
+  watchArchivedUserPlans(userId: string, callback: (plans: PlanSummary[]) => void, onError?: (error: Error) => void) {
+    return this.planRepository.watchArchivedUserPlans(userId, callback, onError);
+  }
+
+  async backfillArchivedAt(userId: string, plan: PlanSummary) {
+    if (plan.role !== 'owner' || plan.planStatus !== 'archived' || plan.archivedAt) {
+      return;
+    }
+
+    await this.planRepository.backfillArchivedAt(userId, plan.planId);
+  }
+
+  async hardDeleteArchivedPlan(userId: string, plan: PlanSummary) {
+    if (plan.role !== 'owner') {
+      throw new AppError('Only the owner can delete this plan.', 'PLAN_DELETE_PERMISSION_DENIED', 403);
+    }
+
+    if (plan.planStatus !== 'archived') {
+      throw new AppError('Only archived plans can be deleted here.', 'PLAN_NOT_ARCHIVED', 400);
+    }
+
+    await this.planRepository.deletePlan(plan.planId, userId);
+  }
+
   async setPlanSecurity(userId: string, planId: string, isLocked: boolean) {
     await this.planRepository.setPlanSecurityForUser(userId, planId, isLocked);
   }

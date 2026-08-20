@@ -52,7 +52,7 @@ import type {
 import { buildLinkedMemberIdSet } from '@/modules/member/utils/member-linkage';
 import { EditPlanForm } from '@/modules/plan/components/edit-plan-form';
 import { PlanUnlockGate } from '@/modules/plan/components/plan-unlock-gate';
-import { planTypeOptions } from '@/modules/plan/constants/plan.constants';
+import { PLAN_ARCHIVE_RETENTION_DAYS, planTypeOptions } from '@/modules/plan/constants/plan.constants';
 import { planService } from '@/modules/plan/services';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
 import { useUserPlans } from '@/modules/plan/hooks/use-user-plans';
@@ -302,8 +302,10 @@ export default function PlanDetailPage() {
   const [isSettlementSubmitting, setIsSettlementSubmitting] = useState(false);
   const [closingError, setClosingError] = useState<string | null>(null);
   const [completionError, setCompletionError] = useState<string | null>(null);
+  const [archivingError, setArchivingError] = useState<string | null>(null);
   const [isClosingPlan, setIsClosingPlan] = useState(false);
   const [isCompletingPlan, setIsCompletingPlan] = useState(false);
+  const [isArchivingPlan, setIsArchivingPlan] = useState(false);
   const [isPlanUnlocked, setIsPlanUnlocked] = useState(false);
   const [securityActionError, setSecurityActionError] = useState<string | null>(
     null,
@@ -378,6 +380,7 @@ export default function PlanDetailPage() {
   const [headerModal, setHeaderModal] = useState<HeaderModal>(null);
   const [showClosePlanConfirm, setShowClosePlanConfirm] = useState(false);
   const [showCompletePlanConfirm, setShowCompletePlanConfirm] = useState(false);
+  const [showArchivePlanConfirm, setShowArchivePlanConfirm] = useState(false);
   const [showStatisticSheet, setShowStatisticSheet] = useState(false);
   const [statisticMemberDrilldown, setStatisticMemberDrilldown] = useState<{
     memberId: string;
@@ -1123,6 +1126,25 @@ export default function PlanDetailPage() {
       );
     } finally {
       setIsClosingPlan(false);
+    }
+  }
+
+  async function handleArchivePlan() {
+    setIsArchivingPlan(true);
+    setArchivingError(null);
+
+    try {
+      await planService.archivePlan(ensuredPlan, currentMember);
+      setShowArchivePlanConfirm(false);
+      router.replace('/plans');
+    } catch (error) {
+      setArchivingError(
+        error instanceof Error
+          ? error.message
+          : 'Hiện chưa thể lưu trữ kế hoạch này.',
+      );
+    } finally {
+      setIsArchivingPlan(false);
     }
   }
 
@@ -2637,6 +2659,69 @@ export default function PlanDetailPage() {
             </div>
           </>
         ) : null}
+        {showArchivePlanConfirm ? (
+          <>
+            <div className="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
+              <button
+                aria-label="Đóng xác nhận lưu trữ kế hoạch"
+                className="absolute inset-0"
+                onClick={() => setShowArchivePlanConfirm(false)}
+                type="button"
+              />
+              <Dialog
+                className="relative z-10 w-full max-w-md"
+                description={`Kế hoạch sẽ được ẩn khỏi danh sách chính và chuyển vào mục "Kế hoạch đã lưu trữ" trong trang Cá nhân. Sau ${PLAN_ARCHIVE_RETENTION_DAYS} ngày, kế hoạch sẽ bị xóa vĩnh viễn nếu không được khôi phục.`}
+                title="Xác nhận lưu trữ kế hoạch?"
+              >
+                {archivingError ? (
+                  <AuthFormMessage message={archivingError} type="error" />
+                ) : null}
+                <div className="mt-4 flex justify-end gap-2">
+                  <Button
+                    onClick={() => setShowArchivePlanConfirm(false)}
+                    variant="secondary"
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    className="bg-red-600 text-white hover:bg-red-700"
+                    disabled={isArchivingPlan}
+                    onClick={handleArchivePlan}
+                  >
+                    {isArchivingPlan ? 'Đang lưu trữ...' : 'Lưu trữ kế hoạch'}
+                  </Button>
+                </div>
+              </Dialog>
+            </div>
+            <div className="md:hidden">
+              <BottomSheet
+                description={`Kế hoạch sẽ được ẩn khỏi danh sách chính và chuyển vào mục "Kế hoạch đã lưu trữ" trong trang Cá nhân. Sau ${PLAN_ARCHIVE_RETENTION_DAYS} ngày, kế hoạch sẽ bị xóa vĩnh viễn nếu không được khôi phục.`}
+                onClose={() => setShowArchivePlanConfirm(false)}
+                open={showArchivePlanConfirm}
+                title="Xác nhận lưu trữ kế hoạch?"
+              >
+                {archivingError ? (
+                  <AuthFormMessage message={archivingError} type="error" />
+                ) : null}
+                <div className="mt-4 flex justify-end gap-2">
+                  <Button
+                    onClick={() => setShowArchivePlanConfirm(false)}
+                    variant="secondary"
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    className="bg-red-600 text-white hover:bg-red-700"
+                    disabled={isArchivingPlan}
+                    onClick={handleArchivePlan}
+                  >
+                    {isArchivingPlan ? 'Đang lưu trữ...' : 'Lưu trữ kế hoạch'}
+                  </Button>
+                </div>
+              </BottomSheet>
+            </div>
+          </>
+        ) : null}
         {showDeletePlanConfirm ? (
           <>
             <div className="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
@@ -2793,6 +2878,9 @@ export default function PlanDetailPage() {
                 {completionError ? (
                   <AuthFormMessage message={completionError} type="error" />
                 ) : null}
+                {archivingError ? (
+                  <AuthFormMessage message={archivingError} type="error" />
+                ) : null}
                 <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
                   Múi giờ hiện tại: {plan.timezone}
                   <br />
@@ -2855,6 +2943,16 @@ export default function PlanDetailPage() {
                       variant="secondary"
                     >
                       {isPlanEnded ? 'Kế hoạch đã kết thúc' : 'Đóng kế hoạch'}
+                    </Button>
+                  ) : null}
+                  {isOwner ? (
+                    <Button
+                      className="border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+                      disabled={isArchivingPlan || Boolean(isPlanEnded)}
+                      onClick={() => setShowArchivePlanConfirm(true)}
+                      variant="secondary"
+                    >
+                      Lưu trữ kế hoạch
                     </Button>
                   ) : null}
                   <Button onClick={() => setHeaderModal(null)} variant="ghost">
@@ -2876,6 +2974,9 @@ export default function PlanDetailPage() {
                 {completionError ? (
                   <AuthFormMessage message={completionError} type="error" />
                 ) : null}
+                {archivingError ? (
+                  <AuthFormMessage message={archivingError} type="error" />
+                ) : null}
                 <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
                   Múi giờ hiện tại: {plan.timezone}
                   <br />
@@ -2938,6 +3039,16 @@ export default function PlanDetailPage() {
                       variant="secondary"
                     >
                       {isPlanEnded ? 'Kế hoạch đã kết thúc' : 'Đóng kế hoạch'}
+                    </Button>
+                  ) : null}
+                  {isOwner ? (
+                    <Button
+                      className="border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+                      disabled={isArchivingPlan || Boolean(isPlanEnded)}
+                      onClick={() => setShowArchivePlanConfirm(true)}
+                      variant="secondary"
+                    >
+                      Lưu trữ kế hoạch
                     </Button>
                   ) : null}
                   <Button onClick={() => setHeaderModal(null)} variant="ghost">

@@ -67,6 +67,7 @@ export type UserPlanDocument = {
   memberId: string;
   memberStatus: PlanMemberStatus;
   planStatus: PlanStatus;
+  archivedAt: Timestamp | null;
   coverImageUrl: string | null;
   startDate: Timestamp | null;
   endDate: Timestamp | null;
@@ -122,6 +123,7 @@ export type PlanSummary = {
   role: PlanRole;
   memberStatus: PlanMemberStatus;
   planStatus: PlanStatus;
+  archivedAt: Timestamp | null;
   coverImageUrl: string | null;
   startDate: Timestamp | null;
   endDate: Timestamp | null;

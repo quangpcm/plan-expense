@@ -1,7 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { Archive, ChevronRight } from 'lucide-react';
 import { ZodError } from 'zod';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
@@ -13,10 +15,12 @@ import {
 } from '@/modules/auth/schemas/update-display-name.schema';
 import { memberService } from '@/modules/member/services';
 import { planService } from '@/modules/plan/services';
+import { useArchivedPlans } from '@/modules/plan/hooks/use-archived-plans';
 import { useUserPlans } from '@/modules/plan/hooks/use-user-plans';
 import { PasscodeForm } from '@/modules/user/components/passcode-form';
 import { useCurrentUserProfile } from '@/modules/user/hooks/use-current-user-profile';
 import { userService } from '@/modules/user/services';
+import { appRoutes } from '@/shared/constants/app-routes';
 import { Avatar } from '@/shared/components/ui/avatar';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
@@ -28,6 +32,7 @@ export default function ProfilePage() {
   const { logout, updateDisplayName } = useAuthActions();
   const { userProfile } = useCurrentUserProfile();
   const { plans } = useUserPlans();
+  const { plans: archivedPlans } = useArchivedPlans();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isSavingName, setIsSavingName] = useState(false);
   const [nameMessage, setNameMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -186,6 +191,28 @@ export default function ProfilePage() {
             </div>
           </div>
         ) : null}
+      </Card>
+
+      <Card>
+        <Link className="flex items-center justify-between gap-3" href={appRoutes.archivedPlans}>
+          <div className="flex items-center gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-secondary)] text-[var(--color-muted)]">
+              <Archive className="size-5" />
+            </span>
+            <div>
+              <p className="text-sm font-medium text-slate-950">Kế hoạch đã lưu trữ</p>
+              <p className="text-xs text-slate-500">Xem, khôi phục hoặc xóa vĩnh viễn kế hoạch đã lưu trữ.</p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {archivedPlans.length > 0 ? (
+              <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-[var(--color-secondary)] px-2 py-0.5 text-xs font-semibold text-[var(--color-muted)]">
+                {archivedPlans.length}
+              </span>
+            ) : null}
+            <ChevronRight className="size-4 text-slate-400" />
+          </div>
+        </Link>
       </Card>
 
       <Card>

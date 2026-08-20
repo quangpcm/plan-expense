@@ -57,3 +57,7 @@ export const planStatusOptions: Array<{ value: PlanStatus; label: string; icon: 
   { value: 'closed', label: 'Dừng theo dõi', icon: PauseCircle },
   { value: 'archived', label: 'Lưu trữ', icon: Archive },
 ];
+
+// Hardcoded so it's easy to tune later; archived plans past this many days
+// are hard-deleted the next time the owner opens the archived plans list.
+export const PLAN_ARCHIVE_RETENTION_DAYS = 15;

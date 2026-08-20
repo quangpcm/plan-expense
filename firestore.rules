@@ -179,6 +179,55 @@ service cloud.firestore {
         (!('debtPayableOutstanding' in request.resource.data) || request.resource.data.debtPayableOutstanding == resource.data.debtPayableOutstanding);
     }
 
+    // Archive is only reachable from 'active' (mirrors closePlan/completePlan)
+    // so unarchive can unconditionally restore to 'active' without needing a
+    // previousStatus field.
+    function isArchivePlanUpdate() {
+      return request.resource.data.id == resource.data.id &&
+        request.resource.data.ownerUserId == resource.data.ownerUserId &&
+        request.resource.data.ownerMemberId == resource.data.ownerMemberId &&
+        request.resource.data.currency == resource.data.currency &&
+        request.resource.data.timezone == resource.data.timezone &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.name == resource.data.name &&
+        request.resource.data.description == resource.data.description &&
+        request.resource.data.planType == resource.data.planType &&
+        request.resource.data.startDate == resource.data.startDate &&
+        request.resource.data.endDate == resource.data.endDate &&
+        request.resource.data.coverImageUrl == resource.data.coverImageUrl &&
+        request.resource.data.coverImageStoragePath == resource.data.coverImageStoragePath &&
+        (!('debtModel' in request.resource.data) == !('debtModel' in resource.data)) &&
+        (!('debtModel' in request.resource.data) || request.resource.data.debtModel == resource.data.debtModel) &&
+        resource.data.status == 'active' &&
+        request.resource.data.status == 'archived' &&
+        request.resource.data.closedAt == resource.data.closedAt &&
+        request.resource.data.archivedAt != null &&
+        planCountersUnchanged();
+    }
+
+    function isUnarchivePlanUpdate() {
+      return request.resource.data.id == resource.data.id &&
+        request.resource.data.ownerUserId == resource.data.ownerUserId &&
+        request.resource.data.ownerMemberId == resource.data.ownerMemberId &&
+        request.resource.data.currency == resource.data.currency &&
+        request.resource.data.timezone == resource.data.timezone &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.name == resource.data.name &&
+        request.resource.data.description == resource.data.description &&
+        request.resource.data.planType == resource.data.planType &&
+        request.resource.data.startDate == resource.data.startDate &&
+        request.resource.data.endDate == resource.data.endDate &&
+        request.resource.data.coverImageUrl == resource.data.coverImageUrl &&
+        request.resource.data.coverImageStoragePath == resource.data.coverImageStoragePath &&
+        (!('debtModel' in request.resource.data) == !('debtModel' in resource.data)) &&
+        (!('debtModel' in request.resource.data) || request.resource.data.debtModel == resource.data.debtModel) &&
+        resource.data.status == 'archived' &&
+        request.resource.data.status == 'active' &&
+        request.resource.data.closedAt == resource.data.closedAt &&
+        request.resource.data.archivedAt == null &&
+        planCountersUnchanged();
+    }
+
     // The owner-facing "edit plan" form: name/description/planType/dates/
     // budget fields are all editable here, unlike isAggregatePlanUpdate() /
     // isClosePlanUpdate() above which deliberately keep them locked. Identity,
@@ -251,6 +300,12 @@ service cloud.firestore {
           isPlanOwner(planId) &&
           isPlanActive(planId) &&
           isEditPlanDetailsUpdate()
+        ) || (
+          isPlanOwner(planId) &&
+          isArchivePlanUpdate()
+        ) || (
+          isPlanOwner(planId) &&
+          isUnarchivePlanUpdate()
         );
       // Full teardown: the owner can delete the plan doc itself regardless of
       // status (active or closed). isPlanOwner() only reads the owner's own
@@ -747,10 +802,23 @@ service cloud.firestore {
           getAfter(/databases/$(database)/documents/plans/$(planId)/members/$(request.resource.data.memberId)).data.invitationId != null
         );
       allow update: if (
+          // Self-service writes (isLocked toggle, accept-invitation metric
+          // self-correction): identity/role/lifecycle fields must stay put so
+          // a member can't rewrite their own mirror to fake `role: 'owner'`
+          // or flip memberStatus/planStatus and slip past isPlanOwner().
           isSignedIn() &&
           request.auth.uid == userId &&
           request.resource.data.userId == userId &&
-          request.resource.data.planId == resource.data.planId
+          request.resource.data.planId == resource.data.planId &&
+          request.resource.data.planName == resource.data.planName &&
+          request.resource.data.planType == resource.data.planType &&
+          request.resource.data.role == resource.data.role &&
+          request.resource.data.memberId == resource.data.memberId &&
+          request.resource.data.memberStatus == resource.data.memberStatus &&
+          request.resource.data.planStatus == resource.data.planStatus &&
+          request.resource.data.archivedAt == resource.data.archivedAt &&
+          request.resource.data.joinedAt == resource.data.joinedAt &&
+          request.resource.data.createdAt == resource.data.createdAt
         ) || (
           isSignedIn() &&
           isPlanOwner(resource.data.planId) &&

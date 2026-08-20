@@ -34,10 +34,18 @@ export interface PlanRepository {
   updatePlan(planId: string, input: UpdatePlanPersistenceInput): Promise<void>;
   completePlan(planId: string): Promise<void>;
   closePlan(planId: string): Promise<void>;
+  archivePlan(planId: string): Promise<void>;
+  unarchivePlan(planId: string): Promise<void>;
+  backfillArchivedAt(userId: string, planId: string): Promise<void>;
   setPlanSecurityForUser(userId: string, planId: string, isLocked: boolean): Promise<void>;
   clearAllPlanSecurityForUser(userId: string): Promise<void>;
   deletePlan(planId: string, ownerUserId: string): Promise<void>;
   watchUserPlans(
+    userId: string,
+    callback: (plans: PlanSummary[]) => void,
+    onError?: (error: Error) => void,
+  ): () => void;
+  watchArchivedUserPlans(
     userId: string,
     callback: (plans: PlanSummary[]) => void,
     onError?: (error: Error) => void,
