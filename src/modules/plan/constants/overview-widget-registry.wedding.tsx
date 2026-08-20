@@ -7,6 +7,7 @@ import type { LucideIcon } from 'lucide-react';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { TodoList } from '@/modules/todo';
+import { getCategoryIcon } from '@/modules/category/utils/category-icon';
 import { priorityLabel } from '@/modules/todo/utils/todo-display';
 import { getMilestoneAnchorDate, milestoneStatusLabel } from '@/modules/milestone/utils/milestone-status';
 import { useGuestInvitations } from '@/modules/wedding-guest/hooks/use-guest-invitations';
@@ -462,6 +463,20 @@ function WeddingGuestSummaryWidget({ onOpenWeddingGuests, planId }: OverviewRend
   );
 }
 
+// Ngưỡng "khoẻ mạnh" của ngân sách — dùng đúng token semantic (success/warning/danger) để
+// progress bar trở thành tín hiệu cảnh báo thật, không chỉ trang trí.
+function getBudgetHealthTone(usedPercent: number) {
+  if (usedPercent > 100) {
+    return { barClass: 'bg-[color:var(--color-danger)]', textClass: 'text-[color:var(--color-danger)]' };
+  }
+
+  if (usedPercent >= 70) {
+    return { barClass: 'bg-[color:var(--color-warning)]', textClass: 'text-[color:var(--color-warning)]' };
+  }
+
+  return { barClass: 'bg-[color:var(--color-success)]', textClass: 'text-[color:var(--color-success)]' };
+}
+
 // "Tài chính": thay financeSummary cho wedding — chỉ hiện đã chi/dự kiến (ratio, insight
 // mới so với Header) + top category, không lặp status/member/income như card cũ.
 function WeddingFinanceSummaryWidget({
@@ -471,6 +486,7 @@ function WeddingFinanceSummaryWidget({
 }: OverviewRendererProps) {
   const spent = statistic.overview.totalExpense;
   const usedPercent = estimatedTotal > 0 ? Math.round((spent / estimatedTotal) * 100) : 0;
+  const budgetTone = getBudgetHealthTone(usedPercent);
   const topCategories = [...statistic.categoryBreakdown]
     .filter((category) => category.totalAmount > 0)
     .sort((a, b) => b.totalAmount - a.totalAmount)
@@ -487,21 +503,42 @@ function WeddingFinanceSummaryWidget({
         </p>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
           <div
-            className="h-full rounded-full bg-[var(--color-primary)]"
+            className={cn('h-full rounded-full', budgetTone.barClass)}
             style={{ width: `${Math.min(usedPercent, 100)}%` }}
           />
         </div>
-        <p className="text-xs text-slate-500">{usedPercent}% ngân sách</p>
+        <p className={cn('text-xs font-medium', budgetTone.textClass)}>
+          {usedPercent}% ngân sách{usedPercent > 100 ? ' — đã vượt dự kiến' : ''}
+        </p>
       </div>
       {topCategories.length > 0 ? (
         <div className="space-y-1.5">
           <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Chi nhiều nhất</p>
-          {topCategories.map((category) => (
-            <div className="flex items-center justify-between text-sm" key={category.categoryId ?? category.categoryName}>
-              <span className="text-slate-600">{category.categoryName}</span>
-              <span className="font-medium text-slate-900">{formatCompactCurrency(category.totalAmount)}</span>
-            </div>
-          ))}
+          {topCategories.map((category) => {
+            const Icon = getCategoryIcon(category.icon);
+
+            return (
+              <div
+                className="flex items-center justify-between text-sm"
+                key={category.categoryId ?? category.categoryName}
+              >
+                <span className="flex min-w-0 items-center gap-2">
+                  <span
+                    className={cn(
+                      'flex size-7 shrink-0 items-center justify-center rounded-full',
+                      category.iconBgColor,
+                    )}
+                  >
+                    <Icon className={cn('size-3.5', category.iconColor)} />
+                  </span>
+                  <span className="truncate text-slate-600">{category.categoryName}</span>
+                </span>
+                <span className="shrink-0 font-medium text-slate-900">
+                  {formatCompactCurrency(category.totalAmount)}
+                </span>
+              </div>
+            );
+          })}
         </div>
       ) : null}
       <ViewAllAction onClick={onOpenFinance} />
