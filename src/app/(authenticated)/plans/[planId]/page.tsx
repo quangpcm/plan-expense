@@ -1631,6 +1631,7 @@ export default function PlanDetailPage() {
               openPlanTab('planning');
             }}
             onToggleTodoStatus={handleChangeTodoStatus}
+            onViewTodo={setDetailTodo}
             plan={plan}
             planId={planId}
             planStatus={plan.status}

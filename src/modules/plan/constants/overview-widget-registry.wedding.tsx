@@ -2,13 +2,19 @@
 
 import { useMemo } from 'react';
 
-import { AlertTriangle, CheckCircle2, Clock3 } from 'lucide-react';
+import { CheckCircle2, Clock3, FolderOpen, Users, XCircle } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { TodoList } from '@/modules/todo';
+import { priorityLabel } from '@/modules/todo/utils/todo-display';
 import { getMilestoneAnchorDate, milestoneStatusLabel } from '@/modules/milestone/utils/milestone-status';
 import { useGuestInvitations } from '@/modules/wedding-guest/hooks/use-guest-invitations';
-import { calculateOverallGuestStatistic } from '@/modules/wedding-guest/utils/wedding-guest-statistic';
+import { useWeddingGuestGroups } from '@/modules/wedding-guest/hooks/use-wedding-guest-groups';
+import {
+  calculateGuestStatisticByGroup,
+  calculateOverallGuestStatistic,
+} from '@/modules/wedding-guest/utils/wedding-guest-statistic';
 import { Badge } from '@/shared/components/ui/badge';
 import { Card } from '@/shared/components/ui/card';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
@@ -23,6 +29,29 @@ import type { OverviewRendererProps } from '@/modules/plan/components/overview-r
 import type { OverviewWidgetRendererDefinition } from '@/modules/plan/constants/overview-widget-registry';
 
 const ATTENTION_MAX_ITEMS = 3;
+const TODO_SNAPSHOT_MAX_ITEMS = 3;
+const GUEST_GROUP_MAX_ITEMS = 3;
+
+type AttentionUrgency = 'overdue' | 'danger' | 'warning';
+type UpcomingTodoItem = { todo: OverviewRendererProps['todos'][number]; dueDate: Date };
+
+// Nguồn dùng chung cho cả "Cần chú ý" và "Công việc sắp đến hạn" — sort ascending theo hạn
+// để widget thứ 2 có thể loại các item widget đầu đã hiển thị rồi lấy tiếp phần còn lại,
+// tránh lặp nội dung giữa 2 section (xem WeddingTodoSnapshotWidget).
+function getUpcomingTodosSortedByDueDate(todos: OverviewRendererProps['todos']): UpcomingTodoItem[] {
+  return todos
+    .filter((todo) => todo.status !== 'done' && todo.status !== 'cancelled' && todo.dueDate)
+    .map((todo) => ({ todo, dueDate: timestampToDate(todo.dueDate) as Date }))
+    .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+}
+
+function selectAttentionItems(todos: OverviewRendererProps['todos']) {
+  return getUpcomingTodosSortedByDueDate(todos)
+    .map((item) => ({ ...item, urgency: getDueUrgency(item.dueDate) }))
+    .filter(
+      (item): item is UpcomingTodoItem & { urgency: AttentionUrgency } => item.urgency !== 'normal',
+    );
+}
 
 function ViewAllAction({ onClick }: { onClick: () => void }) {
   return (
@@ -36,11 +65,73 @@ function ViewAllAction({ onClick }: { onClick: () => void }) {
   );
 }
 
+// Màu theo đúng "Việc cần chú ý hôm nay" ở todo-notification-screen.tsx (rose/amber/sky) để
+// 2 nơi nhất quán trực quan.
+const ATTENTION_TONE: Record<AttentionUrgency, { badgeClass: string; priorityClass: string }> = {
+  overdue: {
+    badgeClass: 'bg-rose-100 text-rose-700',
+    priorityClass: 'text-rose-700',
+  },
+  danger: {
+    badgeClass: 'bg-amber-100 text-amber-700',
+    priorityClass: 'text-amber-700',
+  },
+  warning: {
+    badgeClass: 'bg-sky-100 text-sky-700',
+    priorityClass: 'text-sky-700',
+  },
+};
+
+function AttentionItemRow({
+  dueDate,
+  milestoneTitle,
+  onSelect,
+  todo,
+  urgency,
+}: {
+  dueDate: Date;
+  milestoneTitle: string;
+  onSelect: () => void;
+  todo: OverviewRendererProps['todos'][number];
+  urgency: AttentionUrgency;
+}) {
+  const tone = ATTENTION_TONE[urgency];
+
+  return (
+    <button
+      className="block w-full px-4 py-4 text-left transition hover:bg-slate-50"
+      onClick={onSelect}
+      type="button"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-base font-semibold text-slate-950">{todo.title}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-slate-500">
+            <span className="inline-flex items-center gap-1.5">
+              <FolderOpen className="size-3.5 text-slate-400" />
+              {milestoneTitle}
+            </span>
+            <span className="text-slate-300">|</span>
+            <span className={cn('font-medium', tone.priorityClass)}>{priorityLabel[todo.priority]}</span>
+          </div>
+        </div>
+        <span className={cn('shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold', tone.badgeClass)}>
+          {formatDueCountdown(dueDate)}
+        </span>
+      </div>
+    </button>
+  );
+}
+
 // "Cần chú ý": thay hoàn toàn planSummary (4-KPI) cho wedding — không lặp lại status/member
-// count đã có ở Header, chỉ trả lời "có việc gì cần xử lý ngay không".
+// count đã có ở Header, chỉ trả lời "có việc gì cần xử lý ngay không". Kiểu item tham khảo
+// từ todo-notification-screen.tsx (title, mốc + priority, badge hạn, "Mở chi tiết") nhưng bỏ
+// tên plan (chỉ có 1 plan trong context này) và dùng divide-y thay vì card border riêng vì
+// đã nằm trong 1 section/Card chung.
 function WeddingAttentionSummaryWidget({
   isTodosLoading,
   onOpenPlanningTodos,
+  onViewTodo,
   todos,
   todoActionError,
   visibleMilestones,
@@ -50,80 +141,50 @@ function WeddingAttentionSummaryWidget({
     [visibleMilestones],
   );
 
-  const attentionItems = useMemo(() => {
-    return todos
-      .filter((todo) => todo.status !== 'done' && todo.status !== 'cancelled' && todo.dueDate)
-      .map((todo) => {
-        const dueDate = timestampToDate(todo.dueDate) as Date;
-
-        return { todo, dueDate, urgency: getDueUrgency(dueDate) };
-      })
-      .filter((item) => item.urgency !== 'normal')
-      .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
-  }, [todos]);
+  const attentionItems = useMemo(() => selectAttentionItems(todos), [todos]);
 
   const overdueCount = attentionItems.filter((item) => item.urgency === 'overdue').length;
   const dueTodayCount = attentionItems.filter((item) => item.urgency === 'danger').length;
   const dueSoonCount = attentionItems.filter((item) => item.urgency === 'warning').length;
+  const summary = [
+    overdueCount > 0 ? `${overdueCount} việc quá hạn` : null,
+    dueTodayCount > 0 ? `${dueTodayCount} việc đến hạn hôm nay` : null,
+    dueSoonCount > 0 ? `${dueSoonCount} việc sắp đến hạn` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
-    <Card className="gap-3">
-      <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Cần chú ý</p>
+    <div className="space-y-3">
+      <SectionHeading
+        action={<ViewAllAction onClick={onOpenPlanningTodos} />}
+        eyebrow="Cần chú ý"
+        title={attentionItems.length === 0 ? 'Mọi việc đang trong tầm kiểm soát' : 'Việc cần xử lý'}
+        {...(summary ? { description: summary } : {})}
+      />
       {todoActionError ? <AuthFormMessage message={todoActionError} type="error" /> : null}
       {isTodosLoading ? (
-        <Skeleton className="h-24 rounded-2xl" />
+        <Skeleton className="h-40 rounded-[28px]" />
       ) : attentionItems.length === 0 ? (
-        <div className="flex items-center gap-2 text-sm text-slate-600">
-          <CheckCircle2 className="size-4 shrink-0 text-[color:var(--color-success)]" />
-          Không có việc quá hạn hoặc sắp đến hạn.
-        </div>
+        <Card className="flex-row items-center gap-3 border-slate-200 bg-slate-50 shadow-none">
+          <CheckCircle2 className="size-5 shrink-0 text-[color:var(--color-success)]" />
+          <p className="text-sm leading-6 text-slate-600">Không có việc quá hạn hoặc sắp đến hạn.</p>
+        </Card>
       ) : (
-        <>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
-            {overdueCount > 0 ? (
-              <span className="flex items-center gap-1.5 font-medium text-[color:var(--color-danger)]">
-                <AlertTriangle className="size-3.5 shrink-0" />
-                {overdueCount} việc quá hạn
-              </span>
-            ) : null}
-            {dueTodayCount > 0 ? (
-              <span className="flex items-center gap-1.5 font-medium text-[color:var(--color-warning)]">
-                <Clock3 className="size-3.5 shrink-0" />
-                {dueTodayCount} việc đến hạn hôm nay
-              </span>
-            ) : null}
-            {dueSoonCount > 0 ? (
-              <span className="flex items-center gap-1.5 text-slate-500">{dueSoonCount} việc sắp đến hạn</span>
-            ) : null}
-          </div>
-          <div className="space-y-2">
-            {attentionItems.slice(0, ATTENTION_MAX_ITEMS).map((item) => (
-              <div className="flex items-start justify-between gap-3" key={item.todo.id}>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-slate-900">{item.todo.title}</p>
-                  <p className="truncate text-xs text-slate-500">
-                    {milestoneTitleById.get(item.todo.milestoneId) ?? 'Không có mốc'}
-                  </p>
-                </div>
-                <p
-                  className={cn(
-                    'shrink-0 text-xs font-semibold',
-                    item.urgency === 'overdue'
-                      ? 'text-[color:var(--color-danger)]'
-                      : item.urgency === 'danger'
-                        ? 'text-[color:var(--color-warning)]'
-                        : 'text-slate-500',
-                  )}
-                >
-                  {formatDueCountdown(item.dueDate)}
-                </p>
-              </div>
-            ))}
-          </div>
-        </>
+        <Card className="gap-0 divide-y divide-slate-100 overflow-hidden p-0">
+          {attentionItems.slice(0, ATTENTION_MAX_ITEMS).map((item) => (
+            <AttentionItemRow
+              dueDate={item.dueDate}
+              key={item.todo.id}
+              milestoneTitle={milestoneTitleById.get(item.todo.milestoneId) ?? 'Không có mốc'}
+              onSelect={() => onViewTodo(item.todo)}
+              todo={item.todo}
+              urgency={item.urgency}
+            />
+          ))}
+        </Card>
       )}
-      <ViewAllAction onClick={onOpenPlanningTodos} />
-    </Card>
+    </div>
   );
 }
 
@@ -149,7 +210,7 @@ function WeddingMilestoneCard({
   return (
     <Card className="gap-3">
       <div className="flex items-start justify-between gap-2">
-        <p className="min-w-0 truncate text-sm font-semibold text-slate-950">{milestone.title}</p>
+        <p className="min-w-0 truncate text-base font-semibold text-slate-950">{milestone.title}</p>
         <Badge variant={milestone.status === 'in_progress' ? 'warning' : 'info'}>{statusLabel}</Badge>
       </div>
       <div className="space-y-1.5">
@@ -166,14 +227,14 @@ function WeddingMilestoneCard({
           />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3 text-sm">
+      <div className="grid grid-cols-2 gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Đã chi</p>
-          <p className="mt-1 font-medium text-slate-950">{formatCompactCurrency(milestone.totalExpense)}</p>
+          <p className="mt-1 text-xl font-bold text-slate-950">{formatCompactCurrency(milestone.totalExpense)}</p>
         </div>
         <div>
           <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Dự kiến</p>
-          <p className="mt-1 font-medium text-slate-600">{formatCompactCurrency(estimatedTotal)}</p>
+          <p className="mt-1 text-sm font-medium text-slate-400">{formatCompactCurrency(estimatedTotal)}</p>
         </div>
       </div>
     </Card>
@@ -219,8 +280,10 @@ function WeddingMilestoneSnapshotWidget({
   );
 }
 
-// "Công việc sắp đến hạn": tái dùng nguyên TodoList/TodoCard (đã đủ tốt theo đánh giá),
-// chỉ đổi vị trí CTA vào SectionHeading thay vì hàng nút riêng.
+// "Công việc sắp đến hạn": tái dùng nguyên TodoList/TodoCard (đã đủ tốt theo đánh giá), chỉ
+// đổi vị trí CTA vào SectionHeading. Loại các việc đã hiển thị ở "Cần chú ý" phía trên rồi
+// mới lấy tiếp — 2 section không còn lặp lại đúng những item giống nhau, tăng giá trị tổng
+// thể của tab Tổng quan.
 function WeddingTodoSnapshotWidget({
   canManagePlanning,
   isTodoSubmitting,
@@ -232,14 +295,27 @@ function WeddingTodoSnapshotWidget({
   onOpenPlanningTodos,
   onToggleTodoStatus,
   todoActionError,
-  upcomingTodos,
+  todos,
   visibleMilestones,
 }: OverviewRendererProps) {
+  const nextTodos = useMemo(() => {
+    const attentionIds = new Set(
+      selectAttentionItems(todos)
+        .slice(0, ATTENTION_MAX_ITEMS)
+        .map((item) => item.todo.id),
+    );
+
+    return getUpcomingTodosSortedByDueDate(todos)
+      .filter((item) => !attentionIds.has(item.todo.id))
+      .slice(0, TODO_SNAPSHOT_MAX_ITEMS)
+      .map((item) => item.todo);
+  }, [todos]);
+
   return (
     <div className="space-y-3">
       <SectionHeading
         action={<ViewAllAction onClick={onOpenPlanningTodos} />}
-        description="5 việc chưa hoàn thành"
+        description="Cần hoàn thành trong thời gian tới"
         eyebrow="Công việc"
         title="Việc sắp đến hạn"
       />
@@ -259,27 +335,67 @@ function WeddingTodoSnapshotWidget({
           onChangeStatus={onToggleTodoStatus}
           onDeleteTodo={onDeleteTodo}
           onEdit={onOpenPlanningTodo}
-          todos={upcomingTodos}
+          todos={nextTodos}
         />
       )}
     </div>
   );
 }
 
-const RSVP_LABEL: Record<'attending' | 'pending' | 'not_attending', string> = {
+type RsvpStatus = 'attending' | 'pending' | 'not_attending';
+
+const RSVP_LABEL: Record<RsvpStatus, string> = {
   attending: 'Đã xác nhận',
   pending: 'Chờ phản hồi',
   not_attending: 'Không tham dự',
 };
 
+// Màu theo đúng token semantic của app (globals.css: success/warning/muted) — không dùng
+// màu tự do — để nhất quán với toàn bộ hệ thống, không riêng widget này.
+const RSVP_TONE: Record<RsvpStatus, { barClass: string; colorClass: string; icon: LucideIcon }> = {
+  attending: {
+    barClass: 'bg-[color:var(--color-success)]',
+    colorClass: 'text-[color:var(--color-success)]',
+    icon: CheckCircle2,
+  },
+  pending: {
+    barClass: 'bg-[color:var(--color-warning)]',
+    colorClass: 'text-[color:var(--color-warning)]',
+    icon: Clock3,
+  },
+  not_attending: {
+    barClass: 'bg-[color:var(--color-muted)]',
+    colorClass: 'text-[color:var(--color-muted)]',
+    icon: XCircle,
+  },
+};
+
 // "Khách mời": lấp widget weddingGuestSummary đang bị thiếu component — RSVP breakdown +
-// % xác nhận, không đưa tiền/vàng mừng lên Overview (chỉ có ở tab Khách mời).
+// % phản hồi + breakdown "Người tham dự" theo Nhóm khách (Đám cưới/Đám hỏi/Báo hỷ...),
+// không đưa tiền/vàng mừng lên Overview (chỉ có ở tab Khách mời).
 function WeddingGuestSummaryWidget({ onOpenWeddingGuests, planId }: OverviewRendererProps) {
-  const { errorMessage, invitations, isLoading } = useGuestInvitations(planId);
+  const {
+    errorMessage: invitationsError,
+    invitations,
+    isLoading: isInvitationsLoading,
+  } = useGuestInvitations(planId);
+  const { errorMessage: groupsError, groups, isLoading: isGroupsLoading } = useWeddingGuestGroups(planId);
+  const isLoading = isInvitationsLoading || isGroupsLoading;
+  const errorMessage = invitationsError ?? groupsError;
+
   const statistic = useMemo(() => calculateOverallGuestStatistic(invitations), [invitations]);
   const { rsvpBreakdown } = statistic;
   const total = rsvpBreakdown.attending + rsvpBreakdown.pending + rsvpBreakdown.not_attending;
   const confirmedPercent = total > 0 ? Math.round((rsvpBreakdown.attending / total) * 100) : 0;
+
+  const topGroups = useMemo(
+    () =>
+      calculateGuestStatisticByGroup(groups, invitations)
+        .filter((row) => row.attendeeCount > 0)
+        .sort((a, b) => b.attendeeCount - a.attendeeCount)
+        .slice(0, GUEST_GROUP_MAX_ITEMS),
+    [groups, invitations],
+  );
 
   return (
     <Card className="gap-3">
@@ -292,24 +408,53 @@ function WeddingGuestSummaryWidget({ onOpenWeddingGuests, planId }: OverviewRend
         <p className="text-sm text-slate-600">Chưa có khách mời nào được thêm vào kế hoạch.</p>
       ) : (
         <>
-          <p className="text-2xl font-semibold text-slate-950">{total} khách mời</p>
-          <div className="space-y-1.5 text-sm text-slate-600">
-            {(['attending', 'pending', 'not_attending'] as const).map((status) => (
-              <div className="flex items-center justify-between" key={status}>
-                <span>{RSVP_LABEL[status]}</span>
-                <span className="font-medium text-slate-900">{rsvpBreakdown[status]}</span>
-              </div>
-            ))}
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--color-accent-soft)] text-[color:var(--color-accent)]">
+              <Users className="size-5" />
+            </div>
+            <p className="text-2xl font-semibold text-slate-950">{total} lượt mời</p>
+          </div>
+          <div className="space-y-2 text-sm">
+            {(['attending', 'pending', 'not_attending'] as const).map((status) => {
+              const tone = RSVP_TONE[status];
+              const Icon = tone.icon;
+
+              return (
+                <div className="flex items-center justify-between" key={status}>
+                  <span className="inline-flex items-center gap-1.5 text-slate-600">
+                    <Icon className={cn('size-4 shrink-0', tone.colorClass)} />
+                    {RSVP_LABEL[status]}
+                  </span>
+                  <span className={cn('font-semibold', tone.colorClass)}>{rsvpBreakdown[status]}</span>
+                </div>
+              );
+            })}
           </div>
           <div className="space-y-1.5">
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-              <div
-                className="h-full rounded-full bg-[var(--color-primary)]"
-                style={{ width: `${confirmedPercent}%` }}
-              />
+            <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+              {(['attending', 'pending', 'not_attending'] as const).map((status) =>
+                rsvpBreakdown[status] > 0 ? (
+                  <div
+                    className={cn('h-full', RSVP_TONE[status].barClass)}
+                    key={status}
+                    style={{ width: `${(rsvpBreakdown[status] / total) * 100}%` }}
+                  />
+                ) : null,
+              )}
             </div>
-            <p className="text-xs text-slate-500">{confirmedPercent}% đã xác nhận</p>
+            <p className="text-xs font-medium text-[color:var(--color-success)]">{confirmedPercent}% đã phản hồi</p>
           </div>
+          {topGroups.length > 0 ? (
+            <div className="space-y-1.5 border-t border-slate-100 pt-3">
+              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Người tham dự</p>
+              {topGroups.map((row) => (
+                <div className="flex items-center justify-between text-sm" key={row.group.id}>
+                  <span className="text-slate-600">{row.group.name}</span>
+                  <Badge variant="info">{row.attendeeCount} dự kiến</Badge>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </>
       )}
       <ViewAllAction onClick={onOpenWeddingGuests} />
@@ -346,7 +491,7 @@ function WeddingFinanceSummaryWidget({
             style={{ width: `${Math.min(usedPercent, 100)}%` }}
           />
         </div>
-        <p className="text-xs text-slate-500">{usedPercent}% dự kiến đã sử dụng</p>
+        <p className="text-xs text-slate-500">{usedPercent}% ngân sách</p>
       </div>
       {topCategories.length > 0 ? (
         <div className="space-y-1.5">

@@ -48,6 +48,7 @@ export type OverviewRendererProps = {
   onOpenDebtTracking: () => void;
   onOpenWeddingGuests: () => void;
   onOpenFinance: () => void;
+  onViewTodo: (todo: TodoDocument) => void;
   onSelectMemberDrilldown: (memberId: string) => void;
   onSelectMilestoneDrilldown: (milestoneId: string, memberId: string) => void;
   onSelectUpcomingMilestone: (milestoneId: string) => void;
