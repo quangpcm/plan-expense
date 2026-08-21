@@ -681,7 +681,17 @@ export default function PlanDetailPage() {
     setDetailTodo((current) =>
       current?.id === matchedTodo.id ? current : matchedTodo,
     );
-  }, [searchParams, todos]);
+
+    // Deep link chỉ nên kích hoạt 1 lần — xoá `todoId` khỏi URL ngay sau khi đã mở, nếu
+    // không thì mỗi khi `todos` đổi reference (ví dụ Firestore emit lại snapshot), effect
+    // này chạy lại và tự chuyển tab/mở lại popup, ghi đè cả khi user đã tự chuyển tab khác.
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+    nextSearchParams.delete('todoId');
+    const nextSearch = nextSearchParams.toString();
+    router.replace(
+      nextSearch ? `/plans/${planId}?${nextSearch}` : `/plans/${planId}`,
+    );
+  }, [searchParams, todos, planId, router]);
 
   useEffect(() => {
     const activityIdParam = searchParams.get('activityId');

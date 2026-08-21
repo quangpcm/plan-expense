@@ -193,6 +193,7 @@ export function TimelineList({
                     income={entry.data}
                     key={`income-${entry.id}`}
                     members={members}
+                    milestones={milestones}
                     onSelectIncome={onSelectIncome}
                   />
                 ),
@@ -241,7 +242,7 @@ function ExpenseTimelineCard({
         onClick={() => onSelectExpense(expense)}
         type="button"
       >
-        <Card className="gap-2 border-[var(--color-danger-soft)] bg-[var(--color-surface)] p-4 transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
+        <Card className="gap-1.5 rounded-2xl border-[var(--color-danger-soft)] bg-[var(--color-surface)] p-4 sm:rounded-[var(--radius-card)] sm:gap-2 sm:p-4 transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
           <div className="flex items-center gap-2">
             <CategoryIcon className={cn('size-4 shrink-0', iconColor)} />
             <h3 className="text-base font-semibold text-[var(--color-foreground)]">{expense.title}</h3>
@@ -252,8 +253,8 @@ function ExpenseTimelineCard({
               {spentAt ? formatTime(spentAt) : '--:--'}
             </span>
           </p>
-          <div className="flex items-center justify-between gap-3 pt-1">
-            <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-[var(--color-subtle)]">
+          <div className="flex items-center justify-between gap-2 sm:gap-3 sm:pt-1">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-[var(--color-subtle)] sm:gap-2 sm:text-xs">
               {milestone ? (
                 <>
                   <span className="truncate">{milestone.title}</span>
@@ -299,12 +300,20 @@ type IncomeTimelineCardProps = {
   income: IncomeDocument;
   members: PlanMemberDocument[];
   categories: Category[];
+  milestones: MilestoneDocument[];
   onSelectIncome: (income: IncomeDocument) => void;
 };
 
-function IncomeTimelineCard({ income, members, categories, onSelectIncome }: IncomeTimelineCardProps) {
+function IncomeTimelineCard({
+  income,
+  members,
+  categories,
+  milestones,
+  onSelectIncome,
+}: IncomeTimelineCardProps) {
   const contributor = members.find((member) => member.id === income.contributedByMemberId);
   const category = categories.find((item) => item.id === income.categoryId);
+  const milestone = milestones.find((item) => item.id === income.milestoneId);
   const receivedAt = timestampToDate(income.receivedAt);
   const CategoryIcon = category?.icon ? categoryIcons[category.icon] ?? Tag : Tag;
   const iconColor = category?.iconColor ?? 'text-slate-600';
@@ -319,7 +328,7 @@ function IncomeTimelineCard({ income, members, categories, onSelectIncome }: Inc
         onClick={() => onSelectIncome(income)}
         type="button"
       >
-        <Card className="gap-2 border-[var(--color-income-soft)] bg-[var(--color-income-soft)]/40 p-4 transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
+        <Card className="gap-1.5 rounded-2xl border-[var(--color-income-soft)] bg-[var(--color-income-soft)]/40 p-4 sm:rounded-[var(--radius-card)] sm:gap-2 sm:p-4 transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
           <div className="flex items-center gap-2">
             <CategoryIcon className={cn('size-4 shrink-0', iconColor)} />
             <h3 className="text-base font-semibold text-[var(--color-foreground)]">{income.title}</h3>
@@ -330,7 +339,10 @@ function IncomeTimelineCard({ income, members, categories, onSelectIncome }: Inc
               {receivedAt ? formatTime(receivedAt) : '--:--'}
             </span>
           </p>
-          <div className="flex items-center justify-end gap-3 pt-1">
+          <div className="flex items-center justify-between gap-2 sm:gap-3 sm:pt-1">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-[var(--color-subtle)] sm:gap-2 sm:text-xs">
+              {milestone ? <span className="truncate">{milestone.title}</span> : null}
+            </div>
             <p className="shrink-0 text-base font-bold text-[var(--color-income)]">
               +{formatCurrency(income.amount)}
             </p>

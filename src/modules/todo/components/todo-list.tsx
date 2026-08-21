@@ -36,7 +36,7 @@ export function TodoList({
   const sortedTodos = preserveOrder ? todos : [...todos].sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
 
   return (
-    <div className={cn('grid gap-3', className)}>
+    <div className={cn('grid grid-cols-1 gap-3', className)}>
       {sortedTodos.map((todo) => (
         <TodoCard
           assignee={members.find((member) => member.id === todo.assigneeMemberId) ?? null}

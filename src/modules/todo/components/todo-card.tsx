@@ -24,6 +24,7 @@ type TodoCardProps = {
 
 export function TodoCard({ todo, assignee, milestone, onViewTodo }: TodoCardProps) {
   const dueDate = timestampToDate(todo.dueDate);
+  const isDone = todo.status === 'done';
   const dueUrgency = dueDate ? getDueUrgency(dueDate) : null;
   const selectedVendor = getSelectedTodoVendor(todo);
   const displayedBudget = getTodoBudgetAmount(todo);
@@ -74,30 +75,32 @@ export function TodoCard({ todo, assignee, milestone, onViewTodo }: TodoCardProp
         <p className="line-clamp-1 text-sm leading-6 text-slate-600">{todo.description}</p>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600">
-        <span
-          className={cn(
-            'inline-flex items-center gap-1.5',
-            (dueUrgency === 'overdue' || dueUrgency === 'danger') && 'font-medium text-[color:var(--color-danger)]',
-            dueUrgency === 'warning' && 'font-medium text-[color:var(--color-warning)]',
-          )}
-        >
-          {dueUrgency === 'overdue' ? (
-            <CircleAlert className="size-4 text-[color:var(--color-danger)]" />
-          ) : (
-            <Clock3
-              className={cn(
-                'size-4',
-                dueUrgency === 'danger'
-                  ? 'text-[color:var(--color-danger)]'
-                  : dueUrgency === 'warning'
-                    ? 'text-[color:var(--color-warning)]'
-                    : 'text-slate-400',
-              )}
-            />
-          )}
-          {dueDate ? formatDueCountdown(dueDate) : 'Chưa đặt'}
-        </span>
+      <div className="-mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600">
+        {isDone ? null : (
+          <span
+            className={cn(
+              'inline-flex items-center gap-1.5',
+              (dueUrgency === 'overdue' || dueUrgency === 'danger') && 'font-medium text-[color:var(--color-danger)]',
+              dueUrgency === 'warning' && 'font-medium text-[color:var(--color-warning)]',
+            )}
+          >
+            {dueUrgency === 'overdue' ? (
+              <CircleAlert className="size-4 text-[color:var(--color-danger)]" />
+            ) : (
+              <Clock3
+                className={cn(
+                  'size-4',
+                  dueUrgency === 'danger'
+                    ? 'text-[color:var(--color-danger)]'
+                    : dueUrgency === 'warning'
+                      ? 'text-[color:var(--color-warning)]'
+                      : 'text-slate-400',
+                )}
+              />
+            )}
+            {dueDate ? formatDueCountdown(dueDate) : 'Chưa đặt'}
+          </span>
+        )}
         {displayedBudget != null ? (
           <span className="inline-flex items-center gap-1.5">
             <Wallet className="size-4 text-slate-400" />
