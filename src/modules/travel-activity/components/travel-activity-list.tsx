@@ -18,11 +18,11 @@ import { timestampToDate } from '@/shared/utils/firebase';
 const TIMELINE_RAIL_WIDTH_CLASS = 'w-9';
 const TIMELINE_RAIL_LINE_OFFSET_CLASS = 'left-[31px]';
 
-const DAY_PERIOD_ICON: Record<string, LucideIcon> = {
-  'Sáng': Sunrise,
-  'Chiều': Sun,
-  'Tối': Sunset,
-  'Đêm': Moon,
+const DAY_PERIOD_STYLE: Record<string, { icon: LucideIcon; className: string }> = {
+  'Sáng': { icon: Sunrise, className: 'text-amber-500' },
+  'Chiều': { icon: Sun, className: 'text-orange-500' },
+  'Tối': { icon: Sunset, className: 'text-rose-500' },
+  'Đêm': { icon: Moon, className: 'text-indigo-500' },
 };
 
 type TravelActivityListProps = {
@@ -127,14 +127,15 @@ type TravelActivityTimelineCardProps = {
 function TravelActivityTimelineCard({ activity, onSelect }: TravelActivityTimelineCardProps) {
   const startsAt = timestampToDate(activity.startsAt);
   const dayPeriod = startsAt ? getDayPeriodLabel(startsAt) : null;
-  const DayPeriodIcon = dayPeriod ? DAY_PERIOD_ICON[dayPeriod] : null;
+  const dayPeriodStyle = dayPeriod ? DAY_PERIOD_STYLE[dayPeriod] : null;
+  const DayPeriodIcon = dayPeriodStyle?.icon ?? null;
 
   return (
     <div className="relative flex items-start gap-3">
       <div className={cn('flex shrink-0 items-center justify-end gap-1.5 pt-4', TIMELINE_RAIL_WIDTH_CLASS)}>
         <div className="flex flex-col items-center gap-0.5">
           {DayPeriodIcon ? (
-            <DayPeriodIcon aria-hidden="true" className="size-3 text-slate-400" />
+            <DayPeriodIcon aria-hidden="true" className={cn('size-3', dayPeriodStyle?.className)} />
           ) : null}
           <span className="text-[11px] font-semibold tabular-nums text-slate-600">
             {startsAt ? formatTime(startsAt) : '--:--'}
