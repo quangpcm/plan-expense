@@ -240,24 +240,6 @@ export function MilestoneTimelineBoard({
     return () => cancelAnimationFrame(frameId);
   }, [selectedMilestoneId]);
 
-  if (milestones.length === 0) {
-    return (
-      <Card className="border-slate-200 bg-slate-50 shadow-none">
-        <p className="text-sm leading-6 text-slate-600">
-          Chưa có mốc kế hoạch nào. Hãy tạo mốc đầu tiên để bắt đầu tổ chức kế
-          hoạch theo giai đoạn.
-        </p>
-      </Card>
-    );
-  }
-
-  let previousMonthLabel: string | null = null;
-  const selectedMilestone =
-    milestones.find((milestone) => milestone.id === selectedMilestoneId) ??
-    null;
-  const selectedMonthLabel = selectedMilestone
-    ? formatMonthLabel(getMilestoneAnchorDate(selectedMilestone))
-    : null;
   const todosByMilestone = useMemo(
     () =>
       Object.fromEntries(
@@ -270,11 +252,6 @@ export function MilestoneTimelineBoard({
       ) as Record<string, TodoDocument[]>,
     [milestones, todos],
   );
-  const visibleMilestones = isSearching
-    ? milestones.filter((milestone) =>
-        (todosByMilestone[milestone.id] ?? []).some(todoMatchesQuery),
-      )
-    : milestones;
 
   useEffect(() => {
     function clearPendingDrag() {
@@ -402,6 +379,32 @@ export function MilestoneTimelineBoard({
       }
     };
   }, []);
+
+  if (milestones.length === 0) {
+    return (
+      <Card className="border-slate-200 bg-slate-50 shadow-none">
+        <p className="text-sm leading-6 text-slate-600">
+          Chưa có mốc kế hoạch nào. Hãy tạo mốc đầu tiên để bắt đầu tổ chức kế
+          hoạch theo giai đoạn.
+        </p>
+      </Card>
+    );
+  }
+
+  const selectedMilestone =
+    milestones.find((milestone) => milestone.id === selectedMilestoneId) ??
+    null;
+  const selectedMonthLabel = selectedMilestone
+    ? formatMonthLabel(getMilestoneAnchorDate(selectedMilestone))
+    : null;
+  const visibleMilestones = isSearching
+    ? milestones.filter((milestone) =>
+        (todosByMilestone[milestone.id] ?? []).some(todoMatchesQuery),
+      )
+    : milestones;
+  const visibleMonthLabels = visibleMilestones.map((milestone) =>
+    formatMonthLabel(getMilestoneAnchorDate(milestone)),
+  );
 
   function handleViewTodo(todo: TodoDocument) {
     if (justDraggedRef.current) {
@@ -539,7 +542,7 @@ export function MilestoneTimelineBoard({
           </p>
         </Card>
       ) : null}
-      {visibleMilestones.map((milestone) => {
+      {visibleMilestones.map((milestone, index) => {
         const isSelected = milestone.id === selectedMilestoneId;
         const milestoneTodos = getDisplayedMilestoneTodos(milestone.id).filter(
           todoMatchesQuery,
@@ -551,15 +554,13 @@ export function MilestoneTimelineBoard({
         const startDate = timestampToDate(milestone.startDate);
         const endDate = timestampToDate(milestone.endDate);
         const displayedStatus = milestone.status;
-        const anchorDate = getMilestoneAnchorDate(milestone);
-        const monthLabel = formatMonthLabel(anchorDate);
-        const shouldShowMonthLabel = monthLabel !== previousMonthLabel;
+        const monthLabel = visibleMonthLabels[index];
+        const shouldShowMonthLabel = index === 0 || monthLabel !== visibleMonthLabels[index - 1];
         const isMonthSelected =
           selectedMonthLabel !== null && monthLabel === selectedMonthLabel;
         const tone = getMilestoneCardTone(displayedStatus, isSelected);
         const shouldExpandDetails =
           isSearching || expandedMilestoneIds.has(milestone.id);
-        previousMonthLabel = monthLabel;
 
         return (
           <div

@@ -61,7 +61,7 @@ function ViewAllAction({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       type="button"
     >
-      Xem tất cả →
+      Xem thêm ➔
     </button>
   );
 }
@@ -404,67 +404,73 @@ function WeddingGuestSummaryWidget({ onOpenWeddingGuests, planId }: OverviewRend
   );
 
   return (
-    <Card className="gap-3">
-      <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Khách mời</p>
-      {errorMessage ? (
-        <p className="text-sm text-[color:var(--color-danger)]">{errorMessage}</p>
-      ) : isLoading ? (
-        <Skeleton className="h-24 rounded-2xl" />
-      ) : total === 0 ? (
-        <p className="text-sm text-slate-600">Chưa có khách mời nào được thêm vào kế hoạch.</p>
-      ) : (
-        <>
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--color-accent-soft)] text-[color:var(--color-accent)]">
-              <Users className="size-5" />
+    <div className="space-y-3">
+      <SectionHeading
+        action={<ViewAllAction onClick={onOpenWeddingGuests} />}
+        description=""
+        eyebrow="Khách mời"
+        title="Tình hình khách mời"
+      />
+      <Card className="gap-3">
+        {errorMessage ? (
+          <p className="text-sm text-[color:var(--color-danger)]">{errorMessage}</p>
+        ) : isLoading ? (
+          <Skeleton className="h-24 rounded-2xl" />
+        ) : total === 0 ? (
+          <p className="text-sm text-slate-600">Chưa có khách mời nào được thêm vào kế hoạch.</p>
+        ) : (
+          <>
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--color-accent-soft)] text-[color:var(--color-accent)]">
+                <Users className="size-5" />
+              </div>
+              <p className="text-2xl font-semibold text-slate-950">{total} lượt mời</p>
             </div>
-            <p className="text-2xl font-semibold text-slate-950">{total} lượt mời</p>
-          </div>
-          <div className="space-y-2 text-sm">
-            {(['attending', 'pending', 'not_attending'] as const).map((status) => {
-              const tone = RSVP_TONE[status];
-              const Icon = tone.icon;
+            <div className="space-y-2 text-sm">
+              {(['attending', 'pending', 'not_attending'] as const).map((status) => {
+                const tone = RSVP_TONE[status];
+                const Icon = tone.icon;
 
-              return (
-                <div className="flex items-center justify-between" key={status}>
-                  <span className="inline-flex items-center gap-1.5 text-slate-600">
-                    <Icon className={cn('size-4 shrink-0', tone.colorClass)} />
-                    {RSVP_LABEL[status]}
-                  </span>
-                  <span className={cn('font-semibold', tone.colorClass)}>{rsvpBreakdown[status]}</span>
-                </div>
-              );
-            })}
-          </div>
-          <div className="space-y-1.5">
-            <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-              {(['attending', 'pending', 'not_attending'] as const).map((status) =>
-                rsvpBreakdown[status] > 0 ? (
-                  <div
-                    className={cn('h-full', RSVP_TONE[status].barClass)}
-                    key={status}
-                    style={{ width: `${(rsvpBreakdown[status] / total) * 100}%` }}
-                  />
-                ) : null,
-              )}
+                return (
+                  <div className="flex items-center justify-between" key={status}>
+                    <span className="inline-flex items-center gap-1.5 text-slate-600">
+                      <Icon className={cn('size-4 shrink-0', tone.colorClass)} />
+                      {RSVP_LABEL[status]}
+                    </span>
+                    <span className={cn('font-semibold', tone.colorClass)}>{rsvpBreakdown[status]}</span>
+                  </div>
+                );
+              })}
             </div>
-            <p className="text-xs font-medium text-[color:var(--color-success)]">{confirmedPercent}% đã phản hồi</p>
-          </div>
-          {topGroups.length > 0 ? (
-            <div className="space-y-1.5 border-t border-slate-100 pt-3">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Người tham dự</p>
-              {topGroups.map((row) => (
-                <div className="flex items-center justify-between text-sm" key={row.group.id}>
-                  <span className="text-slate-600">{row.group.name}</span>
-                  <Badge variant="info">{row.attendeeCount} dự kiến</Badge>
-                </div>
-              ))}
+            <div className="space-y-1.5">
+              <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                {(['attending', 'pending', 'not_attending'] as const).map((status) =>
+                  rsvpBreakdown[status] > 0 ? (
+                    <div
+                      className={cn('h-full', RSVP_TONE[status].barClass)}
+                      key={status}
+                      style={{ width: `${(rsvpBreakdown[status] / total) * 100}%` }}
+                    />
+                  ) : null,
+                )}
+              </div>
+              <p className="text-xs font-medium text-[color:var(--color-success)]">{confirmedPercent}% đã phản hồi</p>
             </div>
-          ) : null}
-        </>
-      )}
-      <ViewAllAction onClick={onOpenWeddingGuests} />
-    </Card>
+            {topGroups.length > 0 ? (
+              <div className="space-y-1.5 border-t border-slate-100 pt-3">
+                <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Người tham dự</p>
+                {topGroups.map((row) => (
+                  <div className="flex items-center justify-between text-sm" key={row.group.id}>
+                    <span className="text-slate-600">{row.group.name}</span>
+                    <Badge variant="info">{row.attendeeCount} dự kiến</Badge>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </>
+        )}
+      </Card>
+    </div>
   );
 }
 
@@ -498,56 +504,62 @@ function WeddingFinanceSummaryWidget({
     .slice(0, 3);
 
   return (
-    <Card className="gap-3">
-      <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Tài chính</p>
-      <div className="space-y-1.5">
-        <p className="text-sm text-slate-600">
-          <span className="font-semibold text-slate-950">{formatCompactCurrency(spent)}</span>
-          {' / '}
-          {formatCompactCurrency(estimatedTotal)}
-        </p>
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-          <div
-            className={cn('h-full rounded-full', budgetTone.barClass)}
-            style={{ width: `${Math.min(usedPercent, 100)}%` }}
-          />
-        </div>
-        <p className={cn('text-xs font-medium', budgetTone.textClass)}>
-          {usedPercent}% ngân sách{usedPercent > 100 ? ' — đã vượt dự kiến' : ''}
-        </p>
-      </div>
-      {topCategories.length > 0 ? (
+    <div className="space-y-3">
+      <SectionHeading
+        action={<ViewAllAction onClick={onOpenFinance} />}
+        description=""
+        eyebrow="Tài chính"
+        title="Ngân sách kế hoạch"
+      />
+      <Card className="gap-3">
         <div className="space-y-1.5">
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Chi nhiều nhất</p>
-          {topCategories.map((category) => {
-            const Icon = getCategoryIcon(category.icon);
-
-            return (
-              <div
-                className="flex items-center justify-between text-sm"
-                key={category.categoryId ?? category.categoryName}
-              >
-                <span className="flex min-w-0 items-center gap-2">
-                  <span
-                    className={cn(
-                      'flex size-7 shrink-0 items-center justify-center rounded-full',
-                      category.iconBgColor,
-                    )}
-                  >
-                    <Icon className={cn('size-3.5', category.iconColor)} />
-                  </span>
-                  <span className="truncate text-slate-600">{category.categoryName}</span>
-                </span>
-                <span className="shrink-0 font-medium text-slate-900">
-                  {formatCompactCurrency(category.totalAmount)}
-                </span>
-              </div>
-            );
-          })}
+          <p className="text-sm text-slate-600">
+            <span className="font-semibold text-slate-950">{formatCompactCurrency(spent)}</span>
+            {' / '}
+            {formatCompactCurrency(estimatedTotal)}
+          </p>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+            <div
+              className={cn('h-full rounded-full', budgetTone.barClass)}
+              style={{ width: `${Math.min(usedPercent, 100)}%` }}
+            />
+          </div>
+          <p className={cn('text-xs font-medium', budgetTone.textClass)}>
+            {usedPercent}% ngân sách{usedPercent > 100 ? ' — đã vượt dự kiến' : ''}
+          </p>
         </div>
-      ) : null}
-      <ViewAllAction onClick={onOpenFinance} />
-    </Card>
+        {topCategories.length > 0 ? (
+          <div className="space-y-1.5">
+            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Chi nhiều nhất</p>
+            {topCategories.map((category) => {
+              const Icon = getCategoryIcon(category.icon);
+
+              return (
+                <div
+                  className="flex items-center justify-between text-sm"
+                  key={category.categoryId ?? category.categoryName}
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span
+                      className={cn(
+                        'flex size-7 shrink-0 items-center justify-center rounded-full',
+                        category.iconBgColor,
+                      )}
+                    >
+                      <Icon className={cn('size-3.5', category.iconColor)} />
+                    </span>
+                    <span className="truncate text-slate-600">{category.categoryName}</span>
+                  </span>
+                  <span className="shrink-0 font-medium text-slate-900">
+                    {formatCompactCurrency(category.totalAmount)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
+      </Card>
+    </div>
   );
 }
 
