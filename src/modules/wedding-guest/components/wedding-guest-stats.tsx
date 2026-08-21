@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckCircle2, Sparkles } from 'lucide-react';
 
 import {
   WEDDING_GUEST_INVITED_BY,
@@ -130,12 +129,6 @@ export function WeddingGuestStats({
     : null;
   const topGroupId = topGroupByGuests?.group.id ?? null;
 
-  const topSideByMoney = bySide.length
-    ? bySide.reduce((top, row) =>
-        row.moneyGiftTotal > top.moneyGiftTotal ? row : top,
-      )
-    : null;
-
   const topRelationship = byRelationship.length
     ? byRelationship.reduce((top, row) =>
         row.guestCount > top.guestCount ? row : top,
@@ -150,46 +143,10 @@ export function WeddingGuestStats({
     : null;
   const topInvitedById = topInvitedBy?.attributeId ?? null;
 
-  const topRelationshipByGold = byRelationship
-    .filter((row) => row.goldGiftTotal > 0)
-    .reduce<(typeof byRelationship)[number] | null>(
-      (top, row) => (!top || row.goldGiftTotal > top.goldGiftTotal ? row : top),
-      null,
-    );
-
-  const insights: string[] = [];
-
-  if (topGroupByGuests && topGroupByGuests.guestCount > 0) {
-    insights.push(
-      `Nhóm ${topGroupByGuests.group.name} đông khách nhất (${topGroupByGuests.guestCount} khách).`,
-    );
-  }
-
-  if (topSideByMoney && totalSideMoney > 0) {
-    const percent = Math.round(
-      (topSideByMoney.moneyGiftTotal / totalSideMoney) * 100,
-    );
-    const sideLabel =
-      WEDDING_GUEST_SIDES.find((side) => side.id === topSideByMoney.attributeId)
-        ?.label ?? topSideByMoney.attributeId;
-    insights.push(
-      `Phía ${sideLabel} đóng góp tiền mừng nhiều nhất (${percent}%).`,
-    );
-  }
-
-  if (topRelationshipByGold) {
-    const relationshipLabel =
-      WEDDING_GUEST_RELATIONSHIPS.find(
-        (relationship) => relationship.id === topRelationshipByGold.attributeId,
-      )?.label ?? topRelationshipByGold.attributeId;
-    insights.push(`${relationshipLabel} mừng vàng nhiều nhất.`);
-  }
-
   return (
     <div className="space-y-5">
-      <div className="grid gap-5 lg:grid-cols-[1fr_320px] lg:items-start">
-        <Card>
-          <SectionHeading eyebrow="Thống kê chi tiết" title="Theo nhóm/tiệc" />
+      <Card>
+        <SectionHeading eyebrow="Thống kê chi tiết" title="Theo nhóm/tiệc" />
 
           {byGroup.length === 0 ? (
             <p className="text-sm text-slate-500">Chưa có nhóm nào.</p>
@@ -342,34 +299,9 @@ export function WeddingGuestStats({
               </ul>
             </>
           )}
-        </Card>
+      </Card>
 
-        <Card className="bg-orange-50">
-          <div className="flex items-center gap-2">
-            <Sparkles className="size-4 text-orange-500" />
-            <p className="text-sm font-semibold text-slate-900">Insights</p>
-          </div>
-          {insights.length > 0 ? (
-            <ul className="space-y-3">
-              {insights.map((insight) => (
-                <li
-                  className="flex items-start gap-2 text-sm text-slate-700"
-                  key={insight}
-                >
-                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-orange-500" />
-                  {insight}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-slate-500">
-              Chưa có đủ dữ liệu để đưa ra nhận xét.
-            </p>
-          )}
-        </Card>
-      </div>
-
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-3">
         <Card>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SectionHeading eyebrow="Thống kê chi tiết" title="Theo phía" />
@@ -478,55 +410,55 @@ export function WeddingGuestStats({
             </ul>
           )}
         </Card>
+
+        <Card>
+          <SectionHeading eyebrow="Thống kê chi tiết" title="Theo khách của" />
+          {byInvitedBy.length === 0 ? (
+            <p className="text-sm text-slate-500">Chưa có dữ liệu.</p>
+          ) : (
+            <ul className="space-y-1">
+              {byInvitedBy.map((row, index) => {
+                const color = getCategoryColor(index);
+                const percent =
+                  totalInvitedByGuestCount > 0
+                    ? (row.guestCount / totalInvitedByGuestCount) * 100
+                    : 0;
+                const isTop = row.attributeId === topInvitedById;
+
+                return (
+                  <li
+                    className={cn(
+                      'flex items-center justify-between gap-3 rounded-2xl px-3 py-2.5',
+                      isTop ? 'bg-slate-50' : '',
+                    )}
+                    key={row.attributeId}
+                  >
+                    <span className="flex items-center gap-2 text-sm text-slate-700">
+                      <span
+                        className={cn(
+                          'size-2.5 shrink-0 rounded-full',
+                          color.dot,
+                        )}
+                      />
+                      {WEDDING_GUEST_INVITED_BY.find(
+                        (invitedBy) => invitedBy.id === row.attributeId,
+                      )?.label ?? row.attributeId}
+                    </span>
+                    <span className="text-right">
+                      <span className="block text-sm font-semibold text-slate-950">
+                        {Math.round(percent)}%
+                      </span>
+                      <span className="block text-xs text-slate-500">
+                        {row.guestCount} khách
+                      </span>
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Card>
       </div>
-
-      <Card>
-        <SectionHeading eyebrow="Thống kê chi tiết" title="Theo khách của" />
-        {byInvitedBy.length === 0 ? (
-          <p className="text-sm text-slate-500">Chưa có dữ liệu.</p>
-        ) : (
-          <ul className="space-y-1">
-            {byInvitedBy.map((row, index) => {
-              const color = getCategoryColor(index);
-              const percent =
-                totalInvitedByGuestCount > 0
-                  ? (row.guestCount / totalInvitedByGuestCount) * 100
-                  : 0;
-              const isTop = row.attributeId === topInvitedById;
-
-              return (
-                <li
-                  className={cn(
-                    'flex items-center justify-between gap-3 rounded-2xl px-3 py-2.5',
-                    isTop ? 'bg-slate-50' : '',
-                  )}
-                  key={row.attributeId}
-                >
-                  <span className="flex items-center gap-2 text-sm text-slate-700">
-                    <span
-                      className={cn(
-                        'size-2.5 shrink-0 rounded-full',
-                        color.dot,
-                      )}
-                    />
-                    {WEDDING_GUEST_INVITED_BY.find(
-                      (invitedBy) => invitedBy.id === row.attributeId,
-                    )?.label ?? row.attributeId}
-                  </span>
-                  <span className="text-right">
-                    <span className="block text-sm font-semibold text-slate-950">
-                      {Math.round(percent)}%
-                    </span>
-                    <span className="block text-xs text-slate-500">
-                      {row.guestCount} khách
-                    </span>
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </Card>
     </div>
   );
 }

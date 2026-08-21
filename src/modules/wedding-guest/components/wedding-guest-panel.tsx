@@ -21,6 +21,7 @@ import {
 } from '@/modules/wedding-guest/components/wedding-guest-filter-bar';
 import { WeddingGuestGroupList } from '@/modules/wedding-guest/components/wedding-guest-group-list';
 import { WeddingGuestGroupNav } from '@/modules/wedding-guest/components/wedding-guest-group-nav';
+import { WeddingGuestInsights } from '@/modules/wedding-guest/components/wedding-guest-insights';
 import {
   WeddingGuestList,
   type WeddingGuestListRow,
@@ -44,6 +45,7 @@ import { calculateOverallGuestStatistic } from '@/modules/wedding-guest/utils/we
 import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
+import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 
@@ -51,6 +53,20 @@ type WeddingGuestPanelProps = {
   plan: PlanDocument;
   currentMember: PlanMemberDocument | null;
 };
+
+const GUEST_PREVIEW_LIMIT = 5;
+
+function ViewAllAction({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      className="text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+      onClick={onClick}
+      type="button"
+    >
+      Xem tất cả ➔
+    </button>
+  );
+}
 
 const WeddingGuestImportDialog = dynamic(
   () =>
@@ -99,6 +115,7 @@ export function WeddingGuestPanel({
     DEFAULT_WEDDING_GUEST_FILTERS,
   );
   const [showGroupManager, setShowGroupManager] = useState(false);
+  const [showGuestListModal, setShowGuestListModal] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -127,8 +144,8 @@ export function WeddingGuestPanel({
     : null;
 
   const rows: WeddingGuestListRow[] = useMemo(() => {
-    const normalizedQuery = normalizeVietnameseName(searchQuery);
     const guestById = new Map(guests.map((guest) => [guest.id, guest]));
+    const normalizedQuery = normalizeVietnameseName(searchQuery);
 
     function matchesIdentityFilters(guest: WeddingGuestDocument) {
       if (normalizedQuery && !guest.normalizedName.includes(normalizedQuery)) {
@@ -159,10 +176,6 @@ export function WeddingGuestPanel({
     if (activeGroupId) {
       return invitations
         .filter((invitation) => invitation.groupId === activeGroupId)
-        .filter(
-          (invitation) =>
-            filters.rsvp === 'all' || invitation.rsvp === filters.rsvp,
-        )
         .map((invitation) => ({
           invitation,
           guest: guestById.get(invitation.guestId),
@@ -175,17 +188,30 @@ export function WeddingGuestPanel({
             guest: WeddingGuestDocument;
           } => Boolean(row.guest),
         )
-        .filter((row) => matchesIdentityFilters(row.guest))
+        .filter((row) => {
+          if (filters.rsvp !== 'all' && row.invitation.rsvp !== filters.rsvp) {
+            return false;
+          }
+
+          return matchesIdentityFilters(row.guest);
+        })
         .map((row) => ({ guest: row.guest, invitation: row.invitation }));
     }
 
-    return guests.filter(matchesIdentityFilters).map((guest) => ({
-      guest,
-      groupCount: invitations.filter(
-        (invitation) => invitation.guestId === guest.id,
-      ).length,
-    }));
+    return guests
+      .filter((guest) => matchesIdentityFilters(guest))
+      .map((guest) => ({
+        guest,
+        groupCount: invitations.filter(
+          (invitation) => invitation.guestId === guest.id,
+        ).length,
+      }));
   }, [activeGroupId, filters, guests, invitations, searchQuery]);
+
+  const previewRows = useMemo(
+    () => rows.slice(0, GUEST_PREVIEW_LIMIT),
+    [rows],
+  );
 
   const scopedStat = useMemo(() => {
     const scopedInvitations = activeGroupId
@@ -554,12 +580,18 @@ export function WeddingGuestPanel({
             onManageGroups={() => setShowGroupManager(true)}
             onSelectGroup={setActiveGroupId}
           />
+
+          <WeddingGuestInsights
+            groups={groups}
+            guests={guests}
+            invitations={invitations}
+          />
         </div>
 
         <Card>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SectionHeading eyebrow="Khách mời" title="Danh sách khách mời" />
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {canManage ? (
                 <>
                   <Button
@@ -590,6 +622,7 @@ export function WeddingGuestPanel({
                   Thêm khách
                 </Button>
               ) : null}
+              <ViewAllAction onClick={() => setShowGuestListModal(true)} />
             </div>
           </div>
 
@@ -621,7 +654,7 @@ export function WeddingGuestPanel({
                 setEditingGuest(row.guest);
               }
             }}
-            rows={rows}
+            rows={previewRows}
           />
         </Card>
       </div>
@@ -631,6 +664,32 @@ export function WeddingGuestPanel({
         guests={guests}
         invitations={invitations}
       />
+
+      <ResponsiveModal
+        className="max-h-[85vh] w-full max-w-4xl overflow-y-auto"
+        onOpenChange={setShowGuestListModal}
+        open={showGuestListModal}
+        title="Danh sách khách mời"
+      >
+        <WeddingGuestList
+          emptyMessage={
+            activeGroupId
+              ? 'Chưa có khách nào trong nhóm này.'
+              : 'Chưa có khách mời nào. Chọn một nhóm/tiệc để bắt đầu thêm khách.'
+          }
+          onDeleteGuest={
+            !activeGroupId && canManage ? handleDeleteGuest : undefined
+          }
+          onSelectRow={(row) => {
+            if (activeGroupId && row.invitation) {
+              setEditingInvitation(row.invitation);
+            } else {
+              setEditingGuest(row.guest);
+            }
+          }}
+          rows={rows}
+        />
+      </ResponsiveModal>
 
       {canManage && activeGroupId ? (
         <button
