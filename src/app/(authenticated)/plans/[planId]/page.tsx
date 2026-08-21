@@ -124,7 +124,9 @@ import { Breadcrumbs } from '@/shared/components/ui/breadcrumbs';
 import { Button } from '@/shared/components/ui/button';
 import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Card } from '@/shared/components/ui/card';
+import { ConfirmDialog } from '@/shared/components/ui/confirm-dialog';
 import { Dialog } from '@/shared/components/ui/dialog';
+import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { useMediaQuery } from '@/shared/hooks/use-media-query';
@@ -1737,152 +1739,72 @@ export default function PlanDetailPage() {
               workViewMode={workViewMode}
               onWorkViewModeChange={setWorkViewMode}
             />
-            {showMilestoneForm ? (
-              <>
-                <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
-                  <button
-                    aria-label="Đóng form milestone"
-                    className="absolute inset-0"
-                    onClick={() => {
-                      setShowMilestoneForm(false);
-                      setEditingMilestone(null);
-                    }}
-                    type="button"
-                  />
-                  <Dialog
-                    className="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto"
-                    description="Bản đầu của milestone core hỗ trợ tạo, sửa và sắp xếp lại các mốc lớn của kế hoạch."
-                    title={
-                      editingMilestone
-                        ? 'Cập nhật mốc kế hoạch'
-                        : 'Tạo mốc kế hoạch mới'
-                    }
-                  >
-                    <MilestoneForm
-                      currentMember={currentMember}
-                      currentUser={user}
-                      onClose={() => {
-                        setShowMilestoneForm(false);
-                        setEditingMilestone(null);
-                      }}
-                      onSuccess={() => {
-                        setShowMilestoneForm(false);
-                        setEditingMilestone(null);
-                      }}
-                      plan={ensuredPlan}
-                      {...(editingMilestone
-                        ? { milestone: editingMilestone }
-                        : {})}
-                    />
-                  </Dialog>
-                </div>
-                <div className="md:hidden">
-                  <BottomSheet
-                    description="Bản đầu của milestone core hỗ trợ tạo, sửa và sắp xếp lại các mốc lớn của kế hoạch."
-                    onClose={() => {
-                      setShowMilestoneForm(false);
-                      setEditingMilestone(null);
-                    }}
-                    open={showMilestoneForm}
-                    title={
-                      editingMilestone
-                        ? 'Cập nhật mốc kế hoạch'
-                        : 'Tạo mốc kế hoạch mới'
-                    }
-                  >
-                    <MilestoneForm
-                      currentMember={currentMember}
-                      currentUser={user}
-                      onClose={() => {
-                        setShowMilestoneForm(false);
-                        setEditingMilestone(null);
-                      }}
-                      onSuccess={() => {
-                        setShowMilestoneForm(false);
-                        setEditingMilestone(null);
-                      }}
-                      plan={ensuredPlan}
-                      {...(editingMilestone
-                        ? { milestone: editingMilestone }
-                        : {})}
-                    />
-                  </BottomSheet>
-                </div>
-              </>
-            ) : null}
-            {showTodoForm && selectedMilestone ? (
-              <>
-                <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
-                  <button
-                    aria-label="Đóng form todo"
-                    className="absolute inset-0"
-                    onClick={() => {
-                      setShowTodoForm(false);
-                      setEditingTodo(null);
-                    }}
-                    type="button"
-                  />
-                  <Dialog
-                    className="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto"
-                    description="Todo luôn gắn với đúng một milestone để sau này nối sang thống kê tiến độ và dòng tiền."
-                    title={
-                      editingTodo
-                        ? 'Cập nhật công việc'
-                        : `Thêm công việc cho "${selectedMilestone.title}"`
-                    }
-                  >
-                    <TodoForm
-                      currentMember={currentMember}
-                      currentUser={user}
-                      members={members}
-                      milestone={selectedMilestone}
-                      onCancel={() => {
-                        setShowTodoForm(false);
-                        setEditingTodo(null);
-                      }}
-                      onSuccess={() => {
-                        setShowTodoForm(false);
-                        setEditingTodo(null);
-                      }}
-                      plan={ensuredPlan}
-                      {...(editingTodo ? { todo: editingTodo } : {})}
-                    />
-                  </Dialog>
-                </div>
-                <div className="md:hidden">
-                  <BottomSheet
-                    description="Todo luôn gắn với đúng một milestone để sau này nối sang thống kê tiến độ và dòng tiền."
-                    onClose={() => {
-                      setShowTodoForm(false);
-                      setEditingTodo(null);
-                    }}
-                    open={showTodoForm}
-                    title={
-                      editingTodo
-                        ? 'Cập nhật công việc'
-                        : `Thêm công việc cho "${selectedMilestone.title}"`
-                    }
-                  >
-                    <TodoForm
-                      currentMember={currentMember}
-                      currentUser={user}
-                      members={members}
-                      milestone={selectedMilestone}
-                      onCancel={() => {
-                        setShowTodoForm(false);
-                        setEditingTodo(null);
-                      }}
-                      onSuccess={() => {
-                        setShowTodoForm(false);
-                        setEditingTodo(null);
-                      }}
-                      plan={ensuredPlan}
-                      {...(editingTodo ? { todo: editingTodo } : {})}
-                    />
-                  </BottomSheet>
-                </div>
-              </>
-            ) : null}
+            <ResponsiveModal
+              className="max-h-[90vh] w-full max-w-2xl overflow-y-auto"
+              description="Bản đầu của milestone core hỗ trợ tạo, sửa và sắp xếp lại các mốc lớn của kế hoạch."
+              onOpenChange={(next) => {
+                if (!next) {
+                  setShowMilestoneForm(false);
+                  setEditingMilestone(null);
+                }
+              }}
+              open={showMilestoneForm}
+              title={
+                editingMilestone ? 'Cập nhật mốc kế hoạch' : 'Tạo mốc kế hoạch mới'
+              }
+            >
+              <MilestoneForm
+                currentMember={currentMember}
+                currentUser={user}
+                onClose={() => {
+                  setShowMilestoneForm(false);
+                  setEditingMilestone(null);
+                }}
+                onSuccess={() => {
+                  setShowMilestoneForm(false);
+                  setEditingMilestone(null);
+                }}
+                plan={ensuredPlan}
+                {...(editingMilestone ? { milestone: editingMilestone } : {})}
+              />
+            </ResponsiveModal>
+            <ResponsiveModal
+              className="max-h-[90vh] w-full max-w-2xl overflow-y-auto"
+              description="Todo luôn gắn với đúng một milestone để sau này nối sang thống kê tiến độ và dòng tiền."
+              onOpenChange={(next) => {
+                if (!next) {
+                  setShowTodoForm(false);
+                  setEditingTodo(null);
+                }
+              }}
+              open={showTodoForm && Boolean(selectedMilestone)}
+              title={
+                editingTodo
+                  ? 'Cập nhật công việc'
+                  : selectedMilestone
+                    ? `Thêm công việc cho "${selectedMilestone.title}"`
+                    : ''
+              }
+            >
+              {selectedMilestone ? (
+                <TodoForm
+                  currentMember={currentMember}
+                  currentUser={user}
+                  members={members}
+                  milestone={selectedMilestone}
+                  onCancel={() => {
+                    setShowTodoForm(false);
+                    setEditingTodo(null);
+                  }}
+                  onSuccess={() => {
+                    setShowTodoForm(false);
+                    setEditingTodo(null);
+                  }}
+                  plan={ensuredPlan}
+                  {...(editingTodo ? { todo: editingTodo } : {})}
+                />
+              ) : null}
+            </ResponsiveModal>
           </>
         );
       case 'weddingGuests':
@@ -2450,59 +2372,35 @@ export default function PlanDetailPage() {
             </div>
           </>
         ) : null}
-        {vendorFormTodo ? (
-          <>
-            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
-              <button
-                aria-label="Đóng form nhà cung cấp"
-                className="absolute inset-0"
-                onClick={closeVendorForm}
-                type="button"
-              />
-              <Dialog
-                className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto"
-                description={
-                  editingVendor
-                    ? `Cập nhật thông tin nhà cung cấp cho "${vendorFormTodo.title}".`
-                    : `Thêm nhà cung cấp tham khảo cho "${vendorFormTodo.title}".`
-                }
-                title={editingVendor ? 'Sửa nhà cung cấp' : 'Thêm nhà cung cấp'}
-              >
-                <TodoVendorForm
-                  currentMember={currentMember}
-                  currentUser={user}
-                  onClose={closeVendorForm}
-                  onSuccess={closeVendorForm}
-                  plan={ensuredPlan}
-                  todo={vendorFormTodo}
-                  {...(editingVendor ? { vendor: editingVendor } : {})}
-                />
-              </Dialog>
-            </div>
-            <div className="md:hidden">
-              <BottomSheet
-                description={
-                  editingVendor
-                    ? `Cập nhật thông tin nhà cung cấp cho "${vendorFormTodo.title}".`
-                    : `Thêm nhà cung cấp tham khảo cho "${vendorFormTodo.title}".`
-                }
-                onClose={closeVendorForm}
-                open={Boolean(vendorFormTodo)}
-                title={editingVendor ? 'Sửa nhà cung cấp' : 'Thêm nhà cung cấp'}
-              >
-                <TodoVendorForm
-                  currentMember={currentMember}
-                  currentUser={user}
-                  onClose={closeVendorForm}
-                  onSuccess={closeVendorForm}
-                  plan={ensuredPlan}
-                  todo={vendorFormTodo}
-                  {...(editingVendor ? { vendor: editingVendor } : {})}
-                />
-              </BottomSheet>
-            </div>
-          </>
-        ) : null}
+        <ResponsiveModal
+          className="max-h-[90vh] w-full max-w-lg overflow-y-auto"
+          description={
+            vendorFormTodo
+              ? editingVendor
+                ? `Cập nhật thông tin nhà cung cấp cho "${vendorFormTodo.title}".`
+                : `Thêm nhà cung cấp tham khảo cho "${vendorFormTodo.title}".`
+              : undefined
+          }
+          onOpenChange={(next) => {
+            if (!next) {
+              closeVendorForm();
+            }
+          }}
+          open={Boolean(vendorFormTodo)}
+          title={editingVendor ? 'Sửa nhà cung cấp' : 'Thêm nhà cung cấp'}
+        >
+          {vendorFormTodo ? (
+            <TodoVendorForm
+              currentMember={currentMember}
+              currentUser={user}
+              onClose={closeVendorForm}
+              onSuccess={closeVendorForm}
+              plan={ensuredPlan}
+              todo={vendorFormTodo}
+              {...(editingVendor ? { vendor: editingVendor } : {})}
+            />
+          ) : null}
+        </ResponsiveModal>
         {showTravelActivityForm && user ? (
           <>
             <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
@@ -2574,299 +2472,72 @@ export default function PlanDetailPage() {
             </div>
           </>
         ) : null}
-        {headerModal === 'edit-plan' && isOwner ? (
-          <>
-            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
-              <button
-                aria-label="Đóng form sửa kế hoạch"
-                className="absolute inset-0"
-                onClick={() => setHeaderModal(null)}
-                type="button"
-              />
-              <Dialog
-                className="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto"
-                description="Chỉ chủ kế hoạch có thể sửa tên và thời gian diễn ra kế hoạch."
-                title="Chỉnh sửa kế hoạch"
-              >
-                <EditPlanForm
-                  currentMember={currentMember}
-                  onClose={() => setHeaderModal(null)}
-                  plan={currentPlan}
-                />
-              </Dialog>
-            </div>
-            <div className="md:hidden">
-              <BottomSheet
-                description="Chỉ chủ kế hoạch có thể sửa tên và thời gian diễn ra kế hoạch."
-                onClose={() => setHeaderModal(null)}
-                open={headerModal === 'edit-plan'}
-                title="Chỉnh sửa kế hoạch"
-              >
-                <EditPlanForm
-                  currentMember={currentMember}
-                  onClose={() => setHeaderModal(null)}
-                  plan={currentPlan}
-                />
-              </BottomSheet>
-            </div>
-          </>
+        {isOwner ? (
+          <ResponsiveModal
+            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto"
+            description="Chỉ chủ kế hoạch có thể sửa tên và thời gian diễn ra kế hoạch."
+            onOpenChange={(next) => {
+              if (!next) {
+                setHeaderModal(null);
+              }
+            }}
+            open={headerModal === 'edit-plan'}
+            title="Chỉnh sửa kế hoạch"
+          >
+            <EditPlanForm
+              currentMember={currentMember}
+              onClose={() => setHeaderModal(null)}
+              plan={currentPlan}
+            />
+          </ResponsiveModal>
         ) : null}
-        {showClosePlanConfirm ? (
-          <>
-            <div className="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
-              <button
-                aria-label="Đóng xác nhận đóng kế hoạch"
-                className="absolute inset-0"
-                onClick={() => setShowClosePlanConfirm(false)}
-                type="button"
-              />
-              <Dialog
-                className="relative z-10 w-full max-w-md"
-                description="Sau khi đóng, kế hoạch sẽ khóa các thao tác tạo hoặc chỉnh sửa mới. Dữ liệu hiện có vẫn có thể xem lại."
-                title="Xác nhận đóng kế hoạch?"
-              >
-                <div className="flex justify-end gap-2">
-                  <Button
-                    onClick={() => setShowClosePlanConfirm(false)}
-                    variant="secondary"
-                  >
-                    Hủy
-                  </Button>
-                  <Button
-                    className="bg-red-600 text-white hover:bg-red-700"
-                    disabled={isClosingPlan}
-                    onClick={handleClosePlan}
-                  >
-                    {isClosingPlan ? 'Đang đóng kế hoạch...' : 'Đóng kế hoạch'}
-                  </Button>
-                </div>
-              </Dialog>
-            </div>
-            <div className="md:hidden">
-              <BottomSheet
-                description="Sau khi đóng, kế hoạch sẽ khóa các thao tác tạo hoặc chỉnh sửa mới. Dữ liệu hiện có vẫn có thể xem lại."
-                onClose={() => setShowClosePlanConfirm(false)}
-                open={showClosePlanConfirm}
-                title="Xác nhận đóng kế hoạch?"
-              >
-                <div className="flex justify-end gap-2">
-                  <Button
-                    onClick={() => setShowClosePlanConfirm(false)}
-                    variant="secondary"
-                  >
-                    Hủy
-                  </Button>
-                  <Button
-                    className="bg-red-600 text-white hover:bg-red-700"
-                    disabled={isClosingPlan}
-                    onClick={handleClosePlan}
-                  >
-                    {isClosingPlan ? 'Đang đóng kế hoạch...' : 'Đóng kế hoạch'}
-                  </Button>
-                </div>
-              </BottomSheet>
-            </div>
-          </>
-        ) : null}
-        {showArchivePlanConfirm ? (
-          <>
-            <div className="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
-              <button
-                aria-label="Đóng xác nhận lưu trữ kế hoạch"
-                className="absolute inset-0"
-                onClick={() => setShowArchivePlanConfirm(false)}
-                type="button"
-              />
-              <Dialog
-                className="relative z-10 w-full max-w-md"
-                description={`Kế hoạch sẽ được ẩn khỏi danh sách chính và chuyển vào mục "Kế hoạch đã lưu trữ" trong trang Cá nhân. Sau ${PLAN_ARCHIVE_RETENTION_DAYS} ngày, kế hoạch sẽ bị xóa vĩnh viễn nếu không được khôi phục.`}
-                title="Xác nhận lưu trữ kế hoạch?"
-              >
-                {archivingError ? (
-                  <AuthFormMessage message={archivingError} type="error" />
-                ) : null}
-                <div className="mt-4 flex justify-end gap-2">
-                  <Button
-                    onClick={() => setShowArchivePlanConfirm(false)}
-                    variant="secondary"
-                  >
-                    Hủy
-                  </Button>
-                  <Button
-                    className="bg-red-600 text-white hover:bg-red-700"
-                    disabled={isArchivingPlan}
-                    onClick={handleArchivePlan}
-                  >
-                    {isArchivingPlan ? 'Đang lưu trữ...' : 'Lưu trữ kế hoạch'}
-                  </Button>
-                </div>
-              </Dialog>
-            </div>
-            <div className="md:hidden">
-              <BottomSheet
-                description={`Kế hoạch sẽ được ẩn khỏi danh sách chính và chuyển vào mục "Kế hoạch đã lưu trữ" trong trang Cá nhân. Sau ${PLAN_ARCHIVE_RETENTION_DAYS} ngày, kế hoạch sẽ bị xóa vĩnh viễn nếu không được khôi phục.`}
-                onClose={() => setShowArchivePlanConfirm(false)}
-                open={showArchivePlanConfirm}
-                title="Xác nhận lưu trữ kế hoạch?"
-              >
-                {archivingError ? (
-                  <AuthFormMessage message={archivingError} type="error" />
-                ) : null}
-                <div className="mt-4 flex justify-end gap-2">
-                  <Button
-                    onClick={() => setShowArchivePlanConfirm(false)}
-                    variant="secondary"
-                  >
-                    Hủy
-                  </Button>
-                  <Button
-                    className="bg-red-600 text-white hover:bg-red-700"
-                    disabled={isArchivingPlan}
-                    onClick={handleArchivePlan}
-                  >
-                    {isArchivingPlan ? 'Đang lưu trữ...' : 'Lưu trữ kế hoạch'}
-                  </Button>
-                </div>
-              </BottomSheet>
-            </div>
-          </>
-        ) : null}
-        {showDeletePlanConfirm ? (
-          <>
-            <div className="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
-              <button
-                aria-label="Đóng xác nhận xóa kế hoạch"
-                className="absolute inset-0"
-                onClick={() =>
-                  isDeletingPlan ? null : setShowDeletePlanConfirm(false)
-                }
-                type="button"
-              />
-              <Dialog
-                className="relative z-10 w-full max-w-md"
-                description="Toàn bộ dữ liệu của kế hoạch này — thành viên, mốc kế hoạch, công việc, khoản thu/chi, đối soát, lời mời — sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác."
-                title="Xóa kế hoạch này?"
-              >
-                {deletingError ? (
-                  <AuthFormMessage message={deletingError} type="error" />
-                ) : null}
-                <div className="mt-4 flex justify-end gap-2">
-                  <Button
-                    disabled={isDeletingPlan}
-                    onClick={() => setShowDeletePlanConfirm(false)}
-                    variant="secondary"
-                  >
-                    Hủy
-                  </Button>
-                  <Button
-                    className="bg-red-600 text-white hover:bg-red-700"
-                    disabled={isDeletingPlan}
-                    onClick={handleDeletePlan}
-                  >
-                    {isDeletingPlan ? 'Đang xóa kế hoạch...' : 'Xóa vĩnh viễn'}
-                  </Button>
-                </div>
-              </Dialog>
-            </div>
-            <div className="md:hidden">
-              <BottomSheet
-                description="Toàn bộ dữ liệu của kế hoạch này — thành viên, mốc kế hoạch, công việc, khoản thu/chi, đối soát, lời mời — sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác."
-                onClose={() =>
-                  isDeletingPlan ? undefined : setShowDeletePlanConfirm(false)
-                }
-                open={showDeletePlanConfirm}
-                title="Xóa kế hoạch này?"
-              >
-                {deletingError ? (
-                  <AuthFormMessage message={deletingError} type="error" />
-                ) : null}
-                <div className="mt-4 flex justify-end gap-2">
-                  <Button
-                    disabled={isDeletingPlan}
-                    onClick={() => setShowDeletePlanConfirm(false)}
-                    variant="secondary"
-                  >
-                    Hủy
-                  </Button>
-                  <Button
-                    className="bg-red-600 text-white hover:bg-red-700"
-                    disabled={isDeletingPlan}
-                    onClick={handleDeletePlan}
-                  >
-                    {isDeletingPlan ? 'Đang xóa kế hoạch...' : 'Xóa vĩnh viễn'}
-                  </Button>
-                </div>
-              </BottomSheet>
-            </div>
-          </>
-        ) : null}
-        {showCompletePlanConfirm ? (
-          <>
-            <div className="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
-              <button
-                aria-label="Đóng xác nhận hoàn thành kế hoạch"
-                className="absolute inset-0"
-                onClick={() => setShowCompletePlanConfirm(false)}
-                type="button"
-              />
-              <Dialog
-                className="relative z-10 w-full max-w-md"
-                description="Khi đánh dấu hoàn thành, kế hoạch sẽ chuyển sang chế độ tổng kết và khóa các thao tác tạo hoặc chỉnh sửa mới."
-                title="Hoàn thành kế hoạch này?"
-              >
-                {completionError ? (
-                  <AuthFormMessage message={completionError} type="error" />
-                ) : null}
-                <div className="flex justify-end gap-2">
-                  <Button
-                    onClick={() => setShowCompletePlanConfirm(false)}
-                    variant="secondary"
-                  >
-                    Hủy
-                  </Button>
-                  <Button
-                    className="bg-emerald-600 text-white hover:bg-emerald-700"
-                    disabled={isCompletingPlan}
-                    onClick={handleCompletePlan}
-                  >
-                    {isCompletingPlan
-                      ? 'Đang hoàn thành...'
-                      : 'Xác nhận hoàn thành'}
-                  </Button>
-                </div>
-              </Dialog>
-            </div>
-            <div className="md:hidden">
-              <BottomSheet
-                description="Khi đánh dấu hoàn thành, kế hoạch sẽ chuyển sang chế độ tổng kết và khóa các thao tác tạo hoặc chỉnh sửa mới."
-                onClose={() => setShowCompletePlanConfirm(false)}
-                open={showCompletePlanConfirm}
-                title="Hoàn thành kế hoạch này?"
-              >
-                {completionError ? (
-                  <AuthFormMessage message={completionError} type="error" />
-                ) : null}
-                <div className="flex justify-end gap-2">
-                  <Button
-                    onClick={() => setShowCompletePlanConfirm(false)}
-                    variant="secondary"
-                  >
-                    Hủy
-                  </Button>
-                  <Button
-                    className="bg-emerald-600 text-white hover:bg-emerald-700"
-                    disabled={isCompletingPlan}
-                    onClick={handleCompletePlan}
-                  >
-                    {isCompletingPlan
-                      ? 'Đang hoàn thành...'
-                      : 'Xác nhận hoàn thành'}
-                  </Button>
-                </div>
-              </BottomSheet>
-            </div>
-          </>
-        ) : null}
+        <ConfirmDialog
+          confirmLabel="Đóng kế hoạch"
+          confirmVariant="destructive"
+          description="Sau khi đóng, kế hoạch sẽ khóa các thao tác tạo hoặc chỉnh sửa mới. Dữ liệu hiện có vẫn có thể xem lại."
+          loading={isClosingPlan}
+          loadingLabel="Đang đóng kế hoạch..."
+          onConfirm={handleClosePlan}
+          onOpenChange={setShowClosePlanConfirm}
+          open={showClosePlanConfirm}
+          title="Xác nhận đóng kế hoạch?"
+        />
+        <ConfirmDialog
+          confirmLabel="Lưu trữ kế hoạch"
+          confirmVariant="destructive"
+          description={`Kế hoạch sẽ được ẩn khỏi danh sách chính và chuyển vào mục "Kế hoạch đã lưu trữ" trong trang Cá nhân. Sau ${PLAN_ARCHIVE_RETENTION_DAYS} ngày, kế hoạch sẽ bị xóa vĩnh viễn nếu không được khôi phục.`}
+          errorMessage={archivingError ?? undefined}
+          loading={isArchivingPlan}
+          loadingLabel="Đang lưu trữ..."
+          onConfirm={handleArchivePlan}
+          onOpenChange={setShowArchivePlanConfirm}
+          open={showArchivePlanConfirm}
+          title="Xác nhận lưu trữ kế hoạch?"
+        />
+        <ConfirmDialog
+          confirmLabel="Xóa vĩnh viễn"
+          confirmVariant="destructive"
+          description="Toàn bộ dữ liệu của kế hoạch này — thành viên, mốc kế hoạch, công việc, khoản thu/chi, đối soát, lời mời — sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác."
+          errorMessage={deletingError ?? undefined}
+          loading={isDeletingPlan}
+          loadingLabel="Đang xóa kế hoạch..."
+          onConfirm={handleDeletePlan}
+          onOpenChange={setShowDeletePlanConfirm}
+          open={showDeletePlanConfirm}
+          title="Xóa kế hoạch này?"
+        />
+        <ConfirmDialog
+          confirmLabel="Xác nhận hoàn thành"
+          confirmVariant="success"
+          description="Khi đánh dấu hoàn thành, kế hoạch sẽ chuyển sang chế độ tổng kết và khóa các thao tác tạo hoặc chỉnh sửa mới."
+          errorMessage={completionError ?? undefined}
+          loading={isCompletingPlan}
+          loadingLabel="Đang hoàn thành..."
+          onConfirm={handleCompletePlan}
+          onOpenChange={setShowCompletePlanConfirm}
+          open={showCompletePlanConfirm}
+          title="Hoàn thành kế hoạch này?"
+        />
         {headerModal === 'plan-settings' ? (
           <>
             <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
@@ -3105,76 +2776,35 @@ export default function PlanDetailPage() {
             </div>
           </>
         ) : null}
-        {headerModal === 'leave-or-delete' ? (
-          <>
-            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
-              <button
-                aria-label="Đóng"
-                className="absolute inset-0"
-                onClick={() => setHeaderModal(null)}
-                type="button"
-              />
-              <Dialog
-                className="relative z-10 w-full max-w-md"
-                description={
-                  isOwner
-                    ? 'Xóa kế hoạch sẽ xóa vĩnh viễn toàn bộ dữ liệu — thành viên, mốc kế hoạch, công việc, khoản thu/chi, đối soát, lời mời. Hành động này không thể hoàn tác.'
-                    : 'Tính năng này đang được phát triển và sẽ sớm ra mắt.'
-                }
-                title={isOwner ? 'Xóa kế hoạch' : 'Rời kế hoạch'}
-              >
-                <div className="flex justify-end gap-2">
-                  <Button onClick={() => setHeaderModal(null)} variant="ghost">
-                    {isOwner ? 'Hủy' : 'Đã hiểu'}
-                  </Button>
-                  {isOwner ? (
-                    <Button
-                      className="bg-red-600 text-white hover:bg-red-700"
-                      onClick={() => {
-                        setHeaderModal(null);
-                        setShowDeletePlanConfirm(true);
-                      }}
-                    >
-                      Xóa kế hoạch
-                    </Button>
-                  ) : null}
-                </div>
-              </Dialog>
-            </div>
-            <div className="md:hidden">
-              <BottomSheet
-                description={
-                  isOwner
-                    ? 'Xóa kế hoạch sẽ xóa vĩnh viễn toàn bộ dữ liệu — thành viên, mốc kế hoạch, công việc, khoản thu/chi, đối soát, lời mời. Hành động này không thể hoàn tác.'
-                    : 'Tính năng này đang được phát triển và sẽ sớm ra mắt.'
-                }
-                onClose={() => setHeaderModal(null)}
-                open={headerModal === 'leave-or-delete'}
-                title={isOwner ? 'Xóa kế hoạch' : 'Rời kế hoạch'}
-              >
-                <div className="flex justify-end gap-2">
-                  <Button onClick={() => setHeaderModal(null)} variant="ghost">
-                    {isOwner ? 'Hủy' : 'Đã hiểu'}
-                  </Button>
-                  {isOwner ? (
-                    <Button
-                      className="bg-red-600 text-white hover:bg-red-700"
-                      onClick={() => {
-                        setHeaderModal(null);
-                        setShowDeletePlanConfirm(true);
-                      }}
-                    >
-                      Xóa kế hoạch
-                    </Button>
-                  ) : null}
-                </div>
-              </BottomSheet>
-            </div>
-          </>
-        ) : null}
-        <BottomSheet
-          className="max-h-[85vh] overflow-y-auto"
-          onClose={() => setShowStatisticSheet(false)}
+        <ConfirmDialog
+          cancelLabel={isOwner ? 'Hủy' : 'Đã hiểu'}
+          cancelVariant="ghost"
+          confirmVariant="destructive"
+          description={
+            isOwner
+              ? 'Xóa kế hoạch sẽ xóa vĩnh viễn toàn bộ dữ liệu — thành viên, mốc kế hoạch, công việc, khoản thu/chi, đối soát, lời mời. Hành động này không thể hoàn tác.'
+              : 'Tính năng này đang được phát triển và sẽ sớm ra mắt.'
+          }
+          onOpenChange={(next) => {
+            if (!next) {
+              setHeaderModal(null);
+            }
+          }}
+          open={headerModal === 'leave-or-delete'}
+          title={isOwner ? 'Xóa kế hoạch' : 'Rời kế hoạch'}
+          {...(isOwner
+            ? {
+                confirmLabel: 'Xóa kế hoạch',
+                onConfirm: () => {
+                  setHeaderModal(null);
+                  setShowDeletePlanConfirm(true);
+                },
+              }
+            : {})}
+        />
+        <ResponsiveModal
+          className="max-h-[85vh] w-full max-w-4xl overflow-y-auto"
+          onOpenChange={setShowStatisticSheet}
           open={showStatisticSheet}
           title="Tổng quan tài chính"
         >
@@ -3246,7 +2876,7 @@ export default function PlanDetailPage() {
             </div>
             <ExpenseTimelineChart statistic={statistic} />
           </div>
-        </BottomSheet>
+        </ResponsiveModal>
 
         <BottomSheet
           onClose={() => setStatisticMemberDrilldown(null)}
