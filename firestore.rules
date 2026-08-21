@@ -68,6 +68,11 @@ service cloud.firestore {
         currentUserPlanDoc(planId).data.role in ['owner', 'editor'];
     }
 
+    function canManageTravelActivity(planId) {
+      return isPlanVisible(planId) &&
+        currentUserPlanDoc(planId).data.role in ['owner', 'editor'];
+    }
+
     function canEditAnyExpense(planId) {
       return isPlanVisible(planId) &&
         (
@@ -734,6 +739,28 @@ service cloud.firestore {
         request.resource.data.amount is int &&
         request.resource.data.amount > 0;
       allow delete: if isPlanOwner(planId);
+    }
+
+    match /plans/{planId}/travelActivities/{activityId} {
+      allow read: if isPlanVisible(planId);
+      allow create: if canManageTravelActivity(planId) &&
+        isPlanActive(planId) &&
+        request.resource.data.id == activityId &&
+        request.resource.data.planId == planId &&
+        request.resource.data.createdByUserId == request.auth.uid &&
+        request.resource.data.createdByMemberId == currentUserPlanDoc(planId).data.memberId &&
+        request.resource.data.title is string &&
+        request.resource.data.startsAt is timestamp;
+      allow update: if canManageTravelActivity(planId) &&
+        isPlanActive(planId) &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.planId == resource.data.planId &&
+        request.resource.data.createdByUserId == resource.data.createdByUserId &&
+        request.resource.data.createdByMemberId == resource.data.createdByMemberId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.title is string &&
+        request.resource.data.startsAt is timestamp;
+      allow delete: if canManageTravelActivity(planId);
     }
 
     match /plans/{planId}/invitations/{invitationId} {

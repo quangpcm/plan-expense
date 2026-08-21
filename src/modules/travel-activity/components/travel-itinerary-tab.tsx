@@ -52,17 +52,20 @@ export function TravelItineraryTab({
             <TravelActivityList
               activities={activities}
               canManage={canManage}
-              members={members}
               onCreate={onCreate}
-              onDelete={onDelete}
-              onEdit={onEdit}
               onSelect={onSelect}
             />
           )}
         </div>
         <div className="space-y-4">
           {detailActivity ? (
-            <TravelActivityDetail activity={detailActivity} members={members} />
+            <TravelActivityDetail
+              activity={detailActivity}
+              canManage={canManage}
+              members={members}
+              onDelete={onDelete}
+              onEdit={onEdit}
+            />
           ) : (
             <Card className="border-slate-200 bg-slate-50 shadow-none">
               <p className="text-sm leading-6 text-slate-600">

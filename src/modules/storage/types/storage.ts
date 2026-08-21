@@ -6,7 +6,8 @@ export type MediaType =
   | 'settlement-attachment'
   | 'todo-attachment'
   | 'todo-vendor-attachment'
-  | 'debt-transaction-attachment';
+  | 'debt-transaction-attachment'
+  | 'travel-activity-attachment';
 
 type BaseUploadInput = {
   fileName: string;
@@ -22,7 +23,8 @@ export type RequestUploadUrlInput =
   | (BaseUploadInput & { mediaType: 'settlement-attachment'; planId: string; settlementId: string })
   | (BaseUploadInput & { mediaType: 'todo-attachment'; planId: string; todoId: string })
   | (BaseUploadInput & { mediaType: 'todo-vendor-attachment'; planId: string; todoId: string; vendorId: string })
-  | (BaseUploadInput & { mediaType: 'debt-transaction-attachment'; planId: string; transactionId: string });
+  | (BaseUploadInput & { mediaType: 'debt-transaction-attachment'; planId: string; transactionId: string })
+  | (BaseUploadInput & { mediaType: 'travel-activity-attachment'; planId: string; activityId: string });
 
 export type RequestUploadUrlResult = {
   storagePath: string;

@@ -62,6 +62,12 @@ const requestSchema = z.discriminatedUnion('mediaType', [
     transactionId: z.string().min(1),
     ...baseSchema,
   }),
+  z.object({
+    mediaType: z.literal('travel-activity-attachment'),
+    planId: z.string().min(1),
+    activityId: z.string().min(1),
+    ...baseSchema,
+  }),
 ]);
 
 async function resolveActiveMember(planId: string, uid: string): Promise<PlanMemberDocument> {
@@ -139,6 +145,13 @@ async function assertPermission(input: RequestUploadUrlInput, uid: string): Prom
     !hasPlanCapability(member, 'debtTracking.manageTransaction')
   ) {
     throw new AppError('You do not have permission to add debt transaction attachments.', 'STORAGE_PERMISSION_DENIED', 403);
+  }
+
+  if (
+    input.mediaType === 'travel-activity-attachment' &&
+    !hasPlanCapability(member, 'travelItinerary.editActivity')
+  ) {
+    throw new AppError('You do not have permission to add itinerary activity attachments.', 'STORAGE_PERMISSION_DENIED', 403);
   }
 }
 

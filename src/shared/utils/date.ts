@@ -16,6 +16,15 @@ export function formatTime(input: DateInput, locale = 'vi-VN') {
   }).format(new Date(input));
 }
 
+export function getDayPeriodLabel(input: DateInput) {
+  const hour = new Date(input).getHours();
+
+  if (hour >= 5 && hour < 12) return 'Sáng';
+  if (hour >= 12 && hour < 18) return 'Chiều';
+  if (hour >= 18 && hour < 22) return 'Tối';
+  return 'Đêm';
+}
+
 export function formatDateTime(input: DateInput, locale = 'vi-VN') {
   return new Intl.DateTimeFormat(locale, {
     day: '2-digit',

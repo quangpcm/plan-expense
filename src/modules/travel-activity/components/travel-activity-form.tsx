@@ -6,6 +6,7 @@ import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import type { AuthUser } from '@/modules/auth/types/auth';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
+import { AttachmentPicker, type AttachmentDraft } from '@/modules/storage';
 import { travelActivityService } from '@/modules/travel-activity/services';
 import type {
   CreateTravelActivityInput,
@@ -50,7 +51,11 @@ export function TravelActivityForm({
 }: TravelActivityFormProps) {
   const [title, setTitle] = useState(activity?.title ?? '');
   const [locationName, setLocationName] = useState(activity?.locationName ?? '');
+  const [locationMapUrl, setLocationMapUrl] = useState(activity?.locationMapUrl ?? '');
   const [note, setNote] = useState(activity?.note ?? '');
+  const [attachmentDrafts, setAttachmentDrafts] = useState<AttachmentDraft[]>(
+    (activity?.attachments ?? []).map((attachment) => ({ kind: 'existing', id: attachment.id, attachment })),
+  );
   const [startsAt, setStartsAt] = useState(
     toLocalDateTimeValue(timestampToDate(activity?.startsAt ?? null)),
   );
@@ -71,10 +76,12 @@ export function TravelActivityForm({
       const baseInput: CreateTravelActivityInput = {
         title,
         locationName,
+        locationMapUrl,
         note,
         startsAt,
         endsAt,
         participantMemberIds,
+        attachments: attachmentDrafts,
       };
 
       if (activity) {
@@ -115,6 +122,15 @@ export function TravelActivityForm({
           onChange={(event) => setLocationName(event.target.value)}
           placeholder="Sân bay Narita, khách sạn..."
           value={locationName}
+        />
+      </label>
+      <label className="grid gap-2 text-sm text-slate-700">
+        Link bản đồ (không bắt buộc)
+        <input
+          className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+          onChange={(event) => setLocationMapUrl(event.target.value)}
+          placeholder="https://maps.google.com/..."
+          value={locationMapUrl}
         />
       </label>
       <div className="grid gap-4 md:grid-cols-2">
@@ -170,6 +186,10 @@ export function TravelActivityForm({
             );
           })}
         </div>
+      </div>
+      <div className="grid gap-2 text-sm text-slate-700">
+        Ảnh đính kèm (vé, QR code, thông tin quan trọng...)
+        <AttachmentPicker maxCount={5} onChange={setAttachmentDrafts} value={attachmentDrafts} />
       </div>
       <div className="flex justify-end gap-2">
         <Button onClick={onCancel} variant="ghost">

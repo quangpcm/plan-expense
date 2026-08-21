@@ -1,9 +1,10 @@
 'use client';
 
-import { Timestamp, doc, getDocs, onSnapshot, orderBy, query, where, writeBatch } from 'firebase/firestore';
+import { Timestamp, doc, getDoc, getDocs, onSnapshot, orderBy, query, where, writeBatch } from 'firebase/firestore';
 
 import { getFirebaseFirestore } from '@/config/firebase.config';
 import { getPlanCollectionRef, getPlanDocumentRef, getPlanRootRef, queryByPlanCollection } from '@/modules/plan';
+import { diffRemovedAttachments } from '@/modules/storage/utils/diff-attachments';
 import type {
   CreateTravelActivityPersistenceInput,
   TravelActivityRepository,
@@ -15,6 +16,14 @@ import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
 function toTimestamp(value: string) {
   return Timestamp.fromDate(new Date(value));
+}
+
+function normalizeTravelActivity(raw: TravelActivityDocument): TravelActivityDocument {
+  return {
+    ...raw,
+    locationMapUrl: raw.locationMapUrl ?? null,
+    attachments: raw.attachments ?? [],
+  };
 }
 
 export class FirestoreTravelActivityRepository implements TravelActivityRepository {
@@ -33,10 +42,12 @@ export class FirestoreTravelActivityRepository implements TravelActivityReposito
         planId: input.planId,
         title: input.title.trim(),
         locationName: input.locationName?.trim() || null,
+        locationMapUrl: input.locationMapUrl?.trim() || null,
         note: input.note?.trim() || null,
         startsAt: toTimestamp(input.startsAt),
         endsAt: input.endsAt ? toTimestamp(input.endsAt) : null,
         participantMemberIds: input.participantMemberIds,
+        attachments: input.attachments,
         createdByUserId: input.createdByUserId,
         createdByMemberId: input.createdByMemberId,
         createdAt: now,
@@ -53,21 +64,34 @@ export class FirestoreTravelActivityRepository implements TravelActivityReposito
   async updateActivity(planId: string, input: UpdateTravelActivityPersistenceInput) {
     const db = getFirebaseFirestore();
     const now = Timestamp.now();
+    const activityRef = getPlanDocumentRef(db, planId, 'travelActivities', input.activityId);
+    const activitySnapshot = await getDoc(activityRef);
+
+    if (!activitySnapshot.exists()) {
+      throw new Error('Travel activity not found.');
+    }
+
+    const previousActivity = normalizeTravelActivity(activitySnapshot.data() as TravelActivityDocument);
+    const orphanedAttachments = diffRemovedAttachments(previousActivity.attachments, input.attachments);
 
     await writeBatch(db)
-      .update(getPlanDocumentRef(db, planId, 'travelActivities', input.activityId), {
+      .update(activityRef, {
         title: input.title.trim(),
         locationName: input.locationName?.trim() || null,
+        locationMapUrl: input.locationMapUrl?.trim() || null,
         note: input.note?.trim() || null,
         startsAt: toTimestamp(input.startsAt),
         endsAt: input.endsAt ? toTimestamp(input.endsAt) : null,
         participantMemberIds: input.participantMemberIds,
+        attachments: input.attachments,
         updatedAt: now,
       })
       .update(getPlanRootRef(db, planId), {
         updatedAt: now,
       })
       .commit();
+
+    return { orphanedAttachments };
   }
 
   async deleteActivity(planId: string, activityId: string) {
@@ -75,6 +99,10 @@ export class FirestoreTravelActivityRepository implements TravelActivityReposito
     const now = Timestamp.now();
     const activityRef = getPlanDocumentRef(db, planId, 'travelActivities', activityId);
     const planRef = getPlanRootRef(db, planId);
+    const activitySnapshot = await getDoc(activityRef);
+    const previousActivity = activitySnapshot.exists()
+      ? normalizeTravelActivity(activitySnapshot.data() as TravelActivityDocument)
+      : null;
     const expensesQuery = query(getPlanCollectionRef(db, planId, 'expenses'), where('activityId', '==', activityId));
     const linkedExpensesSnapshot = await getDocs(expensesQuery);
     const batch = writeBatch(db);
@@ -95,6 +123,8 @@ export class FirestoreTravelActivityRepository implements TravelActivityReposito
         updatedAt: now,
       })
       .commit();
+
+    return { orphanedAttachments: previousActivity?.attachments ?? [] };
   }
 
   watchActivities(
@@ -114,7 +144,7 @@ export class FirestoreTravelActivityRepository implements TravelActivityReposito
       (snapshot) => {
         callback(
           snapshot.docs
-            .map((item) => item.data() as TravelActivityDocument)
+            .map((item) => normalizeTravelActivity(item.data() as TravelActivityDocument))
             .sort((left, right) => {
               const startsAtDiff =
                 left.startsAt.toMillis() - right.startsAt.toMillis();

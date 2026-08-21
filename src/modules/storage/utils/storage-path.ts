@@ -39,5 +39,7 @@ export function buildStoragePath(input: RequestUploadUrlInput, fileId: string): 
       return `plans/${input.planId}/todos/${input.todoId}/vendors/${input.vendorId}/${fileId}.${extension}`;
     case 'debt-transaction-attachment':
       return `plans/${input.planId}/debt-transactions/${input.transactionId}/${fileId}.${extension}`;
+    case 'travel-activity-attachment':
+      return `plans/${input.planId}/travel-activities/${input.activityId}/${fileId}.${extension}`;
   }
 }

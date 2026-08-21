@@ -1,6 +1,8 @@
 import type { AuthUser } from '@/modules/auth/types/auth';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
+import { deleteAttachmentsInBackground } from '@/modules/storage/utils/delete-attachments';
+import { resolveAttachmentDrafts } from '@/modules/storage/utils/resolve-attachments';
 import type { TravelActivityRepository } from '@/modules/travel-activity/repositories/travel-activity.repository';
 import type {
   CreateTravelActivityInput,
@@ -47,10 +49,17 @@ export class TravelActivityService {
     this.assertCanManageActivities(currentMember);
     this.assertValidInput(input);
 
+    const activityId = this.travelActivityRepository.generateActivityId(plan.id);
+    const attachments = await resolveAttachmentDrafts(
+      { mediaType: 'travel-activity-attachment', planId: plan.id, activityId },
+      input.attachments,
+    );
+
     return this.travelActivityRepository.createActivity({
       ...input,
       planId: plan.id,
-      activityId: this.travelActivityRepository.generateActivityId(plan.id),
+      activityId,
+      attachments,
       createdByUserId: currentUser.uid,
       createdByMemberId: currentMember!.id,
     });
@@ -67,7 +76,16 @@ export class TravelActivityService {
     this.assertCanManageActivities(currentMember);
     this.assertValidInput(input);
 
-    await this.travelActivityRepository.updateActivity(plan.id, input);
+    const attachments = await resolveAttachmentDrafts(
+      { mediaType: 'travel-activity-attachment', planId: plan.id, activityId: input.activityId },
+      input.attachments,
+    );
+
+    const { orphanedAttachments } = await this.travelActivityRepository.updateActivity(plan.id, {
+      ...input,
+      attachments,
+    });
+    deleteAttachmentsInBackground(plan.id, orphanedAttachments);
   }
 
   async deleteActivity(
@@ -80,7 +98,8 @@ export class TravelActivityService {
     this.assertEditablePlan(plan);
     this.assertCanManageActivities(currentMember);
 
-    await this.travelActivityRepository.deleteActivity(plan.id, activityId);
+    const { orphanedAttachments } = await this.travelActivityRepository.deleteActivity(plan.id, activityId);
+    deleteAttachmentsInBackground(plan.id, orphanedAttachments);
   }
 
   watchActivities(
