@@ -11,13 +11,8 @@ type TodoListProps = {
   milestones?: MilestoneDocument[];
   preserveOrder?: boolean;
   members: PlanMemberDocument[];
-  canManagePlan: boolean;
-  isSubmitting: boolean;
   className?: string;
-  onEdit: (todo: TodoDocument) => void;
-  onChangeStatus: (todo: TodoDocument, status: TodoDocument['status']) => void;
-  onAddVendor: (todo: TodoDocument) => void;
-  onDeleteTodo: (todo: TodoDocument) => void;
+  onViewTodo: (todo: TodoDocument) => void;
   emptyMessage: string;
 };
 
@@ -26,13 +21,8 @@ export function TodoList({
   milestones = [],
   preserveOrder = false,
   members,
-  canManagePlan,
-  isSubmitting,
   className,
-  onEdit,
-  onChangeStatus,
-  onAddVendor,
-  onDeleteTodo,
+  onViewTodo,
   emptyMessage,
 }: TodoListProps) {
   if (todos.length === 0) {
@@ -50,14 +40,9 @@ export function TodoList({
       {sortedTodos.map((todo) => (
         <TodoCard
           assignee={members.find((member) => member.id === todo.assigneeMemberId) ?? null}
-          canManagePlan={canManagePlan}
-          isSubmitting={isSubmitting}
           key={todo.id}
           milestone={milestones.find((milestone) => milestone.id === todo.milestoneId) ?? null}
-          onAddVendor={onAddVendor}
-          onChangeStatus={onChangeStatus}
-          onDeleteTodo={onDeleteTodo}
-          onEdit={onEdit}
+          onViewTodo={onViewTodo}
           todo={todo}
         />
       ))}

@@ -6,8 +6,8 @@ import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { planService } from '@/modules/plan/services';
 import { PasscodeForm } from '@/modules/user/components/passcode-form';
 import { userService } from '@/modules/user/services';
-import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
+import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 
 type PasscodeSheetProps = {
   open: boolean;
@@ -48,11 +48,14 @@ export function PasscodeSheet({ open, onClose, userId, hasPasscode, lockedPlanCo
   }
 
   return (
-    <BottomSheet
+    <ResponsiveModal
       description="Mã 4 số này thuộc về tài khoản của bạn. Dùng để khóa riêng các kế hoạch bạn tự bật, không ảnh hưởng tới thành viên khác."
-      onClose={handleClose}
+      onOpenChange={(next) => {
+        if (!next) {
+          handleClose();
+        }
+      }}
       open={open}
-      showCloseButton
       title="Mã bảo mật cá nhân"
     >
       <div className="space-y-4">
@@ -111,6 +114,6 @@ export function PasscodeSheet({ open, onClose, userId, hasPasscode, lockedPlanCo
           </div>
         ) : null}
       </div>
-    </BottomSheet>
+    </ResponsiveModal>
   );
 }

@@ -100,7 +100,11 @@ function AttentionItemRow({
 
   return (
     <button
-      className="block w-full px-4 py-4 text-left transition hover:bg-slate-50"
+      className={cn(
+        'block w-full px-4 py-4 text-left transition hover:bg-slate-50',
+        'lg:rounded-[26px] lg:border lg:border-slate-200 lg:bg-white lg:shadow-[0_10px_32px_rgba(15,23,42,0.05)]',
+        'lg:hover:-translate-y-0.5 lg:hover:border-slate-300 lg:hover:bg-white lg:hover:shadow-[0_16px_40px_rgba(15,23,42,0.08)]',
+      )}
       onClick={onSelect}
       type="button"
     >
@@ -143,6 +147,7 @@ function WeddingAttentionSummaryWidget({
   );
 
   const attentionItems = useMemo(() => selectAttentionItems(todos), [todos]);
+  const visibleAttentionItems = attentionItems.slice(0, ATTENTION_MAX_ITEMS);
 
   const overdueCount = attentionItems.filter((item) => item.urgency === 'overdue').length;
   const dueTodayCount = attentionItems.filter((item) => item.urgency === 'danger').length;
@@ -172,8 +177,18 @@ function WeddingAttentionSummaryWidget({
           <p className="text-sm leading-6 text-slate-600">Không có việc quá hạn hoặc sắp đến hạn.</p>
         </Card>
       ) : (
-        <Card className="gap-0 divide-y divide-slate-100 overflow-hidden p-0">
-          {attentionItems.slice(0, ATTENTION_MAX_ITEMS).map((item) => (
+        <Card
+          className={cn(
+            'gap-0 divide-y divide-slate-100 overflow-hidden p-0',
+            'lg:grid lg:gap-3 lg:divide-y-0 lg:overflow-visible lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none',
+            visibleAttentionItems.length >= 3
+              ? 'lg:grid-cols-3'
+              : visibleAttentionItems.length === 2
+                ? 'lg:grid-cols-2'
+                : 'lg:grid-cols-1',
+          )}
+        >
+          {visibleAttentionItems.map((item) => (
             <AttentionItemRow
               dueDate={item.dueDate}
               key={item.todo.id}
@@ -286,15 +301,10 @@ function WeddingMilestoneSnapshotWidget({
 // mới lấy tiếp — 2 section không còn lặp lại đúng những item giống nhau, tăng giá trị tổng
 // thể của tab Tổng quan.
 function WeddingTodoSnapshotWidget({
-  canManagePlanning,
-  isTodoSubmitting,
   isTodosLoading,
   members,
-  onAddVendor,
-  onDeleteTodo,
-  onOpenPlanningTodo,
   onOpenPlanningTodos,
-  onToggleTodoStatus,
+  onViewTodo,
   todoActionError,
   todos,
   visibleMilestones,
@@ -325,17 +335,12 @@ function WeddingTodoSnapshotWidget({
         <Skeleton className="h-32 rounded-[28px]" />
       ) : (
         <TodoList
-          canManagePlan={canManagePlanning}
           className="sm:grid-cols-2 lg:grid-cols-3"
           emptyMessage="Không có công việc nào sắp đến hạn."
-          isSubmitting={isTodoSubmitting}
           members={members}
           milestones={visibleMilestones}
           preserveOrder
-          onAddVendor={onAddVendor}
-          onChangeStatus={onToggleTodoStatus}
-          onDeleteTodo={onDeleteTodo}
-          onEdit={onOpenPlanningTodo}
+          onViewTodo={onViewTodo}
           todos={nextTodos}
         />
       )}
@@ -546,6 +551,17 @@ function WeddingFinanceSummaryWidget({
   );
 }
 
+// "Khách mời" + "Tài chính" trên desktop nằm cùng 1 hàng (2 cột) để tận dụng chiều ngang,
+// mobile vẫn xếp dọc như cũ (mặc định grid-cols-1, chỉ chuyển 2 cột từ breakpoint lg).
+function WeddingGuestFinanceRowWidget(props: OverviewRendererProps) {
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      <WeddingGuestSummaryWidget {...props} />
+      <WeddingFinanceSummaryWidget {...props} />
+    </div>
+  );
+}
+
 // isAvailable ở đây chỉ xét điều kiện BỔ SUNG (ví dụ plan đã kết thúc chưa) — việc lọc
 // theo plan type đã được đảm bảo từ trước bởi plan-type-config.ts (các widget này chỉ
 // được khai báo trong overview.widgets của wedding), giống cách planSummary/memberSummary
@@ -571,16 +587,10 @@ export const weddingOverviewWidgetRegistry: Partial<
     component: WeddingTodoSnapshotWidget,
     isAvailable: (props) => !props.isPlanEnded,
   },
-  weddingGuestSummary: {
-    id: 'weddingGuestSummary',
+  weddingGuestFinanceSummary: {
+    id: 'weddingGuestFinanceSummary',
     moduleId: 'weddingGuests',
-    component: WeddingGuestSummaryWidget,
-    isAvailable: () => true,
-  },
-  weddingFinanceSummary: {
-    id: 'weddingFinanceSummary',
-    moduleId: 'finance',
-    component: WeddingFinanceSummaryWidget,
+    component: WeddingGuestFinanceRowWidget,
     isAvailable: () => true,
   },
 };

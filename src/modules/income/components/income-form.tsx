@@ -1,7 +1,7 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { startTransition, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { Landmark } from 'lucide-react';
 import { useForm, useWatch } from 'react-hook-form';
 import { ZodError } from 'zod';
@@ -34,7 +34,10 @@ import { cn } from '@/shared/utils/cn';
 type IncomeFormProps = {
   planId: string;
   mode: 'create' | 'edit';
-  income?: IncomeDocument;
+  income?: IncomeDocument | undefined;
+  defaultMilestoneId?: string | undefined;
+  onSuccess?: ((milestoneId: string) => void) | undefined;
+  onCancel?: (() => void) | undefined;
 };
 
 // Some legacy incomes predate this app's write path and can hold a non-string
@@ -46,8 +49,7 @@ function toSafeString(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
 
-export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
-  const router = useRouter();
+export function IncomeForm({ planId, mode, income, defaultMilestoneId, onSuccess, onCancel }: IncomeFormProps) {
   const searchParams = useSearchParams();
   const { user } = useAuthSession();
   const { plan } = usePlan(planId);
@@ -65,15 +67,18 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
   const visibleMilestones = useMemo(() => getVisibleMilestones(milestones), [milestones]);
   const shouldHideMilestoneSelector = plan ? planUsesHiddenMilestone(plan) : false;
   const milestoneIdFromQuery = searchParams.get('milestoneId') || '';
-  const returnTab = searchParams.get('returnTab');
-  const defaultMilestoneId = plan
-    ? resolveFinanceMilestoneId(plan, milestones, income?.milestoneId || milestoneIdFromQuery)
-    : income?.milestoneId || milestoneIdFromQuery || visibleMilestones[0]?.id || milestones[0]?.id || '';
+  const resolvedDefaultMilestoneId = plan
+    ? resolveFinanceMilestoneId(
+        plan,
+        milestones,
+        income?.milestoneId || defaultMilestoneId || milestoneIdFromQuery,
+      )
+    : income?.milestoneId || defaultMilestoneId || milestoneIdFromQuery || visibleMilestones[0]?.id || milestones[0]?.id || '';
   const form = useForm<CreateIncomeSchema>({
     defaultValues: {
       title: income?.title || '',
       amount: income?.amount || 0,
-      milestoneId: defaultMilestoneId,
+      milestoneId: resolvedDefaultMilestoneId,
       categoryId: toSafeString(income?.categoryId),
       contributedByMemberId:
         income?.contributedByMemberId ||
@@ -92,8 +97,8 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
   const selectedContributor = activeMembers.find((member) => member.id === contributedByMemberIdWatched);
 
   useEffect(() => {
-    if ((shouldHideMilestoneSelector || !form.getValues('milestoneId')) && defaultMilestoneId) {
-      form.setValue('milestoneId', defaultMilestoneId, { shouldValidate: true });
+    if ((shouldHideMilestoneSelector || !form.getValues('milestoneId')) && resolvedDefaultMilestoneId) {
+      form.setValue('milestoneId', resolvedDefaultMilestoneId, { shouldValidate: true });
     }
 
     const defaultContributorId =
@@ -119,7 +124,7 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
     activeMembers,
     counterpartMembers,
     currentMember?.id,
-    defaultMilestoneId,
+    resolvedDefaultMilestoneId,
     form,
     isDebtPlan,
     shouldHideMilestoneSelector,
@@ -144,13 +149,7 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
           categories,
           milestones,
         });
-        startTransition(() => {
-          router.replace(
-            returnTab === 'milestones' && parsed.milestoneId
-              ? `/plans/${planId}?tab=milestones&milestoneId=${parsed.milestoneId}`
-              : `/plans/${planId}?tab=timeline${parsed.milestoneId ? `&milestoneId=${parsed.milestoneId}` : ''}`,
-          );
-        });
+        onSuccess?.(parsed.milestoneId);
       } else if (income) {
         const parsed = updateIncomeSchema.parse({
           ...values,
@@ -168,15 +167,7 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
           },
           income,
         );
-        startTransition(() => {
-          router.replace(
-            returnTab === 'milestones' && parsed.milestoneId
-              ? `/plans/${planId}?tab=milestones&milestoneId=${parsed.milestoneId}`
-              : returnTab === 'timeline'
-                ? `/plans/${planId}?tab=timeline${parsed.milestoneId ? `&milestoneId=${parsed.milestoneId}` : ''}`
-                : `/plans/${planId}/incomes/${income.id}`,
-          );
-        });
+        onSuccess?.(parsed.milestoneId);
       }
     } catch (error) {
       if (error instanceof ZodError) {
@@ -299,18 +290,11 @@ export function IncomeForm({ planId, mode, income }: IncomeFormProps) {
       />
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-        <Button
-          href={
-            income
-              ? `/plans/${planId}/incomes/${income.id}`
-              : returnTab === 'milestones' && milestoneIdWatched
-                ? `/plans/${planId}?tab=milestones&milestoneId=${milestoneIdWatched}`
-                : `/plans/${planId}?tab=timeline${milestoneIdWatched ? `&milestoneId=${milestoneIdWatched}` : ''}`
-          }
-          variant="secondary"
-        >
-          Hủy
-        </Button>
+        {onCancel ? (
+          <Button onClick={onCancel} type="button" variant="secondary">
+            Hủy
+          </Button>
+        ) : null}
         <Button disabled={isSubmitting} type="submit">
           <Landmark className="size-4" />
           {isSubmitting

@@ -4,7 +4,6 @@ export const appRoutes = {
   register: '/register',
   forgotPassword: '/forgot-password',
   plans: '/plans',
-  planCreate: '/plans/new',
   archivedPlans: '/plans/archived',
   profile: '/profile',
   settings: '/settings',

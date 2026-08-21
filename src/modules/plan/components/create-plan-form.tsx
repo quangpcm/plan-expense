@@ -1,7 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { startTransition, useState } from 'react';
+import { useState } from 'react';
 import { FolderPlus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { ZodError } from 'zod';
@@ -36,8 +35,12 @@ function resolvePlanFormErrorMessage(error: ZodError, planType: CreatePlanSchema
   return error.issues[0]?.message || 'Vui lòng kiểm tra lại thông tin đã nhập.';
 }
 
-export function CreatePlanForm() {
-  const router = useRouter();
+type CreatePlanFormProps = {
+  onSuccess: (planId: string) => void;
+  onCancel: () => void;
+};
+
+export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
   const { createPlan, isSubmitting } = useCreatePlan();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { register, handleSubmit, setValue, watch } = useForm<CreatePlanSchema>({
@@ -69,9 +72,7 @@ export function CreatePlanForm() {
     try {
       const parsed = createPlanSchema.parse(values);
       const result = await createPlan(parsed);
-      startTransition(() => {
-        router.replace(`/plans/${result.planId}`);
-      });
+      onSuccess(result.planId);
     } catch (error) {
       if (error instanceof ZodError) {
         setErrorMessage(resolvePlanFormErrorMessage(error, values.planType));
@@ -188,7 +189,7 @@ export function CreatePlanForm() {
             </>
           )}
         </Button>
-        <Button className="mx-auto w-fit px-4" href="/plans" variant="ghost">
+        <Button className="mx-auto w-fit px-4" onClick={onCancel} type="button" variant="ghost">
           Hủy
         </Button>
       </div>

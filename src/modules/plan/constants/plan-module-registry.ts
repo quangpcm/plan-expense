@@ -54,11 +54,6 @@ export const planModuleRegistry: Record<PlanModuleId, PlanModuleDefinition> = {
     optionalDependencies: ['planning', 'members', 'travelItinerary', 'debtTracking'],
     routes: [
       { key: 'finance.tab.timeline', pathname: '/plans/[planId]?tab=timeline' },
-      { key: 'finance.expense.new', pathname: '/plans/[planId]/expenses/new' },
-      { key: 'finance.expense.detail', pathname: '/plans/[planId]/expenses/[expenseId]' },
-      { key: 'finance.expense.edit', pathname: '/plans/[planId]/expenses/[expenseId]/edit' },
-      { key: 'finance.income.detail', pathname: '/plans/[planId]/incomes/[incomeId]' },
-      { key: 'finance.income.edit', pathname: '/plans/[planId]/incomes/[incomeId]/edit' },
     ],
     collections: [{ path: 'expenses' }, { path: 'incomes' }, { path: 'settlements' }],
     overviewWidgets: [overviewWidgets.financeSummary!],

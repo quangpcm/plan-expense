@@ -12,9 +12,9 @@ import {
   type UpdateDisplayNameSchema,
 } from '@/modules/auth/schemas/update-display-name.schema';
 import { memberService } from '@/modules/member/services';
-import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 
 type DisplayNameSheetProps = {
   open: boolean;
@@ -57,11 +57,14 @@ export function DisplayNameSheet({ open, onClose }: DisplayNameSheetProps) {
   });
 
   return (
-    <BottomSheet
+    <ResponsiveModal
       description="Tên này áp dụng cho mọi kế hoạch bạn tham gia, trừ những kế hoạch mà nickname của bạn đã được tùy chỉnh riêng."
-      onClose={onClose}
+      onOpenChange={(next) => {
+        if (!next) {
+          onClose();
+        }
+      }}
       open={open}
-      showCloseButton
       title="Tên hiển thị"
     >
       <form className="space-y-3" onSubmit={handleSave}>
@@ -71,6 +74,6 @@ export function DisplayNameSheet({ open, onClose }: DisplayNameSheetProps) {
           {isSaving ? 'Đang lưu...' : 'Lưu tên hiển thị'}
         </Button>
       </form>
-    </BottomSheet>
+    </ResponsiveModal>
   );
 }

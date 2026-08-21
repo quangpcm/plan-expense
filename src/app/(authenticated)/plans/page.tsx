@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
 import { ArrowUpDown, Bell, Plus, Search } from 'lucide-react';
@@ -9,6 +9,7 @@ import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { useUserPlans } from '@/modules/plan/hooks/use-user-plans';
 import { CreatePlanCard } from '@/modules/plan/components/create-plan-card';
+import { CreatePlanForm } from '@/modules/plan/components/create-plan-form';
 import { PlanCard } from '@/modules/plan/components/plan-card';
 import { TodoNotificationScreen } from '@/modules/todo/components/todo-notification-screen';
 import { TodoAttentionSection } from '@/modules/todo/components/todo-attention-section';
@@ -16,6 +17,7 @@ import { useAttentionTodos, type AttentionBellTone } from '@/modules/todo/hooks/
 import { useCurrentUserProfile } from '@/modules/user/hooks/use-current-user-profile';
 import { Avatar } from '@/shared/components/ui/avatar';
 import { Input } from '@/shared/components/ui/input';
+import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 
 type SortOption = 'updatedAt' | 'createdAt';
@@ -33,12 +35,14 @@ function getBellToneClass(tone: AttentionBellTone) {
 }
 
 export default function PlansPage() {
+  const router = useRouter();
   const { user } = useAuthSession();
   const { userProfile } = useCurrentUserProfile();
   const { plans, isLoading, errorMessage } = useUserPlans();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('updatedAt');
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [showCreatePlanForm, setShowCreatePlanForm] = useState(false);
   const greeting = `Xin chào, ${user?.displayName || user?.email?.split('@')[0] || 'bạn'} 👋`;
   const userInitials = (user?.displayName || user?.email?.split('@')[0] || 'PE').slice(0, 2).toUpperCase();
   const { todayAttentionCount, bellTone } = useAttentionTodos(plans);
@@ -120,7 +124,7 @@ export default function PlansPage() {
           {filteredPlans.map((plan) => (
             <PlanCard key={plan.id} plan={plan} />
           ))}
-          <CreatePlanCard />
+          <CreatePlanCard onClick={() => setShowCreatePlanForm(true)} />
         </div>
       ) : plans.length > 0 ? (
         <div className="rounded-[24px] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface)] p-5 text-sm leading-7 text-[var(--color-muted)]">
@@ -128,19 +132,34 @@ export default function PlansPage() {
         </div>
       ) : (
         <div className="grid gap-4 pb-24 sm:grid-cols-2 lg:grid-cols-3">
-          <CreatePlanCard />
+          <CreatePlanCard onClick={() => setShowCreatePlanForm(true)} />
         </div>
       )}
 
-      <Link
+      <button
         aria-label="Tạo kế hoạch"
         className="fixed right-4 bottom-24 z-20 flex size-14 items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-[0_14px_34px_rgba(36,59,107,0.32)] transition hover:bg-[var(--color-primary-hover)] lg:bottom-6"
-        href="/plans/new"
+        onClick={() => setShowCreatePlanForm(true)}
+        type="button"
       >
         <Plus className="size-6" />
-      </Link>
+      </button>
 
       <TodoNotificationScreen open={isNotificationOpen} onClose={() => setIsNotificationOpen(false)} plans={plans} />
+
+      <ResponsiveModal
+        onOpenChange={setShowCreatePlanForm}
+        open={showCreatePlanForm}
+        title="Tạo kế hoạch mới"
+      >
+        <CreatePlanForm
+          onCancel={() => setShowCreatePlanForm(false)}
+          onSuccess={(planId) => {
+            setShowCreatePlanForm(false);
+            router.push(`/plans/${planId}`);
+          }}
+        />
+      </ResponsiveModal>
     </main>
   );
 }

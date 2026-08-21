@@ -28,17 +28,22 @@ import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
 import { usePlanInvitations } from '@/modules/invitation/hooks/use-plan-invitations';
 import { invitationService } from '@/modules/invitation/services';
 import type { InvitationDocument } from '@/modules/invitation/types/invitation';
+import { IncomeDetailPanel } from '@/modules/income/components/income-detail-panel';
+import { IncomeForm } from '@/modules/income/components/income-form';
 import { useIncomes } from '@/modules/income/hooks/use-incomes';
+import { incomeService } from '@/modules/income/services';
+import type { IncomeDocument } from '@/modules/income/types/income';
 import {
   getExpenseCategories,
   getIncomeCategories,
 } from '@/modules/category/constants/category-presets';
-import { ExpenseDetailCard } from '@/modules/expense/components/expense-detail-card';
+import { ExpenseDetailPanel } from '@/modules/expense/components/expense-detail-panel';
 import { ExpenseForm } from '@/modules/expense/components/expense-form';
 import { TimelineList } from '@/modules/expense/components/timeline-list';
 import { useExpenses } from '@/modules/expense/hooks/use-expenses';
 import { expenseService } from '@/modules/expense/services';
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
+import type { FinanceDesktopDetail } from '@/modules/expense/components/finance-tab';
 import { FinanceTab } from '@/modules/expense';
 import { MemberAvatarStack } from '@/modules/member/components/member-avatar-stack';
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
@@ -125,7 +130,6 @@ import { Button } from '@/shared/components/ui/button';
 import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Card } from '@/shared/components/ui/card';
 import { ConfirmDialog } from '@/shared/components/ui/confirm-dialog';
-import { Dialog } from '@/shared/components/ui/dialog';
 import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 import { Skeleton } from '@/shared/components/ui/skeleton';
@@ -364,6 +368,22 @@ export default function PlanDetailPage() {
   const [expenseActionError, setExpenseActionError] = useState<string | null>(
     null,
   );
+  const [detailIncome, setDetailIncome] = useState<IncomeDocument | null>(
+    null,
+  );
+  const [editingIncome, setEditingIncome] = useState<IncomeDocument | null>(
+    null,
+  );
+  const [showIncomeForm, setShowIncomeForm] = useState(false);
+  const [incomeFormMilestoneId, setIncomeFormMilestoneId] = useState<
+    string | null
+  >(null);
+  const [isDeletingIncomeInline, setIsDeletingIncomeInline] = useState(false);
+  const [incomeActionError, setIncomeActionError] = useState<string | null>(
+    null,
+  );
+  const [desktopFinanceDetail, setDesktopFinanceDetail] =
+    useState<FinanceDesktopDetail | null>(null);
   const [travelActionError, setTravelActionError] = useState<string | null>(
     null,
   );
@@ -1489,6 +1509,7 @@ export default function PlanDetailPage() {
 
   function openEditExpense(expense: ExpenseDocument) {
     setDetailExpense(null);
+    setDesktopFinanceDetail(null);
     setEditingExpense(expense);
     setExpenseFormMilestoneId(expense.milestoneId);
     setShowExpenseForm(true);
@@ -1524,6 +1545,7 @@ export default function PlanDetailPage() {
         currentMember,
       );
       setDetailExpense(null);
+      setDesktopFinanceDetail(null);
     } catch (error) {
       setExpenseActionError(
         error instanceof Error
@@ -1533,6 +1555,81 @@ export default function PlanDetailPage() {
     } finally {
       setIsDeletingExpenseInline(false);
     }
+  }
+
+  function openCreateIncome(milestoneId: string) {
+    setEditingIncome(null);
+    setIncomeFormMilestoneId(milestoneId);
+    setShowIncomeForm(true);
+  }
+
+  function openEditIncome(income: IncomeDocument) {
+    setDetailIncome(null);
+    setDesktopFinanceDetail(null);
+    setEditingIncome(income);
+    setIncomeFormMilestoneId(income.milestoneId);
+    setShowIncomeForm(true);
+  }
+
+  function closeIncomeForm() {
+    setShowIncomeForm(false);
+    setEditingIncome(null);
+    setIncomeFormMilestoneId(null);
+  }
+
+  async function handleDeleteIncomeInline(income: IncomeDocument) {
+    if (!user) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Xoá khoản thu "${income.title}"? Hành động này không thể hoàn tác.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsDeletingIncomeInline(true);
+    setIncomeActionError(null);
+
+    try {
+      await incomeService.deleteIncome(ensuredPlan, income, user, currentMember);
+      setDetailIncome(null);
+      setDesktopFinanceDetail(null);
+    } catch (error) {
+      setIncomeActionError(
+        error instanceof Error
+          ? error.message
+          : 'Hiện chưa thể xoá khoản thu này.',
+      );
+    } finally {
+      setIsDeletingIncomeInline(false);
+    }
+  }
+
+  function getExpenseDetailPermissions(expense: ExpenseDocument) {
+    return {
+      canEdit:
+        canEditAllExpenses ||
+        (hasPlanCapability(currentMember, 'finance.editOwnExpense') &&
+          expense.createdByUserId === user?.uid),
+      canDelete:
+        hasPlanCapability(currentMember, 'finance.deleteAllExpense') ||
+        (hasPlanCapability(currentMember, 'finance.deleteOwnExpense') &&
+          expense.createdByUserId === user?.uid),
+    };
+  }
+
+  function getIncomeDetailPermissions(income: IncomeDocument) {
+    return {
+      canEdit:
+        hasPlanCapability(currentMember, 'finance.editOwnIncome') &&
+        income.createdByMemberId === currentMember?.id,
+      canDelete:
+        hasPlanCapability(currentMember, 'finance.deleteOwnIncome') &&
+        income.createdByMemberId === currentMember?.id,
+    };
   }
 
   const headerMenuItems: HeaderMenuItem[] = [
@@ -1596,25 +1693,13 @@ export default function PlanDetailPage() {
             nativeDebtTransactions={debtTransactions}
             isMilestonesLoading={isMilestonesLoading}
             isPlanEnded={Boolean(isPlanEnded)}
-            isTodoSubmitting={isTodoSubmitting}
             isTodosLoading={isTodosLoading}
             isTravelActivitiesLoading={isTravelActivitiesLoading}
             isTravelItineraryEnabled={isTravelItineraryEnabled}
             members={members}
             milestoneActionError={milestoneActionError}
-            onAddVendor={(todo) => {
-              setEditingVendorId(null);
-              setVendorFormTodo(todo);
-            }}
-            onDeleteTodo={handleDeleteTodo}
             onOpenPlanningMilestones={() => {
               setWorkViewMode('milestones');
-              openPlanTab('planning');
-            }}
-            onOpenPlanningTodo={(todo) => {
-              setSelectedMilestoneId(todo.milestoneId);
-              setEditingTodo(todo);
-              setShowTodoForm(true);
               openPlanTab('planning');
             }}
             onOpenPlanningTodos={() => openPlanTab('planning')}
@@ -1632,7 +1717,6 @@ export default function PlanDetailPage() {
               setWorkViewMode('milestones');
               openPlanTab('planning');
             }}
-            onToggleTodoStatus={handleChangeTodoStatus}
             onViewTodo={setDetailTodo}
             plan={plan}
             planId={planId}
@@ -1653,15 +1737,69 @@ export default function PlanDetailPage() {
         return (
           <FinanceTab
             categories={[...categories, ...incomeCategories]}
+            desktopDetail={desktopFinanceDetail}
+            desktopDetailError={
+              desktopFinanceDetail?.kind === 'income' ? incomeActionError : expenseActionError
+            }
             errorMessage={expenseActionError}
             expenses={expenses}
             incomes={incomes}
+            isDeletingDesktopDetail={
+              desktopFinanceDetail?.kind === 'income'
+                ? isDeletingIncomeInline
+                : isDeletingExpenseInline
+            }
             isPlanEnded={Boolean(isPlanEnded)}
             members={members}
             milestones={visibleMilestones}
+            onCloseDesktopDetail={() => setDesktopFinanceDetail(null)}
+            onDeleteDesktopDetail={() => {
+              if (!desktopFinanceDetail) {
+                return;
+              }
+
+              if (desktopFinanceDetail.kind === 'expense') {
+                void handleDeleteExpenseInline(desktopFinanceDetail.expense);
+              } else {
+                void handleDeleteIncomeInline(desktopFinanceDetail.income);
+              }
+            }}
+            onEditDesktopDetail={() => {
+              if (!desktopFinanceDetail) {
+                return;
+              }
+
+              if (desktopFinanceDetail.kind === 'expense') {
+                openEditExpense(desktopFinanceDetail.expense);
+              } else {
+                openEditIncome(desktopFinanceDetail.income);
+              }
+            }}
             onOpenCreateExpense={openCreateExpense}
+            onOpenCreateIncome={openCreateIncome}
             onOpenStatistic={() => setShowStatisticSheet(true)}
-            onSelectExpense={setDetailExpense}
+            onSelectExpense={(expense) => {
+              if (isDesktopViewport) {
+                setDesktopFinanceDetail({
+                  kind: 'expense',
+                  expense,
+                  ...getExpenseDetailPermissions(expense),
+                });
+              } else {
+                setDetailExpense(expense);
+              }
+            }}
+            onSelectIncome={(income) => {
+              if (isDesktopViewport) {
+                setDesktopFinanceDetail({
+                  kind: 'income',
+                  income,
+                  ...getIncomeDetailPermissions(income),
+                });
+              } else {
+                setDetailIncome(income);
+              }
+            }}
             onSelectedMilestoneChange={setSelectedTimelineMilestoneId}
             plan={ensuredPlan}
             planId={planId}
@@ -1698,21 +1836,11 @@ export default function PlanDetailPage() {
                 setEditingTodo(null);
                 setShowTodoForm(true);
               }}
-              onAddVendor={(todo) => {
-                setEditingVendorId(null);
-                setVendorFormTodo(todo);
-              }}
               onChangeTodoStatus={handleChangeTodoStatus}
               onDeleteMilestone={handleDeleteMilestone}
-              onDeleteTodo={handleDeleteTodo}
               onEditMilestone={(milestone) => {
                 setEditingMilestone(milestone);
                 setShowMilestoneForm(true);
-              }}
-              onEditTodo={(todo) => {
-                setSelectedMilestoneId(todo.milestoneId);
-                setEditingTodo(todo);
-                setShowTodoForm(true);
               }}
               onMilestoneQueryChange={setMilestoneSearchQuery}
               onOpenExpenseSheet={(milestone) => {
@@ -1723,6 +1851,7 @@ export default function PlanDetailPage() {
               onOpenTimelineFromMilestone={() => openPlanTab('finance')}
               onReorderTodos={handleReorderTodosWithinMilestone}
               onSelectExpense={setDetailExpense}
+              onSelectIncome={setDetailIncome}
               onSelectMilestone={setSelectedMilestoneId}
               onSortOrderChange={setTodoDueSortOrder}
               onStatusFilterChange={setTodoStatusFilter}
@@ -2093,285 +2222,150 @@ export default function PlanDetailPage() {
           })}
         </div>
         {activeTabContent}
-        {detailTodo ? (
-          <>
-            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
-              <button
-                aria-label="Đóng chi tiết công việc"
-                className="absolute inset-0"
-                onClick={() => setDetailTodo(null)}
-                type="button"
-              />
-              <Dialog
-                className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto"
-                title="Chi tiết công việc"
-              >
-                <TodoDetailView
-                  assignee={
-                    members.find(
-                      (member) => member.id === detailTodo.assigneeMemberId,
-                    ) ?? null
-                  }
-                  canManagePlan={isOwner && plan.status !== 'closed'}
-                  isSubmitting={isTodoSubmitting}
-                  milestoneOptions={sortedWorkMilestones.map((milestone) => ({
-                    value: milestone.id,
-                    label: milestone.title,
-                  }))}
-                  onAddVendor={(todo) => {
-                    setDetailTodo(null);
-                    setTodoToRestoreAfterVendor(todo);
-                    setEditingVendorId(null);
-                    setVendorFormTodo(todo);
-                  }}
-                  onChangeStatus={handleChangeTodoStatus}
-                  onClose={() => setDetailTodo(null)}
-                  onDeleteTodo={(todo) => {
-                    setDetailTodo(null);
-                    void handleDeleteTodo(todo);
-                  }}
-                  onEdit={(todo) => {
-                    setDetailTodo(null);
-                    setSelectedMilestoneId(todo.milestoneId);
-                    setEditingTodo(todo);
-                    setShowTodoForm(true);
-                  }}
-                  onEditVendor={(todo, vendorId) => {
-                    setDetailTodo(null);
-                    setTodoToRestoreAfterVendor(todo);
-                    setEditingVendorId(vendorId);
-                    setVendorFormTodo(todo);
-                  }}
-                  onDeleteVendor={handleDeleteVendor}
-                  onMoveToMilestone={handleMoveTodoToMilestone}
-                  onSelectVendor={handleSelectTodoVendor}
-                  todo={detailTodo}
-                />
-              </Dialog>
-            </div>
-            <div className="md:hidden">
-              <BottomSheet
-                onClose={() => setDetailTodo(null)}
-                open={Boolean(detailTodo)}
-                title="Chi tiết công việc"
-              >
-                <TodoDetailView
-                  assignee={
-                    members.find(
-                      (member) => member.id === detailTodo.assigneeMemberId,
-                    ) ?? null
-                  }
-                  canManagePlan={isOwner && plan.status !== 'closed'}
-                  isSubmitting={isTodoSubmitting}
-                  milestoneOptions={sortedWorkMilestones.map((milestone) => ({
-                    value: milestone.id,
-                    label: milestone.title,
-                  }))}
-                  onAddVendor={(todo) => {
-                    setDetailTodo(null);
-                    setTodoToRestoreAfterVendor(todo);
-                    setEditingVendorId(null);
-                    setVendorFormTodo(todo);
-                  }}
-                  onChangeStatus={handleChangeTodoStatus}
-                  onClose={() => setDetailTodo(null)}
-                  onDeleteTodo={(todo) => {
-                    setDetailTodo(null);
-                    void handleDeleteTodo(todo);
-                  }}
-                  onEdit={(todo) => {
-                    setDetailTodo(null);
-                    setSelectedMilestoneId(todo.milestoneId);
-                    setEditingTodo(todo);
-                    setShowTodoForm(true);
-                  }}
-                  onEditVendor={(todo, vendorId) => {
-                    setDetailTodo(null);
-                    setTodoToRestoreAfterVendor(todo);
-                    setEditingVendorId(vendorId);
-                    setVendorFormTodo(todo);
-                  }}
-                  onDeleteVendor={handleDeleteVendor}
-                  onMoveToMilestone={handleMoveTodoToMilestone}
-                  onSelectVendor={handleSelectTodoVendor}
-                  todo={detailTodo}
-                />
-              </BottomSheet>
-            </div>
-          </>
-        ) : null}
-        {detailExpense ? (
-          <>
-            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
-              <button
-                aria-label="Đóng chi tiết khoản chi"
-                className="absolute inset-0"
-                onClick={() => setDetailExpense(null)}
-                type="button"
-              />
-              <Dialog
-                className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto"
-                title="Chi tiết khoản chi"
-              >
-                <div className="space-y-4">
-                  <ExpenseDetailCard
-                    categories={[...categories, ...incomeCategories]}
-                    expense={detailExpense}
-                    members={members}
-                    milestones={visibleMilestones}
-                    planId={planId}
-                    travelActivities={travelActivities}
-                  />
-                  {expenseActionError ? (
-                    <AuthFormMessage
-                      message={expenseActionError}
-                      type="error"
-                    />
-                  ) : null}
-                  <div className="flex flex-wrap items-center justify-end gap-2">
-                    <Button
-                      onClick={() => setDetailExpense(null)}
-                      variant="ghost"
-                    >
-                      Đóng
-                    </Button>
-                    {canEditAllExpenses ||
-                    (hasPlanCapability(
-                      currentMember,
-                      'finance.editOwnExpense',
-                    ) &&
-                      detailExpense.createdByUserId === user?.uid) ? (
-                      <Button onClick={() => openEditExpense(detailExpense)}>
-                        Chỉnh sửa
-                      </Button>
-                    ) : null}
-                    {hasPlanCapability(
-                      currentMember,
-                      'finance.deleteAllExpense',
-                    ) ||
-                    (hasPlanCapability(
-                      currentMember,
-                      'finance.deleteOwnExpense',
-                    ) &&
-                      detailExpense.createdByUserId === user?.uid) ? (
-                      <Button
-                        disabled={isDeletingExpenseInline}
-                        onClick={() =>
-                          void handleDeleteExpenseInline(detailExpense)
-                        }
-                        variant="ghost"
-                      >
-                        Xoá
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
-              </Dialog>
-            </div>
-            <div className="md:hidden">
-              <BottomSheet
-                onClose={() => setDetailExpense(null)}
-                open={Boolean(detailExpense)}
-                title="Chi tiết khoản chi"
-              >
-                <div className="space-y-4">
-                  <ExpenseDetailCard
-                    categories={[...categories, ...incomeCategories]}
-                    expense={detailExpense}
-                    members={members}
-                    milestones={visibleMilestones}
-                    planId={planId}
-                    travelActivities={travelActivities}
-                  />
-                  {expenseActionError ? (
-                    <AuthFormMessage
-                      message={expenseActionError}
-                      type="error"
-                    />
-                  ) : null}
-                  <div className="flex flex-wrap items-center justify-end gap-2">
-                    <Button
-                      onClick={() => setDetailExpense(null)}
-                      variant="ghost"
-                    >
-                      Đóng
-                    </Button>
-                    {canEditAllExpenses ||
-                    (hasPlanCapability(
-                      currentMember,
-                      'finance.editOwnExpense',
-                    ) &&
-                      detailExpense.createdByUserId === user?.uid) ? (
-                      <Button onClick={() => openEditExpense(detailExpense)}>
-                        Chỉnh sửa
-                      </Button>
-                    ) : null}
-                    {hasPlanCapability(
-                      currentMember,
-                      'finance.deleteAllExpense',
-                    ) ||
-                    (hasPlanCapability(
-                      currentMember,
-                      'finance.deleteOwnExpense',
-                    ) &&
-                      detailExpense.createdByUserId === user?.uid) ? (
-                      <Button
-                        disabled={isDeletingExpenseInline}
-                        onClick={() =>
-                          void handleDeleteExpenseInline(detailExpense)
-                        }
-                        variant="ghost"
-                      >
-                        Xoá
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
-              </BottomSheet>
-            </div>
-          </>
-        ) : null}
-        {showExpenseForm ? (
-          <>
-            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
-              <button
-                aria-label="Đóng form khoản chi"
-                className="absolute inset-0"
-                onClick={closeExpenseForm}
-                type="button"
-              />
-              <Dialog
-                className="relative z-10 max-h-[90vh] w-full max-w-xl overflow-y-auto"
-                title={editingExpense ? 'Sửa khoản chi' : 'Thêm khoản chi'}
-              >
-                <ExpenseForm
-                  defaultMilestoneId={expenseFormMilestoneId ?? undefined}
-                  expense={editingExpense ?? undefined}
-                  mode={editingExpense ? 'edit' : 'create'}
-                  onCancel={closeExpenseForm}
-                  onSuccess={closeExpenseForm}
-                  planId={planId}
-                />
-              </Dialog>
-            </div>
-            <div className="md:hidden">
-              <BottomSheet
-                onClose={closeExpenseForm}
-                open={showExpenseForm}
-                title={editingExpense ? 'Sửa khoản chi' : 'Thêm khoản chi'}
-              >
-                <ExpenseForm
-                  defaultMilestoneId={expenseFormMilestoneId ?? undefined}
-                  expense={editingExpense ?? undefined}
-                  mode={editingExpense ? 'edit' : 'create'}
-                  onCancel={closeExpenseForm}
-                  onSuccess={closeExpenseForm}
-                  planId={planId}
-                />
-              </BottomSheet>
-            </div>
-          </>
-        ) : null}
+        <ResponsiveModal
+          className="max-h-[90vh] w-full max-w-lg overflow-y-auto"
+          onOpenChange={(next) => {
+            if (!next) {
+              setDetailTodo(null);
+            }
+          }}
+          open={Boolean(detailTodo)}
+          title="Chi tiết công việc"
+        >
+          {detailTodo ? (
+            <TodoDetailView
+              assignee={
+                members.find(
+                  (member) => member.id === detailTodo.assigneeMemberId,
+                ) ?? null
+              }
+              canManagePlan={isOwner && plan.status !== 'closed'}
+              isSubmitting={isTodoSubmitting}
+              milestoneOptions={sortedWorkMilestones.map((milestone) => ({
+                value: milestone.id,
+                label: milestone.title,
+              }))}
+              onAddVendor={(todo) => {
+                setDetailTodo(null);
+                setTodoToRestoreAfterVendor(todo);
+                setEditingVendorId(null);
+                setVendorFormTodo(todo);
+              }}
+              onChangeStatus={handleChangeTodoStatus}
+              onClose={() => setDetailTodo(null)}
+              onDeleteTodo={(todo) => {
+                setDetailTodo(null);
+                void handleDeleteTodo(todo);
+              }}
+              onEdit={(todo) => {
+                setDetailTodo(null);
+                setSelectedMilestoneId(todo.milestoneId);
+                setEditingTodo(todo);
+                setShowTodoForm(true);
+              }}
+              onEditVendor={(todo, vendorId) => {
+                setDetailTodo(null);
+                setTodoToRestoreAfterVendor(todo);
+                setEditingVendorId(vendorId);
+                setVendorFormTodo(todo);
+              }}
+              onDeleteVendor={handleDeleteVendor}
+              onMoveToMilestone={handleMoveTodoToMilestone}
+              onSelectVendor={handleSelectTodoVendor}
+              todo={detailTodo}
+            />
+          ) : null}
+        </ResponsiveModal>
+        <ResponsiveModal
+          className="max-h-[90vh] w-full max-w-lg overflow-y-auto"
+          onOpenChange={(next) => {
+            if (!next) {
+              setDetailExpense(null);
+            }
+          }}
+          open={Boolean(detailExpense)}
+          title="Chi tiết khoản chi"
+        >
+          {detailExpense ? (
+            <ExpenseDetailPanel
+              categories={[...categories, ...incomeCategories]}
+              errorMessage={expenseActionError}
+              expense={detailExpense}
+              isDeleting={isDeletingExpenseInline}
+              members={members}
+              milestones={visibleMilestones}
+              onClose={() => setDetailExpense(null)}
+              onDelete={() => void handleDeleteExpenseInline(detailExpense)}
+              onEdit={() => openEditExpense(detailExpense)}
+              planId={planId}
+              travelActivities={travelActivities}
+              {...getExpenseDetailPermissions(detailExpense)}
+            />
+          ) : null}
+        </ResponsiveModal>
+        <ResponsiveModal
+          className="max-h-[90vh] w-full max-w-lg overflow-y-auto"
+          onOpenChange={(next) => {
+            if (!next) {
+              setDetailIncome(null);
+            }
+          }}
+          open={Boolean(detailIncome)}
+          title="Chi tiết khoản thu"
+        >
+          {detailIncome ? (
+            <IncomeDetailPanel
+              categories={[...categories, ...incomeCategories]}
+              errorMessage={incomeActionError}
+              income={detailIncome}
+              isDeleting={isDeletingIncomeInline}
+              members={members}
+              milestones={visibleMilestones}
+              onClose={() => setDetailIncome(null)}
+              onDelete={() => void handleDeleteIncomeInline(detailIncome)}
+              onEdit={() => openEditIncome(detailIncome)}
+              {...getIncomeDetailPermissions(detailIncome)}
+            />
+          ) : null}
+        </ResponsiveModal>
+        <ResponsiveModal
+          className="max-h-[90vh] w-full max-w-xl overflow-y-auto"
+          onOpenChange={(next) => {
+            if (!next) {
+              closeExpenseForm();
+            }
+          }}
+          open={showExpenseForm}
+          title={editingExpense ? 'Sửa khoản chi' : 'Thêm khoản chi'}
+        >
+          <ExpenseForm
+            defaultMilestoneId={expenseFormMilestoneId ?? undefined}
+            expense={editingExpense ?? undefined}
+            mode={editingExpense ? 'edit' : 'create'}
+            onCancel={closeExpenseForm}
+            onSuccess={closeExpenseForm}
+            planId={planId}
+          />
+        </ResponsiveModal>
+        <ResponsiveModal
+          className="max-h-[90vh] w-full max-w-xl overflow-y-auto"
+          onOpenChange={(next) => {
+            if (!next) {
+              closeIncomeForm();
+            }
+          }}
+          open={showIncomeForm}
+          title={editingIncome ? 'Sửa khoản thu' : 'Thêm khoản thu'}
+        >
+          <IncomeForm
+            defaultMilestoneId={incomeFormMilestoneId ?? undefined}
+            income={editingIncome ?? undefined}
+            mode={editingIncome ? 'edit' : 'create'}
+            onCancel={closeIncomeForm}
+            onSuccess={closeIncomeForm}
+            planId={planId}
+          />
+        </ResponsiveModal>
         <ResponsiveModal
           className="max-h-[90vh] w-full max-w-lg overflow-y-auto"
           description={
@@ -2401,76 +2395,39 @@ export default function PlanDetailPage() {
             />
           ) : null}
         </ResponsiveModal>
-        {showTravelActivityForm && user ? (
-          <>
-            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
-              <button
-                aria-label="Đóng form hoạt động lịch trình"
-                className="absolute inset-0"
-                onClick={() => {
-                  setShowTravelActivityForm(false);
-                  setEditingTravelActivity(null);
-                }}
-                type="button"
-              />
-              <Dialog
-                className="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto"
-                description="Mỗi activity đại diện cho một chặng hoặc một điểm dừng trong itinerary."
-                title={
-                  editingTravelActivity
-                    ? 'Cập nhật activity'
-                    : 'Thêm activity vào itinerary'
-                }
-              >
-                <TravelActivityForm
-                  activity={editingTravelActivity ?? undefined}
-                  currentMember={currentMember}
-                  currentUser={user}
-                  members={members}
-                  onCancel={() => {
-                    setShowTravelActivityForm(false);
-                    setEditingTravelActivity(null);
-                  }}
-                  onSuccess={() => {
-                    setShowTravelActivityForm(false);
-                    setEditingTravelActivity(null);
-                  }}
-                  plan={ensuredPlan}
-                />
-              </Dialog>
-            </div>
-            <div className="md:hidden">
-              <BottomSheet
-                description="Mỗi activity đại diện cho một chặng hoặc một điểm dừng trong itinerary."
-                onClose={() => {
-                  setShowTravelActivityForm(false);
-                  setEditingTravelActivity(null);
-                }}
-                open={showTravelActivityForm}
-                title={
-                  editingTravelActivity
-                    ? 'Cập nhật activity'
-                    : 'Thêm activity vào itinerary'
-                }
-              >
-                <TravelActivityForm
-                  activity={editingTravelActivity ?? undefined}
-                  currentMember={currentMember}
-                  currentUser={user}
-                  members={members}
-                  onCancel={() => {
-                    setShowTravelActivityForm(false);
-                    setEditingTravelActivity(null);
-                  }}
-                  onSuccess={() => {
-                    setShowTravelActivityForm(false);
-                    setEditingTravelActivity(null);
-                  }}
-                  plan={ensuredPlan}
-                />
-              </BottomSheet>
-            </div>
-          </>
+        {user ? (
+          <ResponsiveModal
+            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto"
+            description="Mỗi activity đại diện cho một chặng hoặc một điểm dừng trong itinerary."
+            onOpenChange={(next) => {
+              if (!next) {
+                setShowTravelActivityForm(false);
+                setEditingTravelActivity(null);
+              }
+            }}
+            open={showTravelActivityForm}
+            title={
+              editingTravelActivity
+                ? 'Cập nhật activity'
+                : 'Thêm activity vào itinerary'
+            }
+          >
+            <TravelActivityForm
+              activity={editingTravelActivity ?? undefined}
+              currentMember={currentMember}
+              currentUser={user}
+              members={members}
+              onCancel={() => {
+                setShowTravelActivityForm(false);
+                setEditingTravelActivity(null);
+              }}
+              onSuccess={() => {
+                setShowTravelActivityForm(false);
+                setEditingTravelActivity(null);
+              }}
+              plan={ensuredPlan}
+            />
+          </ResponsiveModal>
         ) : null}
         {isOwner ? (
           <ResponsiveModal
@@ -2539,242 +2496,124 @@ export default function PlanDetailPage() {
           title="Hoàn thành kế hoạch này?"
         />
         {headerModal === 'plan-settings' ? (
-          <>
-            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
-              <button
-                aria-label="Đóng cài đặt kế hoạch"
-                className="absolute inset-0"
-                onClick={() => setHeaderModal(null)}
-                type="button"
-              />
-              <Dialog
-                className="relative z-10 max-h-[90vh] w-full max-w-2xl overflow-y-auto"
-                description="Chủ kế hoạch có thể đóng kế hoạch để khóa thao tác mới nhưng vẫn giữ khả năng xem timeline và thống kê."
-                title="Cài đặt kế hoạch"
-              >
-                {closingError ? (
-                  <AuthFormMessage message={closingError} type="error" />
-                ) : null}
-                {completionError ? (
-                  <AuthFormMessage message={completionError} type="error" />
-                ) : null}
-                {archivingError ? (
-                  <AuthFormMessage message={archivingError} type="error" />
-                ) : null}
-                <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
-                  Múi giờ hiện tại: {plan.timezone}
-                  <br />
-                  Thành viên chủ kế hoạch: {plan.ownerMemberId}
-                  <br />
-                  Trạng thái kế hoạch: {plan.status}
-                  <br />
-                  Thời điểm đóng:{' '}
-                  {plan.closedAt
-                    ? formatDate(timestampToDate(plan.closedAt) ?? new Date())
-                    : 'Chưa đóng'}
-                </div>
-
-                <div className="mt-4 rounded-[24px] border border-slate-200 bg-white p-5">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
-                      <Lock className="size-4 shrink-0" />
-                      Khóa kế hoạch cho tôi
-                    </div>
-                    <Switch
-                      aria-label="Khóa kế hoạch cho tôi"
-                      checked={Boolean(mySummary?.isLocked)}
-                      disabled={isSecurityActionSubmitting}
-                      onCheckedChange={handleToggleSecurity}
-                    />
-                  </div>
-                  <p className="mt-2 text-xs leading-5 text-slate-500">
-                    Chỉ khóa kế hoạch này trên tài khoản của bạn. Khi mở lại,
-                    bạn sẽ nhập mã bảo mật cá nhân của mình. Không ảnh hưởng tới
-                    thành viên khác.
-                  </p>
-                  {securityActionError ? (
-                    <div className="mt-3">
-                      <AuthFormMessage
-                        message={securityActionError}
-                        type="error"
-                      />
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="mt-4 flex flex-wrap justify-end gap-2">
-                  {isOwner ? (
-                    <Button
-                      className="border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                      disabled={isCompletingPlan || Boolean(isPlanEnded)}
-                      onClick={() => setShowCompletePlanConfirm(true)}
-                      variant="secondary"
-                    >
-                      {plan.status === 'completed'
-                        ? 'Đã hoàn thành kế hoạch'
-                        : 'Hoàn thành kế hoạch'}
-                    </Button>
-                  ) : null}
-                  {isOwner ? (
-                    <Button
-                      className="border border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
-                      disabled={isClosingPlan || Boolean(isPlanEnded)}
-                      onClick={() => setShowClosePlanConfirm(true)}
-                      variant="secondary"
-                    >
-                      {isPlanEnded ? 'Kế hoạch đã kết thúc' : 'Đóng kế hoạch'}
-                    </Button>
-                  ) : null}
-                  {isOwner ? (
-                    <Button
-                      className="border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
-                      disabled={isArchivingPlan || Boolean(isPlanEnded)}
-                      onClick={() => setShowArchivePlanConfirm(true)}
-                      variant="secondary"
-                    >
-                      Lưu trữ kế hoạch
-                    </Button>
-                  ) : null}
-                  <Button onClick={() => setHeaderModal(null)} variant="ghost">
-                    Đóng
-                  </Button>
-                </div>
-              </Dialog>
+          <ResponsiveModal
+            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto"
+            description="Chủ kế hoạch có thể đóng kế hoạch để khóa thao tác mới nhưng vẫn giữ khả năng xem timeline và thống kê."
+            onOpenChange={(next) => {
+              if (!next) {
+                setHeaderModal(null);
+              }
+            }}
+            open={headerModal === 'plan-settings'}
+            title="Cài đặt kế hoạch"
+          >
+            {closingError ? (
+              <AuthFormMessage message={closingError} type="error" />
+            ) : null}
+            {completionError ? (
+              <AuthFormMessage message={completionError} type="error" />
+            ) : null}
+            {archivingError ? (
+              <AuthFormMessage message={archivingError} type="error" />
+            ) : null}
+            <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
+              Múi giờ hiện tại: {plan.timezone}
+              <br />
+              Thành viên chủ kế hoạch: {plan.ownerMemberId}
+              <br />
+              Trạng thái kế hoạch: {plan.status}
+              <br />
+              Thời điểm đóng:{' '}
+              {plan.closedAt
+                ? formatDate(timestampToDate(plan.closedAt) ?? new Date())
+                : 'Chưa đóng'}
             </div>
-            <div className="md:hidden">
-              <BottomSheet
-                description="Chủ kế hoạch có thể đóng kế hoạch để khóa thao tác mới nhưng vẫn giữ khả năng xem timeline và thống kê."
-                onClose={() => setHeaderModal(null)}
-                open={headerModal === 'plan-settings'}
-                title="Cài đặt kế hoạch"
-              >
-                {closingError ? (
-                  <AuthFormMessage message={closingError} type="error" />
-                ) : null}
-                {completionError ? (
-                  <AuthFormMessage message={completionError} type="error" />
-                ) : null}
-                {archivingError ? (
-                  <AuthFormMessage message={archivingError} type="error" />
-                ) : null}
-                <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
-                  Múi giờ hiện tại: {plan.timezone}
-                  <br />
-                  Thành viên chủ kế hoạch: {plan.ownerMemberId}
-                  <br />
-                  Trạng thái kế hoạch: {plan.status}
-                  <br />
-                  Thời điểm đóng:{' '}
-                  {plan.closedAt
-                    ? formatDate(timestampToDate(plan.closedAt) ?? new Date())
-                    : 'Chưa đóng'}
-                </div>
 
-                <div className="mt-4 rounded-[24px] border border-slate-200 bg-white p-5">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
-                      <Lock className="size-4 shrink-0" />
-                      Khóa kế hoạch cho tôi
-                    </div>
-                    <Switch
-                      aria-label="Khóa kế hoạch cho tôi"
-                      checked={Boolean(mySummary?.isLocked)}
-                      disabled={isSecurityActionSubmitting}
-                      onCheckedChange={handleToggleSecurity}
-                    />
-                  </div>
-                  <p className="mt-2 text-xs leading-5 text-slate-500">
-                    Chỉ khóa kế hoạch này trên tài khoản của bạn. Khi mở lại,
-                    bạn sẽ nhập mã bảo mật cá nhân của mình. Không ảnh hưởng tới
-                    thành viên khác.
-                  </p>
-                  {securityActionError ? (
-                    <div className="mt-3">
-                      <AuthFormMessage
-                        message={securityActionError}
-                        type="error"
-                      />
-                    </div>
-                  ) : null}
+            <div className="mt-4 rounded-[24px] border border-slate-200 bg-white p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                  <Lock className="size-4 shrink-0" />
+                  Khóa kế hoạch cho tôi
                 </div>
-
-                <div className="mt-4 flex flex-wrap justify-end gap-2">
-                  {isOwner ? (
-                    <Button
-                      className="border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                      disabled={isCompletingPlan || Boolean(isPlanEnded)}
-                      onClick={() => setShowCompletePlanConfirm(true)}
-                      variant="secondary"
-                    >
-                      {plan.status === 'completed'
-                        ? 'Đã hoàn thành kế hoạch'
-                        : 'Hoàn thành kế hoạch'}
-                    </Button>
-                  ) : null}
-                  {isOwner ? (
-                    <Button
-                      className="border border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
-                      disabled={isClosingPlan || Boolean(isPlanEnded)}
-                      onClick={() => setShowClosePlanConfirm(true)}
-                      variant="secondary"
-                    >
-                      {isPlanEnded ? 'Kế hoạch đã kết thúc' : 'Đóng kế hoạch'}
-                    </Button>
-                  ) : null}
-                  {isOwner ? (
-                    <Button
-                      className="border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
-                      disabled={isArchivingPlan || Boolean(isPlanEnded)}
-                      onClick={() => setShowArchivePlanConfirm(true)}
-                      variant="secondary"
-                    >
-                      Lưu trữ kế hoạch
-                    </Button>
-                  ) : null}
-                  <Button onClick={() => setHeaderModal(null)} variant="ghost">
-                    Đóng
-                  </Button>
+                <Switch
+                  aria-label="Khóa kế hoạch cho tôi"
+                  checked={Boolean(mySummary?.isLocked)}
+                  disabled={isSecurityActionSubmitting}
+                  onCheckedChange={handleToggleSecurity}
+                />
+              </div>
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                Chỉ khóa kế hoạch này trên tài khoản của bạn. Khi mở lại, bạn
+                sẽ nhập mã bảo mật cá nhân của mình. Không ảnh hưởng tới thành
+                viên khác.
+              </p>
+              {securityActionError ? (
+                <div className="mt-3">
+                  <AuthFormMessage
+                    message={securityActionError}
+                    type="error"
+                  />
                 </div>
-              </BottomSheet>
+              ) : null}
             </div>
-          </>
+
+            <div className="mt-4 flex flex-wrap justify-end gap-2">
+              {isOwner ? (
+                <Button
+                  className="border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                  disabled={isCompletingPlan || Boolean(isPlanEnded)}
+                  onClick={() => setShowCompletePlanConfirm(true)}
+                  variant="secondary"
+                >
+                  {plan.status === 'completed'
+                    ? 'Đã hoàn thành kế hoạch'
+                    : 'Hoàn thành kế hoạch'}
+                </Button>
+              ) : null}
+              {isOwner ? (
+                <Button
+                  className="border border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
+                  disabled={isClosingPlan || Boolean(isPlanEnded)}
+                  onClick={() => setShowClosePlanConfirm(true)}
+                  variant="secondary"
+                >
+                  {isPlanEnded ? 'Kế hoạch đã kết thúc' : 'Đóng kế hoạch'}
+                </Button>
+              ) : null}
+              {isOwner ? (
+                <Button
+                  className="border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+                  disabled={isArchivingPlan || Boolean(isPlanEnded)}
+                  onClick={() => setShowArchivePlanConfirm(true)}
+                  variant="secondary"
+                >
+                  Lưu trữ kế hoạch
+                </Button>
+              ) : null}
+              <Button onClick={() => setHeaderModal(null)} variant="ghost">
+                Đóng
+              </Button>
+            </div>
+          </ResponsiveModal>
         ) : null}
-        {headerModal === 'plan-lock' && user ? (
-          <>
-            <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
-              <button
-                aria-label="Đóng form đặt mã bảo mật cá nhân"
-                className="absolute inset-0"
-                onClick={() => setHeaderModal('plan-settings')}
-                type="button"
-              />
-              <Dialog
-                className="relative z-10 w-full max-w-md"
-                description="Mã này thuộc về tài khoản của bạn và chỉ dùng để khóa riêng các kế hoạch bạn tự bật."
-                title="Đặt mã bảo mật cá nhân"
-              >
-                <PasscodeForm
-                  onClose={() => setHeaderModal('plan-settings')}
-                  onSuccess={() => void handlePasscodeCreated()}
-                  userId={user.uid}
-                />
-              </Dialog>
-            </div>
-            <div className="md:hidden">
-              <BottomSheet
-                description="Mã này thuộc về tài khoản của bạn và chỉ dùng để khóa riêng các kế hoạch bạn tự bật."
-                onClose={() => setHeaderModal('plan-settings')}
-                open={headerModal === 'plan-lock'}
-                title="Đặt mã bảo mật cá nhân"
-              >
-                <PasscodeForm
-                  onClose={() => setHeaderModal('plan-settings')}
-                  onSuccess={() => void handlePasscodeCreated()}
-                  userId={user.uid}
-                />
-              </BottomSheet>
-            </div>
-          </>
+        {user ? (
+          <ResponsiveModal
+            className="w-full max-w-md"
+            description="Mã này thuộc về tài khoản của bạn và chỉ dùng để khóa riêng các kế hoạch bạn tự bật."
+            onOpenChange={(next) => {
+              if (!next) {
+                setHeaderModal('plan-settings');
+              }
+            }}
+            open={headerModal === 'plan-lock'}
+            title="Đặt mã bảo mật cá nhân"
+          >
+            <PasscodeForm
+              onClose={() => setHeaderModal('plan-settings')}
+              onSuccess={() => void handlePasscodeCreated()}
+              userId={user.uid}
+            />
+          </ResponsiveModal>
         ) : null}
         <ConfirmDialog
           cancelLabel={isOwner ? 'Hủy' : 'Đã hiểu'}
@@ -2896,6 +2735,7 @@ export default function PlanDetailPage() {
               members={members}
               milestones={visibleMilestones}
               onSelectExpense={setDetailExpense}
+              onSelectIncome={setDetailIncome}
               planId={planId}
             />
           ) : null}
@@ -2925,6 +2765,7 @@ export default function PlanDetailPage() {
               members={members}
               milestones={[statisticMilestoneMemberDrilldownMilestone]}
               onSelectExpense={setDetailExpense}
+              onSelectIncome={setDetailIncome}
               planId={planId}
               selectedMilestoneId={
                 statisticMilestoneMemberDrilldownMilestone.id

@@ -95,20 +95,15 @@ function PlanSummaryWidget({
 }
 
 function PlanningSnapshotWidget({
-  canManagePlanning,
   estimatedByMilestoneId,
   isMilestonesLoading,
-  isTodoSubmitting,
   isTodosLoading,
   members,
   milestoneActionError,
-  onAddVendor,
-  onDeleteTodo,
   onOpenPlanningMilestones,
-  onOpenPlanningTodo,
   onOpenPlanningTodos,
   onSelectUpcomingMilestone,
-  onToggleTodoStatus,
+  onViewTodo,
   selectedMilestoneId,
   todoActionError,
   upcomingMilestones,
@@ -153,17 +148,12 @@ function PlanningSnapshotWidget({
           <Skeleton className="h-32 rounded-[28px]" />
         ) : (
           <TodoList
-            canManagePlan={canManagePlanning}
             className="sm:grid-cols-2 lg:grid-cols-3"
             emptyMessage="Không có công việc nào sắp đến hạn."
-            isSubmitting={isTodoSubmitting}
             members={members}
             milestones={visibleMilestones}
             preserveOrder
-            onAddVendor={onAddVendor}
-            onChangeStatus={onToggleTodoStatus}
-            onDeleteTodo={onDeleteTodo}
-            onEdit={onOpenPlanningTodo}
+            onViewTodo={onViewTodo}
             todos={upcomingTodos}
           />
         )}

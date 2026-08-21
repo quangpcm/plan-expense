@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { Paperclip, Tag, Users } from 'lucide-react';
 
@@ -29,6 +28,7 @@ type TimelineListProps = {
   selectedMilestoneId?: string | null;
   onSelectedMilestoneChange?: (milestoneId: string | null) => void;
   onSelectExpense: (expense: ExpenseDocument) => void;
+  onSelectIncome: (income: IncomeDocument) => void;
   hideMilestoneFilter?: boolean;
 };
 
@@ -48,6 +48,7 @@ export function TimelineList({
   selectedMilestoneId: selectedMilestoneIdProp,
   onSelectedMilestoneChange,
   onSelectExpense,
+  onSelectIncome,
   hideMilestoneFilter = false,
 }: TimelineListProps) {
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<string>(selectedMilestoneIdProp || 'all');
@@ -188,11 +189,11 @@ export function TimelineList({
                   />
                 ) : (
                   <IncomeTimelineCard
-                    key={`income-${entry.id}`}
                     categories={categories}
                     income={entry.data}
+                    key={`income-${entry.id}`}
                     members={members}
-                    planId={planId}
+                    onSelectIncome={onSelectIncome}
                   />
                 ),
               )}
@@ -295,13 +296,13 @@ function ExpenseTimelineCard({
 }
 
 type IncomeTimelineCardProps = {
-  planId: string;
   income: IncomeDocument;
   members: PlanMemberDocument[];
   categories: Category[];
+  onSelectIncome: (income: IncomeDocument) => void;
 };
 
-function IncomeTimelineCard({ planId, income, members, categories }: IncomeTimelineCardProps) {
+function IncomeTimelineCard({ income, members, categories, onSelectIncome }: IncomeTimelineCardProps) {
   const contributor = members.find((member) => member.id === income.contributedByMemberId);
   const category = categories.find((item) => item.id === income.categoryId);
   const receivedAt = timestampToDate(income.receivedAt);
@@ -313,9 +314,10 @@ function IncomeTimelineCard({ planId, income, members, categories }: IncomeTimel
       <span className="flex size-6 shrink-0 items-center justify-center pt-5">
         <span className="size-2 rounded-full bg-[var(--color-income)]" />
       </span>
-      <Link
-        className="min-w-0 flex-1"
-        href={`/plans/${planId}/incomes/${income.id}?returnTab=timeline${income.milestoneId ? `&milestoneId=${income.milestoneId}` : ''}`}
+      <button
+        className="min-w-0 flex-1 text-left"
+        onClick={() => onSelectIncome(income)}
+        type="button"
       >
         <Card className="gap-2 border-[var(--color-income-soft)] bg-[var(--color-income-soft)]/40 p-4 transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
           <div className="flex items-center gap-2">
@@ -334,7 +336,7 @@ function IncomeTimelineCard({ planId, income, members, categories }: IncomeTimel
             </p>
           </div>
         </Card>
-      </Link>
+      </button>
     </div>
   );
 }

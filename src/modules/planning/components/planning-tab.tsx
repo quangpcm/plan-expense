@@ -46,12 +46,9 @@ type PlanningTabProps = {
   onCloseExpenseSheet: () => void;
   onCreateMilestone: () => void;
   onAddTodo: (milestone: MilestoneDocument) => void;
-  onAddVendor: (todo: TodoDocument) => void;
   onChangeTodoStatus: (todo: TodoDocument, status: TodoDocument['status']) => void;
   onDeleteMilestone: (milestone: MilestoneDocument) => void;
-  onDeleteTodo: (todo: TodoDocument) => void;
   onEditMilestone: (milestone: MilestoneDocument) => void;
-  onEditTodo: (todo: TodoDocument) => void;
   onMilestoneQueryChange: (query: string) => void;
   onOpenExpenseSheet: (milestone: MilestoneDocument) => void;
   onOpenMilestoneExpenseCreate: (milestoneId: string) => void;
@@ -59,6 +56,7 @@ type PlanningTabProps = {
   onReorderTodos: (milestoneId: string, orderedTodoIds: string[]) => Promise<void>;
   onSelectMilestone: (milestoneId: string | null) => void;
   onSelectExpense: (expense: ExpenseDocument) => void;
+  onSelectIncome: (income: IncomeDocument) => void;
   onSortOrderChange: (sortOrder: TodoDueSortOrder) => void;
   onStatusFilterChange: (statusFilter: TodoStatusFilter) => void;
   onViewTodo: (todo: TodoDocument | null) => void;
@@ -94,12 +92,9 @@ export function PlanningTab({
   onCloseExpenseSheet,
   onCreateMilestone,
   onAddTodo,
-  onAddVendor,
   onChangeTodoStatus,
   onDeleteMilestone,
-  onDeleteTodo,
   onEditMilestone,
-  onEditTodo,
   onMilestoneQueryChange,
   onOpenExpenseSheet,
   onOpenMilestoneExpenseCreate,
@@ -107,6 +102,7 @@ export function PlanningTab({
   onReorderTodos,
   onSelectMilestone,
   onSelectExpense,
+  onSelectIncome,
   onSortOrderChange,
   onStatusFilterChange,
   onViewTodo,
@@ -257,6 +253,7 @@ export function PlanningTab({
                 members={members}
                 milestones={[expenseSheetMilestone]}
                 onSelectExpense={onSelectExpense}
+                onSelectIncome={onSelectIncome}
                 planId={planId}
                 selectedMilestoneId={expenseSheetMilestone.id}
               />
@@ -279,20 +276,15 @@ export function PlanningTab({
             <Skeleton className="h-40 rounded-[28px]" />
           ) : (
             <TodoList
-              canManagePlan={isOwner && !isPlanEnded}
               className="sm:grid-cols-2 lg:grid-cols-3"
               emptyMessage={
                 searchStatusFilter === 'done'
                   ? 'Chưa có công việc nào hoàn thành.'
                   : 'Kế hoạch này chưa có công việc nào.'
               }
-              isSubmitting={isTodoSubmitting}
               members={members}
               milestones={visibleMilestones}
-              onAddVendor={onAddVendor}
-              onChangeStatus={onChangeTodoStatus}
-              onDeleteTodo={onDeleteTodo}
-              onEdit={onEditTodo}
+              onViewTodo={onViewTodo}
               preserveOrder
               todos={allTodosFilteredAndSorted}
             />

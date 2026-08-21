@@ -34,16 +34,12 @@ export type OverviewRendererProps = {
   nativeDebtError: string | null;
   isMilestonesLoading: boolean;
   isPlanEnded: boolean;
-  isTodoSubmitting: boolean;
   isTodosLoading: boolean;
   isTravelActivitiesLoading: boolean;
   isTravelItineraryEnabled: boolean;
   members: PlanMemberDocument[];
   milestoneActionError: string | null;
-  onAddVendor: (todo: TodoDocument) => void;
-  onDeleteTodo: (todo: TodoDocument) => void;
   onOpenPlanningMilestones: () => void;
-  onOpenPlanningTodo: (todo: TodoDocument) => void;
   onOpenPlanningTodos: () => void;
   onOpenDebtTracking: () => void;
   onOpenWeddingGuests: () => void;
@@ -52,10 +48,6 @@ export type OverviewRendererProps = {
   onSelectMemberDrilldown: (memberId: string) => void;
   onSelectMilestoneDrilldown: (milestoneId: string, memberId: string) => void;
   onSelectUpcomingMilestone: (milestoneId: string) => void;
-  onToggleTodoStatus: (
-    todo: TodoDocument,
-    status: TodoDocument['status'],
-  ) => void;
   plan: Pick<PlanDocument, 'planType' | 'status' | 'debtModel'> | PlanType;
   planId: string;
   planStatus: PlanStatus;

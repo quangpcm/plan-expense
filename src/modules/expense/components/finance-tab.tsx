@@ -1,30 +1,45 @@
 'use client';
 
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, Receipt } from 'lucide-react';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
+import { ExpenseDetailPanel } from '@/modules/expense/components/expense-detail-panel';
 import { TimelineList } from '@/modules/expense/components/timeline-list';
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
 import type { CategoryOption } from '@/modules/category/types/category';
+import { IncomeDetailPanel } from '@/modules/income/components/income-detail-panel';
 import type { IncomeDocument } from '@/modules/income/types/income';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import type { TravelActivityDocument } from '@/modules/travel-activity/types/travel-activity';
 import { Button } from '@/shared/components/ui/button';
+import { Card } from '@/shared/components/ui/card';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
+
+export type FinanceDesktopDetail =
+  | ({ kind: 'expense'; expense: ExpenseDocument } & { canEdit: boolean; canDelete: boolean })
+  | ({ kind: 'income'; income: IncomeDocument } & { canEdit: boolean; canDelete: boolean });
 
 type FinanceTabProps = {
   categories: CategoryOption[];
+  desktopDetail: FinanceDesktopDetail | null;
+  desktopDetailError: string | null;
   errorMessage: string | null;
   expenses: ExpenseDocument[];
   incomes: IncomeDocument[];
+  isDeletingDesktopDetail: boolean;
   isPlanEnded: boolean;
   members: PlanMemberDocument[];
   milestones: MilestoneDocument[];
+  onCloseDesktopDetail: () => void;
+  onDeleteDesktopDetail: () => void;
+  onEditDesktopDetail: () => void;
   onOpenCreateExpense: (milestoneId: string) => void;
+  onOpenCreateIncome: (milestoneId: string) => void;
   onOpenStatistic: () => void;
   onSelectExpense: (expense: ExpenseDocument) => void;
+  onSelectIncome: (income: IncomeDocument) => void;
   onSelectedMilestoneChange: (milestoneId: string | null) => void;
   plan: PlanDocument;
   planId: string;
@@ -34,15 +49,23 @@ type FinanceTabProps = {
 
 export function FinanceTab({
   categories,
+  desktopDetail,
+  desktopDetailError,
   errorMessage,
   expenses,
   incomes,
+  isDeletingDesktopDetail,
   isPlanEnded,
   members,
   milestones,
+  onCloseDesktopDetail,
+  onDeleteDesktopDetail,
+  onEditDesktopDetail,
   onOpenCreateExpense,
+  onOpenCreateIncome,
   onOpenStatistic,
   onSelectExpense,
+  onSelectIncome,
   onSelectedMilestoneChange,
   plan,
   planId,
@@ -50,16 +73,6 @@ export function FinanceTab({
   travelActivities = [],
 }: FinanceTabProps) {
   const isDebtPlan = plan.planType === 'debt';
-  const incomeHref = `/plans/${planId}/incomes/new${
-    selectedMilestoneId
-      ? `?milestoneId=${selectedMilestoneId}&returnTab=timeline`
-      : '?returnTab=timeline'
-  }`;
-  const expenseHref = `/plans/${planId}/expenses/new${
-    selectedMilestoneId
-      ? `?milestoneId=${selectedMilestoneId}&returnTab=timeline`
-      : '?returnTab=timeline'
-  }`;
   const emptyStateDescription = isDebtPlan
     ? `Chưa có giao dịch finance nào cho khoản nợ này${
         selectedMilestoneId !== 'all' ? ' trong bộ lọc hiện tại' : ''
@@ -92,7 +105,7 @@ export function FinanceTab({
             ) : (
               <Button
                 className="min-w-0 justify-center border border-[var(--color-income)]/14 bg-[var(--color-income-soft)] px-3 text-[var(--color-income)] hover:bg-[color-mix(in_srgb,var(--color-income-soft)_72%,white)]"
-                href={incomeHref}
+                onClick={() => onOpenCreateIncome(selectedMilestoneId ?? '')}
                 variant="secondary"
               >
                 {incomeActionLabel}
@@ -131,7 +144,7 @@ export function FinanceTab({
               ) : (
                 <Button
                   className="min-w-0 justify-center border border-[var(--color-income)]/14 bg-[var(--color-income-soft)] text-[var(--color-income)] hover:bg-[color-mix(in_srgb,var(--color-income-soft)_72%,white)]"
-                  href={incomeHref}
+                  onClick={() => onOpenCreateIncome(selectedMilestoneId ?? '')}
                   variant="secondary"
                 >
                   {incomeActionLabel}
@@ -144,7 +157,7 @@ export function FinanceTab({
               ) : (
                 <Button
                   className="min-w-0 justify-center bg-[color:color-mix(in_srgb,var(--color-primary)_92%,white)]"
-                  href={expenseHref}
+                  onClick={() => onOpenCreateExpense(selectedMilestoneId ?? '')}
                 >
                   {expenseActionLabel}
                 </Button>
@@ -164,19 +177,71 @@ export function FinanceTab({
           type="success"
         />
       ) : null}
-      <TimelineList
-        categories={categories}
-        expenses={expenses}
-        incomes={incomes}
-        members={members}
-        milestones={milestones}
-        onSelectedMilestoneChange={onSelectedMilestoneChange}
-        onSelectExpense={onSelectExpense}
-        planId={planId}
-        selectedMilestoneId={selectedMilestoneId}
-        travelActivities={travelActivities}
-        {...(emptyStateDescription ? { emptyStateDescription } : {})}
-      />
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <TimelineList
+          categories={categories}
+          expenses={expenses}
+          incomes={incomes}
+          members={members}
+          milestones={milestones}
+          onSelectedMilestoneChange={onSelectedMilestoneChange}
+          onSelectExpense={onSelectExpense}
+          onSelectIncome={onSelectIncome}
+          planId={planId}
+          selectedMilestoneId={selectedMilestoneId}
+          travelActivities={travelActivities}
+          {...(emptyStateDescription ? { emptyStateDescription } : {})}
+        />
+        <div className="hidden lg:block">
+          {desktopDetail ? (
+            desktopDetail.kind === 'expense' ? (
+              <ExpenseDetailPanel
+                canDelete={desktopDetail.canDelete}
+                canEdit={desktopDetail.canEdit}
+                categories={categories}
+                errorMessage={desktopDetailError}
+                expense={desktopDetail.expense}
+                isDeleting={isDeletingDesktopDetail}
+                members={members}
+                milestones={milestones}
+                onClose={onCloseDesktopDetail}
+                onDelete={onDeleteDesktopDetail}
+                onEdit={onEditDesktopDetail}
+                planId={planId}
+                travelActivities={travelActivities}
+              />
+            ) : (
+              <IncomeDetailPanel
+                canDelete={desktopDetail.canDelete}
+                canEdit={desktopDetail.canEdit}
+                categories={categories}
+                errorMessage={desktopDetailError}
+                income={desktopDetail.income}
+                isDeleting={isDeletingDesktopDetail}
+                members={members}
+                milestones={milestones}
+                onClose={onCloseDesktopDetail}
+                onDelete={onDeleteDesktopDetail}
+                onEdit={onEditDesktopDetail}
+              />
+            )
+          ) : (
+            <Card className="flex min-h-[360px] flex-col items-center justify-center gap-3 border-dashed border-slate-200 bg-slate-50 text-center shadow-none">
+              <div className="flex size-14 items-center justify-center rounded-2xl bg-white text-[var(--color-primary)] shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
+                <Receipt className="size-6" />
+              </div>
+              <div className="space-y-1.5">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">Chi tiết giao dịch</p>
+                <h3 className="text-lg font-semibold text-slate-950">Chưa chọn khoản nào</h3>
+                <p className="max-w-xs text-sm leading-6 text-slate-600">
+                  Chọn một khoản chi hoặc khoản thu trong danh sách bên trái để xem đầy đủ thông
+                  tin, người tham gia và ảnh đính kèm.
+                </p>
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
     </>
   );
 }
