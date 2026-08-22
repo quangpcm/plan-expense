@@ -5,6 +5,7 @@ import { CalendarRange, Clock3, Plus, Route } from 'lucide-react';
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
+import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
@@ -14,6 +15,7 @@ import {
   TravelActivityList,
 } from '@/modules/travel-activity';
 import type { TravelActivityDocument } from '@/modules/travel-activity/types/travel-activity';
+import { useMediaQuery } from '@/shared/hooks/use-media-query';
 import { formatDueCountdown } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 
@@ -26,6 +28,7 @@ type TravelItineraryTabProps = {
   expenses: ExpenseDocument[];
   isLoading: boolean;
   members: PlanMemberDocument[];
+  onCloseDetail: () => void;
   onCreate: () => void;
   onDelete: (activity: TravelActivityDocument) => void;
   onEdit: (activity: TravelActivityDocument) => void;
@@ -42,6 +45,7 @@ export function TravelItineraryTab({
   expenses,
   isLoading,
   members,
+  onCloseDetail,
   onCreate,
   onDelete,
   onEdit,
@@ -49,6 +53,7 @@ export function TravelItineraryTab({
   onSelect,
 }: TravelItineraryTabProps) {
   const summary = buildItinerarySummary(activities);
+  const isDesktopLayout = useMediaQuery('(min-width: 1280px)');
 
   return (
     <div className="space-y-5">
@@ -78,7 +83,7 @@ export function TravelItineraryTab({
             />
           )}
         </div>
-        <div className="space-y-4">
+        <div className="hidden space-y-4 xl:block">
           {isLoading ? (
             <Skeleton className="h-72 rounded-[28px]" />
           ) : detailActivity ? (
@@ -97,6 +102,34 @@ export function TravelItineraryTab({
           )}
         </div>
       </div>
+
+      {/* Mobile/tablet (< xl): detail không hiện inline nữa (đã ẩn ở cột trên) —
+          chọn 1 activity mở qua ResponsiveModal (Dialog/Drawer có animation, cùng
+          component với form sửa activity) thay vì render tĩnh. Chỉ mở khi
+          `!isDesktopLayout` để không trùng với cột inline trên desktop. */}
+      <ResponsiveModal
+        className="max-h-[85vh] w-full max-w-2xl overflow-y-auto"
+        onOpenChange={(open) => {
+          if (!open) {
+            onCloseDetail();
+          }
+        }}
+        open={!isDesktopLayout && Boolean(detailActivity)}
+        title="Chi tiết hoạt động"
+      >
+        {detailActivity ? (
+          <TravelActivityDetail
+            activity={detailActivity}
+            canCreateExpense={canCreateExpense}
+            canManage={canManage}
+            expenses={expenses}
+            members={members}
+            onDelete={onDelete}
+            onEdit={onEdit}
+            onOpenCreateExpense={onOpenCreateExpense}
+          />
+        ) : null}
+      </ResponsiveModal>
     </div>
   );
 }

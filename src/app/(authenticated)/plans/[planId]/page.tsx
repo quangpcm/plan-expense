@@ -1991,6 +1991,7 @@ export default function PlanDetailPage() {
             expenses={expenses}
             isLoading={isTravelActivitiesLoading}
             members={members}
+            onCloseDetail={() => setDetailTravelActivity(null)}
             onCreate={() => {
               setEditingTravelActivity(null);
               setShowTravelActivityForm(true);

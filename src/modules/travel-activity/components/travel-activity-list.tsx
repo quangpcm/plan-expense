@@ -11,9 +11,17 @@ import { cn } from '@/shared/utils/cn';
 import { formatTime } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 
-const TIME_COLUMN_WIDTH_CLASS = 'w-16';
-const RAIL_COLUMN_WIDTH_CLASS = 'w-8';
-const RAIL_X_CLASS = 'left-[78px]';
+// Mobile thu hẹp cột giờ + rail (44px/20px) để mốc thời gian sát mép trái
+// hơn; desktop giữ nguyên kích thước cũ (64px/32px) — bộ 3 giá trị này phải
+// khớp với `grid-cols-[...]` khai báo trực tiếp ở 2 hàng lưới bên dưới.
+const TIME_RAIL_GRID_COLS_CLASS = 'grid-cols-[44px_20px_minmax(0,1fr)] sm:grid-cols-[64px_32px_minmax(0,1fr)]';
+// +2px giữa time/dot/card trên mobile (đang sát quá) — desktop giữ nguyên
+// gap-x-0. Cột rail bị đẩy sang phải 2px theo gap này nên RAIL_X_CLASS mobile
+// cũng +2 (53 → 55) để dot vẫn nằm đúng tâm đường kẻ.
+const TIME_RAIL_GAP_CLASS = 'gap-x-0.5 sm:gap-x-0';
+const TIME_COLUMN_WIDTH_CLASS = 'w-11 sm:w-16';
+const RAIL_COLUMN_WIDTH_CLASS = 'w-5 sm:w-8';
+const RAIL_X_CLASS = 'left-[55px] sm:left-[78px]';
 const CONNECTOR_WIDTH_CLASS = 'w-4';
 const DAY_NODE_SIZE_CLASS = 'size-4';
 const ACTIVITY_NODE_SIZE_CLASS = 'size-2';
@@ -157,7 +165,11 @@ export function TravelActivityList({
         </Card>
       ) : null}
 
-      <div className="space-y-8">
+      {/* Kéo timeline (rail + card) sát mép trái màn hình trên mobile — bù lại
+          `px-4` (16px) của AppShell chỉ cho riêng khối này, không đụng tới
+          filter chip/insight card phía trên. Desktop giữ nguyên (AppShell
+          dùng `px-6` từ `sm:` nên revert bằng `sm:ml-0`). */}
+      <div className="-ml-4 space-y-8 sm:ml-0">
         {visibleDayGroups.map((group) => (
           <section className="relative" key={group.dayKey}>
             <span
@@ -167,7 +179,13 @@ export function TravelActivityList({
               )}
             />
 
-            <div className="relative grid grid-cols-[64px_32px_minmax(0,1fr)] items-start gap-x-0 pb-4">
+            <div
+              className={cn(
+                'relative grid items-start pb-4',
+                TIME_RAIL_GRID_COLS_CLASS,
+                TIME_RAIL_GAP_CLASS,
+              )}
+            >
               <div />
               <div className="relative flex min-h-8 items-center justify-center">
                 <span
@@ -230,7 +248,7 @@ function TravelActivityTimelineCard({
   const isTemporalAccent = isCurrent || isNext;
 
   return (
-    <div className="grid grid-cols-[64px_32px_minmax(0,1fr)] items-start gap-x-0">
+    <div className={cn('grid items-start', TIME_RAIL_GRID_COLS_CLASS, TIME_RAIL_GAP_CLASS)}>
       <div
         className={cn(
           TIME_COLUMN_WIDTH_CLASS,
@@ -270,7 +288,7 @@ function TravelActivityTimelineCard({
 
       <Card
         className={cn(
-          'min-w-0 cursor-pointer gap-3 p-4 pl-4 transition',
+          'min-w-0 cursor-pointer gap-3 rounded-2xl p-4 pl-4 transition sm:rounded-[var(--radius-card)]',
           isPast
             ? 'border-slate-200 bg-white/90 text-slate-500'
             : 'bg-white',
