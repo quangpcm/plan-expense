@@ -125,7 +125,6 @@ import type {
   SettlementSuggestion,
 } from '@/modules/settlement/types/settlement';
 import { getTodoBudgetAmount } from '@/modules/todo/utils/todo-budget';
-import { Breadcrumbs } from '@/shared/components/ui/breadcrumbs';
 import { Button } from '@/shared/components/ui/button';
 import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Card } from '@/shared/components/ui/card';
@@ -2038,7 +2037,6 @@ export default function PlanDetailPage() {
 
   return (
     <main className="flex flex-col gap-5">
-      <Breadcrumbs items={[{ label: currentPlan.name }]} />
       {planError ||
       milestoneError ||
       todoError ||

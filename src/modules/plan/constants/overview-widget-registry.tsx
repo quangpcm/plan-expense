@@ -146,6 +146,95 @@ function resolvePendingTodos(todos: OverviewRendererProps['todos']) {
   );
 }
 
+function getMilestoneProgress(milestone: OverviewRendererProps['visibleMilestones'][number]) {
+  if (milestone.todoCount <= 0) {
+    return 0;
+  }
+
+  return Math.round((milestone.completedTodoCount / milestone.todoCount) * 100);
+}
+
+function getMilestoneStartDate(
+  milestone: OverviewRendererProps['visibleMilestones'][number],
+) {
+  return timestampToDate(milestone.startDate) ?? timestampToDate(milestone.endDate);
+}
+
+function getTravelMilestoneCountdown(
+  milestone: OverviewRendererProps['visibleMilestones'][number],
+) {
+  const startDate = getMilestoneStartDate(milestone);
+
+  if (!startDate) {
+    return {
+      label: milestone.status === 'in_progress' ? 'Đang diễn ra' : 'Sắp tới',
+      toneClass: 'bg-sky-50 text-sky-700',
+      dateLabel: 'Chưa có ngày bắt đầu',
+    };
+  }
+
+  const today = new Date();
+  const startOfToday = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
+  const startOfTarget = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate(),
+  );
+  const dayDiff = Math.round(
+    (startOfTarget.getTime() - startOfToday.getTime()) / ONE_DAY_MS,
+  );
+
+  if (milestone.status === 'in_progress') {
+    return {
+      label: 'Đang diễn ra',
+      toneClass: 'bg-sky-50 text-sky-700',
+      dateLabel: formatDate(startDate),
+    };
+  }
+
+  if (dayDiff < 0) {
+    return {
+      label: `Trễ ${Math.abs(dayDiff)} ngày`,
+      toneClass: 'bg-rose-100 text-rose-700',
+      dateLabel: formatDate(startDate),
+    };
+  }
+
+  if (dayDiff === 0) {
+    return {
+      label: 'Đến hạn hôm nay',
+      toneClass: 'bg-amber-100 text-amber-700',
+      dateLabel: formatDate(startDate),
+    };
+  }
+
+  if (dayDiff === 1) {
+    return {
+      label: 'Ngày mai',
+      toneClass: 'bg-amber-100 text-amber-700',
+      dateLabel: formatDate(startDate),
+    };
+  }
+
+  if (dayDiff <= 7) {
+    return {
+      label: `Còn ${dayDiff} ngày`,
+      toneClass: 'bg-amber-100 text-amber-700',
+      dateLabel: formatDate(startDate),
+    };
+  }
+
+  return {
+    label: `Còn ${dayDiff} ngày`,
+    toneClass: 'bg-sky-50 text-sky-700',
+    dateLabel: formatDate(startDate),
+  };
+}
+
 function TravelTripStatusWidget({
   isPlanEnded,
   members,
@@ -235,114 +324,40 @@ function TravelPlanningProgressWidget({
   visibleMilestones,
 }: OverviewRendererProps) {
   const currentMilestone =
-    upcomingMilestones.find((milestone) => milestone.status === 'in_progress') ??
-    upcomingMilestones[0] ??
-    visibleMilestones.find((milestone) => milestone.status !== 'completed' && milestone.status !== 'cancelled') ??
-    visibleMilestones[0] ??
+    visibleMilestones.find((milestone) => milestone.status === 'in_progress') ??
     null;
   const nextMilestone =
-    currentMilestone
-      ? visibleMilestones.find(
-          (milestone) =>
-            milestone.id !== currentMilestone.id &&
-            milestone.orderIndex > currentMilestone.orderIndex &&
-            milestone.status !== 'cancelled',
-        )
-      : null;
-  const completionRate = currentMilestone
-    ? currentMilestone.todoCount > 0
-      ? Math.round(
-          (currentMilestone.completedTodoCount / currentMilestone.todoCount) * 100,
-        )
-      : 0
-    : 0;
+    visibleMilestones.find((milestone) => {
+      if (milestone.status === 'cancelled' || milestone.status === 'completed') {
+        return false;
+      }
+
+      if (currentMilestone) {
+        return milestone.id !== currentMilestone.id &&
+          milestone.orderIndex > currentMilestone.orderIndex;
+      }
+
+      return milestone.status === 'upcoming';
+    }) ?? null;
+  const currentProgress = currentMilestone ? getMilestoneProgress(currentMilestone) : 0;
+  const nextProgress = nextMilestone ? getMilestoneProgress(nextMilestone) : 0;
+  const nextCountdown = nextMilestone ? getTravelMilestoneCountdown(nextMilestone) : null;
 
   return (
     <div className="space-y-3">
       <SectionHeading
         eyebrow="Kế hoạch"
-        title="Tiến độ kế hoạch"
-        description="Ưu tiên mốc hiện tại và bước tiếp theo thay vì lặp lại toàn bộ timeline."
+        title="Mốc sắp tới"
+        description="Hiển thị mốc hiện tại, mốc tiếp theo và countdown để nhìn nhanh mức độ sẵn sàng."
       />
       <Card className="space-y-5">
-        <div className="hidden flex-wrap items-center gap-3 sm:flex">
-          {visibleMilestones.slice(0, 3).map((milestone, index) => {
-            const isCurrent = milestone.id === currentMilestone?.id;
-
-            return (
-              <div className="flex min-w-0 flex-1 items-center gap-3" key={milestone.id}>
-                <button
-                  className={cn(
-                    'flex min-w-0 items-center gap-2 rounded-full px-3 py-2 text-left text-sm transition',
-                    isCurrent
-                      ? 'bg-sky-50 font-semibold text-sky-800'
-                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100',
-                  )}
-                  onClick={() => onSelectUpcomingMilestone(milestone.id)}
-                  type="button"
-                >
-                  {isCurrent ? (
-                    <CheckCircle2 className="size-4 shrink-0" />
-                  ) : (
-                    <Circle className="size-4 shrink-0" />
-                  )}
-                  <span className="truncate">{milestone.title}</span>
-                </button>
-                {index < Math.min(visibleMilestones.length, 3) - 1 ? (
-                  <div className="h-px flex-1 bg-slate-200" />
-                ) : null}
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="grid grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)_28px_minmax(0,1fr)] items-start gap-y-2 sm:hidden">
-          {visibleMilestones.slice(0, 3).map((milestone, index) => {
-            const isCurrent = milestone.id === currentMilestone?.id;
-
-            return (
-              <div className="contents" key={milestone.id}>
-                <button
-                  className="min-w-0 text-center"
-                  onClick={() => onSelectUpcomingMilestone(milestone.id)}
-                  type="button"
-                >
-                  <span
-                    className={cn(
-                      'mx-auto inline-flex size-6 items-center justify-center rounded-full border text-[10px]',
-                      isCurrent
-                        ? 'border-sky-600 bg-sky-50 text-sky-700'
-                        : 'border-slate-300 bg-white text-slate-500',
-                    )}
-                  >
-                    {isCurrent ? (
-                      <CheckCircle2 className="size-3.5" />
-                    ) : (
-                      <Circle className="size-3.5" />
-                    )}
-                  </span>
-                  <span
-                    className={cn(
-                      'mt-2 block truncate text-[11px] leading-4',
-                      isCurrent ? 'font-semibold text-sky-800' : 'text-slate-500',
-                    )}
-                  >
-                    {milestone.title}
-                  </span>
-                </button>
-                {index < Math.min(visibleMilestones.length, 3) - 1 ? (
-                  <div className="pt-3">
-                    <div className="h-px w-full bg-slate-200" />
-                  </div>
-                ) : null}
-              </div>
-            );
-          })}
-        </div>
-
         {currentMilestone ? (
-          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
-            <div className="space-y-3 rounded-[24px] border border-slate-200 bg-slate-50/70 p-4">
+          <div className="space-y-4">
+            <button
+              className="block w-full rounded-[24px] border border-slate-200 bg-slate-50/70 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50"
+              onClick={() => onSelectUpcomingMilestone(currentMilestone.id)}
+              type="button"
+            >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
@@ -352,41 +367,129 @@ function TravelPlanningProgressWidget({
                     {currentMilestone.title}
                   </p>
                 </div>
-                <p className="text-sm font-medium text-slate-500">
-                  {currentMilestone.completedTodoCount}/{currentMilestone.todoCount}
-                </p>
+                <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
+                  Đang diễn ra
+                </span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+              <p className="mt-3 text-sm text-slate-600">
+                {currentMilestone.completedTodoCount}/{currentMilestone.todoCount} công việc · {currentProgress}%
+              </p>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
                 <div
                   className="h-full rounded-full bg-sky-600 transition-[width]"
-                  style={{ width: `${completionRate}%` }}
+                  style={{ width: `${currentProgress}%` }}
                 />
               </div>
-              <p className="text-sm text-slate-600">
-                Hoàn thành {completionRate}%{estimatedByMilestoneId[currentMilestone.id] ? ` · Dự kiến ${formatCompactCurrency(estimatedByMilestoneId[currentMilestone.id] ?? 0)}` : ''}
+              <p className="mt-3 text-sm text-slate-600">
+                <span className="font-semibold text-slate-950">
+                  {formatCompactCurrency(currentMilestone.totalExpense)}
+                </span>{' '}
+                đã chi
+                {estimatedByMilestoneId[currentMilestone.id]
+                  ? ` · ${formatCompactCurrency(
+                      estimatedByMilestoneId[currentMilestone.id] ?? 0,
+                    )} dự kiến`
+                  : ''}
               </p>
-            </div>
+            </button>
 
-            <div className="rounded-[24px] border border-dashed border-slate-200 p-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
-                Tiếp theo
-              </p>
-              <p className="mt-1 text-base font-semibold text-slate-950">
-                {nextMilestone?.title ?? 'Chưa có mốc tiếp theo'}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {nextMilestone
-                  ? formatDateRange(
-                      timestampToDate(nextMilestone.startDate),
-                      timestampToDate(nextMilestone.endDate),
-                    )
-                  : 'Bạn có thể bổ sung milestone mới khi cần chia nhỏ chuyến đi.'}
-              </p>
-            </div>
+            {nextMilestone ? (
+              <button
+                className="block w-full rounded-[24px] border border-dashed border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50"
+                onClick={() => onSelectUpcomingMilestone(nextMilestone.id)}
+                type="button"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                    Tiếp theo
+                  </p>
+                  {nextCountdown ? (
+                    <span
+                      className={cn(
+                        'rounded-full px-3 py-1 text-xs font-semibold',
+                        nextCountdown.toneClass,
+                      )}
+                    >
+                      {nextCountdown.label}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="mt-2 text-lg font-semibold text-slate-950">
+                  {nextMilestone.title}
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {nextCountdown?.dateLabel ?? 'Chưa có ngày bắt đầu'}
+                </p>
+                <p className="mt-3 text-sm text-slate-600">
+                  {nextMilestone.completedTodoCount}/{nextMilestone.todoCount} công việc · {nextProgress}%
+                </p>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
+                  <div
+                    className="h-full rounded-full bg-slate-500 transition-[width]"
+                    style={{ width: `${nextProgress}%` }}
+                  />
+                </div>
+                <p className="mt-3 text-sm text-slate-600">
+                  {estimatedByMilestoneId[nextMilestone.id]
+                    ? `Dự kiến ${formatCompactCurrency(
+                        estimatedByMilestoneId[nextMilestone.id] ?? 0,
+                      )}`
+                    : 'Chưa có chi phí dự kiến'}
+                </p>
+              </button>
+            ) : (
+              <div className="rounded-[24px] border border-dashed border-slate-200 px-4 py-4 text-sm leading-6 text-slate-600">
+                Đây là mốc cuối của kế hoạch.
+              </div>
+            )}
           </div>
+        ) : nextMilestone ? (
+          <button
+            className="block w-full rounded-[24px] border border-dashed border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50"
+            onClick={() => onSelectUpcomingMilestone(nextMilestone.id)}
+            type="button"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                Mốc tiếp theo
+              </p>
+              {nextCountdown ? (
+                <span
+                  className={cn(
+                    'rounded-full px-3 py-1 text-xs font-semibold',
+                    nextCountdown.toneClass,
+                  )}
+                >
+                  {nextCountdown.label}
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-2 text-lg font-semibold text-slate-950">
+              {nextMilestone.title}
+            </p>
+            <p className="mt-1 text-sm text-slate-500">
+              {nextCountdown?.dateLabel ?? 'Chưa có ngày bắt đầu'}
+            </p>
+            <p className="mt-3 text-sm text-slate-600">
+              {nextMilestone.completedTodoCount}/{nextMilestone.todoCount} công việc · {nextProgress}%
+            </p>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
+              <div
+                className="h-full rounded-full bg-slate-500 transition-[width]"
+                style={{ width: `${nextProgress}%` }}
+              />
+            </div>
+            <p className="mt-3 text-sm text-slate-600">
+              {estimatedByMilestoneId[nextMilestone.id]
+                ? `Dự kiến ${formatCompactCurrency(
+                    estimatedByMilestoneId[nextMilestone.id] ?? 0,
+                  )}`
+                : 'Chưa có chi phí dự kiến'}
+            </p>
+          </button>
         ) : (
           <p className="text-sm leading-6 text-slate-600">
-            Chưa có milestone nào trong kế hoạch này.
+            Các mốc kế hoạch đã hoàn thành.
           </p>
         )}
 
