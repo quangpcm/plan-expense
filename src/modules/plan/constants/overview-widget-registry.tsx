@@ -1,6 +1,17 @@
 'use client';
 
-import { AlertTriangle, ArrowDown, ArrowUp } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowDown,
+  ArrowRight,
+  ArrowUp,
+  CalendarDays,
+  CheckCircle2,
+  Circle,
+  Clock3,
+  MapPinned,
+  Users,
+} from 'lucide-react';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { MilestoneList } from '@/modules/milestone';
@@ -16,7 +27,12 @@ import { getDebtTransactionCategoryLabel } from '@/modules/debt-tracking/constan
 import { Card } from '@/shared/components/ui/card';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 import { Skeleton } from '@/shared/components/ui/skeleton';
-import { formatDate } from '@/shared/utils/date';
+import {
+  formatDate,
+  formatDateTime,
+  formatDueCountdown,
+  getDueUrgency,
+} from '@/shared/utils/date';
 import { formatCompactCurrency, formatCurrency } from '@/shared/utils/currency';
 import { timestampToDate } from '@/shared/utils/firebase';
 import { cn } from '@/shared/utils/cn';
@@ -27,6 +43,7 @@ import type {
 import type { OverviewRendererProps } from '@/modules/plan/components/overview-renderer';
 import { resolvePlanDebtModel } from '@/modules/plan/utils/plan-type-config';
 import { weddingOverviewWidgetRegistry } from '@/modules/plan/constants/overview-widget-registry.wedding';
+import { getTravelActivityCategoryMeta } from '@/modules/travel-activity/utils/travel-activity-display';
 
 type OverviewWidgetComponent = (
   props: OverviewRendererProps,
@@ -36,6 +53,417 @@ export type OverviewWidgetRendererDefinition = OverviewWidgetDefinition & {
   component: OverviewWidgetComponent;
   isAvailable: (props: OverviewRendererProps) => boolean;
 };
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+function formatDateRange(startDate: Date | null, endDate: Date | null) {
+  if (startDate && endDate) {
+    return `${formatDate(startDate)} → ${formatDate(endDate)}`;
+  }
+
+  if (startDate) {
+    return `Bắt đầu ${formatDate(startDate)}`;
+  }
+
+  if (endDate) {
+    return `Đến ${formatDate(endDate)}`;
+  }
+
+  return 'Chưa thiết lập thời gian chuyến đi';
+}
+
+function getInclusiveDayCount(startDate: Date | null, endDate: Date | null) {
+  if (!startDate || !endDate) {
+    return null;
+  }
+
+  const startDay = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate(),
+  );
+  const endDay = new Date(
+    endDate.getFullYear(),
+    endDate.getMonth(),
+    endDate.getDate(),
+  );
+
+  return Math.max(
+    1,
+    Math.round((endDay.getTime() - startDay.getTime()) / ONE_DAY_MS) + 1,
+  );
+}
+
+function getDaysUntil(date: Date) {
+  const today = new Date();
+  const startOfToday = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
+  const targetDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  return Math.round(
+    (targetDay.getTime() - startOfToday.getTime()) / ONE_DAY_MS,
+  );
+}
+
+function getPlanDates(
+  plan: OverviewRendererProps['plan'],
+): { startDate: Date | null; endDate: Date | null } {
+  if (typeof plan === 'string') {
+    return { startDate: null, endDate: null };
+  }
+
+  return {
+    startDate: timestampToDate(plan.startDate),
+    endDate: timestampToDate(plan.endDate),
+  };
+}
+
+function resolveUpcomingActivity(
+  travelActivities: OverviewRendererProps['travelActivities'],
+) {
+  const now = Date.now();
+  const sortedActivities = [...travelActivities].sort(
+    (left, right) => left.startsAt.toMillis() - right.startsAt.toMillis(),
+  );
+
+  return (
+    sortedActivities.find((activity) => {
+      const endTime = activity.endsAt?.toMillis() ?? activity.startsAt.toMillis();
+      return endTime >= now;
+    }) ??
+    sortedActivities.find((activity) => activity.startsAt.toMillis() >= now) ??
+    sortedActivities[sortedActivities.length - 1] ??
+    null
+  );
+}
+
+function resolvePendingTodos(todos: OverviewRendererProps['todos']) {
+  return todos.filter(
+    (todo) => todo.status !== 'done' && todo.status !== 'cancelled',
+  );
+}
+
+function TravelTripStatusWidget({
+  isPlanEnded,
+  members,
+  plan,
+  planStatus,
+  travelActivities,
+}: OverviewRendererProps) {
+  const { startDate, endDate } = getPlanDates(plan);
+  const durationDays = getInclusiveDayCount(startDate, endDate);
+  const now = new Date();
+  const todayLabel = formatDateRange(startDate, endDate);
+  const locationLabel =
+    travelActivities
+      .map((activity) => activity.locationName?.trim())
+      .filter((value): value is string => Boolean(value))
+      .slice(0, 2)
+      .join(' → ') || 'Lịch trình sẽ rõ hơn khi thêm địa điểm';
+
+  let title = 'Chưa thiết lập ngày đi';
+  let subtitle = todayLabel;
+
+  if (startDate && !isPlanEnded && startDate > now) {
+    const daysUntil = getDaysUntil(startDate);
+    title = daysUntil <= 0 ? 'Khởi hành hôm nay' : `Còn ${daysUntil} ngày`;
+    subtitle = durationDays
+      ? `${todayLabel} · ${durationDays} ngày`
+      : todayLabel;
+  } else if (startDate && endDate && !isPlanEnded && endDate >= now) {
+    const currentDay = Math.max(1, durationDays ? durationDays - getDaysUntil(endDate) : 1);
+    title = durationDays ? `Ngày ${currentDay} / ${durationDays}` : 'Đang trong chuyến đi';
+    subtitle = 'Đang trong chuyến đi';
+  } else if (isPlanEnded) {
+    title = planStatus === 'completed' ? 'Đã hoàn thành' : 'Đã kết thúc';
+    subtitle = durationDays
+      ? `${durationDays} ngày · ${travelActivities.length} hoạt động`
+      : `${travelActivities.length} hoạt động`;
+  }
+
+  return (
+    <Card className="overflow-hidden border-slate-200 bg-[linear-gradient(135deg,rgba(14,165,233,0.12),rgba(255,255,255,0.96)_42%,rgba(15,23,42,0.03))]">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(260px,0.9fr)]">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">
+            Chuyến đi
+          </p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+            {title}
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">{subtitle}</p>
+
+          <div className="mt-5 flex flex-wrap gap-3 text-sm text-slate-700">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5">
+              <CalendarDays className="size-4 text-sky-700" />
+              {todayLabel}
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5">
+              <Users className="size-4 text-sky-700" />
+              {members.length} thành viên
+            </span>
+          </div>
+        </div>
+
+        <div className="rounded-[24px] border border-white/70 bg-white/80 p-4 backdrop-blur">
+          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+            Hành trình
+          </p>
+          <p className="mt-2 flex items-start gap-2 text-sm font-medium text-slate-900">
+            <MapPinned className="mt-0.5 size-4 shrink-0 text-sky-700" />
+            <span>{locationLabel}</span>
+          </p>
+          <p className="mt-3 text-sm leading-6 text-slate-600">
+            {travelActivities.length > 0
+              ? `${travelActivities.length} hoạt động đã được lên lịch cho chuyến đi này.`
+              : 'Chưa có hoạt động nào trong lịch trình, bạn có thể bắt đầu từ tab Lịch trình.'}
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function TravelPlanningProgressWidget({
+  estimatedByMilestoneId,
+  onOpenPlanningMilestones,
+  onSelectUpcomingMilestone,
+  upcomingMilestones,
+  visibleMilestones,
+}: OverviewRendererProps) {
+  const currentMilestone =
+    upcomingMilestones.find((milestone) => milestone.status === 'in_progress') ??
+    upcomingMilestones[0] ??
+    visibleMilestones.find((milestone) => milestone.status !== 'completed' && milestone.status !== 'cancelled') ??
+    visibleMilestones[0] ??
+    null;
+  const nextMilestone =
+    currentMilestone
+      ? visibleMilestones.find(
+          (milestone) =>
+            milestone.id !== currentMilestone.id &&
+            milestone.orderIndex > currentMilestone.orderIndex &&
+            milestone.status !== 'cancelled',
+        )
+      : null;
+  const completionRate = currentMilestone
+    ? currentMilestone.todoCount > 0
+      ? Math.round(
+          (currentMilestone.completedTodoCount / currentMilestone.todoCount) * 100,
+        )
+      : 0
+    : 0;
+
+  return (
+    <div className="space-y-3">
+      <SectionHeading
+        eyebrow="Kế hoạch"
+        title="Tiến độ kế hoạch"
+        description="Ưu tiên mốc hiện tại và bước tiếp theo thay vì lặp lại toàn bộ timeline."
+      />
+      <Card className="space-y-5">
+        <div className="flex flex-wrap items-center gap-3">
+          {visibleMilestones.slice(0, 3).map((milestone, index) => {
+            const isCurrent = milestone.id === currentMilestone?.id;
+
+            return (
+              <div className="flex min-w-0 flex-1 items-center gap-3" key={milestone.id}>
+                <button
+                  className={cn(
+                    'flex min-w-0 items-center gap-2 rounded-full px-3 py-2 text-left text-sm transition',
+                    isCurrent
+                      ? 'bg-sky-50 font-semibold text-sky-800'
+                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100',
+                  )}
+                  onClick={() => onSelectUpcomingMilestone(milestone.id)}
+                  type="button"
+                >
+                  {isCurrent ? (
+                    <CheckCircle2 className="size-4 shrink-0" />
+                  ) : (
+                    <Circle className="size-4 shrink-0" />
+                  )}
+                  <span className="truncate">{milestone.title}</span>
+                </button>
+                {index < Math.min(visibleMilestones.length, 3) - 1 ? (
+                  <div className="h-px flex-1 bg-slate-200" />
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+
+        {currentMilestone ? (
+          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
+            <div className="space-y-3 rounded-[24px] border border-slate-200 bg-slate-50/70 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                    Hiện tại
+                  </p>
+                  <p className="mt-1 text-lg font-semibold text-slate-950">
+                    {currentMilestone.title}
+                  </p>
+                </div>
+                <p className="text-sm font-medium text-slate-500">
+                  {currentMilestone.completedTodoCount}/{currentMilestone.todoCount}
+                </p>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+                <div
+                  className="h-full rounded-full bg-sky-600 transition-[width]"
+                  style={{ width: `${completionRate}%` }}
+                />
+              </div>
+              <p className="text-sm text-slate-600">
+                Hoàn thành {completionRate}%{estimatedByMilestoneId[currentMilestone.id] ? ` · Dự kiến ${formatCompactCurrency(estimatedByMilestoneId[currentMilestone.id] ?? 0)}` : ''}
+              </p>
+            </div>
+
+            <div className="rounded-[24px] border border-dashed border-slate-200 p-4">
+              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                Tiếp theo
+              </p>
+              <p className="mt-1 text-base font-semibold text-slate-950">
+                {nextMilestone?.title ?? 'Chưa có mốc tiếp theo'}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {nextMilestone
+                  ? formatDateRange(
+                      timestampToDate(nextMilestone.startDate),
+                      timestampToDate(nextMilestone.endDate),
+                    )
+                  : 'Bạn có thể bổ sung milestone mới khi cần chia nhỏ chuyến đi.'}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm leading-6 text-slate-600">
+            Chưa có milestone nào trong kế hoạch này.
+          </p>
+        )}
+
+        <div className="flex justify-end">
+          <button
+            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+            onClick={onOpenPlanningMilestones}
+            type="button"
+          >
+            Xem tất cả mốc <ArrowRight className="size-4" />
+          </button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function TravelAttentionTodosWidget({
+  members,
+  onOpenPlanningTodos,
+  onViewTodo,
+  todos,
+  upcomingTodos,
+  visibleMilestones,
+}: OverviewRendererProps) {
+  const pendingTodos = resolvePendingTodos(todos);
+  const visibleTodos = upcomingTodos.slice(0, 4);
+  const dueSoonCount = upcomingTodos.filter((todo) => {
+    if (!todo.dueDate) {
+      return false;
+    }
+
+    const urgency = getDueUrgency(todo.dueDate.toDate());
+    return urgency === 'overdue' || urgency === 'danger' || urgency === 'warning';
+  }).length;
+
+  return (
+    <div className="space-y-3">
+      <SectionHeading
+        eyebrow={dueSoonCount > 0 ? 'Cần chú ý' : 'Công việc'}
+        title={dueSoonCount > 0 ? `${dueSoonCount} việc sắp đến hạn` : `${pendingTodos.length} việc chưa hoàn thành`}
+        description={
+          dueSoonCount > 0
+            ? 'Những đầu việc cần được xử lý sớm để chuyến đi không bị dồn việc.'
+            : 'Không có việc nào sắp đến hạn, nhưng vẫn còn việc mở cần theo dõi.'
+        }
+      />
+      <Card className="space-y-4">
+        {visibleTodos.length === 0 ? (
+          <div className="flex items-center gap-3 rounded-[24px] bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            <CheckCircle2 className="size-4 shrink-0" />
+            <span>Không có việc nào sắp đến hạn.</span>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {visibleTodos.map((todo) => {
+              const dueDate = todo.dueDate?.toDate() ?? null;
+              const urgency = dueDate ? getDueUrgency(dueDate) : 'normal';
+              const assignee =
+                members.find((member) => member.id === todo.assigneeMemberId) ?? null;
+              const milestone =
+                visibleMilestones.find((item) => item.id === todo.milestoneId) ?? null;
+
+              return (
+                <button
+                  className="flex w-full items-start justify-between gap-4 rounded-[24px] border border-slate-200 px-4 py-3 text-left transition hover:border-sky-200 hover:bg-sky-50/40"
+                  key={todo.id}
+                  onClick={() => onViewTodo(todo)}
+                  type="button"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-950">
+                      {todo.title}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {assignee ? assignee.nickname : 'Chưa giao người phụ trách'}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      {milestone?.title ?? 'Chưa thuộc milestone nào'}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p
+                      className={cn(
+                        'text-sm font-medium',
+                        urgency === 'overdue'
+                          ? 'text-rose-600'
+                          : urgency === 'danger'
+                            ? 'text-amber-700'
+                            : urgency === 'warning'
+                              ? 'text-sky-700'
+                              : 'text-slate-500',
+                      )}
+                    >
+                      {dueDate ? formatDueCountdown(dueDate) : 'Chưa có hạn'}
+                    </p>
+                    {dueDate ? (
+                      <p className="mt-1 text-xs text-slate-400">
+                        {formatDate(dueDate)}
+                      </p>
+                    ) : null}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="flex justify-end">
+          <button
+            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+            onClick={onOpenPlanningTodos}
+            type="button"
+          >
+            Xem tất cả công việc <ArrowRight className="size-4" />
+          </button>
+        </div>
+      </Card>
+    </div>
+  );
+}
 
 function PlanSummaryWidget({
   endedPlanDate,
@@ -223,32 +651,70 @@ function TravelItinerarySummaryWidget({
   travelActivities,
   travelActivityError,
 }: OverviewRendererProps) {
-  const nextActivity = [...travelActivities].sort(
-    (left, right) => left.startsAt.toMillis() - right.startsAt.toMillis(),
-  )[0];
+  const nextActivity = resolveUpcomingActivity(travelActivities);
+  const categoryMeta = nextActivity
+    ? getTravelActivityCategoryMeta(nextActivity.category)
+    : null;
 
   return (
-    <Card>
-      <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
-        Lịch trình
-      </p>
-      {travelActivityError ? (
-        <p className="mt-2 text-sm text-rose-600">{travelActivityError}</p>
-      ) : isTravelActivitiesLoading ? (
-        <Skeleton className="mt-3 h-20 rounded-2xl" />
-      ) : (
-        <>
-          <p className="mt-2 text-2xl font-semibold text-slate-950">
-            {travelActivities.length}
-          </p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            {nextActivity
-              ? `Hoạt động gần nhất ${formatDate(nextActivity.startsAt.toDate())}`
-              : 'Chưa có hoạt động nào trong lịch trình'}
-          </p>
-        </>
-      )}
-    </Card>
+    <div className="space-y-3">
+      <SectionHeading
+        eyebrow="Lịch trình"
+        title="Điểm dừng tiếp theo"
+        description="Overview nên cho thấy việc gì sắp diễn ra tiếp theo trong chuyến đi."
+      />
+      <Card>
+        {travelActivityError ? (
+          <p className="text-sm text-rose-600">{travelActivityError}</p>
+        ) : isTravelActivitiesLoading ? (
+          <Skeleton className="h-28 rounded-2xl" />
+        ) : nextActivity ? (
+          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px]">
+            <div>
+              <div className="flex items-center gap-2">
+                {categoryMeta ? (
+                  <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                    <categoryMeta.icon className="size-3.5" />
+                    {categoryMeta.label}
+                  </span>
+                ) : null}
+              </div>
+              <p className="mt-3 text-xl font-semibold text-slate-950">
+                {nextActivity.title}
+              </p>
+              <div className="mt-3 space-y-2 text-sm text-slate-600">
+                <p className="flex items-center gap-2">
+                  <Clock3 className="size-4 text-sky-700" />
+                  {formatDateTime(nextActivity.startsAt.toDate())}
+                </p>
+                {nextActivity.locationName ? (
+                  <p className="flex items-center gap-2">
+                    <MapPinned className="size-4 text-sky-700" />
+                    {nextActivity.locationName}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-4">
+              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                Tổng lịch trình
+              </p>
+              <p className="mt-2 text-3xl font-semibold text-slate-950">
+                {travelActivities.length}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                hoạt động đã được ghi nhận cho chuyến đi.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-[24px] border border-dashed border-slate-200 px-4 py-5 text-sm leading-6 text-slate-600">
+            Chưa có hoạt động nào trong lịch trình. Bạn có thể thêm hoạt động đầu tiên ở tab Lịch trình.
+          </div>
+        )}
+      </Card>
+    </div>
   );
 }
 
@@ -562,6 +1028,24 @@ export const overviewWidgetRegistry: Partial<
     moduleId: 'members',
     component: MemberSummaryWidget,
     isAvailable: () => true,
+  },
+  travelTripStatus: {
+    id: 'travelTripStatus',
+    moduleId: 'overview',
+    component: TravelTripStatusWidget,
+    isAvailable: () => true,
+  },
+  travelPlanningProgress: {
+    id: 'travelPlanningProgress',
+    moduleId: 'planning',
+    component: TravelPlanningProgressWidget,
+    isAvailable: (props) => !props.isPlanEnded,
+  },
+  travelAttentionTodos: {
+    id: 'travelAttentionTodos',
+    moduleId: 'planning',
+    component: TravelAttentionTodosWidget,
+    isAvailable: (props) => !props.isPlanEnded,
   },
   travelItinerarySummary: {
     id: 'travelItinerarySummary',

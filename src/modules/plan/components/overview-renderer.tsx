@@ -48,7 +48,12 @@ export type OverviewRendererProps = {
   onSelectMemberDrilldown: (memberId: string) => void;
   onSelectMilestoneDrilldown: (milestoneId: string, memberId: string) => void;
   onSelectUpcomingMilestone: (milestoneId: string) => void;
-  plan: Pick<PlanDocument, 'planType' | 'status' | 'debtModel'> | PlanType;
+  plan:
+    | Pick<
+        PlanDocument,
+        'planType' | 'status' | 'debtModel' | 'startDate' | 'endDate'
+      >
+    | PlanType;
   planId: string;
   planStatus: PlanStatus;
   selectedMilestoneId: string | null;
