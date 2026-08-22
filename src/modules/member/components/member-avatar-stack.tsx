@@ -23,7 +23,7 @@ export function MemberAvatarStack({ members, maxVisible = 4 }: MemberAvatarStack
     <div className="flex items-center">
       {visibleMembers.map((member, index) => (
         <Avatar
-          className={cn('size-9 text-xs ring-2 ring-[var(--color-background)]', index > 0 && '-ml-3')}
+          className={cn('size-8 sm:size-9 text-xs ring-2 ring-[var(--color-background)]', index > 0 && '-ml-3')}
           initials={member.nickname.slice(0, 2).toUpperCase()}
           key={member.id}
           src={member.avatarUrl}

@@ -1722,6 +1722,7 @@ export default function PlanDetailPage() {
             onOpenDebtTracking={() => openPlanTab('debtTracking')}
             onOpenWeddingGuests={() => openPlanTab('weddingGuests')}
             onOpenFinance={() => openPlanTab('finance')}
+            onOpenTravelItinerary={() => openPlanTab('travelItinerary')}
             onSelectMemberDrilldown={(memberId) =>
               setStatisticMemberDrilldown({ memberId })
             }
@@ -2158,20 +2159,20 @@ export default function PlanDetailPage() {
               {isNativeDebtPlan ? (
                 <>
                   <div>
-                    <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                    <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400 sm:text-xs sm:tracking-[0.16em]">
                       Phải thu
                     </p>
-                    <p className="mt-1 text-2xl font-semibold text-[color:var(--color-income)]">
+                    <p className="mt-1 text-xl font-semibold text-[color:var(--color-income)] sm:text-2xl">
                       {formatCompactCurrency(
                         nativeDebtSummary?.totalReceivableOutstanding ?? 0,
                       )}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                    <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400 sm:text-xs sm:tracking-[0.16em]">
                       Phải trả
                     </p>
-                    <p className="mt-1 text-2xl font-semibold text-[color:var(--color-expense)]">
+                    <p className="mt-1 text-xl font-semibold text-[color:var(--color-expense)] sm:text-2xl">
                       {formatCompactCurrency(
                         nativeDebtSummary?.totalPayableOutstanding ?? 0,
                       )}
@@ -2181,18 +2182,18 @@ export default function PlanDetailPage() {
               ) : (
                 <>
                   <div>
-                    <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                    <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400 sm:text-xs sm:tracking-[0.16em]">
                       {spentLabel}
                     </p>
-                    <p className="mt-1 text-2xl font-semibold text-slate-950">
+                    <p className="mt-1 text-xl font-semibold text-slate-950 sm:text-2xl">
                       {formatCompactCurrency(plan.totalExpense)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                    <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400 sm:text-xs sm:tracking-[0.16em]">
                       {estimatedLabel}
                     </p>
-                    <p className="mt-1 text-2xl font-semibold text-slate-600">
+                    <p className="mt-1 text-xl font-semibold text-slate-600 sm:text-2xl">
                       {formatCompactCurrency(effectiveEstimatedTotal)}
                     </p>
                   </div>
@@ -2201,7 +2202,7 @@ export default function PlanDetailPage() {
             </div>
 
             <div className="space-y-1.5">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+              <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400 sm:text-xs sm:tracking-[0.16em]">
                 Thành viên
               </p>
               <MemberAvatarStack members={members} />

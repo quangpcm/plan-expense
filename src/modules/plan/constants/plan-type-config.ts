@@ -83,8 +83,7 @@ export const planTypeConfigMap: SupportedPlanTypeConfigMap = {
       widgets: [
         { widgetId: 'weddingAttentionSummary', enabled: true, order: 0 },
         { widgetId: 'weddingMilestoneSnapshot', enabled: true, order: 10 },
-        { widgetId: 'weddingTodoSnapshot', enabled: true, order: 20 },
-        { widgetId: 'weddingGuestFinanceSummary', enabled: true, order: 30 },
+        { widgetId: 'weddingGuestFinanceSummary', enabled: true, order: 20 },
       ],
     },
   },

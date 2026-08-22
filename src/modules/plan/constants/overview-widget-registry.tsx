@@ -265,7 +265,7 @@ function TravelPlanningProgressWidget({
         description="Ưu tiên mốc hiện tại và bước tiếp theo thay vì lặp lại toàn bộ timeline."
       />
       <Card className="space-y-5">
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="hidden flex-wrap items-center gap-3 sm:flex">
           {visibleMilestones.slice(0, 3).map((milestone, index) => {
             const isCurrent = milestone.id === currentMilestone?.id;
 
@@ -290,6 +290,50 @@ function TravelPlanningProgressWidget({
                 </button>
                 {index < Math.min(visibleMilestones.length, 3) - 1 ? (
                   <div className="h-px flex-1 bg-slate-200" />
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="grid grid-cols-[minmax(0,1fr)_28px_minmax(0,1fr)_28px_minmax(0,1fr)] items-start gap-y-2 sm:hidden">
+          {visibleMilestones.slice(0, 3).map((milestone, index) => {
+            const isCurrent = milestone.id === currentMilestone?.id;
+
+            return (
+              <div className="contents" key={milestone.id}>
+                <button
+                  className="min-w-0 text-center"
+                  onClick={() => onSelectUpcomingMilestone(milestone.id)}
+                  type="button"
+                >
+                  <span
+                    className={cn(
+                      'mx-auto inline-flex size-6 items-center justify-center rounded-full border text-[10px]',
+                      isCurrent
+                        ? 'border-sky-600 bg-sky-50 text-sky-700'
+                        : 'border-slate-300 bg-white text-slate-500',
+                    )}
+                  >
+                    {isCurrent ? (
+                      <CheckCircle2 className="size-3.5" />
+                    ) : (
+                      <Circle className="size-3.5" />
+                    )}
+                  </span>
+                  <span
+                    className={cn(
+                      'mt-2 block truncate text-[11px] leading-4',
+                      isCurrent ? 'font-semibold text-sky-800' : 'text-slate-500',
+                    )}
+                  >
+                    {milestone.title}
+                  </span>
+                </button>
+                {index < Math.min(visibleMilestones.length, 3) - 1 ? (
+                  <div className="pt-3">
+                    <div className="h-px w-full bg-slate-200" />
+                  </div>
                 ) : null}
               </div>
             );
@@ -609,12 +653,25 @@ function PlanningSnapshotWidget({
 
 function FinanceSummaryWidget({
   isPlanEnded,
+  onOpenFinance,
   onSelectMilestoneDrilldown,
   statistic,
 }: OverviewRendererProps) {
   return (
     <div className="space-y-3">
-      <SectionHeading eyebrow="Tài chính" title="Thu chi kế hoạch" />
+      <SectionHeading
+        action={
+          <button
+            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+            onClick={onOpenFinance}
+            type="button"
+          >
+            Mở thống kê <ArrowRight className="size-4" />
+          </button>
+        }
+        eyebrow="Tài chính"
+        title="Thu chi kế hoạch"
+      />
       {isPlanEnded ? (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <CategoryBreakdown statistic={statistic} />
@@ -648,6 +705,7 @@ function MemberSummaryWidget({ members }: OverviewRendererProps) {
 
 function TravelItinerarySummaryWidget({
   isTravelActivitiesLoading,
+  onOpenTravelItinerary,
   travelActivities,
   travelActivityError,
 }: OverviewRendererProps) {
@@ -659,6 +717,17 @@ function TravelItinerarySummaryWidget({
   return (
     <div className="space-y-3">
       <SectionHeading
+        action={
+          onOpenTravelItinerary ? (
+            <button
+              className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+              onClick={onOpenTravelItinerary}
+              type="button"
+            >
+              Mở lịch trình <ArrowRight className="size-4" />
+            </button>
+          ) : null
+        }
         eyebrow="Lịch trình"
         title="Điểm dừng tiếp theo"
         description="Overview nên cho thấy việc gì sắp diễn ra tiếp theo trong chuyến đi."

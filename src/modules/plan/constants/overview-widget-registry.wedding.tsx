@@ -66,6 +66,28 @@ function ViewAllAction({ onClick }: { onClick: () => void }) {
   );
 }
 
+function getMilestoneCountdownLabel(milestone: MilestoneDocument) {
+  const anchorDate = getMilestoneAnchorDate(milestone);
+
+  if (!anchorDate) {
+    return milestoneStatusLabel[milestone.status];
+  }
+
+  const dayDiff = Math.ceil(
+    (anchorDate.getTime() - new Date().getTime()) / (24 * 60 * 60 * 1000),
+  );
+
+  if (milestone.status === 'in_progress') {
+    return 'Đang diễn ra';
+  }
+
+  if (milestone.status === 'upcoming' && dayDiff > 0) {
+    return `Còn ${dayDiff} ngày`;
+  }
+
+  return milestoneStatusLabel[milestone.status];
+}
+
 // Màu theo đúng "Việc cần chú ý hôm nay" ở todo-notification-screen.tsx (rose/amber/sky) để
 // 2 nơi nhất quán trực quan.
 const ATTENTION_TONE: Record<AttentionUrgency, { badgeClass: string; priorityClass: string }> = {
@@ -148,6 +170,13 @@ function WeddingAttentionSummaryWidget({
 
   const attentionItems = useMemo(() => selectAttentionItems(todos), [todos]);
   const visibleAttentionItems = attentionItems.slice(0, ATTENTION_MAX_ITEMS);
+  const nextTodoItems = useMemo(() => {
+    const attentionIds = new Set(visibleAttentionItems.map((item) => item.todo.id));
+
+    return getUpcomingTodosSortedByDueDate(todos)
+      .filter((item) => !attentionIds.has(item.todo.id))
+      .slice(0, TODO_SNAPSHOT_MAX_ITEMS);
+  }, [todos, visibleAttentionItems]);
 
   const overdueCount = attentionItems.filter((item) => item.urgency === 'overdue').length;
   const dueTodayCount = attentionItems.filter((item) => item.urgency === 'danger').length;
@@ -165,39 +194,92 @@ function WeddingAttentionSummaryWidget({
       <SectionHeading
         action={<ViewAllAction onClick={onOpenPlanningTodos} />}
         eyebrow="Cần chú ý"
-        title={attentionItems.length === 0 ? 'Mọi việc đang trong tầm kiểm soát' : 'Việc cần xử lý'}
+        title="Công việc"
         {...(summary ? { description: summary } : {})}
       />
       {todoActionError ? <AuthFormMessage message={todoActionError} type="error" /> : null}
       {isTodosLoading ? (
-        <Skeleton className="h-40 rounded-[28px]" />
-      ) : attentionItems.length === 0 ? (
-        <Card className="flex-row items-center gap-3 border-slate-200 bg-slate-50 shadow-none">
-          <CheckCircle2 className="size-5 shrink-0 text-[color:var(--color-success)]" />
-          <p className="text-sm leading-6 text-slate-600">Không có việc quá hạn hoặc sắp đến hạn.</p>
-        </Card>
+        <Skeleton className="h-56 rounded-[28px]" />
       ) : (
-        <Card
-          className={cn(
-            'gap-0 divide-y divide-slate-100 overflow-hidden p-0',
-            'lg:grid lg:gap-3 lg:divide-y-0 lg:overflow-visible lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none',
-            visibleAttentionItems.length >= 3
-              ? 'lg:grid-cols-3'
-              : visibleAttentionItems.length === 2
-                ? 'lg:grid-cols-2'
-                : 'lg:grid-cols-1',
-          )}
-        >
-          {visibleAttentionItems.map((item) => (
-            <AttentionItemRow
-              dueDate={item.dueDate}
-              key={item.todo.id}
-              milestoneTitle={milestoneTitleById.get(item.todo.milestoneId) ?? 'Không có mốc'}
-              onSelect={() => onViewTodo(item.todo)}
-              todo={item.todo}
-              urgency={item.urgency}
-            />
-          ))}
+        <Card className="gap-5">
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                Cần xử lý ngay
+              </p>
+              <p className="text-sm text-slate-600">
+                {summary || 'Không có việc quá hạn hoặc đến hạn hôm nay.'}
+              </p>
+            </div>
+            {attentionItems.length === 0 ? (
+              <div className="flex items-center gap-3 rounded-[24px] border border-slate-200 bg-slate-50 px-4 py-4">
+                <CheckCircle2 className="size-5 shrink-0 text-[color:var(--color-success)]" />
+                <p className="text-sm leading-6 text-slate-600">
+                  Mọi việc đang trong tầm kiểm soát.
+                </p>
+              </div>
+            ) : (
+              <div
+                className={cn(
+                  'gap-0 divide-y divide-slate-100 overflow-hidden rounded-[28px] border border-slate-200',
+                  'lg:grid lg:gap-3 lg:divide-y-0 lg:overflow-visible lg:rounded-none lg:border-0',
+                  visibleAttentionItems.length >= 3
+                    ? 'lg:grid-cols-3'
+                    : visibleAttentionItems.length === 2
+                      ? 'lg:grid-cols-2'
+                      : 'lg:grid-cols-1',
+                )}
+              >
+                {visibleAttentionItems.map((item) => (
+                  <AttentionItemRow
+                    dueDate={item.dueDate}
+                    key={item.todo.id}
+                    milestoneTitle={milestoneTitleById.get(item.todo.milestoneId) ?? 'Không có mốc'}
+                    onSelect={() => onViewTodo(item.todo)}
+                    todo={item.todo}
+                    urgency={item.urgency}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3 border-t border-slate-100 pt-1">
+            <div className="space-y-1">
+              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Sắp tới</p>
+              <p className="text-sm text-slate-600">
+                Các công việc tiếp theo trong thời gian tới.
+              </p>
+            </div>
+            {nextTodoItems.length === 0 ? (
+              <p className="text-sm leading-6 text-slate-500">
+                Không có công việc nào sắp đến hạn.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {nextTodoItems.map((item) => (
+                  <button
+                    className="flex w-full items-start justify-between gap-4 rounded-[20px] border border-slate-200 px-4 py-3 text-left transition hover:border-slate-300 hover:bg-slate-50"
+                    key={item.todo.id}
+                    onClick={() => onViewTodo(item.todo)}
+                    type="button"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-950">
+                        {item.todo.title}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {milestoneTitleById.get(item.todo.milestoneId) ?? 'Không có mốc'}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-sm font-medium text-slate-500">
+                      {formatDueCountdown(item.dueDate)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </Card>
       )}
     </div>
@@ -206,53 +288,61 @@ function WeddingAttentionSummaryWidget({
 
 function WeddingMilestoneCard({
   estimatedByMilestoneId,
+  title,
   milestone,
+  tone,
 }: {
   estimatedByMilestoneId: Record<string, number>;
   milestone: MilestoneDocument;
+  title: string;
+  tone: 'current' | 'next';
 }) {
   const estimatedTotal = estimatedByMilestoneId[milestone.id] ?? 0;
   const progress = milestone.todoCount > 0 ? Math.round((milestone.completedTodoCount / milestone.todoCount) * 100) : 0;
-  const anchorDate = getMilestoneAnchorDate(milestone);
-  const dayDiff = anchorDate ? Math.ceil((anchorDate.getTime() - new Date().getTime()) / (24 * 60 * 60 * 1000)) : null;
-
-  const statusLabel =
-    milestone.status === 'in_progress'
-      ? 'Đang diễn ra'
-      : milestone.status === 'upcoming' && dayDiff !== null && dayDiff > 0
-        ? `Còn ${dayDiff} ngày`
-        : milestoneStatusLabel[milestone.status];
+  const statusLabel = getMilestoneCountdownLabel(milestone);
 
   return (
     <Card className="gap-3">
-      <div className="flex items-start justify-between gap-2">
-        <p className="min-w-0 truncate text-base font-semibold text-slate-950">{milestone.title}</p>
-        <Badge variant={milestone.status === 'in_progress' ? 'warning' : 'info'}>{statusLabel}</Badge>
+      <div className="space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+              {title}
+            </p>
+            <p className="mt-1 min-w-0 truncate text-lg font-semibold text-slate-950">
+              {milestone.title}
+            </p>
+          </div>
+          <Badge variant={tone === 'current' ? 'warning' : 'info'}>{statusLabel}</Badge>
+        </div>
+        <p className="text-sm text-slate-600">
+          {milestone.completedTodoCount}/{milestone.todoCount} công việc
+          {tone === 'current' ? ` · ${progress}%` : ''}
+        </p>
       </div>
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between text-xs text-slate-500">
-          <span>Công việc</span>
-          <span className="font-medium text-slate-700">
-            {milestone.completedTodoCount}/{milestone.todoCount}
-          </span>
-        </div>
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-          <div
-            className="h-full rounded-full bg-[var(--color-primary)]"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Đã chi</p>
-          <p className="mt-1 text-xl font-bold text-slate-950">{formatCompactCurrency(milestone.totalExpense)}</p>
-        </div>
-        <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Dự kiến</p>
-          <p className="mt-1 text-sm font-medium text-slate-400">{formatCompactCurrency(estimatedTotal)}</p>
-        </div>
-      </div>
+      {tone === 'current' ? (
+        <>
+          <div className="space-y-1.5">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-[var(--color-primary)]"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+          <p className="text-sm text-slate-600">
+            <span className="font-semibold text-slate-950">
+              {formatCompactCurrency(milestone.totalExpense)}
+            </span>{' '}
+            đã chi · {formatCompactCurrency(estimatedTotal)} dự kiến
+          </p>
+        </>
+      ) : (
+        <p className="text-sm text-slate-600">
+          {formatCompactCurrency(milestone.totalExpense)} đã chi ·{' '}
+          {formatCompactCurrency(estimatedTotal)} dự kiến
+        </p>
+      )}
     </Card>
   );
 }
@@ -266,83 +356,52 @@ function WeddingMilestoneSnapshotWidget({
   milestoneActionError,
   onOpenPlanningMilestones,
   upcomingMilestones,
+  visibleMilestones,
 }: OverviewRendererProps) {
+  const currentMilestone =
+    upcomingMilestones.find((milestone) => milestone.status === 'in_progress') ??
+    upcomingMilestones[0] ??
+    null;
+  const nextMilestone = currentMilestone
+    ? visibleMilestones.find(
+        (milestone) =>
+          milestone.id !== currentMilestone.id &&
+          milestone.orderIndex > currentMilestone.orderIndex &&
+          milestone.status !== 'cancelled',
+      ) ?? null
+    : upcomingMilestones[1] ?? null;
+
   return (
     <div className="space-y-3">
       <SectionHeading
         action={<ViewAllAction onClick={onOpenPlanningMilestones} />}
-        eyebrow="Mốc kế hoạch"
-        title="Mốc sắp tới"
+        eyebrow="Kế hoạch"
+        title="Tiến độ kế hoạch"
       />
       {milestoneActionError ? <AuthFormMessage message={milestoneActionError} type="error" /> : null}
       {isMilestonesLoading ? (
         <Skeleton className="h-32 rounded-[28px]" />
-      ) : upcomingMilestones.length === 0 ? (
+      ) : !currentMilestone ? (
         <Card className="border-slate-200 bg-slate-50 shadow-none">
           <p className="text-sm leading-6 text-slate-600">Không có mốc nào đang diễn ra hoặc sắp diễn ra.</p>
         </Card>
       ) : (
-        <div className="grid gap-3 lg:grid-cols-3">
-          {upcomingMilestones.map((milestone) => (
+        <div className="grid gap-3 lg:grid-cols-2">
+          <WeddingMilestoneCard
+            estimatedByMilestoneId={estimatedByMilestoneId}
+            milestone={currentMilestone}
+            title="Hiện tại"
+            tone="current"
+          />
+          {nextMilestone ? (
             <WeddingMilestoneCard
               estimatedByMilestoneId={estimatedByMilestoneId}
-              key={milestone.id}
-              milestone={milestone}
+              milestone={nextMilestone}
+              title="Tiếp theo"
+              tone="next"
             />
-          ))}
+          ) : null}
         </div>
-      )}
-    </div>
-  );
-}
-
-// "Công việc sắp đến hạn": tái dùng nguyên TodoList/TodoCard (đã đủ tốt theo đánh giá), chỉ
-// đổi vị trí CTA vào SectionHeading. Loại các việc đã hiển thị ở "Cần chú ý" phía trên rồi
-// mới lấy tiếp — 2 section không còn lặp lại đúng những item giống nhau, tăng giá trị tổng
-// thể của tab Tổng quan.
-function WeddingTodoSnapshotWidget({
-  isTodosLoading,
-  members,
-  onOpenPlanningTodos,
-  onViewTodo,
-  todoActionError,
-  todos,
-  visibleMilestones,
-}: OverviewRendererProps) {
-  const nextTodos = useMemo(() => {
-    const attentionIds = new Set(
-      selectAttentionItems(todos)
-        .slice(0, ATTENTION_MAX_ITEMS)
-        .map((item) => item.todo.id),
-    );
-
-    return getUpcomingTodosSortedByDueDate(todos)
-      .filter((item) => !attentionIds.has(item.todo.id))
-      .slice(0, TODO_SNAPSHOT_MAX_ITEMS)
-      .map((item) => item.todo);
-  }, [todos]);
-
-  return (
-    <div className="space-y-3">
-      <SectionHeading
-        action={<ViewAllAction onClick={onOpenPlanningTodos} />}
-        description="Cần hoàn thành trong thời gian tới"
-        eyebrow="Công việc"
-        title="Việc sắp đến hạn"
-      />
-      {todoActionError ? <AuthFormMessage message={todoActionError} type="error" /> : null}
-      {isTodosLoading ? (
-        <Skeleton className="h-32 rounded-[28px]" />
-      ) : (
-        <TodoList
-          className="sm:grid-cols-2 lg:grid-cols-3"
-          emptyMessage="Không có công việc nào sắp đến hạn."
-          members={members}
-          milestones={visibleMilestones}
-          preserveOrder
-          onViewTodo={onViewTodo}
-          todos={nextTodos}
-        />
       )}
     </div>
   );
@@ -393,6 +452,13 @@ function WeddingGuestSummaryWidget({ onOpenWeddingGuests, planId }: OverviewRend
   const { rsvpBreakdown } = statistic;
   const total = rsvpBreakdown.attending + rsvpBreakdown.pending + rsvpBreakdown.not_attending;
   const confirmedPercent = total > 0 ? Math.round((rsvpBreakdown.attending / total) * 100) : 0;
+  const pendingGroups = useMemo(
+    () =>
+      calculateGuestStatisticByGroup(groups, invitations)
+        .filter((row) => row.rsvpBreakdown.pending > 0)
+        .sort((a, b) => b.rsvpBreakdown.pending - a.rsvpBreakdown.pending),
+    [groups, invitations],
+  );
 
   const topGroups = useMemo(
     () =>
@@ -424,7 +490,14 @@ function WeddingGuestSummaryWidget({ onOpenWeddingGuests, planId }: OverviewRend
               <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--color-accent-soft)] text-[color:var(--color-accent)]">
                 <Users className="size-5" />
               </div>
-              <p className="text-2xl font-semibold text-slate-950">{total} lượt mời</p>
+              <div>
+                <p className="text-2xl font-semibold text-slate-950">
+                  {total} lời mời
+                </p>
+                <p className="text-sm text-slate-600">
+                  {statistic.attendeeCount} người dự kiến
+                </p>
+              </div>
             </div>
             <div className="space-y-2 text-sm">
               {(['attending', 'pending', 'not_attending'] as const).map((status) => {
@@ -456,6 +529,18 @@ function WeddingGuestSummaryWidget({ onOpenWeddingGuests, planId }: OverviewRend
               </div>
               <p className="text-xs font-medium text-[color:var(--color-success)]">{confirmedPercent}% đã phản hồi</p>
             </div>
+            {rsvpBreakdown.pending > 0 ? (
+              <div className="rounded-2xl border border-[color:var(--color-warning-soft)] bg-[color:var(--color-warning-soft)]/40 px-4 py-3">
+                <p className="text-sm font-medium text-[color:var(--color-warning)]">
+                  {rsvpBreakdown.pending} lời mời đang chờ phản hồi
+                </p>
+                {pendingGroups[0] ? (
+                  <p className="mt-1 text-xs text-slate-600">
+                    Nhiều nhất ở nhóm {pendingGroups[0].group.name}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
             {topGroups.length > 0 ? (
               <div className="space-y-1.5 border-t border-slate-100 pt-3">
                 <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Người tham dự</p>
@@ -497,6 +582,7 @@ function WeddingFinanceSummaryWidget({
 }: OverviewRendererProps) {
   const spent = statistic.overview.totalExpense;
   const usedPercent = estimatedTotal > 0 ? Math.round((spent / estimatedTotal) * 100) : 0;
+  const remainingBudget = Math.max(estimatedTotal - spent, 0);
   const budgetTone = getBudgetHealthTone(usedPercent);
   const topCategories = [...statistic.categoryBreakdown]
     .filter((category) => category.totalAmount > 0)
@@ -514,7 +600,7 @@ function WeddingFinanceSummaryWidget({
       <Card className="gap-3">
         <div className="space-y-1.5">
           <p className="text-sm text-slate-600">
-            <span className="font-semibold text-slate-950">{formatCompactCurrency(spent)}</span>
+            Đã chi <span className="font-semibold text-slate-950">{formatCompactCurrency(spent)}</span>
             {' / '}
             {formatCompactCurrency(estimatedTotal)}
           </p>
@@ -526,6 +612,12 @@ function WeddingFinanceSummaryWidget({
           </div>
           <p className={cn('text-xs font-medium', budgetTone.textClass)}>
             {usedPercent}% ngân sách{usedPercent > 100 ? ' — đã vượt dự kiến' : ''}
+          </p>
+          <p className="text-sm text-slate-600">
+            Còn dự kiến{' '}
+            <span className="font-semibold text-slate-950">
+              {formatCompactCurrency(remainingBudget)}
+            </span>
           </p>
         </div>
         {topCategories.length > 0 ? (
@@ -591,12 +683,6 @@ export const weddingOverviewWidgetRegistry: Partial<
     id: 'weddingMilestoneSnapshot',
     moduleId: 'planning',
     component: WeddingMilestoneSnapshotWidget,
-    isAvailable: (props) => !props.isPlanEnded,
-  },
-  weddingTodoSnapshot: {
-    id: 'weddingTodoSnapshot',
-    moduleId: 'planning',
-    component: WeddingTodoSnapshotWidget,
     isAvailable: (props) => !props.isPlanEnded,
   },
   weddingGuestFinanceSummary: {
