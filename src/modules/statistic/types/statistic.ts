@@ -57,6 +57,12 @@ export type StatisticSummary = {
   memberCount: number;
   expenseCount: number;
   averageExpense: number;
+  // Tổng số tiền đã chuyển qua các settlement 'completed' — derive từ dữ liệu
+  // đã tính, không đổi công thức paid/owed/balance hiện có.
+  settledAmount: number;
+  // Tổng phần chênh lệch (adjustedBalance > 0) còn lại giữa các thành viên —
+  // đúng bằng tổng suggestion.amount mà settlementService.suggest() sẽ đề xuất.
+  pendingSettlementAmount: number;
 };
 
 export type StatisticResult = {

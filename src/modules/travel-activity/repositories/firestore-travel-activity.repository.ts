@@ -21,6 +21,7 @@ function toTimestamp(value: string) {
 function normalizeTravelActivity(raw: TravelActivityDocument): TravelActivityDocument {
   return {
     ...raw,
+    category: raw.category ?? 'other',
     locationMapUrl: raw.locationMapUrl ?? null,
     attachments: raw.attachments ?? [],
   };
@@ -41,12 +42,12 @@ export class FirestoreTravelActivityRepository implements TravelActivityReposito
         id: activityRef.id,
         planId: input.planId,
         title: input.title.trim(),
+        category: input.category,
         locationName: input.locationName?.trim() || null,
         locationMapUrl: input.locationMapUrl?.trim() || null,
         note: input.note?.trim() || null,
         startsAt: toTimestamp(input.startsAt),
         endsAt: input.endsAt ? toTimestamp(input.endsAt) : null,
-        participantMemberIds: input.participantMemberIds,
         attachments: input.attachments,
         createdByUserId: input.createdByUserId,
         createdByMemberId: input.createdByMemberId,
@@ -77,12 +78,12 @@ export class FirestoreTravelActivityRepository implements TravelActivityReposito
     await writeBatch(db)
       .update(activityRef, {
         title: input.title.trim(),
+        category: input.category,
         locationName: input.locationName?.trim() || null,
         locationMapUrl: input.locationMapUrl?.trim() || null,
         note: input.note?.trim() || null,
         startsAt: toTimestamp(input.startsAt),
         endsAt: input.endsAt ? toTimestamp(input.endsAt) : null,
-        participantMemberIds: input.participantMemberIds,
         attachments: input.attachments,
         updatedAt: now,
       })

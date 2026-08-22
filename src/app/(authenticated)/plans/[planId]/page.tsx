@@ -109,15 +109,15 @@ import {
   useDebtTransactions,
 } from '@/modules/debt-tracking';
 import type { MemberDebtSnapshot } from '@/modules/debt-tracking';
-import { CategoryBreakdown } from '@/modules/statistic/components/category-breakdown';
-import { ExpenseTimelineChart } from '@/modules/statistic/components/expense-timeline-chart';
+import { FinanceBudgetProgress } from '@/modules/statistic/components/finance-budget-progress';
+import { FinanceCategoryDonut } from '@/modules/statistic/components/finance-category-donut';
+import { FinanceMilestoneBars } from '@/modules/statistic/components/finance-milestone-bars';
+import { FinanceSummaryHero } from '@/modules/statistic/components/finance-summary-hero';
 import { MemberBalanceTable } from '@/modules/statistic/components/member-balance-table';
 import { MemberSpendingList } from '@/modules/statistic/components/member-spending-list';
-import { MilestoneBreakdown } from '@/modules/statistic/components/milestone-breakdown';
-import { StatisticOverview } from '@/modules/statistic/components/statistic-overview';
 import { statisticService } from '@/modules/statistic/services';
 import { SettlementList } from '@/modules/settlement/components/settlement-list';
-import { SettlementSuggestionCard } from '@/modules/settlement/components/settlement-suggestion-card';
+import { SettlementSuggestionList } from '@/modules/settlement/components/settlement-suggestion-list';
 import { useSettlements } from '@/modules/settlement/hooks/use-settlements';
 import { settlementService } from '@/modules/settlement/services';
 import type {
@@ -1990,7 +1990,6 @@ export default function PlanDetailPage() {
             errorMessage={travelActionError}
             expenses={expenses}
             isLoading={isTravelActivitiesLoading}
-            members={members}
             onCloseDetail={() => setDetailTravelActivity(null)}
             onCreate={() => {
               setEditingTravelActivity(null);
@@ -1998,6 +1997,7 @@ export default function PlanDetailPage() {
             }}
             onDelete={(activity) => void handleDeleteTravelActivity(activity)}
             onEdit={(activity) => {
+              setDetailTravelActivity(null);
               setEditingTravelActivity(activity);
               setShowTravelActivityForm(true);
             }}
@@ -2439,7 +2439,6 @@ export default function PlanDetailPage() {
               activity={editingTravelActivity ?? undefined}
               currentMember={currentMember}
               currentUser={user}
-              members={members}
               onCancel={() => {
                 setShowTravelActivityForm(false);
                 setEditingTravelActivity(null);
@@ -2671,72 +2670,54 @@ export default function PlanDetailPage() {
           title="Tổng quan tài chính"
         >
           <div className="space-y-5">
-            <StatisticOverview statistic={statistic} />
+            <FinanceSummaryHero statistic={statistic} />
+            {effectiveEstimatedTotal > 0 ? (
+              <FinanceBudgetProgress
+                budgetAmount={effectiveEstimatedTotal}
+                spent={statistic.overview.totalExpense}
+              />
+            ) : null}
+            <div>
+              <SectionHeading eyebrow="Chi tiêu" title="Chi tiêu được phân bổ như thế nào?" />
+              <div className="mt-3 grid grid-cols-1 gap-4 xl:grid-cols-2">
+                <FinanceCategoryDonut statistic={statistic} />
+                <FinanceMilestoneBars statistic={statistic} />
+              </div>
+            </div>
+            <MemberBalanceTable statistic={statistic} />
+            <SettlementSuggestionList
+              canConfirm={canManageSettlements && plan.status !== 'closed'}
+              errorMessage={settlementError}
+              isSubmitting={isSettlementSubmitting}
+              members={members}
+              message={settlementMessage}
+              onConfirm={(suggestion) => handleConfirmSettlement(suggestion)}
+              pendingAmount={statistic.overview.pendingSettlementAmount}
+              settledAmount={statistic.overview.settledAmount}
+              suggestions={suggestions}
+            />
             <MemberSpendingList
               onSelectMember={(memberId) =>
                 setStatisticMemberDrilldown({ memberId })
               }
               statistic={statistic}
             />
-            <CategoryBreakdown statistic={statistic} />
-            <MilestoneBreakdown
-              onSelectMilestoneMember={(milestoneId, memberId) =>
-                setStatisticMilestoneMemberDrilldown({ milestoneId, memberId })
-              }
-              statistic={statistic}
-            />
-            <MemberBalanceTable statistic={statistic} />
-            <Card>
-              <SectionHeading
-                eyebrow="Đối soát"
-                title="Ai cần chuyển cho ai?"
-                description="Các khoản chuyển đề xuất để cân bằng chi phí giữa các thành viên."
-              />
-              {settlementError ? (
-                <AuthFormMessage message={settlementError} type="error" />
-              ) : null}
-              {settlementMessage ? (
-                <AuthFormMessage message={settlementMessage} type="success" />
-              ) : null}
-              <div className="grid gap-3">
-                {suggestions.length > 0 ? (
-                  suggestions.map((suggestion) => (
-                    <SettlementSuggestionCard
-                      canConfirm={
-                        canManageSettlements && plan.status !== 'closed'
-                      }
-                      isSubmitting={isSettlementSubmitting}
-                      key={`${suggestion.fromMemberId}-${suggestion.toMemberId}-${suggestion.amount}`}
-                      members={members}
-                      onConfirm={() => handleConfirmSettlement(suggestion)}
-                      suggestion={suggestion}
-                    />
-                  ))
-                ) : (
-                  <Card className="border-slate-200 bg-slate-50 shadow-none">
-                    <p className="text-sm leading-6 text-slate-600">
-                      Chi phí giữa các thành viên đã cân bằng, chưa cần chuyển
-                      khoản nào.
-                    </p>
-                  </Card>
-                )}
+            {settlements.length > 0 ? (
+              <div className="space-y-3">
+                <SectionHeading
+                  eyebrow="Lịch sử"
+                  title="Lịch sử đối soát"
+                  description="Các khoản đã xác nhận hoặc đã hủy."
+                />
+                <SettlementList
+                  canCancel={canManageSettlements && plan.status !== 'closed'}
+                  isSubmitting={isSettlementSubmitting}
+                  members={members}
+                  onCancel={handleCancelSettlement}
+                  settlements={settlements}
+                />
               </div>
-            </Card>
-            <div className="space-y-3">
-              <SectionHeading
-                eyebrow="Lịch sử"
-                title="Lịch sử đối soát"
-                description="Các khoản đã xác nhận hoặc đã hủy."
-              />
-              <SettlementList
-                canCancel={canManageSettlements && plan.status !== 'closed'}
-                isSubmitting={isSettlementSubmitting}
-                members={members}
-                onCancel={handleCancelSettlement}
-                settlements={settlements}
-              />
-            </div>
-            <ExpenseTimelineChart statistic={statistic} />
+            ) : null}
           </div>
         </ResponsiveModal>
 

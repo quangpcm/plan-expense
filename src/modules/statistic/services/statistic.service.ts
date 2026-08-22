@@ -13,6 +13,7 @@ import type {
 export class StatisticService {
   calculate(input: StatisticInput): StatisticResult {
     const activeAndRemovedMembers = input.members.filter((member) => member.status !== 'invited');
+    const memberBalances = this.calculateMemberBalance(input);
     const overview = {
       totalExpense: input.expenses.reduce((sum, expense) => sum + expense.amount, 0),
       totalIncome: input.incomes.reduce((sum, income) => sum + income.amount, 0),
@@ -24,11 +25,18 @@ export class StatisticService {
               input.expenses.reduce((sum, expense) => sum + expense.amount, 0) / input.expenses.length,
             )
           : 0,
+      settledAmount: input.settlements
+        .filter((settlement) => settlement.status === 'completed')
+        .reduce((sum, settlement) => sum + settlement.amount, 0),
+      pendingSettlementAmount: memberBalances.reduce(
+        (sum, row) => sum + Math.max(row.adjustedBalance, 0),
+        0,
+      ),
     };
 
     return {
       overview,
-      memberBalances: this.calculateMemberBalance(input),
+      memberBalances,
       milestoneBreakdown: this.calculateMilestones(input),
       categoryBreakdown: this.calculateCategory(input),
       expenseTimeline: this.calculateTimeline(input),

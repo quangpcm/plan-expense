@@ -4,7 +4,6 @@ import { CalendarRange, Clock3, Plus, Route } from 'lucide-react';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
-import type { PlanMemberDocument } from '@/modules/member/types/member';
 import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 import { Button } from '@/shared/components/ui/button';
@@ -27,7 +26,6 @@ type TravelItineraryTabProps = {
   errorMessage: string | null;
   expenses: ExpenseDocument[];
   isLoading: boolean;
-  members: PlanMemberDocument[];
   onCloseDetail: () => void;
   onCreate: () => void;
   onDelete: (activity: TravelActivityDocument) => void;
@@ -44,7 +42,6 @@ export function TravelItineraryTab({
   errorMessage,
   expenses,
   isLoading,
-  members,
   onCloseDetail,
   onCreate,
   onDelete,
@@ -92,7 +89,6 @@ export function TravelItineraryTab({
               canCreateExpense={canCreateExpense}
               canManage={canManage}
               expenses={expenses}
-              members={members}
               onDelete={onDelete}
               onEdit={onEdit}
               onOpenCreateExpense={onOpenCreateExpense}
@@ -123,10 +119,10 @@ export function TravelItineraryTab({
             canCreateExpense={canCreateExpense}
             canManage={canManage}
             expenses={expenses}
-            members={members}
             onDelete={onDelete}
             onEdit={onEdit}
             onOpenCreateExpense={onOpenCreateExpense}
+            variant="plain"
           />
         ) : null}
       </ResponsiveModal>

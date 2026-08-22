@@ -10,21 +10,40 @@ import { AttachmentPicker, type AttachmentDraft } from '@/modules/storage';
 import { travelActivityService } from '@/modules/travel-activity/services';
 import type {
   CreateTravelActivityInput,
+  TravelActivityCategory,
   TravelActivityDocument,
   UpdateTravelActivityInput,
 } from '@/modules/travel-activity/types/travel-activity';
+import { TRAVEL_ACTIVITY_CATEGORIES } from '@/modules/travel-activity/utils/travel-activity-display';
 import { Button } from '@/shared/components/ui/button';
+import { DateTimeInput } from '@/shared/components/ui/date-time-input';
+import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
+import { Input } from '@/shared/components/ui/input';
+import { Textarea } from '@/shared/components/ui/textarea';
 import { timestampToDate } from '@/shared/utils/firebase';
 
 type TravelActivityFormProps = {
   plan: PlanDocument;
-  members: PlanMemberDocument[];
   currentUser: AuthUser;
   currentMember: PlanMemberDocument | null;
   activity?: TravelActivityDocument | undefined;
   onCancel: () => void;
   onSuccess: () => void;
 };
+
+type DurationPresetValue = '15' | '30' | '60' | '120' | '180' | 'custom' | 'undefined';
+
+const DURATION_PRESET_OPTIONS: { value: DurationPresetValue; label: string }[] = [
+  { value: '15', label: '15 phút' },
+  { value: '30', label: '30 phút' },
+  { value: '60', label: '1 giờ' },
+  { value: '120', label: '2 giờ' },
+  { value: '180', label: '3 giờ' },
+  { value: 'custom', label: 'Tùy chỉnh' },
+  { value: 'undefined', label: 'Không xác định' },
+];
+
+const DEFAULT_DURATION_PRESET: DurationPresetValue = '30';
 
 function toLocalDateTimeValue(value: Date | null) {
   if (!value) {
@@ -40,31 +59,68 @@ function toLocalDateTimeValue(value: Date | null) {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
+// Nếu activity đang sửa không có endsAt -> preset là "Không xác định"; nếu độ dài
+// start->end khớp đúng 1 preset cố định -> chọn preset đó; còn lại (mốc giờ lệch tay) -> "Tùy chỉnh".
+function getInitialDurationPreset(startsAt: Date | null, endsAt: Date | null): DurationPresetValue {
+  if (!endsAt) {
+    return 'undefined';
+  }
+
+  if (!startsAt) {
+    return 'custom';
+  }
+
+  const diffMinutes = Math.round((endsAt.getTime() - startsAt.getTime()) / (60 * 1000));
+  const matchedPreset = DURATION_PRESET_OPTIONS.find((option) => option.value === String(diffMinutes));
+
+  return matchedPreset ? matchedPreset.value : 'custom';
+}
+
+function resolveEndsAtValue(startsAt: string, preset: DurationPresetValue, customEndsAt: string) {
+  if (preset === 'undefined') {
+    return '';
+  }
+
+  if (preset === 'custom') {
+    return customEndsAt;
+  }
+
+  if (!startsAt) {
+    return '';
+  }
+
+  const start = new Date(startsAt);
+  const end = new Date(start.getTime() + Number(preset) * 60 * 1000);
+
+  return toLocalDateTimeValue(end);
+}
+
 export function TravelActivityForm({
   plan,
-  members,
   currentUser,
   currentMember,
   activity,
   onCancel,
   onSuccess,
 }: TravelActivityFormProps) {
+  const activityStartsAtDate = timestampToDate(activity?.startsAt ?? null);
+  const activityEndsAtDate = timestampToDate(activity?.endsAt ?? null);
+
   const [title, setTitle] = useState(activity?.title ?? '');
+  const [category, setCategory] = useState<TravelActivityCategory>(activity?.category ?? 'other');
   const [locationName, setLocationName] = useState(activity?.locationName ?? '');
   const [locationMapUrl, setLocationMapUrl] = useState(activity?.locationMapUrl ?? '');
+  const [isMapUrlVisible, setIsMapUrlVisible] = useState(Boolean(activity?.locationMapUrl));
   const [note, setNote] = useState(activity?.note ?? '');
   const [attachmentDrafts, setAttachmentDrafts] = useState<AttachmentDraft[]>(
     (activity?.attachments ?? []).map((attachment) => ({ kind: 'existing', id: attachment.id, attachment })),
   );
-  const [startsAt, setStartsAt] = useState(
-    toLocalDateTimeValue(timestampToDate(activity?.startsAt ?? null)),
+  const [isAttachmentsVisible, setIsAttachmentsVisible] = useState(Boolean(activity?.attachments?.length));
+  const [startsAt, setStartsAt] = useState(toLocalDateTimeValue(activityStartsAtDate));
+  const [durationPreset, setDurationPreset] = useState<DurationPresetValue>(
+    activity ? getInitialDurationPreset(activityStartsAtDate, activityEndsAtDate) : DEFAULT_DURATION_PRESET,
   );
-  const [endsAt, setEndsAt] = useState(
-    toLocalDateTimeValue(timestampToDate(activity?.endsAt ?? null)),
-  );
-  const [participantMemberIds, setParticipantMemberIds] = useState<string[]>(
-    activity?.participantMemberIds ?? [],
-  );
+  const [customEndsAt, setCustomEndsAt] = useState(toLocalDateTimeValue(activityEndsAtDate));
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -75,12 +131,12 @@ export function TravelActivityForm({
     try {
       const baseInput: CreateTravelActivityInput = {
         title,
+        category,
         locationName,
-        locationMapUrl,
+        locationMapUrl: isMapUrlVisible ? locationMapUrl : '',
         note,
         startsAt,
-        endsAt,
-        participantMemberIds,
+        endsAt: resolveEndsAtValue(startsAt, durationPreset, customEndsAt),
         attachments: attachmentDrafts,
       };
 
@@ -108,89 +164,99 @@ export function TravelActivityForm({
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       <label className="grid gap-2 text-sm text-slate-700">
         Tiêu đề
-        <input
-          className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+        <Input
           onChange={(event) => setTitle(event.target.value)}
           placeholder="Ví dụ: Bay đến Tokyo"
           value={title}
         />
       </label>
-      <label className="grid gap-2 text-sm text-slate-700">
-        Địa điểm
-        <input
-          className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
-          onChange={(event) => setLocationName(event.target.value)}
-          placeholder="Sân bay Narita, khách sạn..."
-          value={locationName}
+
+      <div className="grid gap-2 text-sm text-slate-700">
+        Danh mục
+        <DropdownSelect
+          onValueChange={(value) => setCategory(value as TravelActivityCategory)}
+          options={TRAVEL_ACTIVITY_CATEGORIES}
+          value={category}
         />
-      </label>
-      <label className="grid gap-2 text-sm text-slate-700">
-        Link bản đồ (không bắt buộc)
-        <input
-          className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
-          onChange={(event) => setLocationMapUrl(event.target.value)}
-          placeholder="https://maps.google.com/..."
-          value={locationMapUrl}
-        />
-      </label>
+      </div>
+
+      <div className="space-y-2">
+        <label className="grid gap-2 text-sm text-slate-700">
+          Địa điểm
+          <Input
+            onChange={(event) => setLocationName(event.target.value)}
+            placeholder="Sân bay Narita, khách sạn..."
+            value={locationName}
+          />
+        </label>
+        {isMapUrlVisible ? (
+          <label className="grid gap-2 text-sm text-slate-700">
+            Link bản đồ
+            <Input
+              onChange={(event) => setLocationMapUrl(event.target.value)}
+              placeholder="https://maps.google.com/..."
+              value={locationMapUrl}
+            />
+          </label>
+        ) : (
+          <button
+            className="w-fit text-sm font-medium text-[var(--color-primary)] hover:underline"
+            onClick={() => setIsMapUrlVisible(true)}
+            type="button"
+          >
+            + Thêm link bản đồ
+          </button>
+        )}
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-2 text-sm text-slate-700">
           Bắt đầu
-          <input
-            className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
-            onChange={(event) => setStartsAt(event.target.value)}
-            type="datetime-local"
-            value={startsAt}
-          />
+          <DateTimeInput onChange={(event) => setStartsAt(event.target.value)} value={startsAt} />
         </label>
+        <div className="grid gap-2 text-sm text-slate-700">
+          Thời lượng
+          <DropdownSelect
+            onValueChange={(value) => setDurationPreset(value as DurationPresetValue)}
+            options={DURATION_PRESET_OPTIONS}
+            value={durationPreset}
+          />
+        </div>
+      </div>
+
+      {durationPreset === 'custom' ? (
         <label className="grid gap-2 text-sm text-slate-700">
           Kết thúc
-          <input
-            className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
-            onChange={(event) => setEndsAt(event.target.value)}
-            type="datetime-local"
-            value={endsAt}
-          />
+          <DateTimeInput onChange={(event) => setCustomEndsAt(event.target.value)} value={customEndsAt} />
         </label>
-      </div>
+      ) : null}
+
       <label className="grid gap-2 text-sm text-slate-700">
         Ghi chú
-        <textarea
-          className="min-h-28 rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-slate-400"
+        <Textarea
           onChange={(event) => setNote(event.target.value)}
           placeholder="Ghi chú thêm cho hoạt động..."
           value={note}
         />
       </label>
-      <div className="grid gap-2 text-sm text-slate-700">
-        Thành viên tham gia
-        <div className="grid gap-2 rounded-2xl border border-slate-200 p-3">
-          {members.map((member) => {
-            const isChecked = participantMemberIds.includes(member.id);
 
-            return (
-              <label className="flex items-center gap-3 text-sm text-slate-700" key={member.id}>
-                <input
-                  checked={isChecked}
-                  onChange={(event) =>
-                    setParticipantMemberIds((current) =>
-                      event.target.checked
-                        ? [...current, member.id]
-                        : current.filter((memberId) => memberId !== member.id),
-                    )
-                  }
-                  type="checkbox"
-                />
-                <span>{member.nickname}</span>
-              </label>
-            );
-          })}
-        </div>
+      <div className="space-y-2">
+        {isAttachmentsVisible ? (
+          <div className="grid gap-2 text-sm text-slate-700">
+            Ảnh đính kèm (vé, QR code, thông tin quan trọng...)
+            <AttachmentPicker maxCount={5} onChange={setAttachmentDrafts} value={attachmentDrafts} />
+          </div>
+        ) : (
+          <button
+            className="w-fit text-sm font-medium text-[var(--color-primary)] hover:underline"
+            onClick={() => setIsAttachmentsVisible(true)}
+            type="button"
+          >
+            + Thêm đính kèm
+          </button>
+        )}
       </div>
-      <div className="grid gap-2 text-sm text-slate-700">
-        Ảnh đính kèm (vé, QR code, thông tin quan trọng...)
-        <AttachmentPicker maxCount={5} onChange={setAttachmentDrafts} value={attachmentDrafts} />
-      </div>
+
       <div className="flex justify-end gap-2">
         <Button onClick={onCancel} variant="ghost">
           Hủy

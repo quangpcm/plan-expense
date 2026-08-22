@@ -1,14 +1,14 @@
 'use client';
 
-import { CalendarDays, Clock3, Coins, MapPinned, Pencil, Plus, Trash2, Users } from 'lucide-react';
+import { CalendarDays, Clock3, Coins, ExternalLink, MapPinned, Pencil, Plus, Trash2 } from 'lucide-react';
 
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
-import type { PlanMemberDocument } from '@/modules/member/types/member';
 import { AttachmentGallery } from '@/modules/storage';
-import { toMapHref } from '@/modules/travel-activity/utils/travel-activity-display';
+import { getTravelActivityCategoryMeta, toMapHref } from '@/modules/travel-activity/utils/travel-activity-display';
 import type { TravelActivityDocument } from '@/modules/travel-activity/types/travel-activity';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
+import { cn } from '@/shared/utils/cn';
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatTime } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
@@ -16,41 +16,54 @@ import { timestampToDate } from '@/shared/utils/firebase';
 type TravelActivityDetailProps = {
   activity: TravelActivityDocument;
   expenses: ExpenseDocument[];
-  members: PlanMemberDocument[];
   canManage: boolean;
   canCreateExpense: boolean;
   onEdit: (activity: TravelActivityDocument) => void;
   onDelete: (activity: TravelActivityDocument) => void;
   onOpenCreateExpense: (activity: TravelActivityDocument) => void;
+  // 'card' (mặc định): panel viền/bóng/nền riêng — dùng khi đứng cạnh Timeline
+  // trên desktop. 'plain': bỏ hẳn outer card vì đã nằm trong BottomSheet/Dialog
+  // (chính sheet đó đã là container rồi, tránh lồng 2 lớp khung).
+  variant?: 'card' | 'plain';
 };
 
 export function TravelActivityDetail({
   activity,
   expenses,
-  members,
   canManage,
   canCreateExpense,
   onEdit,
   onDelete,
   onOpenCreateExpense,
+  variant = 'card',
 }: TravelActivityDetailProps) {
   const startsAt = timestampToDate(activity.startsAt);
   const endsAt = timestampToDate(activity.endsAt);
-  const participantNames = members
-    .filter((member) => activity.participantMemberIds.includes(member.id))
-    .map((member) => member.nickname);
+  const categoryMeta = getTravelActivityCategoryMeta(activity.category);
+  const CategoryIcon = categoryMeta.icon;
   const linkedExpenses = expenses.filter((expense) => expense.activityId === activity.id);
   const totalSpent = linkedExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const durationLabel = getDurationLabel(startsAt, endsAt);
   const timeRangeLabel = getTimeRangeLabel(startsAt, endsAt);
 
   return (
-    <Card className="gap-6">
+    <Card
+      className={cn(
+        'gap-6',
+        variant === 'plain' ? 'rounded-none border-none bg-transparent p-0 shadow-none' : '',
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1 space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">
-            Activity Inspector
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">
+              Chi tiết
+            </p>
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+              <CategoryIcon className="size-3.5 shrink-0" />
+              {categoryMeta.label}
+            </span>
+          </div>
           <h3 className="text-2xl font-semibold text-slate-950">{activity.title}</h3>
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-500">
             {startsAt ? (
@@ -101,12 +114,13 @@ export function TravelActivityDetail({
             <MapPinned className="mt-0.5 size-4 shrink-0 text-slate-400" />
             {activity.locationMapUrl ? (
               <a
-                className="font-medium text-[var(--color-primary)] underline-offset-2 hover:underline"
+                className="inline-flex items-center gap-1 font-medium text-[var(--color-primary)] underline decoration-dotted underline-offset-2 hover:decoration-solid"
                 href={toMapHref(activity.locationMapUrl)}
                 rel="noreferrer"
                 target="_blank"
               >
                 {activity.locationName}
+                <ExternalLink className="size-3.5 shrink-0" />
               </a>
             ) : (
               <span>{activity.locationName}</span>
@@ -114,29 +128,6 @@ export function TravelActivityDetail({
           </p>
         ) : (
           <p className="text-sm leading-6 text-slate-500">Chưa có địa điểm cụ thể.</p>
-        )}
-      </div>
-
-      <div className="space-y-3 rounded-[24px] bg-slate-50 p-4">
-        <div className="flex items-center gap-2">
-          <Users className="size-4 text-slate-400" />
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-            Tham gia
-          </p>
-        </div>
-        {participantNames.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {participantNames.map((name) => (
-              <span
-                className="rounded-full bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-[0_8px_20px_rgba(15,23,42,0.06)]"
-                key={name}
-              >
-                {name}
-              </span>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm leading-6 text-slate-500">Chưa có thành viên tham gia.</p>
         )}
       </div>
 
@@ -155,7 +146,7 @@ export function TravelActivityDetail({
             <p className="text-sm leading-6 text-slate-600">
               {linkedExpenses.length > 0
                 ? `${linkedExpenses.length} khoản chi đã gắn với activity này.`
-                : 'Chưa có khoản chi nào gắn với activity này.'}
+                : 'Chưa có khoản chi.'}
             </p>
           </div>
           {canCreateExpense ? (
@@ -165,7 +156,7 @@ export function TravelActivityDetail({
               variant="secondary"
             >
               <Plus className="size-4" />
-              Thêm khoản chi
+              Thêm
             </Button>
           ) : null}
         </div>
@@ -184,7 +175,7 @@ export function TravelActivityDetail({
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
           Đính kèm
         </p>
-        <AttachmentGallery attachments={activity.attachments} emptyLabel="Chưa có ảnh đính kèm." />
+        <AttachmentGallery attachments={activity.attachments} emptyLabel="Chưa có đính kèm." />
       </div>
     </Card>
   );

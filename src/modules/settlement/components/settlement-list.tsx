@@ -1,16 +1,15 @@
-import { Button } from '@/shared/components/ui/button';
-import { Card } from '@/shared/components/ui/card';
-import { Badge } from '@/shared/components/ui/badge';
+'use client';
+
+import { useState } from 'react';
+import { CheckCircle2, XCircle } from 'lucide-react';
+
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDateTime } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
-import type { SettlementDocument, SettlementStatus } from '@/modules/settlement/types/settlement';
+import type { SettlementDocument } from '@/modules/settlement/types/settlement';
 
-const settlementStatusLabel: Record<SettlementStatus, string> = {
-  completed: 'Đã chuyển',
-  cancelled: 'Đã hủy',
-};
+const VISIBLE_LIMIT = 5;
 
 type SettlementListProps = {
   canCancel: boolean;
@@ -27,49 +26,63 @@ export function SettlementList({
   onCancel,
   settlements,
 }: SettlementListProps) {
+  const [showAll, setShowAll] = useState(false);
+
   if (settlements.length === 0) {
-    return (
-      <Card>
-        <p className="text-sm leading-6 text-slate-600">Chưa có khoản chuyển nào được xác nhận.</p>
-      </Card>
-    );
+    return null;
   }
 
+  const visibleSettlements = showAll ? settlements : settlements.slice(0, VISIBLE_LIMIT);
+
   return (
-    <div className="grid gap-3">
-      {settlements.map((settlement) => {
+    <div className="grid gap-2">
+      {visibleSettlements.map((settlement) => {
         const fromMember = members.find((member) => member.id === settlement.fromMemberId);
         const toMember = members.find((member) => member.id === settlement.toMemberId);
         const settledAt = timestampToDate(settlement.settledAt);
+        const isCompleted = settlement.status === 'completed';
 
         return (
-          <Card key={settlement.id} className="gap-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-2">
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant={settlement.status === 'completed' ? 'success' : 'danger'}>
-                    {settlementStatusLabel[settlement.status]}
-                  </Badge>
-                  <Badge>{formatCurrency(settlement.amount)}</Badge>
-                </div>
-                <p className="text-base font-semibold text-slate-950">
-                  {fromMember?.nickname || settlement.fromMemberId} {'->'}{' '}
-                  {toMember?.nickname || settlement.toMemberId}
-                </p>
-                <p className="text-sm text-slate-600">
-                  Thời gian chuyển: {settledAt ? formatDateTime(settledAt) : 'Không rõ'}
-                </p>
-                {settlement.note ? <p className="text-sm text-slate-600">Ghi chú: {settlement.note}</p> : null}
-              </div>
-              {canCancel && settlement.status === 'completed' ? (
-                <Button disabled={isSubmitting} onClick={() => onCancel(settlement)} variant="ghost">
-                  {isSubmitting ? 'Đang cập nhật...' : 'Hủy đối soát'}
-                </Button>
-              ) : null}
+          <div
+            className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm"
+            key={settlement.id}
+          >
+            <div className="flex min-w-0 items-center gap-2">
+              {isCompleted ? (
+                <CheckCircle2 className="size-4 shrink-0 text-[color:var(--color-success)]" />
+              ) : (
+                <XCircle className="size-4 shrink-0 text-slate-400" />
+              )}
+              <span className={isCompleted ? 'font-medium text-slate-900' : 'font-medium text-slate-400 line-through'}>
+                {fromMember?.nickname || settlement.fromMemberId} {'->'} {toMember?.nickname || settlement.toMemberId}
+              </span>
+              <span className="text-slate-600">{formatCurrency(settlement.amount)}</span>
+              <span className="text-xs text-slate-400">
+                {settledAt ? formatDateTime(settledAt) : 'Không rõ thời gian'}
+              </span>
             </div>
-          </Card>
+            {canCancel && isCompleted ? (
+              <button
+                className="shrink-0 text-xs font-medium text-slate-500 hover:text-rose-600 disabled:pointer-events-none disabled:opacity-60"
+                disabled={isSubmitting}
+                onClick={() => onCancel(settlement)}
+                type="button"
+              >
+                Hủy
+              </button>
+            ) : null}
+          </div>
         );
       })}
+      {!showAll && settlements.length > VISIBLE_LIMIT ? (
+        <button
+          className="w-fit text-sm font-medium text-[var(--color-primary)] hover:underline"
+          onClick={() => setShowAll(true)}
+          type="button"
+        >
+          Xem tất cả ({settlements.length})
+        </button>
+      ) : null}
     </div>
   );
 }

@@ -1,7 +1,8 @@
+import { ArrowRight } from 'lucide-react';
 import type { MouseEventHandler } from 'react';
 
+import { Avatar } from '@/shared/components/ui/avatar';
 import { Button } from '@/shared/components/ui/button';
-import { Card } from '@/shared/components/ui/card';
 import { formatCurrency } from '@/shared/utils/currency';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { SettlementSuggestion } from '@/modules/settlement/types/settlement';
@@ -23,24 +24,32 @@ export function SettlementSuggestionCard({
 }: SettlementSuggestionCardProps) {
   const fromMember = members.find((member) => member.id === suggestion.fromMemberId);
   const toMember = members.find((member) => member.id === suggestion.toMemberId);
+  const fromName = fromMember?.nickname || suggestion.fromMemberId;
+  const toName = toMember?.nickname || suggestion.toMemberId;
 
   return (
-    <Card className="gap-4 border-slate-200 bg-slate-50 shadow-none">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <p className="text-base font-semibold text-slate-950">
-            {fromMember?.nickname || suggestion.fromMemberId} {'->'} {toMember?.nickname || suggestion.toMemberId}
-          </p>
-        </div>
-        <p className="text-xl font-semibold text-slate-950">{formatCurrency(suggestion.amount)}</p>
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+      <div className="flex min-w-0 items-center gap-2 text-sm">
+        <Avatar
+          className="size-8 text-xs"
+          initials={fromName.slice(0, 2).toUpperCase()}
+          src={fromMember?.avatarUrl ?? null}
+        />
+        <span className="truncate font-medium text-slate-900">{fromName}</span>
+        <ArrowRight className="size-4 shrink-0 text-slate-400" />
+        <Avatar
+          className="size-8 text-xs"
+          initials={toName.slice(0, 2).toUpperCase()}
+          src={toMember?.avatarUrl ?? null}
+        />
+        <span className="truncate font-medium text-slate-900">{toName}</span>
+        <span className="ml-1 shrink-0 font-semibold text-slate-950">{formatCurrency(suggestion.amount)}</span>
       </div>
       {canConfirm ? (
-        <div className="flex justify-end">
-          <Button disabled={isSubmitting} onClick={onConfirm}>
-            {isSubmitting ? 'Đang lưu đối soát...' : 'Xác nhận đã chuyển'}
-          </Button>
-        </div>
+        <Button className="min-h-9 shrink-0 px-4 py-2 text-xs" disabled={isSubmitting} onClick={onConfirm}>
+          {isSubmitting ? 'Đang lưu...' : 'Xác nhận đã chuyển'}
+        </Button>
       ) : null}
-    </Card>
+    </div>
   );
 }

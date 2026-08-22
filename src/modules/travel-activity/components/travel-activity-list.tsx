@@ -1,9 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Hourglass, MapPinned, Sparkles, Users } from 'lucide-react';
+import { ExternalLink, Hourglass, MapPinned, Sparkles } from 'lucide-react';
 
-import { toMapHref } from '@/modules/travel-activity/utils/travel-activity-display';
+import { getTravelActivityCategoryMeta, toMapHref } from '@/modules/travel-activity/utils/travel-activity-display';
 import type { TravelActivityDocument } from '@/modules/travel-activity/types/travel-activity';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
@@ -241,7 +241,8 @@ function TravelActivityTimelineCard({
   const startsAt = timestampToDate(activity.startsAt);
   const endsAt = timestampToDate(activity.endsAt);
   const durationLabel = getDurationLabel(startsAt, endsAt);
-  const participantCount = activity.participantMemberIds.length;
+  const categoryMeta = getTravelActivityCategoryMeta(activity.category);
+  const CategoryIcon = categoryMeta.icon;
   const isCurrent = displayState === 'current';
   const isNext = displayState === 'next';
   const isPast = displayState === 'past';
@@ -319,13 +320,16 @@ function TravelActivityTimelineCard({
               {isCurrent ? 'Đang diễn ra' : 'Tiếp theo'}
             </span>
           ) : null}
-          <p
-            className={cn(
-              'line-clamp-2 text-base font-semibold',
-              isPast ? 'text-slate-700' : 'text-slate-950',
-            )}
-          >
-            {activity.title}
+          <p className="flex items-start gap-1.5">
+            <CategoryIcon className="mt-0.5 size-4 shrink-0 text-slate-400" />
+            <span
+              className={cn(
+                'line-clamp-2 text-base font-semibold',
+                isPast ? 'text-slate-700' : 'text-slate-950',
+              )}
+            >
+              {activity.title}
+            </span>
           </p>
           <div
             className={cn(
@@ -339,7 +343,7 @@ function TravelActivityTimelineCard({
                 {activity.locationMapUrl ? (
                   <a
                     className={cn(
-                      'truncate underline-offset-2 hover:underline',
+                      'inline-flex min-w-0 items-center gap-1 underline decoration-dotted underline-offset-2 hover:decoration-solid',
                       isPast
                         ? 'text-slate-500'
                         : 'font-medium text-[var(--color-primary)]',
@@ -349,7 +353,8 @@ function TravelActivityTimelineCard({
                     rel="noreferrer"
                     target="_blank"
                   >
-                    {activity.locationName}
+                    <span className="truncate">{activity.locationName}</span>
+                    <ExternalLink className="size-3 shrink-0" />
                   </a>
                 ) : (
                   <span className="truncate">{activity.locationName}</span>
@@ -360,12 +365,6 @@ function TravelActivityTimelineCard({
               <p className="flex items-center gap-1.5">
                 <Hourglass className="size-3.5 shrink-0" />
                 <span>{durationLabel}</span>
-              </p>
-            ) : null}
-            {participantCount > 0 ? (
-              <p className="flex items-center gap-1.5">
-                <Users className="size-3.5 shrink-0" />
-                <span>{participantCount} người tham gia</span>
               </p>
             ) : null}
           </div>

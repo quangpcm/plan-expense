@@ -168,6 +168,8 @@ describe('StatisticService', () => {
       memberCount: 2,
       expenseCount: 1,
       averageExpense: 300,
+      settledAmount: 50,
+      pendingSettlementAmount: 600,
     });
     expect(statistic.memberBalances).toEqual([
       expect.objectContaining({
