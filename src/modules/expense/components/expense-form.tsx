@@ -39,6 +39,7 @@ type ExpenseFormProps = {
   planId: string;
   mode: 'create' | 'edit';
   expense?: ExpenseDocument | undefined;
+  defaultActivityId?: string | undefined;
   defaultMilestoneId?: string | undefined;
   onSuccess?: ((milestoneId: string) => void) | undefined;
   onCancel?: (() => void) | undefined;
@@ -53,7 +54,15 @@ function toSafeString(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
 
-export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSuccess, onCancel }: ExpenseFormProps) {
+export function ExpenseForm({
+  planId,
+  mode,
+  expense,
+  defaultActivityId,
+  defaultMilestoneId,
+  onSuccess,
+  onCancel,
+}: ExpenseFormProps) {
   const searchParams = useSearchParams();
   const { user } = useAuthSession();
   const { plan } = usePlan(planId);
@@ -102,6 +111,7 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
   const visibleMilestones = useMemo(() => getVisibleMilestones(milestones), [milestones]);
   const shouldHideMilestoneSelector = plan ? planUsesHiddenMilestone(plan) : false;
   const defaultCategoryId = toSafeString(expense?.categoryId) || categories[0]?.id || '';
+  const defaultActivityIdValue = toSafeString(expense?.activityId) || defaultActivityId || '';
   const milestoneIdFromQuery = searchParams.get('milestoneId') || '';
   const resolvedDefaultMilestoneId = plan
     ? resolveFinanceMilestoneId(
@@ -130,6 +140,7 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
       title: expense?.title || '',
       amount: expense?.amount || 0,
       milestoneId: resolvedDefaultMilestoneId,
+      activityId: defaultActivityIdValue,
       categoryId: defaultCategoryId,
       paidByMemberId: defaultPaidByMemberId,
       participantMemberIds: defaultParticipantIds,
@@ -152,6 +163,7 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
   const splitValuesWatched = useWatch({ control: form.control, name: 'splitValues' }) ?? {};
   const amountWatched = useWatch({ control: form.control, name: 'amount' });
   const categoryIdWatched = useWatch({ control: form.control, name: 'categoryId' });
+  const activityIdWatched = useWatch({ control: form.control, name: 'activityId' });
   const paidByMemberIdWatched = useWatch({ control: form.control, name: 'paidByMemberId' });
   const milestoneIdWatched = useWatch({ control: form.control, name: 'milestoneId' });
   const spentAtWatched = useWatch({ control: form.control, name: 'spentAt' });
@@ -227,6 +239,10 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
       form.setValue('categoryId', defaultCategoryId, { shouldValidate: true });
     }
 
+    if (!form.getValues('activityId') && defaultActivityIdValue) {
+      form.setValue('activityId', defaultActivityIdValue, { shouldValidate: true });
+    }
+
     if ((shouldHideMilestoneSelector || !form.getValues('milestoneId')) && resolvedDefaultMilestoneId) {
       form.setValue('milestoneId', resolvedDefaultMilestoneId, { shouldValidate: true });
     }
@@ -251,6 +267,7 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
     }
   }, [
     defaultCategoryId,
+    defaultActivityIdValue,
     resolvedDefaultMilestoneId,
     defaultPaidByMemberId,
     defaultParticipantIds,
@@ -328,6 +345,11 @@ export function ExpenseForm({ planId, mode, expense, defaultMilestoneId, onSucce
 
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
+      {activityIdWatched ? (
+        <div className="rounded-2xl border border-[var(--color-primary)]/16 bg-[color:color-mix(in_srgb,var(--color-primary)_6%,white)] px-4 py-3 text-sm leading-6 text-slate-700">
+          Khoản chi này sẽ được gắn với activity đang chọn trong lịch trình.
+        </div>
+      ) : null}
       <div className="space-y-1 text-center">
         <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#727687]" htmlFor="amount">
           Số tiền (VND)

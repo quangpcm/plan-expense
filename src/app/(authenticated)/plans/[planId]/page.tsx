@@ -291,6 +291,7 @@ export default function PlanDetailPage() {
   const canManageMembers = hasCapability('members.manage');
   const canManageSettlements = hasCapability('finance.manageSettlements');
   const canEditAllExpenses = hasCapability('finance.editAllExpense');
+  const canCreateExpense = hasCapability('finance.createExpense') && !isPlanEnded;
   const canManageTravelActivities =
     hasCapability('travelItinerary.createActivity') && !isPlanEnded;
   const canManagePlanning = isOwner && !isPlanEnded;
@@ -362,6 +363,9 @@ export default function PlanDetailPage() {
   );
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [expenseFormMilestoneId, setExpenseFormMilestoneId] = useState<
+    string | null
+  >(null);
+  const [expenseFormActivityId, setExpenseFormActivityId] = useState<
     string | null
   >(null);
   const [isDeletingExpenseInline, setIsDeletingExpenseInline] = useState(false);
@@ -1511,9 +1515,10 @@ export default function PlanDetailPage() {
     }
   }
 
-  function openCreateExpense(milestoneId: string) {
+  function openCreateExpense(milestoneId: string, activityId?: string) {
     setEditingExpense(null);
     setExpenseFormMilestoneId(milestoneId);
+    setExpenseFormActivityId(activityId ?? null);
     setShowExpenseForm(true);
   }
 
@@ -1529,6 +1534,7 @@ export default function PlanDetailPage() {
     setShowExpenseForm(false);
     setEditingExpense(null);
     setExpenseFormMilestoneId(null);
+    setExpenseFormActivityId(null);
   }
 
   async function handleDeleteExpenseInline(expense: ExpenseDocument) {
@@ -1978,9 +1984,11 @@ export default function PlanDetailPage() {
         return (
           <TravelItineraryTab
             activities={travelActivities}
+            canCreateExpense={canCreateExpense}
             canManage={canManageTravelActivities}
             detailActivity={detailTravelActivity}
             errorMessage={travelActionError}
+            expenses={expenses}
             isLoading={isTravelActivitiesLoading}
             members={members}
             onCreate={() => {
@@ -1992,6 +2000,9 @@ export default function PlanDetailPage() {
               setEditingTravelActivity(activity);
               setShowTravelActivityForm(true);
             }}
+            onOpenCreateExpense={(activity) =>
+              openCreateExpense('', activity.id)
+            }
             onSelect={setDetailTravelActivity}
           />
         );
@@ -2349,6 +2360,7 @@ export default function PlanDetailPage() {
           title={editingExpense ? 'Sửa khoản chi' : 'Thêm khoản chi'}
         >
           <ExpenseForm
+            defaultActivityId={expenseFormActivityId ?? undefined}
             defaultMilestoneId={expenseFormMilestoneId ?? undefined}
             expense={editingExpense ?? undefined}
             mode={editingExpense ? 'edit' : 'create'}

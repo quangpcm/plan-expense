@@ -19,8 +19,8 @@ export function formatTime(input: DateInput, locale = 'vi-VN') {
 export function getDayPeriodLabel(input: DateInput) {
   const hour = new Date(input).getHours();
 
-  if (hour >= 5 && hour < 12) return 'Sáng';
-  if (hour >= 12 && hour < 18) return 'Chiều';
+  if (hour >= 1 && hour < 16) return 'Sáng';
+  if (hour >= 16 && hour < 18) return 'Chiều';
   if (hour >= 18 && hour < 22) return 'Tối';
   return 'Đêm';
 }
@@ -55,13 +55,19 @@ export function parseDateTimeLocalInput(input: string | null | undefined) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
-export function formatDateTimePickerDisplay(input: DateInput, locale = 'vi-VN') {
+export function formatDateTimePickerDisplay(
+  input: DateInput,
+  locale = 'vi-VN',
+) {
   const date = new Date(input);
 
   return `${formatTime(date, locale)} ${formatDate(date, locale)}`;
 }
 
-const RELATIVE_TIME_DIVISIONS: { amount: number; unit: Intl.RelativeTimeFormatUnit }[] = [
+const RELATIVE_TIME_DIVISIONS: {
+  amount: number;
+  unit: Intl.RelativeTimeFormatUnit;
+}[] = [
   { amount: 60, unit: 'second' },
   { amount: 60, unit: 'minute' },
   { amount: 24, unit: 'hour' },
@@ -97,7 +103,10 @@ function startOfDay(date: Date) {
 }
 
 function getDueDayDiff(input: DateInput) {
-  return Math.round((startOfDay(new Date(input)).getTime() - startOfDay(new Date()).getTime()) / ONE_DAY_MS);
+  return Math.round(
+    (startOfDay(new Date(input)).getTime() - startOfDay(new Date()).getTime()) /
+      ONE_DAY_MS,
+  );
 }
 
 export function getDueUrgency(input: DateInput): DueUrgency {

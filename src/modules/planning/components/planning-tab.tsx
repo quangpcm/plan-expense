@@ -157,7 +157,7 @@ export function PlanningTab({
             onClick={() => onWorkViewModeChange('todos')}
             type="button"
           >
-            Tất cả công việc
+            Tất cả
           </button>
         </div>
         {workViewMode === 'todos' ? (
