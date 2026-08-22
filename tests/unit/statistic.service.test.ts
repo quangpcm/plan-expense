@@ -22,7 +22,7 @@ function makeMember(id: string, nickname: string): PlanMemberDocument {
     avatarUrl: null,
     role: 'editor',
     permissions: {
-      canEditAllExpenses: false,
+      moduleAccess: {},
     },
     status: 'active',
     invitedAt: null,

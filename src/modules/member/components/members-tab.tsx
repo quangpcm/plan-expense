@@ -7,6 +7,8 @@ import { MemberList } from '@/modules/member/components/member-list';
 import { MemberManagementPanel } from '@/modules/member/components/member-management-panel';
 import type { PlanMemberDocument, PlanRole } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
+import type { ConfigurableModuleId, ModuleAccessLevel } from '@/modules/plan/types/plan-modular';
+import { getEnabledPlanModules } from '@/modules/plan/utils/plan-type-config';
 import { Card } from '@/shared/components/ui/card';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 
@@ -38,7 +40,7 @@ type MembersTabProps = {
     values: {
       nickname: string;
       role: Exclude<PlanRole, 'owner'>;
-      canEditAllExpenses: boolean;
+      moduleAccess: Partial<Record<ConfigurableModuleId, ModuleAccessLevel>>;
     },
   ) => Promise<void>;
   plan: PlanDocument;
@@ -92,6 +94,7 @@ export function MembersTab({
       ) : null}
       <MemberList
         canManageMembers={canManageMembers}
+        enabledModuleIds={getEnabledPlanModules(plan).map((moduleConfig) => moduleConfig.moduleId)}
         isSaving={isSubmitting}
         linkedMemberIds={linkedMemberIds}
         members={members}

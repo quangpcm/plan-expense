@@ -9,6 +9,7 @@ import type {
   UpdateTodoInput,
 } from '@/modules/todo/types/todo';
 import type { AuthUser } from '@/modules/auth/types/auth';
+import { hasPlanCapability } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import { deleteAttachmentsInBackground } from '@/modules/storage/utils/delete-attachments';
@@ -18,9 +19,38 @@ import { AppError } from '@/shared/errors/app-error';
 export class TodoService {
   constructor(private readonly todoRepository: TodoRepository) {}
 
-  private assertManagePlanPermission(currentMember: PlanMemberDocument | null) {
-    if (currentMember?.role !== 'owner') {
-      throw new AppError('Only the owner can manage todos.', 'TODO_PERMISSION_DENIED', 403);
+  private assertCreatePermission(currentMember: PlanMemberDocument | null) {
+    if (!hasPlanCapability(currentMember, 'planning.createTodo')) {
+      throw new AppError('You do not have permission to create todos.', 'TODO_PERMISSION_DENIED', 403);
+    }
+  }
+
+  private assertCanEditTodo(currentMember: PlanMemberDocument | null, todo: TodoDocument, currentUser: AuthUser) {
+    const canEditAll = hasPlanCapability(currentMember, 'planning.editAllTodo');
+    const canEditOwn =
+      hasPlanCapability(currentMember, 'planning.editOwnTodo') && todo.createdByUserId === currentUser.uid;
+
+    if (!canEditAll && !canEditOwn) {
+      throw new AppError('You do not have permission to edit this todo.', 'TODO_PERMISSION_DENIED', 403);
+    }
+  }
+
+  private assertCanDeleteTodo(currentMember: PlanMemberDocument | null, todo: TodoDocument, currentUser: AuthUser) {
+    const canDeleteAll = hasPlanCapability(currentMember, 'planning.deleteAllTodo');
+    const canDeleteOwn =
+      hasPlanCapability(currentMember, 'planning.deleteOwnTodo') && todo.createdByUserId === currentUser.uid;
+
+    if (!canDeleteAll && !canDeleteOwn) {
+      throw new AppError('You do not have permission to delete this todo.', 'TODO_PERMISSION_DENIED', 403);
+    }
+  }
+
+  // Bulk operations across a whole milestone's todo list aren't scoped to a
+  // single owned resource, so they require manage-all rather than per-todo
+  // ownership checks.
+  private assertCanManageAllTodos(currentMember: PlanMemberDocument | null) {
+    if (!hasPlanCapability(currentMember, 'planning.editAllTodo')) {
+      throw new AppError('You do not have permission to reorganize todos.', 'TODO_PERMISSION_DENIED', 403);
     }
   }
 
@@ -37,7 +67,7 @@ export class TodoService {
     currentMember: PlanMemberDocument | null,
   ) {
     this.assertEditablePlan(plan);
-    this.assertManagePlanPermission(currentMember);
+    this.assertCreatePermission(currentMember);
 
     const title = input.title.trim();
 
@@ -68,13 +98,13 @@ export class TodoService {
 
   async updateTodo(
     plan: PlanDocument,
+    todo: TodoDocument,
     input: UpdateTodoInput,
     currentUser: AuthUser,
     currentMember: PlanMemberDocument | null,
   ) {
-    void currentUser;
     this.assertEditablePlan(plan);
-    this.assertManagePlanPermission(currentMember);
+    this.assertCanEditTodo(currentMember, todo, currentUser);
 
     const title = input.title.trim();
 
@@ -98,36 +128,15 @@ export class TodoService {
     deleteAttachmentsInBackground(plan.id, orphanedAttachments);
   }
 
-  async completeTodo(
-    plan: PlanDocument,
-    todoId: string,
-    milestoneId: string,
-    currentUser: AuthUser,
-    currentMember: PlanMemberDocument | null,
-  ) {
-    await this.updateTodo(
-      plan,
-      {
-        todoId,
-        milestoneId,
-        title: '',
-        priority: 'medium',
-        status: 'done',
-      },
-      currentUser,
-      currentMember,
-    );
-  }
-
   async addVendor(
     plan: PlanDocument,
+    todo: TodoDocument,
     input: AddTodoVendorSchema,
     currentUser: AuthUser,
     currentMember: PlanMemberDocument | null,
   ) {
-    void currentUser;
     this.assertEditablePlan(plan);
-    this.assertManagePlanPermission(currentMember);
+    this.assertCanEditTodo(currentMember, todo, currentUser);
 
     const name = input.name.trim();
 
@@ -158,9 +167,8 @@ export class TodoService {
     currentUser: AuthUser,
     currentMember: PlanMemberDocument | null,
   ) {
-    void currentUser;
     this.assertEditablePlan(plan);
-    this.assertManagePlanPermission(currentMember);
+    this.assertCanEditTodo(currentMember, todo, currentUser);
 
     const name = input.name.trim();
 
@@ -195,9 +203,8 @@ export class TodoService {
     currentUser: AuthUser,
     currentMember: PlanMemberDocument | null,
   ) {
-    void currentUser;
     this.assertEditablePlan(plan);
-    this.assertManagePlanPermission(currentMember);
+    this.assertCanEditTodo(currentMember, todo, currentUser);
 
     if (!todo.vendors.some((vendor) => vendor.id === vendorId)) {
       throw new AppError('Vendor không tồn tại trong công việc này.', 'TODO_VENDOR_NOT_FOUND', 400);
@@ -215,7 +222,7 @@ export class TodoService {
   ) {
     void currentUser;
     this.assertEditablePlan(plan);
-    this.assertManagePlanPermission(currentMember);
+    this.assertCanManageAllTodos(currentMember);
 
     if (!input.milestoneId.trim() || input.orderedTodoIds.length === 0) {
       throw new AppError('Danh sách công việc để sắp xếp không hợp lệ.', 'TODO_REORDER_INVALID_INPUT', 400);
@@ -232,7 +239,7 @@ export class TodoService {
   ) {
     void currentUser;
     this.assertEditablePlan(plan);
-    this.assertManagePlanPermission(currentMember);
+    this.assertCanManageAllTodos(currentMember);
 
     if (!input.targetMilestoneId.trim()) {
       throw new AppError('Cần chọn milestone đích hợp lệ.', 'TODO_MOVE_TARGET_REQUIRED', 400);
@@ -248,9 +255,8 @@ export class TodoService {
     currentUser: AuthUser,
     currentMember: PlanMemberDocument | null,
   ) {
-    void currentUser;
     this.assertEditablePlan(plan);
-    this.assertManagePlanPermission(currentMember);
+    this.assertCanEditTodo(currentMember, todo, currentUser);
 
     if (vendorId && !todo.vendors.some((vendor) => vendor.id === vendorId)) {
       throw new AppError('Vendor không tồn tại trong công việc này.', 'TODO_VENDOR_NOT_FOUND', 400);
@@ -265,9 +271,8 @@ export class TodoService {
     currentUser: AuthUser,
     currentMember: PlanMemberDocument | null,
   ) {
-    void currentUser;
     this.assertEditablePlan(plan);
-    this.assertManagePlanPermission(currentMember);
+    this.assertCanDeleteTodo(currentMember, todo, currentUser);
 
     const { orphanedAttachments } = await this.todoRepository.deleteTodo(plan.id, todo.id);
     deleteAttachmentsInBackground(plan.id, orphanedAttachments);

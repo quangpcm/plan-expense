@@ -1,4 +1,5 @@
 import type { AuthUser } from '@/modules/auth/types/auth';
+import { hasPlanCapability } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import { deleteAttachmentsInBackground } from '@/modules/storage/utils/delete-attachments';
@@ -19,9 +20,12 @@ export class TravelActivityService {
     }
   }
 
+  // travelItinerary chỉ hỗ trợ hidden/view/manage_all (docs/roles-permissions.md
+  // #14.1) — không có phân biệt own/all, nên create/edit/delete đều dùng
+  // chung 1 check.
   private assertCanManageActivities(currentMember: PlanMemberDocument | null) {
-    if (currentMember?.role !== 'owner' && currentMember?.role !== 'editor') {
-      throw new AppError('Only owners or editors can manage itinerary activities.', 'TRAVEL_ACTIVITY_FORBIDDEN', 403);
+    if (!hasPlanCapability(currentMember, 'travelItinerary.editActivity')) {
+      throw new AppError('Only owners or editors with full itinerary access can manage activities.', 'TRAVEL_ACTIVITY_FORBIDDEN', 403);
     }
   }
 

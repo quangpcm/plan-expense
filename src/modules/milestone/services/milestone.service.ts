@@ -6,6 +6,7 @@ import type {
   UpdateMilestoneInput,
 } from '@/modules/milestone/types/milestone';
 import type { AuthUser } from '@/modules/auth/types/auth';
+import { hasPlanCapability } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import { deleteAttachmentsInBackground } from '@/modules/storage/utils/delete-attachments';
@@ -14,9 +15,11 @@ import { AppError } from '@/shared/errors/app-error';
 export class MilestoneService {
   constructor(private readonly milestoneRepository: MilestoneRepository) {}
 
+  // Milestone là shared resource (docs/roles-permissions.md #13) — không có
+  // khái niệm "own", chỉ manage_all mới quản lý được.
   private assertManagePlanPermission(currentMember: PlanMemberDocument | null) {
-    if (currentMember?.role !== 'owner') {
-      throw new AppError('Only the owner can manage milestones.', 'MILESTONE_PERMISSION_DENIED', 403);
+    if (!hasPlanCapability(currentMember, 'planning.manageMilestone')) {
+      throw new AppError('Only the owner or an editor with full planning access can manage milestones.', 'MILESTONE_PERMISSION_DENIED', 403);
     }
   }
 

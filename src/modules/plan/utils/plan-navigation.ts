@@ -1,6 +1,18 @@
+import { resolveModuleAccess } from '@/modules/member/services/permission.service';
+import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument, PlanType } from '@/modules/plan/types/plan';
-import type { PlanModuleDefinition, PlanModuleId, PlanModuleRoute } from '@/modules/plan/types/plan-modular';
+import type { ConfigurableModuleId, PlanModuleDefinition, PlanModuleId, PlanModuleRoute } from '@/modules/plan/types/plan-modular';
 import { getPlanModuleDefinitions } from '@/modules/plan/utils/plan-type-config';
+
+// 'overview' luôn hiển thị khi module gốc enabled — không có access level
+// riêng, tự động filter theo module con (docs/roles-permissions.md #16).
+function isModuleVisibleForMember(moduleId: PlanModuleId, member: PlanMemberDocument | null | undefined): boolean {
+  if (member === undefined || moduleId === 'overview') {
+    return true;
+  }
+
+  return resolveModuleAccess(member, moduleId as ConfigurableModuleId) !== 'hidden';
+}
 
 export type PlanDetailTabId = PlanModuleId;
 
@@ -40,9 +52,11 @@ function getNavigationRoutes(moduleDefinition: PlanModuleDefinition): PlanModule
 
 export function getPlanDetailTabs(
   plan: Pick<PlanDocument, 'planType'> | PlanType,
+  member?: PlanMemberDocument | null,
 ): PlanDetailTabDefinition[] {
   return getPlanModuleDefinitions(plan)
     .filter((moduleDefinition) => moduleDefinition.navigation.enabled)
+    .filter((moduleDefinition) => isModuleVisibleForMember(moduleDefinition.id, member))
     .flatMap((moduleDefinition) => {
       const navigationRoutes = getNavigationRoutes(moduleDefinition);
       const primaryRoute = navigationRoutes[0];
@@ -65,9 +79,10 @@ export function getPlanDetailTabs(
 export function resolvePlanDetailTab(
   plan: Pick<PlanDocument, 'planType'> | PlanType,
   tabParam: string | null,
+  member?: PlanMemberDocument | null,
 ): PlanDetailTabId {
   const navigationByTab = new Map<string, PlanDetailTabId>();
-  const tabs = getPlanDetailTabs(plan);
+  const tabs = getPlanDetailTabs(plan, member);
 
   for (const tab of tabs) {
     if (tab.queryTab) {

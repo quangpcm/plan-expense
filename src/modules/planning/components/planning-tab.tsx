@@ -34,9 +34,10 @@ type PlanningTabProps = {
   expenseSheetMilestone: MilestoneDocument | null;
   expenseSheetMilestoneExpenses: ExpenseDocument[];
   incomeCategories: CategoryOption[];
+  canManageAllPlanning: boolean;
+  canManageOwnPlanning: boolean;
   isMilestoneSubmitting: boolean;
   isMilestonesLoading: boolean;
-  isOwner: boolean;
   isPlanEnded: boolean;
   isTodoSubmitting: boolean;
   isTodosLoading: boolean;
@@ -80,9 +81,10 @@ export function PlanningTab({
   expenseSheetMilestone,
   expenseSheetMilestoneExpenses,
   incomeCategories,
+  canManageAllPlanning,
+  canManageOwnPlanning,
   isMilestoneSubmitting,
   isMilestonesLoading,
-  isOwner,
   isPlanEnded,
   isTodoSubmitting,
   isTodosLoading,
@@ -188,7 +190,8 @@ export function PlanningTab({
           ) : (
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               <MilestoneTimelineBoard
-                canManagePlan={isOwner}
+                canManageAllPlanning={canManageAllPlanning}
+                canManageOwnPlanning={canManageOwnPlanning}
                 defaultExpandedMilestoneId={selectedMilestone?.id ?? null}
                 isMilestoneSubmitting={isMilestoneSubmitting}
                 isPlanClosed={Boolean(isPlanEnded)}
@@ -259,7 +262,7 @@ export function PlanningTab({
               />
             ) : null}
           </BottomSheet>
-          {isOwner && !isPlanEnded ? (
+          {canManageAllPlanning && !isPlanEnded ? (
             <button
               aria-label="Tạo mốc kế hoạch"
               className="fixed right-4 bottom-24 z-30 flex size-14 items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-[0_14px_34px_rgba(36,59,107,0.32)] transition hover:bg-[var(--color-primary-hover)] md:right-8 md:bottom-8"

@@ -91,7 +91,7 @@ export function TodoForm({
           attachments: attachmentDrafts,
         });
 
-        await todoService.updateTodo(plan, parsed, currentUser, currentMember);
+        await todoService.updateTodo(plan, todo, parsed, currentUser, currentMember);
         setSuccessMessage('Đã cập nhật công việc.');
       } else {
         const parsed = createTodoSchema.parse({

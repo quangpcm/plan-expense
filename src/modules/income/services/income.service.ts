@@ -97,8 +97,9 @@ export class IncomeService {
   async updateIncome(input: UpdateIncomeInput, context: IncomeContext, income: IncomeDocument) {
     this.assertEditablePlan(context.plan);
     const canEdit =
-      hasPlanCapability(context.currentMember, 'finance.editOwnIncome') &&
-      income.createdByMemberId === context.currentMember?.id;
+      hasPlanCapability(context.currentMember, 'finance.editAllIncome') ||
+      (hasPlanCapability(context.currentMember, 'finance.editOwnIncome') &&
+        income.createdByMemberId === context.currentMember?.id);
 
     if (!canEdit) {
       throw new AppError('You do not have permission to edit this income.', 'INCOME_EDIT_DENIED', 403);
@@ -124,7 +125,8 @@ export class IncomeService {
   ) {
     this.assertEditablePlan(plan);
     const canDelete =
-      hasPlanCapability(currentMember, 'finance.deleteOwnIncome') && income.createdByMemberId === currentMember?.id;
+      hasPlanCapability(currentMember, 'finance.deleteAllIncome') ||
+      (hasPlanCapability(currentMember, 'finance.deleteOwnIncome') && income.createdByMemberId === currentMember?.id);
 
     if (!canDelete) {
       throw new AppError('You do not have permission to delete this income.', 'INCOME_DELETE_DENIED', 403);

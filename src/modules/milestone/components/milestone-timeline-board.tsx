@@ -33,7 +33,10 @@ type MilestoneTimelineBoardProps = {
   selectedMilestoneId: string | null;
   defaultExpandedMilestoneId: string | null;
   searchQuery: string;
-  canManagePlan: boolean;
+  // Mốc (milestone) là shared resource — chỉ manage_all mới sửa/xoá/sắp xếp được.
+  canManageAllPlanning: boolean;
+  // Todo hỗ trợ manage_own — true khi editor được manage_own HOẶC manage_all.
+  canManageOwnPlanning: boolean;
   isPlanClosed: boolean;
   isMilestoneSubmitting: boolean;
   isTodoSubmitting: boolean;
@@ -140,7 +143,8 @@ export function MilestoneTimelineBoard({
   selectedMilestoneId,
   defaultExpandedMilestoneId,
   searchQuery,
-  canManagePlan,
+  canManageAllPlanning,
+  canManageOwnPlanning,
   isPlanClosed,
   isMilestoneSubmitting,
   isTodoSubmitting,
@@ -440,7 +444,7 @@ export function MilestoneTimelineBoard({
     milestoneId: string,
     todoId: string,
   ) {
-    if (!canManagePlan || isPlanClosed || isTodoSubmitting) {
+    if (!canManageAllPlanning || isPlanClosed || isTodoSubmitting) {
       return;
     }
 
@@ -657,7 +661,7 @@ export function MilestoneTimelineBoard({
                     >
                       <CircleDollarSign className="size-4" />
                     </Button>
-                    {canManagePlan ? (
+                    {canManageAllPlanning ? (
                       <div className="flex flex-wrap justify-end gap-2">
                         <Button
                           className={cn(
@@ -764,7 +768,7 @@ export function MilestoneTimelineBoard({
                           members.find(
                             (member) => member.id === todo.assigneeMemberId,
                           ) ?? null;
-                        const canToggle = canManagePlan && !isPlanClosed;
+                        const canToggle = canManageOwnPlanning && !isPlanClosed;
                         const isDraggingTodo =
                           activeDrag?.todoId === todo.id &&
                           activeDrag.milestoneId === milestone.id;
@@ -806,7 +810,7 @@ export function MilestoneTimelineBoard({
                                     onChangeStatus={onChangeTodoStatus}
                                     onView={handleViewTodo}
                                     todo={todo}
-                                    {...(canManagePlan && !isPlanClosed
+                                    {...(canManageAllPlanning && !isPlanClosed
                                       ? {
                                           onHoldPointerDown: (
                                             event: ReactPointerEvent<HTMLDivElement>,
@@ -836,11 +840,11 @@ export function MilestoneTimelineBoard({
                 <button
                   className={cn(
                     'flex min-h-11 w-full items-center justify-center gap-2 rounded-[18px] px-4 py-2.5 text-sm font-semibold transition',
-                    canManagePlan && !isPlanClosed
+                    canManageOwnPlanning && !isPlanClosed
                       ? 'bg-transparent text-slate-600 hover:bg-white hover:text-[#0050cb]'
                       : 'cursor-not-allowed bg-transparent text-slate-400',
                   )}
-                  disabled={!canManagePlan || isPlanClosed}
+                  disabled={!canManageOwnPlanning || isPlanClosed}
                   onClick={(event) => {
                     event.stopPropagation();
                     onAddTodo(milestone);

@@ -13,14 +13,17 @@ import type {
   PlanStatus,
   PlanType,
 } from '@/modules/plan/types/plan';
+import type { ConfigurableModuleId } from '@/modules/plan/types/plan-modular';
 import type { StatisticResult } from '@/modules/statistic/types/statistic';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import type { TodoDocument } from '@/modules/todo';
+import { resolveModuleAccess } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { TravelActivityDocument } from '@/modules/travel-activity/types/travel-activity';
 
 export type OverviewRendererProps = {
   canManagePlanning: boolean;
+  currentMember: PlanMemberDocument | null;
   debtTrackingError: string | null;
   debtTrackingSummary: DebtTrackingSummary;
   endedPlanDate: Date | null;
@@ -83,7 +86,12 @@ export function resolveOverviewWidgets(
       (
         widgetDefinition,
       ): widgetDefinition is NonNullable<typeof widgetDefinition> =>
-        widgetDefinition !== undefined && widgetDefinition.isAvailable(props),
+        widgetDefinition !== undefined &&
+        widgetDefinition.isAvailable(props) &&
+        // Overview widget tự động ẩn theo module gốc — không phải permission
+        // độc lập (docs/roles-permissions.md #16).
+        (widgetDefinition.moduleId === 'overview' ||
+          resolveModuleAccess(props.currentMember, widgetDefinition.moduleId as ConfigurableModuleId) !== 'hidden'),
     );
 }
 

@@ -88,7 +88,7 @@ async function seedBasePlan() {
       invitationId: null,
       avatarUrl: null,
       role: 'owner',
-      permissions: { canEditAllExpenses: true },
+      permissions: { moduleAccess: {} },
       status: 'active',
       invitedAt: null,
       joinedAt: now,
@@ -109,7 +109,7 @@ async function seedBasePlan() {
       invitationId: null,
       avatarUrl: null,
       role: 'editor',
-      permissions: { canEditAllExpenses: false },
+      permissions: { moduleAccess: {} },
       status: 'active',
       invitedAt: null,
       joinedAt: now,
@@ -130,7 +130,7 @@ async function seedBasePlan() {
       invitationId: null,
       avatarUrl: null,
       role: 'viewer',
-      permissions: { canEditAllExpenses: false },
+      permissions: { moduleAccess: {} },
       status: 'active',
       invitedAt: null,
       joinedAt: now,
@@ -151,7 +151,7 @@ async function seedBasePlan() {
       invitationId: null,
       avatarUrl: null,
       role: 'owner',
-      permissions: { canEditAllExpenses: true },
+      permissions: { moduleAccess: {} },
       status: 'active',
       invitedAt: null,
       joinedAt: now,
@@ -172,7 +172,7 @@ async function seedBasePlan() {
       invitationId: null,
       avatarUrl: null,
       role: 'editor',
-      permissions: { canEditAllExpenses: false },
+      permissions: { moduleAccess: {} },
       status: 'active',
       invitedAt: null,
       joinedAt: now,
@@ -457,7 +457,7 @@ async function seedBasePlan() {
       invitationId: null,
       avatarUrl: null,
       role: 'viewer',
-      permissions: { canEditAllExpenses: false },
+      permissions: { moduleAccess: {} },
       status: 'active',
       invitedAt: null,
       joinedAt: now,
@@ -478,7 +478,7 @@ async function seedBasePlan() {
       invitationId: null,
       avatarUrl: null,
       role: 'viewer',
-      permissions: { canEditAllExpenses: false },
+      permissions: { moduleAccess: {} },
       status: 'active',
       invitedAt: null,
       joinedAt: now,
@@ -748,10 +748,10 @@ describe('firestore rules', () => {
     );
   });
 
-  it('allows canEditAllExpenses member to edit someone else expense', async () => {
+  it('allows a member with finance=manage_all to edit someone else expense', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await updateDoc(doc(context.firestore(), 'plans', 'plan-1', 'members', 'member-editor'), {
-        permissions: { canEditAllExpenses: true },
+        permissions: { moduleAccess: { finance: 'manage_all' } },
       });
     });
 
@@ -927,6 +927,118 @@ describe('firestore rules', () => {
     );
   });
 
+  it('allows editor (default planning=manage_own) to create and edit their own todo, but not someone else todo', async () => {
+    const db = testEnv.authenticatedContext('editor-user').firestore();
+
+    await assertSucceeds(
+      setDoc(doc(db, 'plans', 'plan-1', 'todos', 'todo-editor-owned'), {
+        id: 'todo-editor-owned',
+        planId: 'plan-1',
+        milestoneId: 'milestone-1',
+        title: 'Editor task',
+        description: null,
+        assigneeMemberId: 'member-editor',
+        dueDate: null,
+        priority: 'medium',
+        status: 'todo',
+        createdByUserId: 'editor-user',
+        createdAt: now,
+        updatedAt: now,
+        completedAt: null,
+        cancelledAt: null,
+      }),
+    );
+
+    await assertSucceeds(
+      updateDoc(doc(db, 'plans', 'plan-1', 'todos', 'todo-editor-owned'), {
+        title: 'Editor task updated',
+        updatedAt: now,
+      }),
+    );
+
+    await assertFails(
+      updateDoc(doc(db, 'plans', 'plan-1', 'todos', 'todo-1'), {
+        title: 'Illegal edit of owner todo',
+        updatedAt: now,
+      }),
+    );
+  });
+
+  it('lets an editor with planning=manage_all manage milestones and todos created by others', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), 'plans', 'plan-1', 'members', 'member-editor'), {
+        permissions: { moduleAccess: { planning: 'manage_all' } },
+      });
+    });
+
+    const db = testEnv.authenticatedContext('editor-user').firestore();
+
+    await assertSucceeds(
+      updateDoc(doc(db, 'plans', 'plan-1', 'todos', 'todo-1'), {
+        title: 'Delegated todo edit',
+        updatedAt: now,
+      }),
+    );
+
+    await assertSucceeds(
+      setDoc(doc(db, 'plans', 'plan-1', 'milestones', 'milestone-editor-manage-all'), {
+        id: 'milestone-editor-manage-all',
+        planId: 'plan-1',
+        title: 'Delegated milestone',
+        description: null,
+        iconId: null,
+        isSystemHidden: false,
+        startDate: null,
+        endDate: null,
+        status: 'upcoming',
+        orderIndex: 3,
+        budgetAmount: null,
+        totalExpense: 0,
+        todoCount: 0,
+        completedTodoCount: 0,
+        createdByUserId: 'editor-user',
+        createdAt: now,
+        updatedAt: now,
+        completedAt: null,
+        cancelledAt: null,
+      }),
+    );
+  });
+
+  it('allows a member with finance=manage_all to edit someone else income too', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), 'plans', 'plan-1', 'members', 'member-editor'), {
+        permissions: { moduleAccess: { finance: 'manage_all' } },
+      });
+    });
+
+    const db = testEnv.authenticatedContext('editor-user').firestore();
+    await assertSucceeds(
+      updateDoc(doc(db, 'plans', 'plan-1', 'incomes', 'income-owner'), {
+        title: 'Delegated income edit',
+        updatedAt: now,
+        version: 2,
+      }),
+    );
+  });
+
+  it('lets the owner hide a module for an editor, blocking their previously-default write access', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), 'plans', 'plan-1', 'members', 'member-editor'), {
+        permissions: { moduleAccess: { finance: 'hidden' } },
+      });
+    });
+
+    const db = testEnv.authenticatedContext('editor-user').firestore();
+    await assertFails(
+      updateDoc(doc(db, 'plans', 'plan-1', 'expenses', 'expense-editor'), {
+        title: 'Should be blocked once finance is hidden',
+        updatedAt: now,
+        version: 2,
+      }),
+    );
+  });
+
   it('allows a member to refresh their own non-custom nickname', async () => {
     const db = testEnv.authenticatedContext('editor-user').firestore();
     await assertSucceeds(
@@ -997,7 +1109,7 @@ describe('firestore rules', () => {
         nickname: 'Hacker',
         avatarUrl: null,
         role: 'editor',
-        permissions: { canEditAllExpenses: false },
+        permissions: { moduleAccess: {} },
         status: 'active',
         invitedAt: null,
         joinedAt: now,
@@ -1201,7 +1313,7 @@ describe('firestore rules', () => {
       invitationId: 'invite-link',
       avatarUrl: null,
       role: 'viewer',
-      permissions: { canEditAllExpenses: false },
+      permissions: { moduleAccess: {} },
       status: 'active',
       invitedAt: null,
       joinedAt: now,
@@ -1254,7 +1366,7 @@ describe('firestore rules', () => {
         invitationId: 'invite-link',
         avatarUrl: null,
         role: 'editor',
-        permissions: { canEditAllExpenses: false },
+        permissions: { moduleAccess: {} },
         status: 'active',
         invitedAt: null,
         joinedAt: now,
@@ -1282,7 +1394,7 @@ describe('firestore rules', () => {
         invitationId: 'invite-expired',
         avatarUrl: null,
         role: 'viewer',
-        permissions: { canEditAllExpenses: false },
+        permissions: { moduleAccess: {} },
         status: 'active',
         invitedAt: null,
         joinedAt: now,
@@ -1310,7 +1422,7 @@ describe('firestore rules', () => {
         invitationId: 'invite-email',
         avatarUrl: null,
         role: 'editor',
-        permissions: { canEditAllExpenses: false },
+        permissions: { moduleAccess: {} },
         status: 'active',
         invitedAt: null,
         joinedAt: now,
@@ -1426,7 +1538,7 @@ describe('firestore rules', () => {
         invitationId: 'invite-claim',
         avatarUrl: null,
         role: 'viewer',
-        permissions: { canEditAllExpenses: false },
+        permissions: { moduleAccess: {} },
         status: 'active',
         invitedAt: null,
         joinedAt: now,

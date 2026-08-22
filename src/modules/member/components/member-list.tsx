@@ -12,7 +12,9 @@ import { Collapsible } from '@/shared/components/ui/collapsible';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
 import { MemberAvatarPicker } from '@/modules/member/components/member-avatar-picker';
+import { ModuleAccessEditor } from '@/modules/member/components/module-access-editor';
 import type { PlanMemberDocument, PlanMemberStatus, PlanRole } from '@/modules/member/types/member';
+import type { ConfigurableModuleId, ModuleAccessLevel, PlanModuleId } from '@/modules/plan/types/plan-modular';
 
 const roleLabel: Record<PlanRole, string> = {
   owner: 'Chủ kế hoạch',
@@ -29,12 +31,13 @@ const memberStatusLabel: Record<PlanMemberStatus, string> = {
 type UpdateMemberValues = {
   nickname: string;
   role: Exclude<PlanRole, 'owner'>;
-  canEditAllExpenses: boolean;
+  moduleAccess: Partial<Record<ConfigurableModuleId, ModuleAccessLevel>>;
 };
 
 type MemberListProps = {
   planId: string;
   members: PlanMemberDocument[];
+  enabledModuleIds?: PlanModuleId[];
   canManageMembers?: boolean;
   isSaving?: boolean;
   linkedMemberIds?: Set<string>;
@@ -53,6 +56,7 @@ type MemberListProps = {
 function EditableMemberRow({
   planId,
   member,
+  enabledModuleIds = [],
   canManageMembers = false,
   isSaving = false,
   isLinked = false,
@@ -66,6 +70,7 @@ function EditableMemberRow({
 }: {
   planId: string;
   member: PlanMemberDocument;
+  enabledModuleIds?: PlanModuleId[];
   canManageMembers?: boolean;
   isSaving?: boolean;
   isLinked?: boolean;
@@ -81,7 +86,9 @@ function EditableMemberRow({
   const [role, setRole] = useState<Exclude<PlanRole, 'owner'>>(
     member.role === 'owner' ? 'viewer' : member.role,
   );
-  const [canEditAllExpenses, setCanEditAllExpenses] = useState(member.permissions.canEditAllExpenses);
+  const [moduleAccess, setModuleAccess] = useState<Partial<Record<ConfigurableModuleId, ModuleAccessLevel>>>(
+    member.permissions.moduleAccess ?? {},
+  );
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [isConfirmUnlinkOpen, setIsConfirmUnlinkOpen] = useState(false);
   const [isClaimSheetOpen, setIsClaimSheetOpen] = useState(false);
@@ -135,7 +142,7 @@ function EditableMemberRow({
     member.role !== 'owner' &&
     (trimmedNickname !== member.nickname ||
       role !== member.role ||
-      canEditAllExpenses !== member.permissions.canEditAllExpenses);
+      JSON.stringify(moduleAccess) !== JSON.stringify(member.permissions.moduleAccess ?? {}));
   const isRemoved = member.status === 'removed';
 
   const summary = (
@@ -158,7 +165,6 @@ function EditableMemberRow({
               {memberStatusLabel[member.status]}
             </Badge>
           ) : null}
-          {/* {member.permissions.canEditAllExpenses ? <Badge>được sửa mọi khoản chi</Badge> : null} */}
         </div>
         {member.memberType === 'guest' ? null : (
           <p className="text-sm text-slate-500">{member.email || 'Thành viên đã đăng ký'}</p>
@@ -174,30 +180,28 @@ function EditableMemberRow({
         placeholder="Biệt danh"
         value={nickname}
       />
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
-        <DropdownSelect
-          onValueChange={(value) => setRole(value as Exclude<PlanRole, 'owner'>)}
-          options={[
-            { value: 'editor', label: 'Thành viên' },
-            { value: 'viewer', label: 'Chỉ xem' },
-          ]}
-          value={role}
-        />
-        <label className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700">
-          <input
-            checked={canEditAllExpenses}
-            onChange={(event) => setCanEditAllExpenses(event.target.checked)}
-            type="checkbox"
-          />
-          Sửa mọi khoản chi
-        </label>
-      </div>
+      <DropdownSelect
+        onValueChange={(value) => setRole(value as Exclude<PlanRole, 'owner'>)}
+        options={[
+          { value: 'editor', label: 'Thành viên' },
+          { value: 'viewer', label: 'Chỉ xem' },
+        ]}
+        value={role}
+      />
+      <ModuleAccessEditor
+        enabledModuleIds={enabledModuleIds}
+        onChange={(moduleId, level) =>
+          setModuleAccess((current) => ({ ...current, [moduleId]: level }))
+        }
+        role={role}
+        value={moduleAccess}
+      />
       <div className="flex items-center gap-2">
         <Button
           className="flex-1"
           disabled={isSaving || !hasChanges || !trimmedNickname || !onUpdateMember}
           onClick={() =>
-            onUpdateMember?.(member, { nickname: trimmedNickname, role, canEditAllExpenses })
+            onUpdateMember?.(member, { nickname: trimmedNickname, role, moduleAccess })
           }
         >
           Lưu
@@ -348,6 +352,7 @@ function EditableMemberRow({
 export function MemberList({
   planId,
   members,
+  enabledModuleIds = [],
   canManageMembers = false,
   isSaving = false,
   linkedMemberIds,
@@ -365,6 +370,7 @@ export function MemberList({
         <EditableMemberRow
           key={member.id}
           canManageMembers={canManageMembers}
+          enabledModuleIds={enabledModuleIds}
           isLinked={linkedMemberIds?.has(member.id) ?? false}
           isSaving={isSaving}
           member={member}

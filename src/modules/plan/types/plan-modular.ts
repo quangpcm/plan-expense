@@ -14,9 +14,12 @@ export type PlanModuleId =
 export type PlanCapability =
   | 'overview.view'
   | 'planning.view'
-  | 'planning.createMilestone'
+  | 'planning.manageMilestone'
   | 'planning.createTodo'
-  | 'planning.editTodo'
+  | 'planning.editOwnTodo'
+  | 'planning.deleteOwnTodo'
+  | 'planning.editAllTodo'
+  | 'planning.deleteAllTodo'
   | 'finance.view'
   | 'finance.createExpense'
   | 'finance.editOwnExpense'
@@ -26,9 +29,12 @@ export type PlanCapability =
   | 'finance.createIncome'
   | 'finance.editOwnIncome'
   | 'finance.deleteOwnIncome'
+  | 'finance.editAllIncome'
+  | 'finance.deleteAllIncome'
   | 'finance.manageSettlements'
   | 'members.view'
   | 'members.manage'
+  | 'weddingGuests.view'
   | 'weddingGuests.manageGuest'
   | 'travelItinerary.view'
   | 'travelItinerary.createActivity'
@@ -38,6 +44,13 @@ export type PlanCapability =
   | 'debtTracking.viewMemberSnapshot'
   | 'debtTracking.viewMemberTransaction'
   | 'debtTracking.manageTransaction';
+
+// Roles & Permissions V2 — xem docs/roles-permissions.md
+export type ModuleAccessLevel = 'hidden' | 'view' | 'manage_own' | 'manage_all';
+
+// Module có access level configurable qua Permission UI (mục 24). 'overview'
+// không nằm trong đây — Overview luôn tự động filter theo module gốc (mục 16).
+export type ConfigurableModuleId = Exclude<PlanModuleId, 'overview'>;
 
 export type OverviewWidgetId =
   | 'planSummary'
@@ -84,6 +97,9 @@ export type PlanModuleDefinition = {
     enabled: boolean;
   };
   permissions?: PlanCapability[] | undefined;
+  // Module Access Level nào module này cho phép owner chọn cho 1 member
+  // (mục 26). Không set với 'overview' — module đó không configurable.
+  supportedAccessLevels?: ModuleAccessLevel[] | undefined;
   requires?: PlanModuleId[] | undefined;
   optionalDependencies?: PlanModuleId[] | undefined;
   routes?: PlanModuleRoute[] | undefined;

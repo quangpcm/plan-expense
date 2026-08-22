@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolvePlanPermissions } from '@/modules/member/services/permission.service';
+import { resolveModuleAccess, resolvePlanPermissions } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import { Timestamp } from 'firebase/firestore';
 
@@ -17,7 +17,7 @@ function makeMember(overrides: Partial<PlanMemberDocument>): PlanMemberDocument 
     avatarUrl: null,
     role: 'viewer',
     permissions: {
-      canEditAllExpenses: false,
+      moduleAccess: {},
     },
     status: 'active',
     invitedAt: null,
@@ -49,7 +49,7 @@ describe('resolvePlanPermissions', () => {
     });
   });
 
-  it('lets editor create but not manage everything by default', () => {
+  it('lets editor create but not manage everything by default (finance defaults to manage_own)', () => {
     expect(resolvePlanPermissions(makeMember({ role: 'editor' }))).toMatchObject({
       canCreateExpense: true,
       canDeleteAllExpenses: false,
@@ -57,20 +57,72 @@ describe('resolvePlanPermissions', () => {
     });
   });
 
-  it('honors canEditAllExpenses override for non-owner members', () => {
+  it('grants full finance access once an editor is explicitly given finance=manage_all', () => {
+    expect(
+      resolvePlanPermissions(
+        makeMember({
+          role: 'editor',
+          permissions: { moduleAccess: { finance: 'manage_all' } },
+        }),
+      ),
+    ).toMatchObject({
+      canCreateExpense: true,
+      canEditAllExpenses: true,
+      canDeleteAllExpenses: true,
+      // Settlement never rides along with finance=manage_all (docs/roles-permissions.md #12).
+      canManageSettlements: false,
+    });
+  });
+
+  it('P3: viewer never gets write capability, even with a stored manage_all override', () => {
     expect(
       resolvePlanPermissions(
         makeMember({
           role: 'viewer',
-          permissions: {
-            canEditAllExpenses: true,
-          },
+          permissions: { moduleAccess: { finance: 'manage_all' } },
         }),
       ),
     ).toMatchObject({
-      canEditAllExpenses: true,
-      canDeleteAllExpenses: true,
       canCreateExpense: false,
+      canEditAllExpenses: false,
+      canDeleteAllExpenses: false,
     });
+  });
+});
+
+describe('resolveModuleAccess', () => {
+  it('resolves hidden for no member', () => {
+    expect(resolveModuleAccess(null, 'finance')).toBe('hidden');
+  });
+
+  it('always resolves manage_all for owner, ignoring any stored override', () => {
+    expect(
+      resolveModuleAccess(makeMember({ role: 'owner', permissions: { moduleAccess: { finance: 'view' } } }), 'finance'),
+    ).toBe('manage_all');
+  });
+
+  it('defaults editor finance/planning to manage_own', () => {
+    const editor = makeMember({ role: 'editor' });
+    expect(resolveModuleAccess(editor, 'finance')).toBe('manage_own');
+    expect(resolveModuleAccess(editor, 'planning')).toBe('manage_own');
+  });
+
+  it('defaults editor weddingGuests/travelItinerary to manage_all (matches pre-V2 behavior)', () => {
+    const editor = makeMember({ role: 'editor' });
+    expect(resolveModuleAccess(editor, 'weddingGuests')).toBe('manage_all');
+    expect(resolveModuleAccess(editor, 'travelItinerary')).toBe('manage_all');
+  });
+
+  it('lets owner downgrade an editor module override to hidden', () => {
+    const editor = makeMember({ role: 'editor', permissions: { moduleAccess: { finance: 'hidden' } } });
+    expect(resolveModuleAccess(editor, 'finance')).toBe('hidden');
+  });
+
+  it('clamps a viewer override down to view unless explicitly hidden', () => {
+    const viewer = makeMember({ role: 'viewer', permissions: { moduleAccess: { finance: 'manage_own' } } });
+    expect(resolveModuleAccess(viewer, 'finance')).toBe('view');
+
+    const hiddenViewer = makeMember({ role: 'viewer', permissions: { moduleAccess: { finance: 'hidden' } } });
+    expect(resolveModuleAccess(hiddenViewer, 'finance')).toBe('hidden');
   });
 });

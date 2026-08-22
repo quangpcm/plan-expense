@@ -136,7 +136,7 @@ export class FirestorePlanRepository implements PlanRepository {
       avatarUrl: input.owner.photoURL,
       role: 'owner',
       permissions: {
-        canEditAllExpenses: true,
+        moduleAccess: {},
       },
       status: 'active',
       invitedAt: null,

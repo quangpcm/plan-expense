@@ -118,7 +118,7 @@ export class FirestoreInvitationRepository implements InvitationRepository {
         invitationId,
         avatarUrl: actor.photoURL,
         role: invitation.role,
-        permissions: { canEditAllExpenses: false },
+        permissions: { moduleAccess: {} },
         status: 'active',
         invitedAt: null,
         joinedAt: now,

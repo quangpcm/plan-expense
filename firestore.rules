@@ -54,31 +54,66 @@ service cloud.firestore {
         currentUserPlanDoc(planId).data.role == 'owner';
     }
 
-    function canCreateExpense(planId) {
+    // Roles & Permissions V2 (docs/roles-permissions.md) — mirrors
+    // resolveModuleAccess()/resolvePlanCapabilities() in permission.service.ts.
+    // Every member doc always carries permissions.moduleAccess as a map
+    // (possibly empty) — see MemberRepository/PlanRepository/InvitationRepository.
+    function memberModuleAccess(planId, moduleId, editorDefault) {
+      let role = currentUserPlanDoc(planId).data.role;
+      let overrides = memberDoc(planId, currentUserPlanDoc(planId).data.memberId).data.permissions.moduleAccess;
+      let stored = moduleId in overrides ? overrides[moduleId] : null;
+      let resolved = role == 'owner'
+        ? 'manage_all'
+        : (stored != null ? stored : (role == 'editor' ? editorDefault : 'view'));
+      // P3 (docs/roles-permissions.md): viewer never gets write capability,
+      // regardless of a stored override.
+      return role == 'viewer' && resolved != 'hidden' ? 'view' : resolved;
+    }
+
+    function canManageOwnFinance(planId) {
       return isPlanVisible(planId) &&
-        currentUserPlanDoc(planId).data.role in ['owner', 'editor'];
+        memberModuleAccess(planId, 'finance', 'manage_own') in ['manage_own', 'manage_all'];
+    }
+
+    function canManageAllFinance(planId) {
+      return isPlanVisible(planId) &&
+        memberModuleAccess(planId, 'finance', 'manage_own') == 'manage_all';
+    }
+
+    function canCreateExpense(planId) {
+      return canManageOwnFinance(planId);
     }
 
     function canCreateIncome(planId) {
-      return canCreateExpense(planId);
+      return canManageOwnFinance(planId);
+    }
+
+    function canManageOwnPlanning(planId) {
+      return isPlanVisible(planId) &&
+        memberModuleAccess(planId, 'planning', 'manage_own') in ['manage_own', 'manage_all'];
+    }
+
+    function canManageAllPlanning(planId) {
+      return isPlanVisible(planId) &&
+        memberModuleAccess(planId, 'planning', 'manage_own') == 'manage_all';
     }
 
     function canManageWeddingGuest(planId) {
       return isPlanVisible(planId) &&
-        currentUserPlanDoc(planId).data.role in ['owner', 'editor'];
+        memberModuleAccess(planId, 'weddingGuests', 'manage_all') == 'manage_all';
     }
 
     function canManageTravelActivity(planId) {
       return isPlanVisible(planId) &&
-        currentUserPlanDoc(planId).data.role in ['owner', 'editor'];
+        memberModuleAccess(planId, 'travelItinerary', 'manage_all') == 'manage_all';
     }
 
     function canEditAnyExpense(planId) {
-      return isPlanVisible(planId) &&
-        (
-          currentUserPlanDoc(planId).data.role == 'owner' ||
-          memberDoc(planId, currentUserPlanDoc(planId).data.memberId).data.permissions.canEditAllExpenses == true
-        );
+      return canManageAllFinance(planId);
+    }
+
+    function canEditAnyIncome(planId) {
+      return canManageAllFinance(planId);
     }
 
     function isPlanActive(planId) {
@@ -471,7 +506,7 @@ service cloud.firestore {
     match /plans/{planId}/milestones/{milestoneId} {
       allow read: if isPlanVisible(planId);
       allow create: if (
-          isPlanOwner(planId) &&
+          canManageAllPlanning(planId) &&
           isPlanActive(planId) &&
           request.resource.data.id == milestoneId &&
           request.resource.data.planId == planId &&
@@ -501,7 +536,7 @@ service cloud.firestore {
           request.resource.data.todoCount is int &&
           request.resource.data.completedTodoCount is int
         );
-      allow update: if isPlanOwner(planId) &&
+      allow update: if canManageAllPlanning(planId) &&
         isPlanActive(planId) &&
         resource.data.isSystemHidden != true &&
         request.resource.data.id == resource.data.id &&
@@ -514,7 +549,7 @@ service cloud.firestore {
         request.resource.data.completedTodoCount is int &&
         request.resource.data.orderIndex is int &&
         request.resource.data.status in ['upcoming', 'in_progress', 'completed', 'cancelled'];
-      allow delete: if isPlanOwner(planId) && resource.data.isSystemHidden != true;
+      allow delete: if (isPlanOwner(planId) || canManageAllPlanning(planId)) && resource.data.isSystemHidden != true;
     }
 
     match /plans/{planId}/weddingGuestGroups/{groupId} {
@@ -593,7 +628,7 @@ service cloud.firestore {
 
     match /plans/{planId}/todos/{todoId} {
       allow read: if isPlanVisible(planId);
-      allow create: if isPlanOwner(planId) &&
+      allow create: if canManageOwnPlanning(planId) &&
         isPlanActive(planId) &&
         request.resource.data.id == todoId &&
         request.resource.data.planId == planId &&
@@ -604,8 +639,11 @@ service cloud.firestore {
         request.resource.data.title is string &&
         request.resource.data.priority in ['low', 'medium', 'high'] &&
         request.resource.data.status in ['todo', 'in_progress', 'done', 'cancelled'];
-      allow update: if isPlanOwner(planId) &&
-        isPlanActive(planId) &&
+      allow update: if isPlanActive(planId) &&
+        (
+          (resource.data.createdByUserId == request.auth.uid && canManageOwnPlanning(planId)) ||
+          canManageAllPlanning(planId)
+        ) &&
         request.resource.data.id == resource.data.id &&
         request.resource.data.planId == resource.data.planId &&
         request.resource.data.createdByUserId == resource.data.createdByUserId &&
@@ -616,10 +654,18 @@ service cloud.firestore {
         request.resource.data.title is string &&
         request.resource.data.priority in ['low', 'medium', 'high'] &&
         request.resource.data.status in ['todo', 'in_progress', 'done', 'cancelled'];
-      // Full plan teardown must also work on a closed plan, so this doesn't
-      // gate on isPlanActive() — deleting a closed plan's todos individually
-      // is an acceptable side effect of widening this for that case.
-      allow delete: if isPlanOwner(planId);
+      // Full plan teardown must also work on a closed plan, so the owner
+      // branch doesn't gate on isPlanActive() — deleting a closed plan's
+      // todos individually is an acceptable side effect of widening this for
+      // that case. Editor own/all deletes still require an active plan.
+      allow delete: if isPlanOwner(planId) ||
+        (
+          isPlanActive(planId) &&
+          (
+            (resource.data.createdByUserId == request.auth.uid && canManageOwnPlanning(planId)) ||
+            canManageAllPlanning(planId)
+          )
+        );
     }
 
     match /plans/{planId}/expenses/{expenseId} {
@@ -638,7 +684,7 @@ service cloud.firestore {
         request.resource.data.paidByMemberId is string;
       allow update: if isPlanActive(planId) &&
         (
-          resource.data.createdByUserId == request.auth.uid ||
+          (resource.data.createdByUserId == request.auth.uid && canManageOwnFinance(planId)) ||
           canEditAnyExpense(planId)
         ) &&
         request.resource.data.id == resource.data.id &&
@@ -650,7 +696,18 @@ service cloud.firestore {
         milestoneDoc(planId, request.resource.data.milestoneId).data.planId == planId &&
         request.resource.data.amount is int &&
         request.resource.data.amount > 0;
-      allow delete: if isPlanOwner(planId);
+      // Everyday deletes go through ExpenseService.deleteExpense(), which does
+      // a hard delete (not a soft-delete update) — so this must mirror
+      // finance.deleteOwnExpense/deleteAllExpense, not just Owner. The Owner
+      // branch stays unconditional (no isPlanActive) for full plan teardown.
+      allow delete: if isPlanOwner(planId) ||
+        (
+          isPlanActive(planId) &&
+          (
+            (resource.data.createdByUserId == request.auth.uid && canManageOwnFinance(planId)) ||
+            canManageAllFinance(planId)
+          )
+        );
     }
 
     match /plans/{planId}/incomes/{incomeId} {
@@ -668,7 +725,10 @@ service cloud.firestore {
         milestoneDoc(planId, request.resource.data.milestoneId).data.planId == planId &&
         request.resource.data.contributedByMemberId is string;
       allow update: if isPlanActive(planId) &&
-        resource.data.createdByUserId == request.auth.uid &&
+        (
+          (resource.data.createdByUserId == request.auth.uid && canManageOwnFinance(planId)) ||
+          canEditAnyIncome(planId)
+        ) &&
         request.resource.data.id == resource.data.id &&
         request.resource.data.planId == resource.data.planId &&
         request.resource.data.createdByUserId == resource.data.createdByUserId &&
@@ -679,7 +739,14 @@ service cloud.firestore {
         request.resource.data.milestoneId is string &&
         milestoneDoc(planId, request.resource.data.milestoneId).data.planId == planId &&
         request.resource.data.contributedByMemberId is string;
-      allow delete: if isPlanOwner(planId);
+      allow delete: if isPlanOwner(planId) ||
+        (
+          isPlanActive(planId) &&
+          (
+            (resource.data.createdByUserId == request.auth.uid && canManageOwnFinance(planId)) ||
+            canManageAllFinance(planId)
+          )
+        );
     }
 
     match /plans/{planId}/settlements/{settlementId} {

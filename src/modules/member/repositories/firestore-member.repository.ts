@@ -62,7 +62,7 @@ export class FirestoreMemberRepository implements MemberRepository {
       avatarUrl: null,
       role: input.role,
       permissions: {
-        canEditAllExpenses: false,
+        moduleAccess: {},
       },
       status: 'active',
       invitedAt: null,
@@ -87,7 +87,7 @@ export class FirestoreMemberRepository implements MemberRepository {
       nicknameIsCustom: true,
       role: input.role,
       permissions: {
-        canEditAllExpenses: input.canEditAllExpenses,
+        moduleAccess: input.moduleAccess,
       },
       updatedAt: Timestamp.now(),
     });

@@ -55,6 +55,7 @@ import type {
   PlanRole,
 } from '@/modules/member/types/member';
 import { buildLinkedMemberIdSet } from '@/modules/member/utils/member-linkage';
+import type { ConfigurableModuleId, ModuleAccessLevel } from '@/modules/plan/types/plan-modular';
 import { EditPlanForm } from '@/modules/plan/components/edit-plan-form';
 import { PlanUnlockGate } from '@/modules/plan/components/plan-unlock-gate';
 import { PLAN_ARCHIVE_RETENTION_DAYS, planTypeOptions } from '@/modules/plan/constants/plan.constants';
@@ -203,8 +204,8 @@ export default function PlanDetailPage() {
   const { invitations, errorMessage: invitationError } =
     usePlanInvitations(planId);
   const planDetailTabs = useMemo(
-    () => (plan ? getPlanDetailTabs(plan) : []),
-    [plan],
+    () => (plan ? getPlanDetailTabs(plan, currentMember) : []),
+    [plan, currentMember],
   );
   const estimatedTotal = useMemo(
     () =>
@@ -293,7 +294,9 @@ export default function PlanDetailPage() {
   const canCreateExpense = hasCapability('finance.createExpense') && !isPlanEnded;
   const canManageTravelActivities =
     hasCapability('travelItinerary.createActivity') && !isPlanEnded;
-  const canManagePlanning = isOwner && !isPlanEnded;
+  const canManageAllPlanning = hasCapability('planning.manageMilestone') && !isPlanEnded;
+  const canManageOwnPlanning = hasCapability('planning.createTodo') && !isPlanEnded;
+  const canManagePlanning = canManageAllPlanning;
   const { settlements, errorMessage: settlementWatchError } =
     useSettlements(planId);
   const [memberActionError, setMemberActionError] = useState<string | null>(
@@ -481,14 +484,14 @@ export default function PlanDetailPage() {
     if (tabParam === 'settings') {
       setHeaderModal('plan-settings');
     } else if (tabParam) {
-      setActiveTab(resolvePlanDetailTab(plan, tabParam));
+      setActiveTab(resolvePlanDetailTab(plan, tabParam, currentMember));
       if (tabParam === 'statistic') {
         setShowStatisticSheet(true);
       }
     } else if (isNewPlan) {
-      setActiveTab(resolvePlanDetailTab(plan, null));
+      setActiveTab(resolvePlanDetailTab(plan, null, currentMember));
     }
-  }, [plan, planId, searchParams]);
+  }, [plan, planId, searchParams, currentMember]);
 
   const currentPlan = plan;
   const statistic = useMemo(
@@ -889,7 +892,7 @@ export default function PlanDetailPage() {
     values: {
       nickname: string;
       role: Exclude<PlanRole, 'owner'>;
-      canEditAllExpenses: boolean;
+      moduleAccess: Partial<Record<ConfigurableModuleId, ModuleAccessLevel>>;
     },
   ) {
     if (!user) {
@@ -907,7 +910,7 @@ export default function PlanDetailPage() {
           memberId: member.id,
           nickname: values.nickname,
           role: values.role,
-          canEditAllExpenses: values.canEditAllExpenses,
+          moduleAccess: values.moduleAccess,
         },
         user,
         currentMember,
@@ -1317,6 +1320,7 @@ export default function PlanDetailPage() {
     try {
       await todoService.updateTodo(
         ensuredPlan,
+        todo,
         {
           todoId: todo.id,
           milestoneId: todo.milestoneId,
@@ -1695,6 +1699,7 @@ export default function PlanDetailPage() {
         return (
           <OverviewTab
             canManagePlanning={canManagePlanning}
+            currentMember={currentMember}
             debtTrackingError={debtTrackingError}
             debtTrackingSummary={debtTrackingSummary}
             endedPlanDate={endedPlanDate}
@@ -1828,6 +1833,8 @@ export default function PlanDetailPage() {
           <>
             <PlanningTab
               allTodosFilteredAndSorted={allTodosFilteredAndSorted}
+              canManageAllPlanning={canManageAllPlanning}
+              canManageOwnPlanning={canManageOwnPlanning}
               categories={categories}
               errorMessage={null}
               expenseSheetMilestone={expenseSheetMilestone}
@@ -1835,7 +1842,6 @@ export default function PlanDetailPage() {
               incomeCategories={incomeCategories}
               isMilestoneSubmitting={isMilestoneSubmitting}
               isMilestonesLoading={isMilestonesLoading}
-              isOwner={isOwner}
               isPlanEnded={Boolean(isPlanEnded)}
               isTodoSubmitting={isTodoSubmitting}
               isTodosLoading={isTodosLoading}
@@ -2260,7 +2266,11 @@ export default function PlanDetailPage() {
                   (member) => member.id === detailTodo.assigneeMemberId,
                 ) ?? null
               }
-              canManagePlan={isOwner && plan.status !== 'closed'}
+              canManagePlan={
+                (hasCapability('planning.editAllTodo') ||
+                  (hasCapability('planning.editOwnTodo') && detailTodo.createdByUserId === user?.uid)) &&
+                plan.status !== 'closed'
+              }
               isSubmitting={isTodoSubmitting}
               milestoneOptions={sortedWorkMilestones.map((milestone) => ({
                 value: milestone.id,

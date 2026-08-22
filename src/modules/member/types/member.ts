@@ -1,10 +1,15 @@
 import type { Timestamp } from 'firebase/firestore';
+
+import type { ConfigurableModuleId, ModuleAccessLevel } from '@/modules/plan/types/plan-modular';
+
 export type MemberType = 'registered' | 'guest';
 
 export type PlanRole = 'owner' | 'editor' | 'viewer';
 
+// Roles & Permissions V2 (docs/roles-permissions.md). Module không có entry
+// ở đây resolve theo role default (permission.service.ts) — chỉ lưu override.
 export type PlanPermissions = {
-  canEditAllExpenses: boolean;
+  moduleAccess?: Partial<Record<ConfigurableModuleId, ModuleAccessLevel>>;
 };
 
 export type PlanMemberStatus = 'invited' | 'active' | 'removed';
@@ -39,7 +44,7 @@ export type UpdateMemberInput = {
   memberId: string;
   nickname: string;
   role: Exclude<PlanRole, 'owner'>;
-  canEditAllExpenses: boolean;
+  moduleAccess: Partial<Record<ConfigurableModuleId, ModuleAccessLevel>>;
 };
 
 export type UpdateMemberAvatarInput = {

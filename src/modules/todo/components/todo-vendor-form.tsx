@@ -87,7 +87,7 @@ export function TodoVendorForm({
           attachments: attachmentDrafts,
         });
 
-        await todoService.addVendor(plan, parsed, currentUser, currentMember);
+        await todoService.addVendor(plan, todo, parsed, currentUser, currentMember);
         setName('');
         setDescription('');
         setLink('');
