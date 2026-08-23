@@ -64,7 +64,7 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
           iconId: milestone.iconId ?? '',
         });
 
-        await milestoneService.updateMilestone(plan, parsed, currentUser, currentMember);
+        await milestoneService.updateMilestone(plan, milestone, parsed, currentUser, currentMember);
         setSuccessMessage('Đã cập nhật mốc kế hoạch.');
       } else {
         const parsed = createMilestoneSchema.parse({

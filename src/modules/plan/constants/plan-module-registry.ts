@@ -32,7 +32,11 @@ export const planModuleRegistry: Record<PlanModuleId, PlanModuleDefinition> = {
     navigation: { enabled: true },
     permissions: [
       'planning.view',
-      'planning.manageMilestone',
+      'planning.createMilestone',
+      'planning.editOwnMilestone',
+      'planning.deleteOwnMilestone',
+      'planning.editAllMilestone',
+      'planning.deleteAllMilestone',
       'planning.createTodo',
       'planning.editOwnTodo',
       'planning.deleteOwnTodo',

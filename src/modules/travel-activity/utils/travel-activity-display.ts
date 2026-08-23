@@ -1,10 +1,21 @@
-import { BedDouble, Landmark, MoreHorizontal, Plane, ShoppingBag, Ticket, UtensilsCrossed } from 'lucide-react';
+import {
+  BedDouble,
+  Landmark,
+  MoreHorizontal,
+  Plane,
+  Route,
+  ShoppingBag,
+  Ticket,
+  UtensilsCrossed,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 import type { TravelActivityCategory } from '@/modules/travel-activity/types/travel-activity';
 
 export function toMapHref(url: string) {
-  return url.startsWith('http://') || url.startsWith('https://') ? url : `https://${url}`;
+  return url.startsWith('http://') || url.startsWith('https://')
+    ? url
+    : `https://${url}`;
 }
 
 type TravelActivityCategoryMeta = {
@@ -14,7 +25,7 @@ type TravelActivityCategoryMeta = {
 };
 
 export const TRAVEL_ACTIVITY_CATEGORIES: TravelActivityCategoryMeta[] = [
-  { value: 'transport', label: 'Di chuyển', icon: Plane },
+  { value: 'transport', label: 'Di chuyển', icon: Route },
   { value: 'stay', label: 'Lưu trú', icon: BedDouble },
   { value: 'food', label: 'Ăn uống', icon: UtensilsCrossed },
   { value: 'sightseeing', label: 'Tham quan', icon: Landmark },
@@ -23,9 +34,12 @@ export const TRAVEL_ACTIVITY_CATEGORIES: TravelActivityCategoryMeta[] = [
   { value: 'other', label: 'Khác', icon: MoreHorizontal },
 ];
 
-const TRAVEL_ACTIVITY_CATEGORY_FALLBACK = TRAVEL_ACTIVITY_CATEGORIES[TRAVEL_ACTIVITY_CATEGORIES.length - 1]!;
+const TRAVEL_ACTIVITY_CATEGORY_FALLBACK =
+  TRAVEL_ACTIVITY_CATEGORIES[TRAVEL_ACTIVITY_CATEGORIES.length - 1]!;
 
-export function getTravelActivityCategoryMeta(category: TravelActivityCategory) {
+export function getTravelActivityCategoryMeta(
+  category: TravelActivityCategory,
+) {
   return (
     TRAVEL_ACTIVITY_CATEGORIES.find((entry) => entry.value === category) ??
     TRAVEL_ACTIVITY_CATEGORY_FALLBACK

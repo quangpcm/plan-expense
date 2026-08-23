@@ -506,7 +506,7 @@ service cloud.firestore {
     match /plans/{planId}/milestones/{milestoneId} {
       allow read: if isPlanVisible(planId);
       allow create: if (
-          canManageAllPlanning(planId) &&
+          canManageOwnPlanning(planId) &&
           isPlanActive(planId) &&
           request.resource.data.id == milestoneId &&
           request.resource.data.planId == planId &&
@@ -536,8 +536,11 @@ service cloud.firestore {
           request.resource.data.todoCount is int &&
           request.resource.data.completedTodoCount is int
         );
-      allow update: if canManageAllPlanning(planId) &&
-        isPlanActive(planId) &&
+      allow update: if isPlanActive(planId) &&
+        (
+          (resource.data.createdByUserId == request.auth.uid && canManageOwnPlanning(planId)) ||
+          canManageAllPlanning(planId)
+        ) &&
         resource.data.isSystemHidden != true &&
         request.resource.data.id == resource.data.id &&
         request.resource.data.planId == resource.data.planId &&
@@ -549,7 +552,11 @@ service cloud.firestore {
         request.resource.data.completedTodoCount is int &&
         request.resource.data.orderIndex is int &&
         request.resource.data.status in ['upcoming', 'in_progress', 'completed', 'cancelled'];
-      allow delete: if (isPlanOwner(planId) || canManageAllPlanning(planId)) && resource.data.isSystemHidden != true;
+      allow delete: if (
+          isPlanOwner(planId) ||
+          canManageAllPlanning(planId) ||
+          (resource.data.createdByUserId == request.auth.uid && canManageOwnPlanning(planId))
+        ) && resource.data.isSystemHidden != true;
     }
 
     match /plans/{planId}/weddingGuestGroups/{groupId} {

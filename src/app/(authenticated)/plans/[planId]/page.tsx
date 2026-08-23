@@ -295,9 +295,15 @@ export default function PlanDetailPage() {
   const canCreateExpense = hasCapability('finance.createExpense') && !isPlanEnded;
   const canManageTravelActivities =
     hasCapability('travelItinerary.createActivity') && !isPlanEnded;
-  const canManageAllPlanning = hasCapability('planning.manageMilestone') && !isPlanEnded;
+  // Todo bulk operations (drag-reorder, move-between-milestones) require
+  // full "Công việc" access — granted at the same planning=manage_all tier
+  // as Milestone's own manage-all capability below.
+  const canManageAllPlanning = hasCapability('planning.editAllTodo') && !isPlanEnded;
   const canManageOwnPlanning = hasCapability('planning.createTodo') && !isPlanEnded;
   const canManagePlanning = canManageAllPlanning;
+  const canCreateMilestone = hasCapability('planning.createMilestone') && !isPlanEnded;
+  const canManageOwnMilestone = hasCapability('planning.editOwnMilestone') && !isPlanEnded;
+  const canManageAllMilestone = hasCapability('planning.editAllMilestone') && !isPlanEnded;
   const { settlements, errorMessage: settlementWatchError } =
     useSettlements(planId);
   const [memberActionError, setMemberActionError] = useState<string | null>(
@@ -1839,9 +1845,13 @@ export default function PlanDetailPage() {
           <>
             <PlanningTab
               allTodosFilteredAndSorted={allTodosFilteredAndSorted}
+              canManageAllMilestone={canManageAllMilestone}
               canManageAllPlanning={canManageAllPlanning}
+              canManageOwnMilestone={canManageOwnMilestone}
               canManageOwnPlanning={canManageOwnPlanning}
+              canCreateMilestone={canCreateMilestone}
               categories={categories}
+              currentUserId={user?.uid ?? null}
               errorMessage={null}
               expenseSheetMilestone={expenseSheetMilestone}
               expenseSheetMilestoneExpenses={expenseSheetMilestoneExpenses}

@@ -33,10 +33,17 @@ type MilestoneTimelineBoardProps = {
   selectedMilestoneId: string | null;
   defaultExpandedMilestoneId: string | null;
   searchQuery: string;
-  // Mốc (milestone) là shared resource — chỉ manage_all mới sửa/xoá/sắp xếp được.
+  // "Công việc" = Planning module (Milestone + Todo), nhưng capability bên
+  // dưới vẫn granular theo resource (docs/roles-permissions.md #13, amended).
+  // canManageAllPlanning/canManageOwnPlanning: bulk Todo reorder & tạo Todo.
   canManageAllPlanning: boolean;
-  // Todo hỗ trợ manage_own — true khi editor được manage_own HOẶC manage_all.
   canManageOwnPlanning: boolean;
+  // canManageAllMilestone/canManageOwnMilestone: sửa/xoá Milestone — own chỉ
+  // áp dụng cho milestone do currentUserId tạo, sắp xếp lại (reorder) luôn
+  // cần manage_all.
+  canManageAllMilestone: boolean;
+  canManageOwnMilestone: boolean;
+  currentUserId: string | null;
   isPlanClosed: boolean;
   isMilestoneSubmitting: boolean;
   isTodoSubmitting: boolean;
@@ -145,6 +152,9 @@ export function MilestoneTimelineBoard({
   searchQuery,
   canManageAllPlanning,
   canManageOwnPlanning,
+  canManageAllMilestone,
+  canManageOwnMilestone,
+  currentUserId,
   isPlanClosed,
   isMilestoneSubmitting,
   isTodoSubmitting,
@@ -565,6 +575,9 @@ export function MilestoneTimelineBoard({
         const tone = getMilestoneCardTone(displayedStatus, isSelected);
         const shouldExpandDetails =
           isSearching || expandedMilestoneIds.has(milestone.id);
+        const canManageThisMilestone =
+          canManageAllMilestone ||
+          (canManageOwnMilestone && milestone.createdByUserId === currentUserId);
 
         return (
           <div
@@ -661,7 +674,7 @@ export function MilestoneTimelineBoard({
                     >
                       <CircleDollarSign className="size-4" />
                     </Button>
-                    {canManageAllPlanning ? (
+                    {canManageThisMilestone ? (
                       <div className="flex flex-wrap justify-end gap-2">
                         <Button
                           className={cn(

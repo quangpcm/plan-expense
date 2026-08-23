@@ -314,6 +314,7 @@ Ví dụ:
 Expense
 Income
 Todo
+Milestone (amended — xem mục 13)
 ```
 
 Có thể hỗ trợ:
@@ -359,13 +360,15 @@ Không phải resource nào cũng nên có `manage_own`.
 Ví dụ:
 
 ```text
-Milestone
 Wedding Guest
 Travel Activity  (quyết định — xem ghi chú mục 8.1)
 Members
 Settlement
 Plan Settings
 ```
+
+Milestone từng nằm ở nhóm này (V2 gốc) nhưng đã được amend sang ownership
+resource — xem mục 13.
 
 Khái niệm:
 
@@ -541,6 +544,13 @@ Settlement tiếp tục được xem là sensitive/administrative operation và 
 
 # 13. Planning
 
+> **Amended (2026-08-23):** quyết định gốc bên dưới coi Milestone là shared
+> resource (chỉ `view`/`manage_all`, không có `manage_own`). Quyết định này
+> đã bị đảo ngược theo yêu cầu mở rộng "Công việc" — Milestone giờ có cùng
+> own/all semantic như Todo. Giữ lại nội dung gốc bên dưới (gạch dưới bằng
+> ~~) để tránh mất lịch sử quyết định; nội dung hiệu lực nằm ở khối "Quyết
+> định hiện tại" phía sau.
+
 Planning chứa:
 
 ```text
@@ -548,7 +558,9 @@ Milestone
 Todo
 ```
 
-Hai resource không bắt buộc có cùng ownership semantic.
+"Công việc" trong Permission UI (mục 24) = toàn bộ Planning module (Milestone
++ Todo) — chỉ 1 dropdown, nhưng capability bên dưới vẫn granular theo từng
+resource để enforce đúng.
 
 ### Todo
 
@@ -559,43 +571,61 @@ manage_own
 manage_all
 ```
 
-### Milestone
+### Milestone — Quyết định hiện tại
 
-Milestone là cấu trúc chung của Plan.
-
-Không nên mặc định coi:
-
-```text
-Milestone do A tạo
-→ chỉ A quản lý
-```
-
-Vì vậy implementation phải xác định Milestone là shared resource.
-
-Đề xuất:
+Milestone giờ cũng là ownership resource, cùng semantic với Todo:
 
 ```text
 Planning = manage_own
+→ "Tôi quản lý những gì tôi tạo"
 
-Todo:
-→ Create
-→ Edit/Delete own
-
-Milestone:
-→ View
+Todo:    Create, Edit/Delete own
+Milestone: Create, Edit/Delete own
 ```
 
 ```text
 Planning = manage_all
+→ Editor sửa/xoá được cả Milestone và Todo do người khác tạo
 
-Todo:
-→ Manage all
-
-Milestone:
-→ Manage all
+Todo:    Manage all
+Milestone: Manage all
 ```
 
-Điều này giữ UX module-level đơn giản nhưng resolver vẫn hiểu semantic của từng resource.
+Reorder milestone (sắp xếp lại toàn bộ danh sách) không scope theo 1 record
+sở hữu riêng lẻ, nên vẫn yêu cầu `manage_all` (giống bulk reorder của Todo)
+— không có "reorder own".
+
+Capability keys:
+
+```ts
+planning.createMilestone
+planning.editOwnMilestone
+planning.deleteOwnMilestone
+planning.editAllMilestone
+planning.deleteAllMilestone
+
+planning.createTodo
+planning.editOwnTodo
+planning.deleteOwnTodo
+planning.editAllTodo
+planning.deleteAllTodo
+```
+
+Business rule vẫn giữ nguyên bất kể capability: có quyền xoá Milestone không
+đồng nghĩa được bypass rule dữ liệu (vd. không hard-delete milestone còn
+Expense liên quan — `docs/4.DMS.md` §7.5).
+
+### Milestone — Quyết định gốc (superseded)
+
+~~Milestone là cấu trúc chung của Plan.~~
+
+~~Không nên mặc định coi: "Milestone do A tạo → chỉ A quản lý". Vì vậy
+implementation phải xác định Milestone là shared resource, chỉ hỗ trợ
+`view`/`manage_all`, không có `manage_own`.~~
+
+Điều này từng giữ UX module-level đơn giản nhưng resolver vẫn hiểu semantic
+của từng resource — nguyên tắc "UI 1 dropdown, capability granular" đó vẫn
+đúng và được giữ lại ở quyết định hiện tại phía trên.
 
 ---
 
@@ -1245,7 +1275,7 @@ regression âm thầm. Quyết định cuối, dùng làm input duy nhất cho P
 |---|---|---|---|---|
 | overview | manage_all | view | view | luôn theo module gốc, không override riêng |
 | planning (Todo) | manage_all | **manage_own** | view | net-new cho Editor — hiện tại editor không có quyền gì ở Todo, không có regression |
-| planning (Milestone) | manage_all | view (khi planning=manage_own) / manage_all (khi planning=manage_all) | view | theo bảng ở mục 13, Milestone là shared resource đi theo cùng level với Todo |
+| planning (Milestone) | manage_all | **manage_own** | view | Amended 2026-08-23 (mục 13): Milestone không còn là shared resource — cùng own/all semantic với Todo. Reorder milestone vẫn cần manage_all |
 | finance (Expense + Income) | manage_all | **manage_own** | view | thay thế `canEditAllExpenses`; giữ hành vi tương đương V1 làm default, owner nâng lên `manage_all` nếu cần — không tự mở rộng sang Income mặc định |
 | settlement | manage_all | (không tách theo access level, giữ nguyên rule Owner-only hiện tại) | view | ngoài scope V2, xem mục 12 |
 | weddingGuests | manage_all | **manage_all** ⚠️ | view | quyết định giữ nguyên hành vi hiện tại — KHÔNG default xuống `view` như gợi ý chung ở mục 7, vì editor hiện tại đã sửa/xoá được guest của người khác; hạ default sẽ là regression |
@@ -1441,8 +1471,14 @@ Own Todo
 Other Todo
 → edit/delete DENY
 
-Milestone
-→ shared-resource rule applies
+Own Milestone
+→ create + edit/delete PASS
+
+Other Milestone
+→ edit/delete DENY
+
+Reorder milestones
+→ DENY (bulk op requires manage_all — mục 13)
 ```
 
 ```text

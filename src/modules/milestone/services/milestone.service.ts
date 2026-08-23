@@ -15,11 +15,45 @@ import { AppError } from '@/shared/errors/app-error';
 export class MilestoneService {
   constructor(private readonly milestoneRepository: MilestoneRepository) {}
 
-  // Milestone là shared resource (docs/roles-permissions.md #13) — không có
-  // khái niệm "own", chỉ manage_all mới quản lý được.
-  private assertManagePlanPermission(currentMember: PlanMemberDocument | null) {
-    if (!hasPlanCapability(currentMember, 'planning.manageMilestone')) {
-      throw new AppError('Only the owner or an editor with full planning access can manage milestones.', 'MILESTONE_PERMISSION_DENIED', 403);
+  private assertCreatePermission(currentMember: PlanMemberDocument | null) {
+    if (!hasPlanCapability(currentMember, 'planning.createMilestone')) {
+      throw new AppError('You do not have permission to create milestones.', 'MILESTONE_PERMISSION_DENIED', 403);
+    }
+  }
+
+  private assertCanEditMilestone(
+    currentMember: PlanMemberDocument | null,
+    milestone: MilestoneDocument,
+    currentUser: AuthUser,
+  ) {
+    const canEditAll = hasPlanCapability(currentMember, 'planning.editAllMilestone');
+    const canEditOwn =
+      hasPlanCapability(currentMember, 'planning.editOwnMilestone') && milestone.createdByUserId === currentUser.uid;
+
+    if (!canEditAll && !canEditOwn) {
+      throw new AppError('You do not have permission to edit this milestone.', 'MILESTONE_PERMISSION_DENIED', 403);
+    }
+  }
+
+  private assertCanDeleteMilestone(
+    currentMember: PlanMemberDocument | null,
+    milestone: MilestoneDocument,
+    currentUser: AuthUser,
+  ) {
+    const canDeleteAll = hasPlanCapability(currentMember, 'planning.deleteAllMilestone');
+    const canDeleteOwn =
+      hasPlanCapability(currentMember, 'planning.deleteOwnMilestone') && milestone.createdByUserId === currentUser.uid;
+
+    if (!canDeleteAll && !canDeleteOwn) {
+      throw new AppError('You do not have permission to delete this milestone.', 'MILESTONE_PERMISSION_DENIED', 403);
+    }
+  }
+
+  // Reorder sắp xếp lại toàn bộ danh sách milestone trong 1 lần, không scope
+  // theo 1 record sở hữu riêng lẻ, nên cần manage-all (mirrors todo.service.ts).
+  private assertCanManageAllMilestones(currentMember: PlanMemberDocument | null) {
+    if (!hasPlanCapability(currentMember, 'planning.editAllMilestone')) {
+      throw new AppError('You do not have permission to reorganize milestones.', 'MILESTONE_PERMISSION_DENIED', 403);
     }
   }
 
@@ -36,7 +70,7 @@ export class MilestoneService {
     currentMember: PlanMemberDocument | null,
   ) {
     this.assertEditablePlan(plan);
-    this.assertManagePlanPermission(currentMember);
+    this.assertCreatePermission(currentMember);
 
     const title = input.title.trim();
 
@@ -66,13 +100,13 @@ export class MilestoneService {
 
   async updateMilestone(
     plan: PlanDocument,
+    milestone: MilestoneDocument,
     input: UpdateMilestoneInput,
     currentUser: AuthUser,
     currentMember: PlanMemberDocument | null,
   ) {
-    void currentUser;
     this.assertEditablePlan(plan);
-    this.assertManagePlanPermission(currentMember);
+    this.assertCanEditMilestone(currentMember, milestone, currentUser);
 
     const title = input.title.trim();
 
@@ -99,7 +133,7 @@ export class MilestoneService {
     currentMember: PlanMemberDocument | null,
   ) {
     this.assertEditablePlan(plan);
-    this.assertManagePlanPermission(currentMember);
+    this.assertCanManageAllMilestones(currentMember);
     await this.milestoneRepository.reorderMilestones(plan.id, milestones);
   }
 
@@ -109,9 +143,8 @@ export class MilestoneService {
     currentUser: AuthUser,
     currentMember: PlanMemberDocument | null,
   ) {
-    void currentUser;
     this.assertEditablePlan(plan);
-    this.assertManagePlanPermission(currentMember);
+    this.assertCanDeleteMilestone(currentMember, milestone, currentUser);
 
     if (milestone.isSystemHidden) {
       throw new AppError('System hidden milestone cannot be deleted.', 'MILESTONE_SYSTEM_HIDDEN_DELETE_DENIED', 400);

@@ -894,7 +894,7 @@ describe('firestore rules', () => {
     );
   });
 
-  it('allows owner to create a milestone and blocks editor from doing so', async () => {
+  it('allows owner to create a milestone; blocks editor from creating one for someone else but allows their own (planning=manage_own default)', async () => {
     const ownerDb = testEnv.authenticatedContext('owner-user').firestore();
     await assertSucceeds(
       setDoc(doc(ownerDb, 'plans', 'plan-1', 'milestones', 'milestone-2'), {
@@ -921,6 +921,8 @@ describe('firestore rules', () => {
     );
 
     const editorDb = testEnv.authenticatedContext('editor-user').firestore();
+    // Editor default planning=manage_own can create milestones, but only
+    // with themselves as createdByUserId.
     await assertFails(
       setDoc(doc(editorDb, 'plans', 'plan-1', 'milestones', 'milestone-3'), {
         id: 'milestone-3',
@@ -937,11 +939,53 @@ describe('firestore rules', () => {
         totalExpense: 0,
         todoCount: 0,
         completedTodoCount: 0,
+        createdByUserId: 'owner-user',
+        createdAt: now,
+        updatedAt: now,
+        completedAt: null,
+        cancelledAt: null,
+      }),
+    );
+
+    await assertSucceeds(
+      setDoc(doc(editorDb, 'plans', 'plan-1', 'milestones', 'milestone-3'), {
+        id: 'milestone-3',
+        planId: 'plan-1',
+        title: 'Editor own milestone',
+        description: null,
+        iconId: null,
+        isSystemHidden: false,
+        startDate: null,
+        endDate: null,
+        status: 'upcoming',
+        orderIndex: 2,
+        budgetAmount: null,
+        totalExpense: 0,
+        todoCount: 0,
+        completedTodoCount: 0,
         createdByUserId: 'editor-user',
         createdAt: now,
         updatedAt: now,
         completedAt: null,
         cancelledAt: null,
+      }),
+    );
+
+    // But editing/deleting the owner's milestone is still denied — manage_own
+    // only reaches milestones the editor created themselves.
+    await assertFails(
+      updateDoc(doc(editorDb, 'plans', 'plan-1', 'milestones', 'milestone-2'), {
+        title: 'Illegal edit of owner milestone',
+        updatedAt: now,
+      }),
+    );
+    await assertFails(deleteDoc(doc(editorDb, 'plans', 'plan-1', 'milestones', 'milestone-2')));
+
+    // And the editor can edit/delete their own milestone.
+    await assertSucceeds(
+      updateDoc(doc(editorDb, 'plans', 'plan-1', 'milestones', 'milestone-3'), {
+        title: 'Editor own milestone renamed',
+        updatedAt: now,
       }),
     );
   });
@@ -1101,6 +1145,9 @@ describe('firestore rules', () => {
         cancelledAt: null,
       }),
     );
+
+    // deleteAllMilestone reaches a milestone created by someone else too.
+    await assertSucceeds(deleteDoc(doc(db, 'plans', 'plan-1', 'milestones', 'milestone-1')));
   });
 
   it('allows a member with finance=manage_all to edit someone else income too', async () => {

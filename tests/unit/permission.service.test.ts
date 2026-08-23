@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveModuleAccess, resolvePlanPermissions } from '@/modules/member/services/permission.service';
+import { hasPlanCapability, resolveModuleAccess, resolvePlanPermissions } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import { Timestamp } from 'firebase/firestore';
 
@@ -49,11 +49,25 @@ describe('resolvePlanPermissions', () => {
     });
   });
 
-  it('lets editor create but not manage everything by default (finance defaults to manage_own)', () => {
+  it('lets editor create but not manage everything by default (finance/planning default to manage_own)', () => {
     expect(resolvePlanPermissions(makeMember({ role: 'editor' }))).toMatchObject({
+      canManagePlan: false,
       canCreateExpense: true,
       canDeleteAllExpenses: false,
       canManageSettlements: false,
+    });
+  });
+
+  it('grants canManagePlan (editAllMilestone) once an editor is explicitly given planning=manage_all', () => {
+    expect(
+      resolvePlanPermissions(
+        makeMember({
+          role: 'editor',
+          permissions: { moduleAccess: { planning: 'manage_all' } },
+        }),
+      ),
+    ).toMatchObject({
+      canManagePlan: true,
     });
   });
 
@@ -87,6 +101,34 @@ describe('resolvePlanPermissions', () => {
       canEditAllExpenses: false,
       canDeleteAllExpenses: false,
     });
+  });
+});
+
+describe('planning capabilities (Công việc = Milestone + Todo, docs/roles-permissions.md #13 amended)', () => {
+  it('planning=manage_own grants create/edit-own/delete-own for both Todo and Milestone', () => {
+    const editor = makeMember({ role: 'editor', permissions: { moduleAccess: { planning: 'manage_own' } } });
+
+    expect(hasPlanCapability(editor, 'planning.createTodo')).toBe(true);
+    expect(hasPlanCapability(editor, 'planning.editOwnTodo')).toBe(true);
+    expect(hasPlanCapability(editor, 'planning.deleteOwnTodo')).toBe(true);
+    expect(hasPlanCapability(editor, 'planning.createMilestone')).toBe(true);
+    expect(hasPlanCapability(editor, 'planning.editOwnMilestone')).toBe(true);
+    expect(hasPlanCapability(editor, 'planning.deleteOwnMilestone')).toBe(true);
+
+    expect(hasPlanCapability(editor, 'planning.editAllTodo')).toBe(false);
+    expect(hasPlanCapability(editor, 'planning.editAllMilestone')).toBe(false);
+    expect(hasPlanCapability(editor, 'planning.deleteAllMilestone')).toBe(false);
+  });
+
+  it('planning=manage_all additionally grants edit-all/delete-all for both Todo and Milestone', () => {
+    const editor = makeMember({ role: 'editor', permissions: { moduleAccess: { planning: 'manage_all' } } });
+
+    expect(hasPlanCapability(editor, 'planning.editAllTodo')).toBe(true);
+    expect(hasPlanCapability(editor, 'planning.deleteAllTodo')).toBe(true);
+    expect(hasPlanCapability(editor, 'planning.editAllMilestone')).toBe(true);
+    expect(hasPlanCapability(editor, 'planning.deleteAllMilestone')).toBe(true);
+    // manage_all subsumes manage_own.
+    expect(hasPlanCapability(editor, 'planning.createMilestone')).toBe(true);
   });
 });
 

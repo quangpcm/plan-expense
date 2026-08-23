@@ -14,7 +14,11 @@ export type PlanModuleId =
 export type PlanCapability =
   | 'overview.view'
   | 'planning.view'
-  | 'planning.manageMilestone'
+  | 'planning.createMilestone'
+  | 'planning.editOwnMilestone'
+  | 'planning.deleteOwnMilestone'
+  | 'planning.editAllMilestone'
+  | 'planning.deleteAllMilestone'
   | 'planning.createTodo'
   | 'planning.editOwnTodo'
   | 'planning.deleteOwnTodo'

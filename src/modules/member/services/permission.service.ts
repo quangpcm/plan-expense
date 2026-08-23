@@ -58,7 +58,11 @@ function canManageAll(level: ModuleAccessLevel): boolean {
 const OWNER_CAPABILITIES: PlanCapability[] = [
   'overview.view',
   'planning.view',
-  'planning.manageMilestone',
+  'planning.createMilestone',
+  'planning.editOwnMilestone',
+  'planning.deleteOwnMilestone',
+  'planning.editAllMilestone',
+  'planning.deleteAllMilestone',
   'planning.createTodo',
   'planning.editOwnTodo',
   'planning.deleteOwnTodo',
@@ -107,18 +111,23 @@ export function resolvePlanCapabilities(member: PlanMemberDocument | null): Plan
   if (planningAccess !== 'hidden') {
     capabilities.add('planning.view');
 
+    // Công việc = Planning module = Milestone + Todo (docs/roles-permissions.md
+    // #13, amended). UI chỉ expose 1 dropdown "Công việc" nhưng Milestone và
+    // Todo vẫn có capability riêng để enforce granular own/all.
     if (canManageOwn(planningAccess)) {
       capabilities.add('planning.createTodo');
       capabilities.add('planning.editOwnTodo');
       capabilities.add('planning.deleteOwnTodo');
+      capabilities.add('planning.createMilestone');
+      capabilities.add('planning.editOwnMilestone');
+      capabilities.add('planning.deleteOwnMilestone');
     }
 
-    // Milestone là shared resource (mục 13) — chỉ manage_all mới quản lý được,
-    // manage_own chỉ cho phép view (không có capability riêng cho view-only).
     if (canManageAll(planningAccess)) {
       capabilities.add('planning.editAllTodo');
       capabilities.add('planning.deleteAllTodo');
-      capabilities.add('planning.manageMilestone');
+      capabilities.add('planning.editAllMilestone');
+      capabilities.add('planning.deleteAllMilestone');
     }
   }
 
@@ -192,7 +201,7 @@ export function resolvePlanPermissions(member: PlanMemberDocument | null) {
   const hasCapability = (capability: PlanCapability) => hasPlanCapability(member, capability);
 
   return {
-    canManagePlan: hasCapability('planning.manageMilestone'),
+    canManagePlan: hasCapability('planning.editAllMilestone'),
     canManageMembers: hasCapability('members.manage'),
     canCreateExpense: hasCapability('finance.createExpense'),
     canEditAllExpenses: hasCapability('finance.editAllExpense'),
