@@ -135,9 +135,9 @@ async function assertPermission(input: RequestUploadUrlInput, uid: string): Prom
 
   if (
     (input.mediaType === 'todo-attachment' || input.mediaType === 'todo-vendor-attachment') &&
-    member.role !== 'owner'
+    !hasPlanCapability(member, 'planning.createTodo')
   ) {
-    throw new AppError('Only the plan owner can manage todo attachments.', 'STORAGE_PERMISSION_DENIED', 403);
+    throw new AppError('You do not have permission to add todo attachments.', 'STORAGE_PERMISSION_DENIED', 403);
   }
 
   if (

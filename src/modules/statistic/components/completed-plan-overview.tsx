@@ -147,7 +147,7 @@ export function CompletedPlanOverview({
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-medium text-slate-900">{row.nickname}</p>
                       <p className={`text-sm ${row.adjustedBalance > 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
-                        {row.adjustedBalance > 0 ? 'sẽ nhận' : 'cần trả'}
+                        {row.adjustedBalance > 0 ? 'còn nhận' : 'cần trả'}
                       </p>
                     </div>
                   </div>

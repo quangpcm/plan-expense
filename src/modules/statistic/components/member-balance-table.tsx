@@ -61,7 +61,7 @@ export function MemberBalanceTable({ statistic }: MemberBalanceTableProps) {
                 <p className="pl-0 text-[11px] text-slate-400">
                   Tự thanh toán {formatCurrency(row.paid)} · Nạp quỹ {formatCurrency(row.totalIncome)}
                   {row.incomeAllocatedToMember > 0
-                    ? ` · Được phân bổ quỹ ${formatCurrency(row.incomeAllocatedToMember)}`
+                    ? ` · Đã được hoàn từ quỹ ${formatCurrency(row.incomeAllocatedToMember)}`
                     : ''}
                 </p>
                 <div className="flex items-center gap-2">

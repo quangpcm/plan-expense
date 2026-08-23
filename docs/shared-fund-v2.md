@@ -1230,7 +1230,7 @@ QP
 
 Tự thanh toán       16.409.000
 Nạp quỹ                       0
-Đã được phân bổ quỹ  7.432.500
+Đã Đã được hoàn từ quỹ  7.432.500
 Phải chịu             9.554.500
 -----------------------------
 Cần trả                 578.000
@@ -1936,7 +1936,7 @@ Expected Statistic:
 QP
 Tự thanh toán      16.409.000
 Nạp quỹ                     0
-Được phân bổ quỹ    7.432.500
+Đã được hoàn từ quỹ    7.432.500
 Phải chịu            9.554.500
 Cần trả                578.000
 ```
