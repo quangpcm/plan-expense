@@ -21,7 +21,10 @@ import { usePlan } from '@/modules/plan/hooks/use-plan';
 import { createExpenseSchema, type CreateExpenseSchema } from '@/modules/expense/schemas/create-expense.schema';
 import { updateExpenseSchema, type UpdateExpenseSchema } from '@/modules/expense/schemas/update-expense.schema';
 import { expenseService } from '@/modules/expense/services';
+import { useExpenses } from '@/modules/expense/hooks/use-expenses';
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
+import { useIncomes } from '@/modules/income/hooks/use-incomes';
+import { calculateFundBalance } from '@/modules/statistic/utils/fund-balance';
 import { AttachmentPicker, type AttachmentDraft } from '@/modules/storage';
 import { AmountInput } from '@/shared/components/ui/amount-input';
 import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
@@ -68,6 +71,8 @@ export function ExpenseForm({
   const { plan } = usePlan(planId);
   const { milestones } = useMilestones(planId);
   const { members, currentMember } = usePlanMembers(planId);
+  const { expenses } = useExpenses(planId);
+  const { incomes } = useIncomes(planId);
   const categories = useMemo(() => (plan ? getExpenseCategories(plan.planType) : []), [plan]);
   const isDebtPlan = plan?.planType === 'debt';
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -84,8 +89,15 @@ export function ExpenseForm({
     () => members.filter((member) => member.status === 'active'),
     [members],
   );
+  const defaultPaymentSourceType = expense?.paymentSourceType || 'member';
   const defaultPaidByMemberId =
     expense?.paidByMemberId || currentMember?.id || activeMembers[0]?.id || '';
+  const fundBalance = useMemo(() => {
+    const breakdown = calculateFundBalance({ incomes, expenses, ownerMemberId: plan?.ownerMemberId ?? '' });
+    return expense && expense.paymentSourceType === 'fund'
+      ? breakdown.unallocatedBalance + expense.amount
+      : breakdown.unallocatedBalance;
+  }, [incomes, expenses, plan?.ownerMemberId, expense]);
   const counterpartMembers = useMemo(
     () => activeMembers.filter((member) => member.id !== currentMember?.id),
     [activeMembers, currentMember?.id],
@@ -142,6 +154,7 @@ export function ExpenseForm({
       milestoneId: resolvedDefaultMilestoneId,
       activityId: defaultActivityIdValue,
       categoryId: defaultCategoryId,
+      paymentSourceType: defaultPaymentSourceType,
       paidByMemberId: defaultPaidByMemberId,
       participantMemberIds: defaultParticipantIds,
       splitMethod: expense?.splitMethod || splitMethods.self,
@@ -165,6 +178,7 @@ export function ExpenseForm({
   const categoryIdWatched = useWatch({ control: form.control, name: 'categoryId' });
   const activityIdWatched = useWatch({ control: form.control, name: 'activityId' });
   const paidByMemberIdWatched = useWatch({ control: form.control, name: 'paidByMemberId' });
+  const paymentSourceTypeWatched = useWatch({ control: form.control, name: 'paymentSourceType' }) || 'member';
   const milestoneIdWatched = useWatch({ control: form.control, name: 'milestoneId' });
   const spentAtWatched = useWatch({ control: form.control, name: 'spentAt' });
   const isFirstSplitMethodRender = useRef(true);
@@ -227,7 +241,11 @@ export function ExpenseForm({
   }, [form, isDebtPlan, liveSelfParticipantIds, selectedSplitMethod]);
 
   useEffect(() => {
-    if (!form.getValues('paidByMemberId') && defaultPaidByMemberId) {
+    if (
+      form.getValues('paymentSourceType') !== 'fund' &&
+      !form.getValues('paidByMemberId') &&
+      defaultPaidByMemberId
+    ) {
       form.setValue('paidByMemberId', defaultPaidByMemberId, { shouldValidate: true });
     }
 
@@ -252,6 +270,10 @@ export function ExpenseForm({
     }
 
     if (isDebtPlan) {
+      if (form.getValues('paymentSourceType') !== 'member') {
+        form.setValue('paymentSourceType', 'member', { shouldValidate: true });
+      }
+
       if (currentMember?.id && form.getValues('paidByMemberId') !== currentMember.id) {
         form.setValue('paidByMemberId', currentMember.id, { shouldValidate: true });
       }
@@ -293,6 +315,7 @@ export function ExpenseForm({
         await expenseService.createExpense(
           {
             ...parsed,
+            paidByMemberId: parsed.paidByMemberId || null,
             attachments: parsed.attachments,
           },
           {
@@ -302,6 +325,8 @@ export function ExpenseForm({
             currentUser: user,
             milestones,
             categories,
+            expenses,
+            incomes,
           },
         );
         if (parsed.categoryId) {
@@ -313,14 +338,20 @@ export function ExpenseForm({
           ...values,
           expenseId: expense.id,
         } satisfies UpdateExpenseSchema);
-        await expenseService.updateExpense(parsed, {
-          plan,
-          members,
-          currentMember,
-          currentUser: user,
-          milestones,
-          categories,
-        }, expense);
+        await expenseService.updateExpense(
+          { ...parsed, paidByMemberId: parsed.paidByMemberId || null },
+          {
+            plan,
+            members,
+            currentMember,
+            currentUser: user,
+            milestones,
+            categories,
+            expenses,
+            incomes,
+          },
+          expense,
+        );
         onSuccess?.(parsed.milestoneId);
       }
     } catch (error) {
@@ -424,55 +455,93 @@ export function ExpenseForm({
         </div>
       ) : (
         <>
-          <button
-            className="flex w-full items-center justify-between rounded-2xl border border-[#c2c6d8] bg-white px-4 py-3 text-left"
-            onClick={() => setIsPaidByOpen(true)}
-            type="button"
-          >
-            <span className="flex items-center gap-3">
-              <span className="flex size-9 items-center justify-center rounded-full bg-[#0050cb]/10 text-[#0050cb]">
-                <User className="size-4" />
-              </span>
-              <span>
-                <span className="block text-xs text-[#727687]">Người chi trả</span>
-                <span className="block text-sm font-medium text-[#191c1e]">{paidByLabel}</span>
-              </span>
-            </span>
-            <ChevronRight className="size-4 text-[#727687]" />
-          </button>
+          <div className="grid grid-cols-2 gap-2 rounded-2xl border border-[#c2c6d8] bg-slate-50 p-1">
+            <button
+              className={cn(
+                'rounded-xl px-3 py-2 text-sm font-medium transition-colors',
+                paymentSourceTypeWatched === 'member' ? 'bg-white text-[#0050cb] shadow-sm' : 'text-[#727687]',
+              )}
+              onClick={() => form.setValue('paymentSourceType', 'member', { shouldValidate: true, shouldDirty: true })}
+              type="button"
+            >
+              Thành viên trả
+            </button>
+            <button
+              className={cn(
+                'rounded-xl px-3 py-2 text-sm font-medium transition-colors',
+                paymentSourceTypeWatched === 'fund' ? 'bg-white text-[#0050cb] shadow-sm' : 'text-[#727687]',
+              )}
+              onClick={() => {
+                form.setValue('paymentSourceType', 'fund', { shouldValidate: true, shouldDirty: true });
+                form.setValue('paidByMemberId', '', { shouldValidate: true, shouldDirty: true });
+              }}
+              type="button"
+            >
+              Quỹ chung trả
+            </button>
+          </div>
 
-          <BottomSheet
-            onClose={() => setIsPaidByOpen(false)}
-            open={isPaidByOpen}
-            title="Chọn người chi trả"
-          >
-            <div className="grid gap-2">
-              {activeMembers.map((member) => {
-                const isSelected = member.id === paidByMemberIdWatched;
-
-                return (
-                  <button
-                    key={member.id}
-                    className={cn(
-                      'flex min-h-11 items-center justify-between rounded-2xl border px-4 py-2 text-sm',
-                      isSelected ? 'border-[#0050cb] bg-[#0050cb]/10' : 'border-[#c2c6d8] bg-white',
-                    )}
-                    onClick={() => {
-                      form.setValue('paidByMemberId', member.id, { shouldValidate: true, shouldDirty: true });
-                      setIsPaidByOpen(false);
-                    }}
-                    type="button"
-                  >
-                    <span className="text-[#191c1e]">
-                      {member.nickname}
-                      {member.id === currentMember?.id ? ' (Mặc định)' : ''}
-                    </span>
-                    {isSelected ? <Check className="size-4 text-[#0050cb]" /> : null}
-                  </button>
-                );
-              })}
+          {paymentSourceTypeWatched === 'fund' ? (
+            <div className="rounded-2xl border border-[#c2c6d8] bg-white px-4 py-3 text-sm text-slate-700">
+              <span className="block text-xs text-[#727687]">Nguồn tiền</span>
+              <span className="mt-1 block font-medium text-[#191c1e]">Quỹ chung</span>
+              <span className="mt-1 block text-xs text-[#727687]">
+                Số dư hiện tại: {formatCurrency(fundBalance)}
+              </span>
             </div>
-          </BottomSheet>
+          ) : (
+            <>
+              <button
+                className="flex w-full items-center justify-between rounded-2xl border border-[#c2c6d8] bg-white px-4 py-3 text-left"
+                onClick={() => setIsPaidByOpen(true)}
+                type="button"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="flex size-9 items-center justify-center rounded-full bg-[#0050cb]/10 text-[#0050cb]">
+                    <User className="size-4" />
+                  </span>
+                  <span>
+                    <span className="block text-xs text-[#727687]">Người chi trả</span>
+                    <span className="block text-sm font-medium text-[#191c1e]">{paidByLabel}</span>
+                  </span>
+                </span>
+                <ChevronRight className="size-4 text-[#727687]" />
+              </button>
+
+              <BottomSheet
+                onClose={() => setIsPaidByOpen(false)}
+                open={isPaidByOpen}
+                title="Chọn người chi trả"
+              >
+                <div className="grid gap-2">
+                  {activeMembers.map((member) => {
+                    const isSelected = member.id === paidByMemberIdWatched;
+
+                    return (
+                      <button
+                        key={member.id}
+                        className={cn(
+                          'flex min-h-11 items-center justify-between rounded-2xl border px-4 py-2 text-sm',
+                          isSelected ? 'border-[#0050cb] bg-[#0050cb]/10' : 'border-[#c2c6d8] bg-white',
+                        )}
+                        onClick={() => {
+                          form.setValue('paidByMemberId', member.id, { shouldValidate: true, shouldDirty: true });
+                          setIsPaidByOpen(false);
+                        }}
+                        type="button"
+                      >
+                        <span className="text-[#191c1e]">
+                          {member.nickname}
+                          {member.id === currentMember?.id ? ' (Mặc định)' : ''}
+                        </span>
+                        {isSelected ? <Check className="size-4 text-[#0050cb]" /> : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </BottomSheet>
+            </>
+          )}
         </>
       )}
 

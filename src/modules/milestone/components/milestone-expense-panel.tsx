@@ -64,6 +64,7 @@ export function MilestoneExpensePanel({
         <div className="grid gap-3">
           {expenses.map((expense) => {
             const paidBy = members.find((member) => member.id === expense.paidByMemberId);
+            const paidByLabel = expense.paymentSourceType === 'fund' ? 'Quỹ chung' : paidBy?.nickname ?? 'Không rõ';
             const category = categories.find((item) => item.id === expense.categoryId);
             const CategoryIcon = category?.icon ? categoryIcons[category.icon] ?? Tag : Tag;
             const iconColor = category?.iconColor ?? 'text-slate-600';
@@ -89,7 +90,7 @@ export function MilestoneExpensePanel({
                         src={paidBy?.avatarUrl ?? null}
                       /> */}
                       <span className="truncate">
-                        <span className="font-medium text-[var(--color-muted)]">{paidBy?.nickname ?? 'Không rõ'}</span>{' '}
+                        <span className="font-medium text-[var(--color-muted)]">{paidByLabel}</span>{' '}
                         đã chi · {spentAt ? formatDateTime(spentAt) : '--'}
                       </span>
                     </div>

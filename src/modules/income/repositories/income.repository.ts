@@ -9,6 +9,7 @@ export type CreateIncomePersistenceInput = {
   categoryId: string | null;
   amount: number;
   contributedByMemberId: string;
+  allocatedToMemberId: string | null;
   note: string | null;
   receivedAt: Date;
   createdByUser: AuthUser;

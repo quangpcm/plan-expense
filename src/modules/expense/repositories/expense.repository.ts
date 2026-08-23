@@ -3,6 +3,7 @@ import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MediaAttachment } from '@/modules/storage/types/attachment';
 import type {
   ExpenseDocument,
+  ExpensePaymentSourceType,
   ExpenseParticipant,
   SplitMethod,
   UpdateExpenseInput,
@@ -16,7 +17,8 @@ export type CreateExpensePersistenceInput = {
   title: string;
   categoryId: string | null;
   amount: number;
-  paidByMemberId: string;
+  paymentSourceType: ExpensePaymentSourceType;
+  paidByMemberId: string | null;
   participants: ExpenseParticipant[];
   splitMethod: SplitMethod;
   merchantName: string | null;

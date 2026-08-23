@@ -33,6 +33,7 @@ export function ExpenseDetailCard({
   const category = categories.find((item) => item.id === expense.categoryId);
   const milestone = milestones.find((item) => item.id === expense.milestoneId);
   const paidBy = members.find((member) => member.id === expense.paidByMemberId);
+  const paidByLabel = expense.paymentSourceType === 'fund' ? 'Quỹ chung' : paidBy?.nickname || 'Không rõ';
   const createdBy = members.find((member) => member.id === expense.createdByMemberId);
   const spentAt = timestampToDate(expense.spentAt);
   const createdAt = timestampToDate(expense.createdAt);
@@ -56,7 +57,7 @@ export function ExpenseDetailCard({
         <div className="flex items-center gap-2 text-slate-800">
           <User className="size-4 shrink-0 text-slate-400" />
           <span>
-            <span className="font-medium">{paidBy?.nickname || 'Không rõ'}</span> đã trả ·{' '}
+            <span className="font-medium">{paidByLabel}</span> đã trả ·{' '}
             {spentAt ? formatDateTime(spentAt) : 'Không rõ'}
           </span>
         </div>

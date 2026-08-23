@@ -54,9 +54,16 @@ export function MemberBalanceTable({ statistic }: MemberBalanceTableProps) {
                     />
                   </div>
                   <p className="shrink-0 text-xs text-slate-500">
-                    Đã góp: <span className="font-medium text-slate-700">{formatCurrency(totalContribution)}</span>
+                    Đã đóng góp:{' '}
+                    <span className="font-medium text-slate-700">{formatCurrency(totalContribution)}</span>
                   </p>
                 </div>
+                <p className="pl-0 text-[11px] text-slate-400">
+                  Tự thanh toán {formatCurrency(row.paid)} · Nạp quỹ {formatCurrency(row.totalIncome)}
+                  {row.incomeAllocatedToMember > 0
+                    ? ` · Được phân bổ quỹ ${formatCurrency(row.incomeAllocatedToMember)}`
+                    : ''}
+                </p>
                 <div className="flex items-center gap-2">
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
                     <div

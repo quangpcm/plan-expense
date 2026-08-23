@@ -114,6 +114,7 @@ import { FinanceBudgetProgress } from '@/modules/statistic/components/finance-bu
 import { FinanceCategoryDonut } from '@/modules/statistic/components/finance-category-donut';
 import { FinanceMilestoneBars } from '@/modules/statistic/components/finance-milestone-bars';
 import { FinanceSummaryHero } from '@/modules/statistic/components/finance-summary-hero';
+import { FundBalanceCard } from '@/modules/statistic/components/fund-balance-card';
 import { MemberBalanceTable } from '@/modules/statistic/components/member-balance-table';
 import { MemberSpendingList } from '@/modules/statistic/components/member-spending-list';
 import { statisticService } from '@/modules/statistic/services';
@@ -503,10 +504,12 @@ export default function PlanDetailPage() {
         milestones: visibleMilestones,
         categories,
         settlements,
+        ownerMemberId: plan?.ownerMemberId ?? '',
       }),
-    [members, expenses, incomes, visibleMilestones, categories, settlements],
+    [members, expenses, incomes, visibleMilestones, categories, settlements, plan?.ownerMemberId],
   );
-  const suggestions = settlementService.suggest(statistic.memberBalances);
+  const requiresFundAllocation = statistic.fund.unallocatedBalance > 0;
+  const suggestions = settlementService.suggest(statistic.memberBalances, statistic.fund.unallocatedBalance);
   const statisticMemberDrilldownMember = useMemo(
     () =>
       statisticMemberDrilldown
@@ -1613,7 +1616,10 @@ export default function PlanDetailPage() {
     setIncomeActionError(null);
 
     try {
-      await incomeService.deleteIncome(ensuredPlan, income, user, currentMember);
+      await incomeService.deleteIncome(ensuredPlan, income, user, currentMember, {
+        expenses,
+        incomes,
+      });
       setDetailIncome(null);
       setDesktopFinanceDetail(null);
     } catch (error) {
@@ -2680,6 +2686,7 @@ export default function PlanDetailPage() {
         >
           <div className="space-y-5">
             <FinanceSummaryHero statistic={statistic} />
+            <FundBalanceCard statistic={statistic} />
             {effectiveEstimatedTotal > 0 ? (
               <FinanceBudgetProgress
                 budgetAmount={effectiveEstimatedTotal}
@@ -2702,8 +2709,10 @@ export default function PlanDetailPage() {
               message={settlementMessage}
               onConfirm={(suggestion) => handleConfirmSettlement(suggestion)}
               pendingAmount={statistic.overview.pendingSettlementAmount}
+              requiresFundAllocation={requiresFundAllocation}
               settledAmount={statistic.overview.settledAmount}
               suggestions={suggestions}
+              unallocatedFundBalance={statistic.fund.unallocatedBalance}
             />
             <MemberSpendingList
               onSelectMember={(memberId) =>

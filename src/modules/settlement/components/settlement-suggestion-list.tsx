@@ -1,3 +1,5 @@
+import { AlertTriangle } from 'lucide-react';
+
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { SettlementSuggestion } from '@/modules/settlement/types/settlement';
@@ -14,8 +16,10 @@ type SettlementSuggestionListProps = {
   message: string | null;
   onConfirm: (suggestion: SettlementSuggestion) => void;
   pendingAmount: number;
+  requiresFundAllocation: boolean;
   settledAmount: number;
   suggestions: SettlementSuggestion[];
+  unallocatedFundBalance: number;
 };
 
 export function SettlementSuggestionList({
@@ -26,8 +30,10 @@ export function SettlementSuggestionList({
   message,
   onConfirm,
   pendingAmount,
+  requiresFundAllocation,
   settledAmount,
   suggestions,
+  unallocatedFundBalance,
 }: SettlementSuggestionListProps) {
   const totalToSettle = pendingAmount + settledAmount;
   const settledPercent = totalToSettle > 0 ? Math.round((settledAmount / totalToSettle) * 100) : 0;
@@ -41,7 +47,15 @@ export function SettlementSuggestionList({
       />
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       {message ? <AuthFormMessage message={message} type="success" /> : null}
-      {suggestions.length > 0 ? (
+      {requiresFundAllocation ? (
+        <div className="flex items-start gap-2 rounded-2xl border border-[color:var(--color-warning)]/30 bg-[color:var(--color-warning)]/10 px-4 py-3 text-sm text-slate-700">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[color:var(--color-warning)]" />
+          <span>
+            Quỹ chung còn {formatCurrency(unallocatedFundBalance)} chưa phân bổ — hãy chỉnh &quot;Hoàn cho&quot; ở
+            các khoản thu tương ứng trước khi đối soát.
+          </span>
+        </div>
+      ) : suggestions.length > 0 ? (
         <>
           <div className="space-y-1.5">
             <p className="text-sm text-slate-600">

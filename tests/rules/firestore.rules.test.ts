@@ -292,6 +292,7 @@ async function seedBasePlan() {
       categoryId: null,
       amount: 300,
       currency: 'VND',
+      paymentSourceType: 'member',
       paidByMemberId: 'member-owner',
       participants: [],
       splitMethod: 'equal',
@@ -318,6 +319,7 @@ async function seedBasePlan() {
       categoryId: null,
       amount: 200,
       currency: 'VND',
+      paymentSourceType: 'member',
       paidByMemberId: 'member-editor',
       participants: [],
       splitMethod: 'equal',
@@ -345,6 +347,7 @@ async function seedBasePlan() {
       amount: 500,
       currency: 'VND',
       contributedByMemberId: 'member-owner',
+      allocatedToMemberId: null,
       note: null,
       attachments: [],
       receivedAt: now,
@@ -367,6 +370,7 @@ async function seedBasePlan() {
       amount: 150,
       currency: 'VND',
       contributedByMemberId: 'member-editor',
+      allocatedToMemberId: null,
       note: null,
       attachments: [],
       receivedAt: now,
@@ -583,6 +587,7 @@ async function seedBasePlan() {
       categoryId: null,
       amount: 80,
       currency: 'VND',
+      paymentSourceType: 'member',
       paidByMemberId: 'member-editor-2',
       participants: [],
       splitMethod: 'equal',
@@ -610,6 +615,7 @@ async function seedBasePlan() {
       amount: 500,
       currency: 'VND',
       contributedByMemberId: 'member-owner-2',
+      allocatedToMemberId: null,
       note: null,
       attachments: [],
       receivedAt: now,
@@ -679,6 +685,7 @@ describe('firestore rules', () => {
         categoryId: null,
         amount: 100,
         currency: 'VND',
+        paymentSourceType: 'member',
         paidByMemberId: 'member-viewer',
         participants: [],
         splitMethod: 'equal',
@@ -710,6 +717,7 @@ describe('firestore rules', () => {
         categoryId: null,
         amount: 100,
         currency: 'VND',
+        paymentSourceType: 'member',
         paidByMemberId: 'member-editor',
         participants: [],
         splitMethod: 'equal',
@@ -730,6 +738,83 @@ describe('firestore rules', () => {
     );
   });
 
+  it('allows editor to create a fund-paid expense with paidByMemberId null', async () => {
+    const db = testEnv.authenticatedContext('editor-user').firestore();
+    await assertSucceeds(
+      setDoc(doc(db, 'plans', 'plan-1', 'expenses', 'expense-fund'), {
+        id: 'expense-fund',
+        planId: 'plan-1',
+        milestoneId: 'milestone-1',
+        title: 'Fund taxi',
+        categoryId: null,
+        amount: 100,
+        currency: 'VND',
+        paymentSourceType: 'fund',
+        paidByMemberId: null,
+        participants: [],
+        splitMethod: 'equal',
+        merchantName: null,
+        locationName: null,
+        note: null,
+        attachments: [],
+        spentAt: now,
+        createdByUserId: 'editor-user',
+        createdByMemberId: 'member-editor',
+        createdAt: now,
+        updatedAt: now,
+        status: 'active',
+        deletedAt: null,
+        deletedByUserId: null,
+        version: 1,
+      }),
+    );
+  });
+
+  it('blocks expense creation that violates the payment source invariant', async () => {
+    const db = testEnv.authenticatedContext('editor-user').firestore();
+    const basePayload = {
+      planId: 'plan-1',
+      milestoneId: 'milestone-1',
+      title: 'Invalid source',
+      categoryId: null,
+      amount: 100,
+      currency: 'VND',
+      participants: [],
+      splitMethod: 'equal',
+      merchantName: null,
+      locationName: null,
+      note: null,
+      attachments: [],
+      spentAt: now,
+      createdByUserId: 'editor-user',
+      createdByMemberId: 'member-editor',
+      createdAt: now,
+      updatedAt: now,
+      status: 'active',
+      deletedAt: null,
+      deletedByUserId: null,
+      version: 1,
+    };
+
+    await assertFails(
+      setDoc(doc(db, 'plans', 'plan-1', 'expenses', 'expense-fund-with-payer'), {
+        ...basePayload,
+        id: 'expense-fund-with-payer',
+        paymentSourceType: 'fund',
+        paidByMemberId: 'member-editor',
+      }),
+    );
+
+    await assertFails(
+      setDoc(doc(db, 'plans', 'plan-1', 'expenses', 'expense-member-without-payer'), {
+        ...basePayload,
+        id: 'expense-member-without-payer',
+        paymentSourceType: 'member',
+        paidByMemberId: null,
+      }),
+    );
+  });
+
   it('allows editor to edit their own expense but not someone else expense', async () => {
     const db = testEnv.authenticatedContext('editor-user').firestore();
     await assertSucceeds(
@@ -742,6 +827,18 @@ describe('firestore rules', () => {
     await assertFails(
       updateDoc(doc(db, 'plans', 'plan-1', 'expenses', 'expense-owner'), {
         title: 'Illegal edit',
+        updatedAt: now,
+        version: 2,
+      }),
+    );
+  });
+
+  it('allows editor to switch their own expense from member-paid to fund-paid', async () => {
+    const db = testEnv.authenticatedContext('editor-user').firestore();
+    await assertSucceeds(
+      updateDoc(doc(db, 'plans', 'plan-1', 'expenses', 'expense-editor'), {
+        paymentSourceType: 'fund',
+        paidByMemberId: null,
         updatedAt: now,
         version: 2,
       }),
@@ -776,6 +873,7 @@ describe('firestore rules', () => {
         categoryId: null,
         amount: 100,
         currency: 'VND',
+        paymentSourceType: 'member',
         paidByMemberId: 'member-editor',
         participants: [],
         splitMethod: 'equal',
@@ -1141,6 +1239,7 @@ describe('firestore rules', () => {
         categoryId: null,
         amount: 100,
         currency: 'VND',
+        paymentSourceType: 'member',
         paidByMemberId: 'member-editor',
         participants: [],
         splitMethod: 'equal',
@@ -1191,6 +1290,7 @@ describe('firestore rules', () => {
         categoryId: null,
         amount: 60,
         currency: 'VND',
+        paymentSourceType: 'member',
         paidByMemberId: 'member-editor-2',
         participants: [],
         splitMethod: 'equal',
@@ -1723,5 +1823,134 @@ describe('firestore rules', () => {
         updatedAt: now,
       }),
     );
+  });
+
+  describe('settlements', () => {
+    const baseSettlement = {
+      planId: 'plan-1',
+      amount: 100,
+      currency: 'VND',
+      note: null,
+      attachments: [],
+      settledAt: now,
+      status: 'completed',
+      createdByUserId: 'owner-user',
+      createdByMemberId: 'member-owner',
+      createdAt: now,
+      updatedAt: now,
+      cancelledAt: null,
+      cancelledByUserId: null,
+      version: 1,
+    };
+
+    it('allows creating a member-to-member settlement', async () => {
+      const db = testEnv.authenticatedContext('owner-user').firestore();
+      await assertSucceeds(
+        setDoc(doc(db, 'plans', 'plan-1', 'settlements', 'settlement-member'), {
+          ...baseSettlement,
+          id: 'settlement-member',
+          fromMemberId: 'member-editor',
+          toMemberId: 'member-owner',
+        }),
+      );
+    });
+
+    it('blocks a settlement where fromMemberId equals toMemberId', async () => {
+      const db = testEnv.authenticatedContext('owner-user').firestore();
+      await assertFails(
+        setDoc(doc(db, 'plans', 'plan-1', 'settlements', 'settlement-same-member'), {
+          ...baseSettlement,
+          id: 'settlement-same-member',
+          fromMemberId: 'member-owner',
+          toMemberId: 'member-owner',
+        }),
+      );
+    });
+
+    it('allows cancelling a settlement while keeping fromMemberId/toMemberId unchanged', async () => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'plans', 'plan-1', 'settlements', 'settlement-cancel'), {
+          ...baseSettlement,
+          id: 'settlement-cancel',
+          fromMemberId: 'member-editor',
+          toMemberId: 'member-owner',
+        });
+      });
+
+      const db = testEnv.authenticatedContext('owner-user').firestore();
+      await assertSucceeds(
+        updateDoc(doc(db, 'plans', 'plan-1', 'settlements', 'settlement-cancel'), {
+          status: 'cancelled',
+          cancelledByUserId: 'owner-user',
+          cancelledAt: now,
+        }),
+      );
+    });
+
+    it('blocks changing fromMemberId while cancelling a settlement', async () => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'plans', 'plan-1', 'settlements', 'settlement-retarget'), {
+          ...baseSettlement,
+          id: 'settlement-retarget',
+          fromMemberId: 'member-editor',
+          toMemberId: 'member-owner',
+        });
+      });
+
+      const db = testEnv.authenticatedContext('owner-user').firestore();
+      await assertFails(
+        updateDoc(doc(db, 'plans', 'plan-1', 'settlements', 'settlement-retarget'), {
+          fromMemberId: 'member-owner',
+          status: 'cancelled',
+          cancelledByUserId: 'owner-user',
+          cancelledAt: now,
+        }),
+      );
+    });
+  });
+
+  describe('incomes allocatedToMemberId invariant', () => {
+    const baseIncome = {
+      planId: 'plan-1',
+      milestoneId: 'milestone-1',
+      title: 'Nap quy',
+      categoryId: null,
+      amount: 100,
+      currency: 'VND',
+      contributedByMemberId: 'member-editor',
+      note: null,
+      attachments: [],
+      receivedAt: now,
+      status: 'active',
+      createdByUserId: 'editor-user',
+      createdByMemberId: 'member-editor',
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+      deletedByUserId: null,
+      version: 1,
+    };
+
+    it('allows creating an income with allocatedToMemberId set to null', async () => {
+      const db = testEnv.authenticatedContext('editor-user').firestore();
+      await assertSucceeds(
+        setDoc(doc(db, 'plans', 'plan-1', 'incomes', 'income-unallocated'), {
+          ...baseIncome,
+          id: 'income-unallocated',
+          allocatedToMemberId: null,
+        }),
+      );
+    });
+
+    it('allows creating an income allocated to a member', async () => {
+      const db = testEnv.authenticatedContext('editor-user').firestore();
+      await assertSucceeds(
+        setDoc(doc(db, 'plans', 'plan-1', 'incomes', 'income-allocated'), {
+          ...baseIncome,
+          id: 'income-allocated',
+          allocatedToMemberId: 'member-owner',
+        }),
+      );
+    });
   });
 });

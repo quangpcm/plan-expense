@@ -1,12 +1,15 @@
 import { AppError } from '@/shared/errors/app-error';
 import type { AuthUser } from '@/modules/auth/types/auth';
 import type { Category } from '@/modules/category/types/category';
+import type { ExpenseDocument } from '@/modules/expense/types/expense';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import { hasPlanCapability } from '@/modules/member/services/permission.service';
 import type { PlanDocument } from '@/modules/plan/types/plan';
 import type { CreateIncomeInput, IncomeDocument, UpdateIncomeInput } from '@/modules/income/types/income';
 import type { IncomeRepository } from '@/modules/income/repositories/income.repository';
+import { calculateFundBalance } from '@/modules/statistic/utils/fund-balance';
+import { formatCurrency } from '@/shared/utils/currency';
 
 type IncomeContext = {
   plan: PlanDocument;
@@ -15,6 +18,13 @@ type IncomeContext = {
   currentUser: AuthUser;
   categories: Category[];
   milestones: MilestoneDocument[];
+  expenses: ExpenseDocument[];
+  incomes: IncomeDocument[];
+};
+
+type FinanceSnapshot = {
+  expenses: ExpenseDocument[];
+  incomes: IncomeDocument[];
 };
 
 export class IncomeService {
@@ -37,6 +47,54 @@ export class IncomeService {
       throw new AppError(
         'Trong debt mode, khoản thu phải do thành viên trả lại cho bạn.',
         'DEBT_INCOME_INVALID_CONTRIBUTOR',
+        400,
+      );
+    }
+  }
+
+  private assertValidAllocation(allocatedToMemberId: string | null, activeMembers: PlanMemberDocument[]) {
+    if (allocatedToMemberId === null) {
+      return;
+    }
+
+    if (!activeMembers.some((member) => member.id === allocatedToMemberId)) {
+      throw new AppError(
+        'Thành viên được chọn để hoàn quỹ không hợp lệ trong kế hoạch này.',
+        'INCOME_INVALID_ALLOCATION',
+        400,
+      );
+    }
+  }
+
+  /**
+   * Recomputes the unallocated fund balance with `editedIncomeId` replaced by
+   * `projectedIncome` (or removed entirely when `projectedIncome` is null, i.e. delete).
+   * A full recompute — rather than a simple amount delta — is required because
+   * changing only the allocation (not the amount) can also move money in or out
+   * of the unallocated pool that a Fund-paid Expense may already depend on.
+   */
+  private assertFundSolvency(
+    ownerMemberId: string,
+    snapshot: FinanceSnapshot,
+    editedIncomeId: string,
+    projectedIncome: Pick<IncomeDocument, 'amount' | 'status' | 'allocatedToMemberId'> | null,
+  ) {
+    const projectedIncomes = snapshot.incomes.filter((income) => income.id !== editedIncomeId);
+
+    if (projectedIncome) {
+      projectedIncomes.push(projectedIncome as IncomeDocument);
+    }
+
+    const projected = calculateFundBalance({
+      incomes: projectedIncomes,
+      expenses: snapshot.expenses,
+      ownerMemberId,
+    }).unallocatedBalance;
+
+    if (projected < 0) {
+      throw new AppError(
+        `Không thể lưu thay đổi này. Sau thay đổi, phần quỹ chưa phân bổ sẽ thiếu ${formatCurrency(Math.abs(projected))}.`,
+        'INCOME_FUND_INSUFFICIENT',
         400,
       );
     }
@@ -77,6 +135,7 @@ export class IncomeService {
       throw new AppError('Contributor must be active in this plan.', 'INCOME_INVALID_CONTRIBUTOR', 400);
     }
     this.assertDebtIncomeSemantics(context.plan, context.currentMember, input.contributedByMemberId);
+    this.assertValidAllocation(input.allocatedToMemberId, activeMembers);
 
     const milestone = this.assertValidMilestone(context.plan.id, input.milestoneId, context.milestones);
 
@@ -87,6 +146,7 @@ export class IncomeService {
       categoryId: input.categoryId || null,
       amount: input.amount,
       contributedByMemberId: input.contributedByMemberId,
+      allocatedToMemberId: input.allocatedToMemberId,
       note: input.note?.trim() || null,
       receivedAt: input.receivedAt ? new Date(input.receivedAt) : new Date(),
       createdByUser: context.currentUser,
@@ -111,8 +171,16 @@ export class IncomeService {
       throw new AppError('Contributor must be active in this plan.', 'INCOME_INVALID_CONTRIBUTOR', 400);
     }
     this.assertDebtIncomeSemantics(context.plan, context.currentMember, input.contributedByMemberId);
+    this.assertValidAllocation(input.allocatedToMemberId, activeMembers);
 
     this.assertValidMilestone(context.plan.id, input.milestoneId, context.milestones);
+
+    this.assertFundSolvency(
+      context.plan.ownerMemberId,
+      { expenses: context.expenses, incomes: context.incomes },
+      income.id,
+      { amount: input.amount, status: 'active', allocatedToMemberId: input.allocatedToMemberId },
+    );
 
     await this.incomeRepository.updateIncome(context.plan.id, input);
   }
@@ -122,6 +190,7 @@ export class IncomeService {
     income: IncomeDocument,
     currentUser: AuthUser,
     currentMember: PlanMemberDocument | null,
+    financeSnapshot: FinanceSnapshot,
   ) {
     this.assertEditablePlan(plan);
     const canDelete =
@@ -131,6 +200,8 @@ export class IncomeService {
     if (!canDelete) {
       throw new AppError('You do not have permission to delete this income.', 'INCOME_DELETE_DENIED', 403);
     }
+
+    this.assertFundSolvency(plan.ownerMemberId, financeSnapshot, income.id, null);
 
     await this.incomeRepository.softDeleteIncome(plan.id, income.id, currentUser);
   }

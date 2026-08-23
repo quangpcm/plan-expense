@@ -13,6 +13,7 @@ export type MemberBalanceRow = {
   owed: number;
   balance: number;
   totalIncome: number;
+  incomeAllocatedToMember: number;
   settlementPaid: number;
   settlementReceived: number;
   adjustedBalance: number;
@@ -65,12 +66,29 @@ export type StatisticSummary = {
   pendingSettlementAmount: number;
 };
 
+export type FundStatisticSummary = {
+  totalIncome: number;
+  allocatedIncome: number;
+  unallocatedIncome: number;
+  expensePaidFromFund: number;
+  unallocatedBalance: number;
+};
+
+export type FinancialInvariantSummary = {
+  memberBalanceTotal: number;
+  unallocatedFundBalance: number;
+  difference: number;
+  valid: boolean;
+};
+
 export type StatisticResult = {
   overview: StatisticSummary;
   memberBalances: MemberBalanceRow[];
   milestoneBreakdown: MilestoneStatisticRow[];
   categoryBreakdown: CategoryStatisticRow[];
   expenseTimeline: TimelineStatisticRow[];
+  fund: FundStatisticSummary;
+  invariant: FinancialInvariantSummary;
 };
 
 export type StatisticInput = {
@@ -80,4 +98,5 @@ export type StatisticInput = {
   milestones: MilestoneDocument[];
   categories: Category[];
   settlements: SettlementDocument[];
+  ownerMemberId: string;
 };

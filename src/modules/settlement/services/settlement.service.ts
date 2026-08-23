@@ -33,7 +33,18 @@ export class SettlementService {
     }
   }
 
-  suggest(memberBalances: MemberBalanceRow[]): SettlementSuggestion[] {
+  /**
+   * Pure Member ↔ Member greedy matching on adjustedBalance. Gated by
+   * `unallocatedFundBalance`: while any Shared Fund income remains unallocated,
+   * member balances don't sum to zero yet (they sum to that unallocated amount)
+   * so a "final" settlement plan would misrepresent who owes whom — return no
+   * suggestions until every Income has been allocated to a member.
+   */
+  suggest(memberBalances: MemberBalanceRow[], unallocatedFundBalance = 0): SettlementSuggestion[] {
+    if (unallocatedFundBalance > 0) {
+      return [];
+    }
+
     const creditors = memberBalances
       .filter((row) => row.adjustedBalance > 0)
       .map((row) => ({

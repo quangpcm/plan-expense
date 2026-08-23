@@ -14,6 +14,13 @@ export type IncomeDocument = {
   amount: number;
   currency: CurrencyCode;
   contributedByMemberId: string;
+  /**
+   * Member this contribution is earmarked to reimburse.
+   * undefined: legacy document written before this field existed — resolve to plan.ownerMemberId.
+   * null: user explicitly chose "unallocated" — stays in the shared fund.
+   * string: allocated reimbursement target.
+   */
+  allocatedToMemberId?: string | null;
   note: string | null;
   attachments: ExpenseAttachment[];
   receivedAt: Timestamp;
@@ -33,6 +40,7 @@ export type CreateIncomeInput = {
   milestoneId: string;
   categoryId?: string | undefined;
   contributedByMemberId: string;
+  allocatedToMemberId: string | null;
   note?: string | undefined;
   receivedAt?: string | undefined;
 };
@@ -44,6 +52,7 @@ export type UpdateIncomeInput = {
   milestoneId: string;
   categoryId?: string | undefined;
   contributedByMemberId: string;
+  allocatedToMemberId: string | null;
   note?: string | undefined;
   receivedAt?: string | undefined;
 };

@@ -226,6 +226,7 @@ function ExpenseTimelineCard({
   travelActivities,
 }: ExpenseTimelineCardProps) {
   const paidBy = members.find((member) => member.id === expense.paidByMemberId);
+  const paidByLabel = expense.paymentSourceType === 'fund' ? 'Quỹ chung' : paidBy?.nickname || 'Không rõ';
   const category = categories.find((item) => item.id === expense.categoryId);
   const milestone = milestones.find((item) => item.id === expense.milestoneId);
   const spentAt = timestampToDate(expense.spentAt);
@@ -248,7 +249,7 @@ function ExpenseTimelineCard({
             <h3 className="text-base font-semibold text-[var(--color-foreground)]">{expense.title}</h3>
           </div>
           <p className="text-sm text-[var(--color-subtle)]">
-            <span className="font-medium text-[var(--color-muted)]">{paidBy?.nickname || 'Không rõ'}</span> đã trả ·{' '}
+            <span className="font-medium text-[var(--color-muted)]">{paidByLabel}</span> đã trả ·{' '}
             <span className="font-medium text-[var(--color-muted)]">
               {spentAt ? formatTime(spentAt) : '--:--'}
             </span>

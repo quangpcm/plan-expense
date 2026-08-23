@@ -33,6 +33,7 @@ function normalizeExpenseDocument(expense: ExpenseDocument): ExpenseDocument {
   return {
     ...expense,
     activityId: typeof expense.activityId === 'string' && expense.activityId.trim() ? expense.activityId : null,
+    paymentSourceType: expense.paymentSourceType === 'fund' ? 'fund' : 'member',
   };
 }
 
@@ -70,6 +71,7 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
         categoryId: input.categoryId,
         amount: input.amount,
         currency: 'VND',
+        paymentSourceType: input.paymentSourceType,
         paidByMemberId: input.paidByMemberId,
         participants: input.participants,
         splitMethod: input.splitMethod,
@@ -152,6 +154,7 @@ export class FirestoreExpenseRepository implements ExpenseRepository {
         activityId: input.activityId ?? null,
         categoryId: input.categoryId || null,
         amount: input.amount,
+        paymentSourceType: input.paymentSourceType,
         paidByMemberId: input.paidByMemberId,
         participants,
         splitMethod: input.splitMethod,

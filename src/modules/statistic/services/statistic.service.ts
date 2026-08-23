@@ -1,5 +1,6 @@
 import { formatDate } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
+import { calculateFundBalance, resolveIncomeAllocation } from '@/modules/statistic/utils/fund-balance';
 import type {
   CategoryStatisticRow,
   MemberBalanceRow,
@@ -14,6 +15,24 @@ export class StatisticService {
   calculate(input: StatisticInput): StatisticResult {
     const activeAndRemovedMembers = input.members.filter((member) => member.status !== 'invited');
     const memberBalances = this.calculateMemberBalance(input);
+    const fundBreakdown = calculateFundBalance({
+      incomes: input.incomes,
+      expenses: input.expenses,
+      ownerMemberId: input.ownerMemberId,
+    });
+    const memberBalanceTotal = memberBalances.reduce((sum, row) => sum + row.adjustedBalance, 0);
+    const difference = memberBalanceTotal - fundBreakdown.unallocatedBalance;
+    const invariant = {
+      memberBalanceTotal,
+      unallocatedFundBalance: fundBreakdown.unallocatedBalance,
+      difference,
+      valid: difference === 0,
+    };
+
+    if (!invariant.valid) {
+      console.warn('[StatisticService] Fund invariant violation', invariant);
+    }
+
     const overview = {
       totalExpense: input.expenses.reduce((sum, expense) => sum + expense.amount, 0),
       totalIncome: input.incomes.reduce((sum, income) => sum + income.amount, 0),
@@ -40,6 +59,14 @@ export class StatisticService {
       milestoneBreakdown: this.calculateMilestones(input),
       categoryBreakdown: this.calculateCategory(input),
       expenseTimeline: this.calculateTimeline(input),
+      fund: {
+        totalIncome: fundBreakdown.totalIncome,
+        allocatedIncome: fundBreakdown.totalAllocatedIncome,
+        unallocatedIncome: fundBreakdown.totalUnallocatedIncome,
+        expensePaidFromFund: fundBreakdown.totalExpensePaidFromFund,
+        unallocatedBalance: fundBreakdown.unallocatedBalance,
+      },
+      invariant,
     };
   }
 
@@ -48,14 +75,21 @@ export class StatisticService {
       .filter((member) => member.status !== 'invited')
       .map((member) => {
         const paid = input.expenses
-          .filter((expense) => expense.paidByMemberId === member.id)
+          .filter((expense) => expense.paymentSourceType === 'member' && expense.paidByMemberId === member.id)
           .reduce((sum, expense) => sum + expense.amount, 0);
         const owed = input.expenses.reduce((sum, expense) => {
           const participant = expense.participants.find((item) => item.memberId === member.id);
           return sum + (participant?.amount || 0);
         }, 0);
         const totalIncome = input.incomes
-          .filter((income) => income.contributedByMemberId === member.id)
+          .filter((income) => income.status === 'active' && income.contributedByMemberId === member.id)
+          .reduce((sum, income) => sum + income.amount, 0);
+        const incomeAllocatedToMember = input.incomes
+          .filter(
+            (income) =>
+              income.status === 'active' &&
+              resolveIncomeAllocation(income, input.ownerMemberId) === member.id,
+          )
           .reduce((sum, income) => sum + income.amount, 0);
         const settlementPaid = input.settlements
           .filter((settlement) => settlement.status === 'completed' && settlement.fromMemberId === member.id)
@@ -63,7 +97,7 @@ export class StatisticService {
         const settlementReceived = input.settlements
           .filter((settlement) => settlement.status === 'completed' && settlement.toMemberId === member.id)
           .reduce((sum, settlement) => sum + settlement.amount, 0);
-        const balance = paid + totalIncome - owed;
+        const balance = paid + totalIncome - owed - incomeAllocatedToMember;
 
         return {
           memberId: member.id,
@@ -73,6 +107,7 @@ export class StatisticService {
           owed,
           balance,
           totalIncome,
+          incomeAllocatedToMember,
           settlementPaid,
           settlementReceived,
           adjustedBalance: balance + settlementPaid - settlementReceived,
@@ -114,6 +149,9 @@ export class StatisticService {
 
         const memberTotals = new Map<string, number>();
         milestoneExpenses.forEach((expense) => {
+          if (!expense.paidByMemberId) {
+            return;
+          }
           memberTotals.set(
             expense.paidByMemberId,
             (memberTotals.get(expense.paidByMemberId) || 0) + expense.amount,

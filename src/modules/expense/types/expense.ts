@@ -7,6 +7,8 @@ export type SplitMethod = 'self' | 'equal' | 'exact' | 'percentage' | 'shares';
 
 export type ExpenseStatus = 'active' | 'deleted';
 
+export type ExpensePaymentSourceType = 'member' | 'fund';
+
 export type ExpenseAttachment = MediaAttachment;
 
 export type ExpenseParticipant = {
@@ -25,7 +27,11 @@ export type ExpenseDocument = {
   categoryId: string | null;
   amount: number;
   currency: CurrencyCode;
-  paidByMemberId: string;
+  paymentSourceType: ExpensePaymentSourceType;
+  /**
+   * Required when paymentSourceType === 'member'. Null when paymentSourceType === 'fund'.
+   */
+  paidByMemberId: string | null;
   participants: ExpenseParticipant[];
   splitMethod: SplitMethod;
   merchantName: string | null;
@@ -49,7 +55,8 @@ export type CreateExpenseInput = {
   milestoneId: string;
   activityId?: string | undefined;
   categoryId?: string | undefined;
-  paidByMemberId: string;
+  paymentSourceType: ExpensePaymentSourceType;
+  paidByMemberId: string | null;
   participantMemberIds: string[];
   splitMethod: SplitMethod;
   splitValues?: Record<string, number> | undefined;
@@ -67,7 +74,8 @@ export type UpdateExpenseInput = {
   milestoneId: string;
   activityId?: string | undefined;
   categoryId?: string | undefined;
-  paidByMemberId: string;
+  paymentSourceType: ExpensePaymentSourceType;
+  paidByMemberId: string | null;
   participantMemberIds: string[];
   splitMethod: SplitMethod;
   splitValues?: Record<string, number> | undefined;

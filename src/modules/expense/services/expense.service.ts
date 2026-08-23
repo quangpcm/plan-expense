@@ -5,17 +5,21 @@ import type {
   CreateExpenseInput,
   ExpenseDocument,
   ExpenseParticipant,
+  ExpensePaymentSourceType,
   SplitMethod,
   UpdateExpenseInput,
 } from '@/modules/expense/types/expense';
 import type { ExpenseRepository } from '@/modules/expense/repositories/expense.repository';
 import type { Category } from '@/modules/category/types/category';
+import type { IncomeDocument } from '@/modules/income/types/income';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import { hasPlanCapability } from '@/modules/member/services/permission.service';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
+import { calculateFundBalance } from '@/modules/statistic/utils/fund-balance';
 import { deleteAttachmentsInBackground } from '@/modules/storage/utils/delete-attachments';
 import { resolveAttachmentDrafts } from '@/modules/storage/utils/resolve-attachments';
+import { formatCurrency } from '@/shared/utils/currency';
 
 type ExpenseContext = {
   plan: PlanDocument;
@@ -24,6 +28,8 @@ type ExpenseContext = {
   currentMember: PlanMemberDocument | null;
   currentUser: AuthUser;
   categories: Category[];
+  expenses: ExpenseDocument[];
+  incomes: IncomeDocument[];
 };
 
 export class ExpenseService {
@@ -64,12 +70,21 @@ export class ExpenseService {
   private assertDebtExpenseSemantics(
     plan: PlanDocument,
     currentMember: PlanMemberDocument | null,
-    paidByMemberId: string,
+    paymentSourceType: ExpensePaymentSourceType,
+    paidByMemberId: string | null,
     participantIds: string[],
     splitMethod: SplitMethod,
   ) {
     if (plan.planType !== 'debt') {
       return;
+    }
+
+    if (paymentSourceType === 'fund') {
+      throw new AppError(
+        'Trong debt mode, khoản chi không thể trả bằng quỹ chung.',
+        'DEBT_EXPENSE_FUND_NOT_ALLOWED',
+        400,
+      );
     }
 
     if (!currentMember) {
@@ -98,6 +113,31 @@ export class ExpenseService {
       throw new AppError(
         'Trong debt mode, khoản chi cho mượn phải dùng chế độ 1 người nhận tiền.',
         'DEBT_EXPENSE_SPLIT_METHOD_INVALID',
+        400,
+      );
+    }
+  }
+
+  private assertFundAvailability(
+    amount: number,
+    context: ExpenseContext,
+    existingExpense: ExpenseDocument | null,
+  ) {
+    const currentBalance = calculateFundBalance({
+      incomes: context.incomes,
+      expenses: context.expenses,
+      ownerMemberId: context.plan.ownerMemberId,
+    }).unallocatedBalance;
+    const restoredBalance =
+      existingExpense && existingExpense.paymentSourceType === 'fund'
+        ? currentBalance + existingExpense.amount
+        : currentBalance;
+    const projected = restoredBalance - amount;
+
+    if (projected < 0) {
+      throw new AppError(
+        `Quỹ chung không đủ để thanh toán khoản chi này (thiếu ${formatCurrency(Math.abs(projected))}).`,
+        'EXPENSE_FUND_INSUFFICIENT',
         400,
       );
     }
@@ -149,13 +189,18 @@ export class ExpenseService {
     this.assertDebtExpenseSemantics(
       context.plan,
       context.currentMember,
+      input.paymentSourceType,
       input.paidByMemberId,
       participantIds,
       input.splitMethod,
     );
 
-    if (!activeMembers.some((member) => member.id === input.paidByMemberId)) {
-      throw new AppError('Paid by member must be active in this plan.', 'EXPENSE_INVALID_PAYER', 400);
+    if (input.paymentSourceType === 'member') {
+      if (!input.paidByMemberId || !activeMembers.some((member) => member.id === input.paidByMemberId)) {
+        throw new AppError('Paid by member must be active in this plan.', 'EXPENSE_INVALID_PAYER', 400);
+      }
+    } else {
+      this.assertFundAvailability(input.amount, context, null);
     }
 
     const createdByMember = context.currentMember;
@@ -179,7 +224,8 @@ export class ExpenseService {
       title: input.title.trim(),
       categoryId: input.categoryId || context.categories[0]?.id || null,
       amount: input.amount,
-      paidByMemberId: input.paidByMemberId,
+      paymentSourceType: input.paymentSourceType,
+      paidByMemberId: input.paymentSourceType === 'fund' ? null : input.paidByMemberId,
       participants,
       splitMethod: input.splitMethod,
       merchantName: input.merchantName?.trim() || null,
@@ -212,10 +258,20 @@ export class ExpenseService {
     this.assertDebtExpenseSemantics(
       context.plan,
       context.currentMember,
+      input.paymentSourceType,
       input.paidByMemberId,
       participantIds,
       input.splitMethod,
     );
+
+    if (input.paymentSourceType === 'member') {
+      if (!input.paidByMemberId || !activeMembers.some((member) => member.id === input.paidByMemberId)) {
+        throw new AppError('Paid by member must be active in this plan.', 'EXPENSE_INVALID_PAYER', 400);
+      }
+    } else {
+      this.assertFundAvailability(input.amount, context, expense);
+    }
+
     const participants = this.buildParticipants(input, participantIds);
     const attachments = await resolveAttachmentDrafts(
       { mediaType: 'expense-attachment', planId: context.plan.id, expenseId: expense.id },
@@ -224,7 +280,13 @@ export class ExpenseService {
 
     const { orphanedAttachments } = await this.expenseRepository.updateExpense(
       context.plan.id,
-      { ...input, activityId: input.activityId?.trim() || undefined, milestoneId: milestone.id, attachments },
+      {
+        ...input,
+        paidByMemberId: input.paymentSourceType === 'fund' ? null : input.paidByMemberId,
+        activityId: input.activityId?.trim() || undefined,
+        milestoneId: milestone.id,
+        attachments,
+      },
       participants,
     );
     deleteAttachmentsInBackground(context.plan.id, orphanedAttachments);

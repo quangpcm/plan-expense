@@ -681,7 +681,11 @@ service cloud.firestore {
         request.resource.data.amount > 0 &&
         request.resource.data.milestoneId is string &&
         milestoneDoc(planId, request.resource.data.milestoneId).data.planId == planId &&
-        request.resource.data.paidByMemberId is string;
+        request.resource.data.paymentSourceType in ['member', 'fund'] &&
+        (
+          (request.resource.data.paymentSourceType == 'member' && request.resource.data.paidByMemberId is string) ||
+          (request.resource.data.paymentSourceType == 'fund' && request.resource.data.paidByMemberId == null)
+        );
       allow update: if isPlanActive(planId) &&
         (
           (resource.data.createdByUserId == request.auth.uid && canManageOwnFinance(planId)) ||
@@ -695,7 +699,12 @@ service cloud.firestore {
         request.resource.data.milestoneId is string &&
         milestoneDoc(planId, request.resource.data.milestoneId).data.planId == planId &&
         request.resource.data.amount is int &&
-        request.resource.data.amount > 0;
+        request.resource.data.amount > 0 &&
+        request.resource.data.paymentSourceType in ['member', 'fund'] &&
+        (
+          (request.resource.data.paymentSourceType == 'member' && request.resource.data.paidByMemberId is string) ||
+          (request.resource.data.paymentSourceType == 'fund' && request.resource.data.paidByMemberId == null)
+        );
       // Everyday deletes go through ExpenseService.deleteExpense(), which does
       // a hard delete (not a soft-delete update) — so this must mirror
       // finance.deleteOwnExpense/deleteAllExpense, not just Owner. The Owner
@@ -723,7 +732,8 @@ service cloud.firestore {
         request.resource.data.amount > 0 &&
         request.resource.data.milestoneId is string &&
         milestoneDoc(planId, request.resource.data.milestoneId).data.planId == planId &&
-        request.resource.data.contributedByMemberId is string;
+        request.resource.data.contributedByMemberId is string &&
+        (request.resource.data.allocatedToMemberId == null || request.resource.data.allocatedToMemberId is string);
       allow update: if isPlanActive(planId) &&
         (
           (resource.data.createdByUserId == request.auth.uid && canManageOwnFinance(planId)) ||
@@ -738,7 +748,8 @@ service cloud.firestore {
         request.resource.data.amount > 0 &&
         request.resource.data.milestoneId is string &&
         milestoneDoc(planId, request.resource.data.milestoneId).data.planId == planId &&
-        request.resource.data.contributedByMemberId is string;
+        request.resource.data.contributedByMemberId is string &&
+        (request.resource.data.allocatedToMemberId == null || request.resource.data.allocatedToMemberId is string);
       allow delete: if isPlanOwner(planId) ||
         (
           isPlanActive(planId) &&
@@ -758,6 +769,7 @@ service cloud.firestore {
         request.resource.data.createdByUserId == request.auth.uid &&
         request.resource.data.createdByMemberId == currentUserPlanDoc(planId).data.memberId &&
         request.resource.data.status == 'completed' &&
+        request.resource.data.fromMemberId is string &&
         request.resource.data.fromMemberId != request.resource.data.toMemberId &&
         request.resource.data.amount is int &&
         request.resource.data.amount > 0;

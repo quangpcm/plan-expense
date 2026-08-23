@@ -1,10 +1,11 @@
 type LinkedExpenseRef = {
-  paidByMemberId: string;
+  paidByMemberId: string | null;
   participants: { memberId: string }[];
 };
 
 type LinkedIncomeRef = {
   contributedByMemberId: string;
+  allocatedToMemberId?: string | null;
 };
 
 type LinkedSettlementRef = {
@@ -22,7 +23,9 @@ export function buildLinkedMemberIdSet(input: MemberLinkedRecordsInput): Set<str
   const memberIds = new Set<string>();
 
   for (const expense of input.expenses) {
-    memberIds.add(expense.paidByMemberId);
+    if (expense.paidByMemberId) {
+      memberIds.add(expense.paidByMemberId);
+    }
     for (const participant of expense.participants) {
       memberIds.add(participant.memberId);
     }
@@ -30,6 +33,9 @@ export function buildLinkedMemberIdSet(input: MemberLinkedRecordsInput): Set<str
 
   for (const income of input.incomes) {
     memberIds.add(income.contributedByMemberId);
+    if (income.allocatedToMemberId) {
+      memberIds.add(income.allocatedToMemberId);
+    }
   }
 
   for (const settlement of input.settlements) {

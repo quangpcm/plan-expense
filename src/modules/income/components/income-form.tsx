@@ -22,6 +22,9 @@ import { createIncomeSchema, type CreateIncomeSchema } from '@/modules/income/sc
 import { updateIncomeSchema, type UpdateIncomeSchema } from '@/modules/income/schemas/update-income.schema';
 import { incomeService } from '@/modules/income/services';
 import type { IncomeDocument } from '@/modules/income/types/income';
+import { useExpenses } from '@/modules/expense/hooks/use-expenses';
+import { useIncomes } from '@/modules/income/hooks/use-incomes';
+import { resolveIncomeAllocation } from '@/modules/statistic/utils/fund-balance';
 import { AmountInput } from '@/shared/components/ui/amount-input';
 import { Button } from '@/shared/components/ui/button';
 import { DateTimeInput } from '@/shared/components/ui/date-time-input';
@@ -55,6 +58,8 @@ export function IncomeForm({ planId, mode, income, defaultMilestoneId, onSuccess
   const { plan } = usePlan(planId);
   const { members, currentMember } = usePlanMembers(planId);
   const { milestones } = useMilestones(planId);
+  const { expenses } = useExpenses(planId);
+  const { incomes } = useIncomes(planId);
   const categories = useMemo(() => (plan ? getIncomeCategories(plan.planType) : []), [plan]);
   const isDebtPlan = plan?.planType === 'debt';
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -66,6 +71,12 @@ export function IncomeForm({ planId, mode, income, defaultMilestoneId, onSuccess
   );
   const visibleMilestones = useMemo(() => getVisibleMilestones(milestones), [milestones]);
   const shouldHideMilestoneSelector = plan ? planUsesHiddenMilestone(plan) : false;
+  const [hasUserSetAllocation, setHasUserSetAllocation] = useState(false);
+  const defaultAllocatedToMemberId = isDebtPlan
+    ? null
+    : income
+      ? resolveIncomeAllocation(income, plan?.ownerMemberId ?? '')
+      : (plan?.ownerMemberId ?? null);
   const milestoneIdFromQuery = searchParams.get('milestoneId') || '';
   const resolvedDefaultMilestoneId = plan
     ? resolveFinanceMilestoneId(
@@ -85,6 +96,7 @@ export function IncomeForm({ planId, mode, income, defaultMilestoneId, onSuccess
         (isDebtPlan ? counterpartMembers[0]?.id : currentMember?.id) ||
         activeMembers[0]?.id ||
         '',
+      allocatedToMemberId: defaultAllocatedToMemberId,
       note: toSafeString(income?.note),
       receivedAt: income ? formatDateTimeLocalInput(income.receivedAt.toDate()) : '',
     },
@@ -93,6 +105,7 @@ export function IncomeForm({ planId, mode, income, defaultMilestoneId, onSuccess
   const amountWatched = useWatch({ control: form.control, name: 'amount' });
   const milestoneIdWatched = useWatch({ control: form.control, name: 'milestoneId' });
   const contributedByMemberIdWatched = useWatch({ control: form.control, name: 'contributedByMemberId' });
+  const allocatedToMemberIdWatched = useWatch({ control: form.control, name: 'allocatedToMemberId' });
 
   const selectedContributor = activeMembers.find((member) => member.id === contributedByMemberIdWatched);
 
@@ -130,6 +143,14 @@ export function IncomeForm({ planId, mode, income, defaultMilestoneId, onSuccess
     shouldHideMilestoneSelector,
   ]);
 
+  useEffect(() => {
+    if (hasUserSetAllocation) {
+      return;
+    }
+
+    form.setValue('allocatedToMemberId', defaultAllocatedToMemberId, { shouldValidate: true });
+  }, [defaultAllocatedToMemberId, form, hasUserSetAllocation]);
+
   const handleSubmit = form.handleSubmit(async (values) => {
     if (!plan || !user) {
       return;
@@ -148,6 +169,8 @@ export function IncomeForm({ planId, mode, income, defaultMilestoneId, onSuccess
           currentUser: user,
           categories,
           milestones,
+          expenses,
+          incomes,
         });
         onSuccess?.(parsed.milestoneId);
       } else if (income) {
@@ -164,6 +187,8 @@ export function IncomeForm({ planId, mode, income, defaultMilestoneId, onSuccess
             currentUser: user,
             categories,
             milestones,
+            expenses,
+            incomes,
           },
           income,
         );
@@ -278,6 +303,34 @@ export function IncomeForm({ planId, mode, income, defaultMilestoneId, onSuccess
           value={contributedByMemberIdWatched || selectedContributor?.id || ''}
         />
       </div>
+
+      {!isDebtPlan ? (
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700" htmlFor="allocatedToMemberId">
+            Hoàn cho
+          </label>
+          <DropdownSelect
+            id="allocatedToMemberId"
+            onValueChange={(value) => {
+              setHasUserSetAllocation(true);
+              form.setValue('allocatedToMemberId', value || null, { shouldValidate: true, shouldDirty: true });
+            }}
+            options={[
+              { value: '', label: 'Chưa phân bổ' },
+              ...activeMembers.map((member) => ({
+                value: member.id,
+                label: member.id === currentMember?.id ? `${member.nickname} (Bạn)` : member.nickname,
+              })),
+            ]}
+            placeholder="Chọn thành viên được hoàn"
+            value={allocatedToMemberIdWatched ?? ''}
+          />
+          <p className="text-xs text-slate-500">
+            Khoản tiền này sẽ được tính là phần hoàn lại cho thành viên được chọn.
+          </p>
+        </div>
+      ) : null}
+
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700" htmlFor="receivedAt">
           {isDebtPlan ? 'Thời gian hoàn trả' : 'Thời gian nhận'}

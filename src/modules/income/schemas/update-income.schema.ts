@@ -7,6 +7,7 @@ export const updateIncomeSchema = z.object({
   milestoneId: z.string().min(1),
   categoryId: z.string().optional().or(z.literal('')),
   contributedByMemberId: z.string().min(1),
+  allocatedToMemberId: z.string().min(1).nullable(),
   note: z.string().trim().max(500).optional().or(z.literal('')),
   receivedAt: z.string().optional().or(z.literal('')),
 });
