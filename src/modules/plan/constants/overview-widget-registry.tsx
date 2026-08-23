@@ -14,10 +14,14 @@ import {
 } from 'lucide-react';
 
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
+import { getCategoryIcon } from '@/modules/category/utils/category-icon';
 import { MilestoneList } from '@/modules/milestone';
 import { CategoryBreakdown } from '@/modules/statistic/components/category-breakdown';
+import { resolveCategoryColor } from '@/modules/statistic/components/finance-category-donut';
 import { MilestoneBreakdown } from '@/modules/statistic/components/milestone-breakdown';
 import { StatisticOverview } from '@/modules/statistic/components/statistic-overview';
+import { SettlementProgressSummary } from '@/modules/settlement/components/settlement-progress-summary';
+import { computeSettlementProgress } from '@/modules/settlement/utils/settlement-progress';
 import { TodoList } from '@/modules/todo';
 import {
   calculateDebtAttentionItems,
@@ -790,6 +794,201 @@ function FinanceSummaryWidget({
   );
 }
 
+// Travel-only KPI row: nhãn "Nạp quỹ" thay "Tổng thu" vì Income trong app này
+// luôn là tiền góp vào quỹ chung, không phải revenue của chuyến đi — giữ
+// "Thành viên" thay vì "Bình quân/người" vì participant có thể khác nhau
+// trên từng expense, chia đều tổng chi/số thành viên sẽ ra một con số sai
+// nghĩa nghiệp vụ.
+function TravelFinanceKpiRow({ statistic }: { statistic: OverviewRendererProps['statistic'] }) {
+  return (
+    <Card className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <div>
+        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Tổng chi</p>
+        <p className="mt-1 text-lg font-semibold text-slate-950">
+          {formatCurrency(statistic.overview.totalExpense)}
+        </p>
+      </div>
+      <div>
+        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Nạp quỹ</p>
+        <p className="mt-1 text-lg font-semibold text-slate-950">
+          {formatCurrency(statistic.overview.totalIncome)}
+        </p>
+      </div>
+      <div>
+        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Thành viên</p>
+        <p className="mt-1 text-lg font-semibold text-slate-950">{statistic.overview.memberCount}</p>
+      </div>
+      <div>
+        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Khoản chi</p>
+        <p className="mt-1 text-lg font-semibold text-slate-950">{statistic.overview.expenseCount}</p>
+      </div>
+    </Card>
+  );
+}
+
+// "Cân đối thành viên" thu gọn cho Overview — chỉ trả lời "tiền đang cân bằng
+// giữa các thành viên thế nào?", không lặp lại breakdown chi tiết per-member
+// đã có ở Statistics (MemberBalanceTable). Giữ tên "Cân đối thành viên" (khớp
+// terminology với Statistics) dù nội dung thiên về settlement state — CTA
+// "Xem đối soát →" đã đảm nhiệm phần action, mở SettlementWorkspace (dialog
+// compact riêng, KHÔNG phải "Thống kê tài chính" đầy đủ — xem page.tsx).
+// Dùng chung computeSettlementProgress/SettlementProgressSummary với
+// SettlementWorkspace để 2 nơi luôn nhất quán.
+function TravelMemberBalanceOverviewCard({
+  completedSettlementsCount,
+  onOpenSettlements,
+  requiresFundAllocation,
+  statistic,
+  suggestions,
+}: {
+  completedSettlementsCount: OverviewRendererProps['completedSettlementsCount'];
+  onOpenSettlements: OverviewRendererProps['onOpenSettlements'];
+  requiresFundAllocation: OverviewRendererProps['requiresFundAllocation'];
+  statistic: OverviewRendererProps['statistic'];
+  suggestions: OverviewRendererProps['suggestions'];
+}) {
+  const progress = computeSettlementProgress(
+    statistic.memberBalances,
+    suggestions,
+    statistic.overview,
+    requiresFundAllocation,
+    completedSettlementsCount,
+  );
+
+  return (
+    <Card className="gap-3">
+      <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Cân đối thành viên</h3>
+      <SettlementProgressSummary progress={progress} />
+      <button
+        className="self-end text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+        onClick={onOpenSettlements}
+        type="button"
+      >
+        Xem đối soát ➔
+      </button>
+    </Card>
+  );
+}
+
+// Top 3 danh mục chi nhiều nhất — trả lời "tiền chủ yếu chi vào đâu?" mà
+// không lặp lại toàn bộ donut/legend đầy đủ đã có ở Statistics.
+function TravelCategoryOverviewCard({ statistic }: { statistic: OverviewRendererProps['statistic'] }) {
+  const rows = statistic.categoryBreakdown.filter((row) => row.totalAmount > 0);
+  const total = rows.reduce((sum, row) => sum + row.totalAmount, 0);
+  const topRows = rows.slice(0, 3);
+  const restCount = rows.length - topRows.length;
+  const restAmount = rows.slice(3).reduce((sum, row) => sum + row.totalAmount, 0);
+
+  return (
+    <Card className="gap-3">
+      <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Chi tiêu theo danh mục</h3>
+      {topRows.length === 0 ? (
+        <p className="text-sm text-slate-600">Chưa có khoản chi nào để phân tích.</p>
+      ) : (
+        <div className="space-y-3">
+          {topRows.map((row) => {
+            const Icon = row.icon ? getCategoryIcon(row.icon) : null;
+            const percent = total > 0 ? Math.round((row.totalAmount / total) * 100) : 0;
+            const color = resolveCategoryColor(row.iconColor);
+
+            return (
+              <div key={row.categoryId ?? row.categoryName}>
+                <div className="flex items-center justify-between gap-2 text-sm">
+                  <span className="flex min-w-0 items-center gap-2 text-slate-700">
+                    {Icon ? (
+                      <span
+                        className={cn(
+                          'flex size-6 shrink-0 items-center justify-center rounded-full',
+                          row.iconBgColor,
+                        )}
+                      >
+                        <Icon className={cn('size-3.5', row.iconColor)} />
+                      </span>
+                    ) : null}
+                    <span className="truncate">{row.categoryName}</span>
+                  </span>
+                  <span className="shrink-0 whitespace-nowrap font-medium text-slate-900">
+                    {formatCompactCurrency(row.totalAmount)} · {percent}%
+                  </span>
+                </div>
+                <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: color, width: `${percent}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+          {restCount > 0 ? (
+            <p className="text-xs text-slate-500">
+              + {restCount} danh mục khác · {formatCompactCurrency(restAmount)}
+            </p>
+          ) : null}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// "Tài chính" cho Travel — thay financeSummary chung: giữ KPI row nhưng đổi
+// "Tổng thu" → "Nạp quỹ", và promote 2 insight quan trọng nhất với Travel
+// (Cân đối thành viên, Chi tiêu theo danh mục) lên Overview thay vì chỉ có
+// 4 con số đơn lẻ. Cố tình KHÔNG bê nguyên MemberBalanceTable/
+// FinanceCategoryDonut từ Statistics sang — Overview chỉ đóng vai trò
+// snapshot, Statistics vẫn là nơi giải thích chi tiết.
+function TravelFinanceSummaryWidget({
+  completedSettlementsCount,
+  isPlanEnded,
+  onOpenSettlements,
+  onOpenStatistics,
+  onSelectMilestoneDrilldown,
+  requiresFundAllocation,
+  statistic,
+  suggestions,
+}: OverviewRendererProps) {
+  return (
+    <div className="space-y-3">
+      <SectionHeading
+        action={
+          <button
+            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+            onClick={onOpenStatistics}
+            type="button"
+          >
+            Mở thống kê <ArrowRight className="size-4" />
+          </button>
+        }
+        eyebrow="Tài chính"
+        title="Thu chi kế hoạch"
+      />
+      {isPlanEnded ? (
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <CategoryBreakdown statistic={statistic} />
+          <MilestoneBreakdown
+            onSelectMilestoneMember={onSelectMilestoneDrilldown}
+            statistic={statistic}
+          />
+        </div>
+      ) : (
+        <>
+          <TravelFinanceKpiRow statistic={statistic} />
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <TravelMemberBalanceOverviewCard
+              completedSettlementsCount={completedSettlementsCount}
+              onOpenSettlements={onOpenSettlements}
+              requiresFundAllocation={requiresFundAllocation}
+              statistic={statistic}
+              suggestions={suggestions}
+            />
+            <TravelCategoryOverviewCard statistic={statistic} />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function MemberSummaryWidget({ members }: OverviewRendererProps) {
   return (
     <Card>
@@ -1193,6 +1392,12 @@ export const overviewWidgetRegistry: Partial<
     id: 'financeSummary',
     moduleId: 'finance',
     component: FinanceSummaryWidget,
+    isAvailable: () => true,
+  },
+  travelFinanceSummary: {
+    id: 'travelFinanceSummary',
+    moduleId: 'finance',
+    component: TravelFinanceSummaryWidget,
     isAvailable: () => true,
   },
   memberSummary: {

@@ -120,6 +120,7 @@ import { MemberSpendingList } from '@/modules/statistic/components/member-spendi
 import { statisticService } from '@/modules/statistic/services';
 import { SettlementList } from '@/modules/settlement/components/settlement-list';
 import { SettlementSuggestionList } from '@/modules/settlement/components/settlement-suggestion-list';
+import { SettlementWorkspace } from '@/modules/settlement/components/settlement-workspace';
 import { useSettlements } from '@/modules/settlement/hooks/use-settlements';
 import { settlementService } from '@/modules/settlement/services';
 import type {
@@ -420,6 +421,7 @@ export default function PlanDetailPage() {
   const [showCompletePlanConfirm, setShowCompletePlanConfirm] = useState(false);
   const [showArchivePlanConfirm, setShowArchivePlanConfirm] = useState(false);
   const [showStatisticSheet, setShowStatisticSheet] = useState(false);
+  const [showSettlementWorkspace, setShowSettlementWorkspace] = useState(false);
   const [statisticMemberDrilldown, setStatisticMemberDrilldown] = useState<{
     memberId: string;
   } | null>(null);
@@ -516,6 +518,7 @@ export default function PlanDetailPage() {
   );
   const requiresFundAllocation = statistic.fund.unallocatedBalance > 0;
   const suggestions = settlementService.suggest(statistic.memberBalances, statistic.fund.unallocatedBalance);
+  const completedSettlementsCount = settlements.filter((settlement) => settlement.status === 'completed').length;
   const statisticMemberDrilldownMember = useMemo(
     () =>
       statisticMemberDrilldown
@@ -1711,6 +1714,7 @@ export default function PlanDetailPage() {
         return (
           <OverviewTab
             canManagePlanning={canManagePlanning}
+            completedSettlementsCount={completedSettlementsCount}
             currentMember={currentMember}
             debtTrackingError={debtTrackingError}
             debtTrackingSummary={debtTrackingSummary}
@@ -1738,6 +1742,8 @@ export default function PlanDetailPage() {
             onOpenDebtTracking={() => openPlanTab('debtTracking')}
             onOpenWeddingGuests={() => openPlanTab('weddingGuests')}
             onOpenFinance={() => openPlanTab('finance')}
+            onOpenSettlements={() => setShowSettlementWorkspace(true)}
+            onOpenStatistics={() => setShowStatisticSheet(true)}
             onOpenTravelItinerary={() => openPlanTab('travelItinerary')}
             onSelectMemberDrilldown={(memberId) =>
               setStatisticMemberDrilldown({ memberId })
@@ -1754,8 +1760,10 @@ export default function PlanDetailPage() {
             plan={plan}
             planId={planId}
             planStatus={plan.status}
+            requiresFundAllocation={requiresFundAllocation}
             selectedMilestoneId={selectedMilestone?.id ?? null}
             statistic={statistic}
+            suggestions={suggestions}
             estimatedTotal={effectiveEstimatedTotal}
             todos={todos}
             todoActionError={todoActionError}
@@ -2747,6 +2755,32 @@ export default function PlanDetailPage() {
               </div>
             ) : null}
           </div>
+        </ResponsiveModal>
+
+        <ResponsiveModal
+          className="max-h-[85vh] w-full max-w-2xl overflow-y-auto"
+          onOpenChange={setShowSettlementWorkspace}
+          open={showSettlementWorkspace}
+          title="Đối soát thành viên"
+        >
+          <SettlementWorkspace
+            canConfirm={canManageSettlements && plan.status !== 'closed'}
+            completedSettlementsCount={completedSettlementsCount}
+            errorMessage={settlementError}
+            isSubmitting={isSettlementSubmitting}
+            members={members}
+            message={settlementMessage}
+            onCancel={handleCancelSettlement}
+            onConfirm={(suggestion) => handleConfirmSettlement(suggestion)}
+            onOpenFullStatistics={() => {
+              setShowSettlementWorkspace(false);
+              setShowStatisticSheet(true);
+            }}
+            requiresFundAllocation={requiresFundAllocation}
+            settlements={settlements}
+            statistic={statistic}
+            suggestions={suggestions}
+          />
         </ResponsiveModal>
 
         <BottomSheet

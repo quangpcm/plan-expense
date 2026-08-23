@@ -35,7 +35,7 @@ const TAILWIND_600_HEX: Record<string, string> = {
   rose: '#e11d48',
 };
 
-function resolveCategoryColor(iconColorClass: string) {
+export function resolveCategoryColor(iconColorClass: string) {
   const colorName = iconColorClass.match(/^text-([a-z]+)-\d+$/)?.[1];
   return (colorName && TAILWIND_600_HEX[colorName]) || '#64748b';
 }

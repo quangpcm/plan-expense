@@ -71,6 +71,7 @@ export type OverviewWidgetId =
   | 'weddingFinanceSummary'
   | 'weddingGuestFinanceSummary'
   | 'travelItinerarySummary'
+  | 'travelFinanceSummary'
   | 'debtSummary'
   | 'debtOverviewSummary';
 

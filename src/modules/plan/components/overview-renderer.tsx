@@ -15,6 +15,7 @@ import type {
 } from '@/modules/plan/types/plan';
 import type { ConfigurableModuleId } from '@/modules/plan/types/plan-modular';
 import type { StatisticResult } from '@/modules/statistic/types/statistic';
+import type { SettlementSuggestion } from '@/modules/settlement/types/settlement';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
 import type { TodoDocument } from '@/modules/todo';
 import { resolveModuleAccess } from '@/modules/member/services/permission.service';
@@ -23,6 +24,7 @@ import type { TravelActivityDocument } from '@/modules/travel-activity/types/tra
 
 export type OverviewRendererProps = {
   canManagePlanning: boolean;
+  completedSettlementsCount: number;
   currentMember: PlanMemberDocument | null;
   debtTrackingError: string | null;
   debtTrackingSummary: DebtTrackingSummary;
@@ -47,6 +49,8 @@ export type OverviewRendererProps = {
   onOpenDebtTracking: () => void;
   onOpenWeddingGuests: () => void;
   onOpenFinance: () => void;
+  onOpenSettlements: () => void;
+  onOpenStatistics: () => void;
   onOpenTravelItinerary: () => void;
   onViewTodo: (todo: TodoDocument) => void;
   onSelectMemberDrilldown: (memberId: string) => void;
@@ -60,8 +64,10 @@ export type OverviewRendererProps = {
     | PlanType;
   planId: string;
   planStatus: PlanStatus;
+  requiresFundAllocation: boolean;
   selectedMilestoneId: string | null;
   statistic: StatisticResult;
+  suggestions: SettlementSuggestion[];
   estimatedTotal: number;
   todos: TodoDocument[];
   todoActionError: string | null;

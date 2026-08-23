@@ -108,7 +108,7 @@ export const planTypeConfigMap: SupportedPlanTypeConfigMap = {
         { widgetId: 'travelPlanningProgress', enabled: true, order: 10 },
         { widgetId: 'travelAttentionTodos', enabled: true, order: 20 },
         { widgetId: 'travelItinerarySummary', enabled: true, order: 30 },
-        { widgetId: 'financeSummary', enabled: true, order: 40 },
+        { widgetId: 'travelFinanceSummary', enabled: true, order: 40 },
       ],
     },
   },
