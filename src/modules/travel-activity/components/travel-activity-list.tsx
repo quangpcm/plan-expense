@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Clock3, ExternalLink, Hourglass, MapPinned, Sparkles } from 'lucide-react';
+import { Clock3, ExternalLink, Hourglass, MapPinned, Paperclip, Sparkles } from 'lucide-react';
 
 import { getTravelActivityCategoryMeta, toMapHref } from '@/modules/travel-activity/utils/travel-activity-display';
 import type { TravelActivityDocument } from '@/modules/travel-activity/types/travel-activity';
@@ -365,6 +365,12 @@ function TravelActivityTimelineCard({
               <p className="flex items-center gap-1.5">
                 <Clock3 className="size-3.5 shrink-0" />
                 <span>{durationLabel}</span>
+              </p>
+            ) : null}
+            {activity.attachments.length > 0 ? (
+              <p className="flex items-center gap-1.5">
+                <Paperclip className="size-3.5 shrink-0" />
+                <span>{activity.attachments.length}</span>
               </p>
             ) : null}
           </div>
