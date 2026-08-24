@@ -10,6 +10,7 @@ import type { PlanSummary } from '@/modules/plan/types/plan';
 import { getArchiveDaysRemaining } from '@/modules/plan/utils/plan-archive';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
+import { DataRow } from '@/shared/components/ui/data-row';
 
 type ArchivedPlanListItemProps = {
   plan: PlanSummary;
@@ -54,23 +55,28 @@ export function ArchivedPlanListItem({ plan, userId }: ArchivedPlanListItemProps
 
   return (
     <Card className="gap-3">
-      <div className="flex items-center gap-3">
-        <div
-          className={`flex size-11 shrink-0 items-center justify-center rounded-full ${visual.iconBgClassName} ${visual.iconFgClassName}`}
-        >
-          <PlanTypeIcon className="size-5" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate text-base font-semibold text-[var(--color-foreground)]">{plan.planName}</h3>
-          <p className="text-xs text-[var(--color-muted)]">
-            {daysRemaining === null
-              ? `Sẽ tự động xóa sau ${PLAN_ARCHIVE_RETENTION_DAYS} ngày`
-              : daysRemaining > 0
-                ? `Còn ${daysRemaining} ngày trước khi xóa vĩnh viễn`
-                : 'Sẽ sớm bị xóa vĩnh viễn'}
-          </p>
-        </div>
-      </div>
+      <DataRow
+        className="py-0"
+        leading={
+          <div
+            className={`flex size-11 shrink-0 items-center justify-center rounded-full ${visual.iconBgClassName} ${visual.iconFgClassName}`}
+          >
+            <PlanTypeIcon className="size-5" />
+          </div>
+        }
+        main={
+          <>
+            <h3 className="truncate text-base font-semibold text-[var(--color-text-primary)]">{plan.planName}</h3>
+            <p className="text-xs text-[var(--color-text-secondary)]">
+              {daysRemaining === null
+                ? `Sẽ tự động xóa sau ${PLAN_ARCHIVE_RETENTION_DAYS} ngày`
+                : daysRemaining > 0
+                  ? `Còn ${daysRemaining} ngày trước khi xóa vĩnh viễn`
+                  : 'Sẽ sớm bị xóa vĩnh viễn'}
+            </p>
+          </>
+        }
+      />
 
       {restoreError ? <AuthFormMessage message={restoreError} type="error" /> : null}
       {deleteError ? <AuthFormMessage message={deleteError} type="error" /> : null}

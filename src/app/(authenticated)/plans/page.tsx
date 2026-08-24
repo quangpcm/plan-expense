@@ -16,7 +16,9 @@ import { TodoAttentionSection } from '@/modules/todo/components/todo-attention-s
 import { useAttentionTodos, type AttentionBellTone } from '@/modules/todo/hooks/use-attention-todos';
 import { useCurrentUserProfile } from '@/modules/user/hooks/use-current-user-profile';
 import { Avatar } from '@/shared/components/ui/avatar';
+import { FilterBar } from '@/shared/components/ui/filter-bar';
 import { Input } from '@/shared/components/ui/input';
+import { PageHeader } from '@/shared/components/ui/page-header';
 import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 
@@ -57,56 +59,60 @@ export default function PlansPage() {
   return (
     <main className="relative flex flex-col gap-4 bg-[var(--color-background)]">
       <section className="space-y-4 px-1">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0 space-y-1">
-            <h1 className="truncate text-[2rem] font-bold leading-tight text-[var(--color-foreground)]">{greeting}</h1>
-            <p className="text-sm leading-6 text-[var(--color-muted)]">Quản lý và theo dõi kế hoạch tài chính.</p>
-          </div>
-          <div className="flex shrink-0 items-center gap-3 pt-1">
-            <button
-              aria-label="Thông báo"
-              className={`relative inline-flex size-11 items-center justify-center rounded-full border shadow-[0_8px_24px_rgba(15,23,42,0.06)] transition ${getBellToneClass(bellTone)}`}
-              onClick={() => setIsNotificationOpen(true)}
-              type="button"
-            >
-              <Bell className="size-5" />
-              {todayAttentionCount > 0 ? (
-                <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold leading-none text-white shadow-[0_8px_18px_rgba(244,63,94,0.35)]">
-                  {todayAttentionCount > 9 ? '9+' : todayAttentionCount}
-                </span>
-              ) : null}
-            </button>
-            <Avatar
-              className="size-11 shadow-[0_10px_24px_rgba(43,94,242,0.2)]"
-              initials={userInitials}
-              src={userProfile?.avatarUrl ?? user?.photoURL ?? null}
-            />
-          </div>
-        </div>
+        <PageHeader
+          actions={
+            <>
+              <button
+                aria-label="Thông báo"
+                className={`relative inline-flex size-11 items-center justify-center rounded-full border shadow-[0_8px_24px_rgba(15,23,42,0.06)] transition ${getBellToneClass(bellTone)}`}
+                onClick={() => setIsNotificationOpen(true)}
+                type="button"
+              >
+                <Bell className="size-5" />
+                {todayAttentionCount > 0 ? (
+                  <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold leading-none text-white shadow-[0_8px_18px_rgba(244,63,94,0.35)]">
+                    {todayAttentionCount > 9 ? '9+' : todayAttentionCount}
+                  </span>
+                ) : null}
+              </button>
+              <Avatar
+                className="size-11 shadow-[0_10px_24px_rgba(43,94,242,0.2)]"
+                initials={userInitials}
+                src={userProfile?.avatarUrl ?? user?.photoURL ?? null}
+              />
+            </>
+          }
+          description="Quản lý và theo dõi kế hoạch tài chính."
+          title={greeting}
+        />
 
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[var(--color-subtle)]" />
-            <Input
-              className="pl-10"
-              placeholder="Tìm kiếm kế hoạch..."
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-            />
-          </div>
-          <div className="relative shrink-0">
-            <ArrowUpDown className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-subtle)]" />
-            <select
-              aria-label="Sắp xếp kế hoạch"
-              className="h-11 appearance-none rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] pl-9 pr-3 text-xs text-[var(--color-foreground)] outline-none transition focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent-soft)]"
-              value={sortBy}
-              onChange={(event) => setSortBy(event.target.value as SortOption)}
-            >
-              <option value="updatedAt">Mới nhất</option>
-              <option value="createdAt">Ngày tạo</option>
-            </select>
-          </div>
-        </div>
+        <FilterBar
+          filters={
+            <div className="relative shrink-0">
+              <ArrowUpDown className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-subtle)]" />
+              <select
+                aria-label="Sắp xếp kế hoạch"
+                className="h-11 appearance-none rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] pl-9 pr-3 text-xs text-[var(--color-foreground)] outline-none transition focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent-soft)]"
+                value={sortBy}
+                onChange={(event) => setSortBy(event.target.value as SortOption)}
+              >
+                <option value="updatedAt">Mới nhất</option>
+                <option value="createdAt">Ngày tạo</option>
+              </select>
+            </div>
+          }
+          search={
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[var(--color-subtle)]" />
+              <Input
+                className="pl-10"
+                placeholder="Tìm kiếm kế hoạch..."
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+              />
+            </div>
+          }
+        />
       </section>
 
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
