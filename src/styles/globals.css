@@ -42,6 +42,82 @@
   --color-milestone-upcoming-foreground: #172033;
   --color-milestone-upcoming-muted: #68738a;
   --radius-card: 1.5rem;
+
+  /*
+   * Design System V2 — Foundation semantic tokens (Wave 1).
+   * These alias the raw values above; they do not replace them yet.
+   * Consumers migrate to semantic names progressively in later waves
+   * (see docs/design-sys-v2/implement-specs/implement/02-05).
+   */
+  --color-brand-primary: var(--color-primary);
+  --color-brand-primary-hover: var(--color-primary-hover);
+  /* No distinct "active" shade exists yet; aliased to hover until a real value is approved. */
+  --color-brand-primary-active: var(--color-primary-hover);
+  --color-brand-foreground: var(--color-primary-foreground);
+  --color-brand-accent: var(--color-accent);
+  --color-brand-subtle: var(--color-accent-soft);
+  /* brand.gradient-start/middle/end intentionally omitted: no existing gradient to preserve,
+     and inventing new hex stops is prohibited by 01.Foundation.md §10. Deferred. */
+
+  --color-surface-page: var(--color-background);
+  --color-surface-default: var(--color-surface);
+  --color-surface-subtle: var(--color-surface-soft);
+  /* raised/overlay differ from default via elevation (shadow), not fill — no distinct tint exists. */
+  --color-surface-raised: var(--color-surface);
+  --color-surface-overlay: var(--color-surface);
+
+  --color-text-primary: var(--color-foreground);
+  --color-text-secondary: var(--color-muted);
+  --color-text-muted: var(--color-subtle);
+  /* No distinct disabled-text color exists yet; aliased to muted. Deferred. */
+  --color-text-disabled: var(--color-subtle);
+  --color-text-inverse: var(--color-primary-foreground);
+  --color-text-link: var(--color-accent);
+
+  --color-border-default: var(--color-border);
+  /* No distinct subtle tier exists yet; aliased to default. Deferred. */
+  --color-border-subtle: var(--color-border);
+  /* --color-border-strong already exists above with this exact semantic name; no alias needed. */
+  --color-border-focus: var(--color-accent);
+
+  --color-status-success: var(--color-success);
+  --color-status-success-surface: var(--color-success-soft);
+  --color-status-warning: var(--color-warning);
+  --color-status-warning-surface: var(--color-warning-soft);
+  --color-status-danger: var(--color-danger);
+  --color-status-danger-surface: var(--color-danger-soft);
+  --color-status-info: var(--color-info);
+  --color-status-info-surface: var(--color-info-soft);
+
+  --color-focus-ring: var(--color-accent);
+  --color-focus-ring-soft: var(--color-accent-soft);
+
+  /* Harvested from ResponsiveModal/BottomSheet backdrop (bg-slate-950/40); not a new value. */
+  --color-overlay-backdrop: rgb(2 6 23 / 40%);
+
+  /*
+   * Canonical V2 radius scale, namespaced `-ds-` on purpose: Tailwind v4 reserves the bare
+   * --radius-sm/md/lg/xl keys for its own default `rounded-sm/md/lg/xl` utilities. `rounded-xl`
+   * already has real consumers today at Tailwind's default 12px — overriding --radius-xl directly
+   * would silently change those without review, which 01.Foundation.md §22/§31 forbid. This
+   * namespace makes the new scale available (`rounded-ds-*`) without touching existing usage.
+   */
+  --radius-ds-sm: 8px;
+  --radius-ds-md: 12px;
+  --radius-ds-lg: 16px;
+  --radius-ds-xl: 20px;
+  --radius-ds-full: 9999px;
+
+  /*
+   * Elevation is semantic hierarchy, not decoration (01.Foundation.md §23).
+   * - none: no token needed, Tailwind's native `shadow-none` already covers it.
+   * - overlay: harvested as-is from Dialog/ResponsiveModal's existing shadow, not invented.
+   * - raised: DEFERRED. No existing "raised" surface to harvest a value from, and inventing one
+   *   without an approved/existing source violates the same rule already applied to
+   *   brand.gradient-* below. Add once Pilot evidence justifies an exact value.
+   */
+  --shadow-overlay: 0 16px 60px rgb(15 23 42 / 10%);
+
   --animate-ping-lg: ping-lg 1s cubic-bezier(0, 0, 0.2, 1) infinite;
   --animate-float-slow: float-slow 8s ease-in-out infinite;
   --animate-float-delayed: float-delayed 10s ease-in-out infinite;
@@ -51,6 +127,26 @@
   --animate-overlay-hide: overlay-hide 150ms ease-in;
   --animate-content-show: content-show 200ms cubic-bezier(0.16, 1, 0.3, 1);
   --animate-content-hide: content-hide 150ms ease-in;
+}
+
+/*
+ * Design System V2 — Foundation tokens that don't need Tailwind's automatic utility-class
+ * generation (unlike the --color-, --radius- and --shadow- entries in @theme above). Consumed via
+ * var(), the same pattern already used for --radius-card in this file.
+ */
+:root {
+  /* Focus ring geometry (01.Foundation.md §16). Existing components already implement this
+     visually (see button.tsx: ring-2 + ring-offset-2) — these tokens name that recipe, they
+     don't change it. */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
+  /* Minimal z-index roles (01.Foundation.md §29), aliasing the numeric ladder already in use
+     across the app (z-10/30/40/50). Naming only — existing usages are untouched in Wave 1. */
+  --z-index-sticky: 10;
+  --z-index-dropdown: 30;
+  --z-index-overlay: 40;
+  --z-index-toast: 50;
 }
 
 @keyframes ping-lg {
@@ -175,6 +271,96 @@
 
   ::selection {
     background: color-mix(in srgb, var(--color-accent) 18%, white);
+  }
+}
+
+/*
+ * Design System V2 — semantic typography roles (01.Foundation.md §20 / 6.Foundation.md §6.4.2).
+ * Bundled font-size + line-height + weight recipes, not React wrappers — spec explicitly says
+ * not to create a component for every role when a class solves it. Values are the proposed V2
+ * scale; not yet applied to any consumer in Wave 1, and not implementation-locked until a Pilot
+ * validates them.
+ */
+@layer components {
+  .text-page-title {
+    font-size: 1.5rem; /* 24px */
+    line-height: 2rem;
+    font-weight: 700;
+  }
+
+  .text-section-title {
+    font-size: 1.125rem; /* 18px */
+    line-height: 1.5rem;
+    font-weight: 700;
+  }
+
+  .text-component-title {
+    font-size: 0.9375rem; /* 15px */
+    line-height: 1.375rem;
+    font-weight: 600;
+  }
+
+  .text-body {
+    font-size: 0.875rem; /* 14px */
+    line-height: 1.375rem;
+    font-weight: 400;
+  }
+
+  .text-body-strong {
+    font-size: 0.875rem; /* 14px */
+    line-height: 1.375rem;
+    font-weight: 600;
+  }
+
+  .text-metadata {
+    font-size: 0.75rem; /* 12px */
+    line-height: 1rem;
+    font-weight: 400;
+  }
+
+  /*
+   * caption maps to the same approved 12px size as metadata rather than inventing an unapproved
+   * 11px value — it exists as a distinct semantic role for consumers that need to say "this is a
+   * caption, not metadata" (tone/usage), not because it has a different locked size yet. Revisit
+   * if Pilot evidence justifies a genuinely distinct size.
+   */
+  .text-caption {
+    font-size: 0.75rem; /* 12px, same as metadata — see comment above */
+    line-height: 1rem;
+    font-weight: 400;
+  }
+
+  .text-metric-lg {
+    font-size: 1.75rem; /* 28px */
+    line-height: 2rem;
+    font-weight: 700;
+  }
+
+  .text-metric-md {
+    font-size: 1.375rem; /* 22px */
+    line-height: 1.75rem;
+    font-weight: 700;
+  }
+
+  .text-metric-sm {
+    font-size: 1.125rem; /* 18px */
+    line-height: 1.375rem;
+    font-weight: 700;
+  }
+}
+
+/*
+ * Reduced motion (01.Foundation.md §24, Design System V2 §6.11). Additive safety net: only
+ * activates under the OS/browser preference, does not change default motion behavior.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

@@ -1,8 +1,15 @@
 import type { Metadata, Viewport } from 'next';
+import { Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
 
 import '@/styles/globals.css';
 import { AppProviders } from '@/app/providers';
+
+const inter = Inter({
+  subsets: ['latin', 'vietnamese'],
+  variable: '--font-sans',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Plan Expense',
@@ -34,7 +41,7 @@ type RootLayoutProps = {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en">
+    <html className={inter.variable} lang="en">
       <body>
         <AppProviders>{children}</AppProviders>
       </body>
