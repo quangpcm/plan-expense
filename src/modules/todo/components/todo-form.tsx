@@ -198,7 +198,7 @@ export function TodoForm({
       </div>
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700">Hình ảnh</label>
-        <AttachmentPicker maxCount={5} onChange={setAttachmentDrafts} value={attachmentDrafts} />
+        <AttachmentPicker onChange={setAttachmentDrafts} value={attachmentDrafts} />
       </div>
       <div className="flex items-center justify-end gap-2">
         {onCancel ? (

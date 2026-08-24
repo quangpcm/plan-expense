@@ -404,12 +404,7 @@ export function DebtTransactionForm({
 
       <div className="space-y-2">
         <p className="text-sm font-medium text-slate-700">Đính kèm</p>
-        <AttachmentPicker
-          label="Thêm ảnh"
-          maxCount={5}
-          onChange={setAttachments}
-          value={attachments}
-        />
+        <AttachmentPicker label="Thêm ảnh" onChange={setAttachments} value={attachments} />
       </div>
 
       {errorMessage ? (

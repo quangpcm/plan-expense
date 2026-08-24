@@ -244,7 +244,7 @@ export function TravelActivityForm({
         {isAttachmentsVisible ? (
           <div className="grid gap-2 text-sm text-slate-700">
             Ảnh đính kèm (vé, QR code, thông tin quan trọng...)
-            <AttachmentPicker maxCount={5} onChange={setAttachmentDrafts} value={attachmentDrafts} />
+            <AttachmentPicker onChange={setAttachmentDrafts} value={attachmentDrafts} />
           </div>
         ) : (
           <button

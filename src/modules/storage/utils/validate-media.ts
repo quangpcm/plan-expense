@@ -11,6 +11,8 @@ export const ALLOWED_MEDIA_MIME_TYPES = [
 
 export const MAX_MEDIA_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024;
 
+export const MEDIA_MAX_COUNT = 10;
+
 export function validateMediaUpload(contentType: string, size: number): void {
   if (!ALLOWED_MEDIA_MIME_TYPES.includes(contentType as (typeof ALLOWED_MEDIA_MIME_TYPES)[number])) {
     throw new AppError(`Unsupported file type: ${contentType}.`, 'MEDIA_UNSUPPORTED_TYPE', 400);

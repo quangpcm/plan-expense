@@ -694,7 +694,6 @@ export function ExpenseForm({
         <p className="text-sm font-medium text-slate-700">Hóa đơn đính kèm</p>
         <AttachmentPicker
           label="Thêm ảnh hóa đơn"
-          maxCount={5}
           onChange={(next) => form.setValue('attachments', next, { shouldDirty: true })}
           value={attachmentDrafts}
         />

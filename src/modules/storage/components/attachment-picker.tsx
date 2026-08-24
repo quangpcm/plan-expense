@@ -6,11 +6,10 @@ import { Camera, Link2, Plus, X } from 'lucide-react';
 import type { AttachmentDraft } from '@/modules/storage/types/attachment';
 import { compressImageFile } from '@/modules/storage/utils/compress-image';
 import { resolveAttachmentUrl } from '@/modules/storage/utils/public-url';
+import { MEDIA_MAX_COUNT } from '@/modules/storage/utils/validate-media';
 import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
-
-const DEFAULT_MAX_COUNT = 5;
 
 type AttachmentPickerProps = {
   value: AttachmentDraft[];
@@ -35,7 +34,7 @@ function resolveDraftPreviewUrl(draft: AttachmentDraft, objectUrls: Record<strin
 export function AttachmentPicker({
   value,
   onChange,
-  maxCount = DEFAULT_MAX_COUNT,
+  maxCount = MEDIA_MAX_COUNT,
   disabled = false,
   label = 'Thêm hình ảnh',
 }: AttachmentPickerProps) {
