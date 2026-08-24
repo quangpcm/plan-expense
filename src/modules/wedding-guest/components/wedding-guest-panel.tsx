@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Download, Plus, Upload } from 'lucide-react';
+import { Download, Plus, Upload, UserRoundCheck, UsersRound } from 'lucide-react';
 
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
@@ -22,13 +22,17 @@ import {
 import { WeddingGuestGroupList } from '@/modules/wedding-guest/components/wedding-guest-group-list';
 import { WeddingGuestGroupNav } from '@/modules/wedding-guest/components/wedding-guest-group-nav';
 import { WeddingGuestInsights } from '@/modules/wedding-guest/components/wedding-guest-insights';
-import {
-  WeddingGuestList,
-  type WeddingGuestListRow,
-} from '@/modules/wedding-guest/components/wedding-guest-list';
+import { WeddingGuestList } from '@/modules/wedding-guest/components/wedding-guest-list';
+import { WeddingGuestListComposition } from '@/modules/wedding-guest/components/wedding-guest-list-composition';
 import { WeddingGuestStatTiles } from '@/modules/wedding-guest/components/wedding-guest-stat-tiles';
 import { WeddingGuestStats } from '@/modules/wedding-guest/components/wedding-guest-stats';
 import type { WeddingGuestIdentityValues } from '@/modules/wedding-guest/components/wedding-guest-identity-fields';
+import {
+  getGuestRsvpLabel,
+  getWeddingGuestInvitedByLabel,
+  getWeddingGuestRelationshipLabel,
+  getWeddingGuestSideLabel,
+} from '@/modules/wedding-guest/constants/wedding-guest-presets';
 import { useGuestInvitations } from '@/modules/wedding-guest/hooks/use-guest-invitations';
 import { useWeddingGuestGroups } from '@/modules/wedding-guest/hooks/use-wedding-guest-groups';
 import { useWeddingGuests } from '@/modules/wedding-guest/hooks/use-wedding-guests';
@@ -45,9 +49,11 @@ import {
   calculateOverallGuestStatistic,
   type GuestAttributeKey,
 } from '@/modules/wedding-guest/utils/wedding-guest-statistic';
+import { Badge } from '@/shared/components/ui/badge';
 import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
+import { Input } from '@/shared/components/ui/input';
 import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 import { Skeleton } from '@/shared/components/ui/skeleton';
@@ -146,7 +152,7 @@ export function WeddingGuestPanel({
     ? (guests.find((guest) => guest.id === editingInvitation.guestId) ?? null)
     : null;
 
-  const rows: WeddingGuestListRow[] = useMemo(() => {
+  const { rows, filteredInvitations } = useMemo(() => {
     const guestById = new Map(guests.map((guest) => [guest.id, guest]));
     const normalizedQuery = normalizeVietnameseName(searchQuery);
 
@@ -177,8 +183,19 @@ export function WeddingGuestPanel({
     }
 
     if (activeGroupId) {
-      return invitations
+      const matchingInvitations = invitations
         .filter((invitation) => invitation.groupId === activeGroupId)
+        .filter((invitation) => {
+          if (filters.rsvp !== 'all' && invitation.rsvp !== filters.rsvp) {
+            return false;
+          }
+
+          const guest = guestById.get(invitation.guestId);
+
+          return guest ? matchesIdentityFilters(guest) : false;
+        });
+
+      const groupRows = matchingInvitations
         .map((invitation) => ({
           invitation,
           guest: guestById.get(invitation.guestId),
@@ -190,25 +207,26 @@ export function WeddingGuestPanel({
             invitation: GuestInvitationDocument;
             guest: WeddingGuestDocument;
           } => Boolean(row.guest),
-        )
-        .filter((row) => {
-          if (filters.rsvp !== 'all' && row.invitation.rsvp !== filters.rsvp) {
-            return false;
-          }
+        );
 
-          return matchesIdentityFilters(row.guest);
-        })
-        .map((row) => ({ guest: row.guest, invitation: row.invitation }));
+      return { rows: groupRows, filteredInvitations: matchingInvitations };
     }
 
-    return guests
-      .filter((guest) => matchesIdentityFilters(guest))
-      .map((guest) => ({
-        guest,
-        groupCount: invitations.filter(
-          (invitation) => invitation.guestId === guest.id,
-        ).length,
-      }));
+    const matchingGuests = guests.filter((guest) =>
+      matchesIdentityFilters(guest),
+    );
+    const matchingGuestIds = new Set(matchingGuests.map((guest) => guest.id));
+    const allGroupsRows = matchingGuests.map((guest) => ({
+      guest,
+      groupCount: invitations.filter(
+        (invitation) => invitation.guestId === guest.id,
+      ).length,
+    }));
+    const matchingInvitations = invitations.filter((invitation) =>
+      matchingGuestIds.has(invitation.guestId),
+    );
+
+    return { rows: allGroupsRows, filteredInvitations: matchingInvitations };
   }, [activeGroupId, filters, guests, invitations, searchQuery]);
 
   const previewRows = useMemo(() => rows.slice(0, GUEST_PREVIEW_LIMIT), [rows]);
@@ -226,6 +244,39 @@ export function WeddingGuestPanel({
     () => calculateOverallGuestStatistic(scopedInvitations),
     [scopedInvitations],
   );
+  const filteredStat = useMemo(
+    () => calculateOverallGuestStatistic(filteredInvitations),
+    [filteredInvitations],
+  );
+  const activeFilterChips = useMemo(() => {
+    const chips: string[] = [];
+
+    if (filters.sideId !== 'all') {
+      chips.push(`Phía: ${getWeddingGuestSideLabel(filters.sideId)}`);
+    }
+
+    if (filters.relationshipId !== 'all') {
+      chips.push(
+        `Quan hệ: ${getWeddingGuestRelationshipLabel(filters.relationshipId)}`,
+      );
+    }
+
+    if (filters.invitedById !== 'all') {
+      chips.push(
+        `Khách của: ${getWeddingGuestInvitedByLabel(filters.invitedById)}`,
+      );
+    }
+
+    if (activeGroupId && filters.rsvp !== 'all') {
+      chips.push(`Xác nhận: ${getGuestRsvpLabel(filters.rsvp)}`);
+    }
+
+    if (searchQuery.trim()) {
+      chips.push(`Tìm: "${searchQuery.trim()}"`);
+    }
+
+    return chips;
+  }, [activeGroupId, filters, searchQuery]);
 
   function resetActionState() {
     setActionError(null);
@@ -681,6 +732,16 @@ export function WeddingGuestPanel({
             }}
             rows={previewRows}
           />
+
+          {rows.length > GUEST_PREVIEW_LIMIT ? (
+            <button
+              className="w-full rounded-2xl bg-slate-50 py-2.5 text-sm font-medium text-[var(--color-primary)] transition hover:bg-slate-100"
+              onClick={() => setShowGuestListModal(true)}
+              type="button"
+            >
+              Xem thêm
+            </button>
+          ) : null}
         </Card>
       </div>
 
@@ -701,24 +762,76 @@ export function WeddingGuestPanel({
         open={showGuestListModal}
         title="Danh sách khách mời"
       >
-        <WeddingGuestList
-          emptyMessage={
-            activeGroupId
-              ? 'Chưa có khách nào trong nhóm này.'
-              : 'Chưa có khách mời nào. Chọn một nhóm/tiệc để bắt đầu thêm khách.'
-          }
-          onDeleteGuest={
-            !activeGroupId && canManage ? handleDeleteGuest : undefined
-          }
-          onSelectRow={(row) => {
-            if (activeGroupId && row.invitation) {
-              setEditingInvitation(row.invitation);
-            } else {
-              setEditingGuest(row.guest);
+        <div className="space-y-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="neutral">
+              {activeGroup ? activeGroup.name : 'Tất cả nhóm/tiệc'}
+            </Badge>
+            {activeFilterChips.map((chip) => (
+              <Badge key={chip} variant="info">
+                {chip}
+              </Badge>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col gap-1 rounded-2xl bg-slate-50 p-3">
+              <div className="flex items-center gap-1.5 text-slate-400">
+                <UsersRound className="size-3.5" />
+                <p className="text-[10px] uppercase tracking-[0.1em]">
+                  Khách mời
+                </p>
+              </div>
+              <p className="text-lg font-semibold text-slate-950">
+                {filteredStat.guestCount}
+              </p>
+            </div>
+            <div className="flex flex-col gap-1 rounded-2xl bg-slate-50 p-3">
+              <div className="flex items-center gap-1.5 text-slate-400">
+                <UserRoundCheck className="size-3.5" />
+                <p className="text-[10px] uppercase tracking-[0.1em]">
+                  Dự kiến tham dự
+                </p>
+              </div>
+              <p className="text-lg font-semibold text-slate-950">
+                {filteredStat.attendeeCount}
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <SectionHeading eyebrow="Tổng hợp" title="Cơ cấu khách mời" />
+            <WeddingGuestListComposition
+              guests={guests}
+              invitations={filteredInvitations}
+            />
+          </div>
+
+          <Input
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Tìm khách theo tên..."
+            value={searchQuery}
+          />
+
+          <WeddingGuestList
+            emptyMessage={
+              activeGroupId
+                ? 'Chưa có khách nào trong nhóm này.'
+                : 'Chưa có khách mời nào. Chọn một nhóm/tiệc để bắt đầu thêm khách.'
             }
-          }}
-          rows={rows}
-        />
+            onDeleteGuest={
+              !activeGroupId && canManage ? handleDeleteGuest : undefined
+            }
+            onSelectRow={(row) => {
+              if (activeGroupId && row.invitation) {
+                setEditingInvitation(row.invitation);
+              } else {
+                setEditingGuest(row.guest);
+              }
+            }}
+            rows={rows}
+          />
+        </div>
       </ResponsiveModal>
 
       {canManage && activeGroupId ? (

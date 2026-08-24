@@ -2,15 +2,8 @@
 
 import { useState } from 'react';
 
-import {
-  WEDDING_GUEST_INVITED_BY,
-  WEDDING_GUEST_RELATIONSHIPS,
-  WEDDING_GUEST_SIDES,
-} from '@/modules/wedding-guest/constants/wedding-guest-presets';
-import {
-  getCategoryColor,
-  ShareBar,
-} from '@/modules/wedding-guest/components/wedding-guest-stat-visuals';
+import { getWeddingGuestAttributeLabel } from '@/modules/wedding-guest/constants/wedding-guest-presets';
+import { WeddingGuestCompositionRows } from '@/modules/wedding-guest/components/wedding-guest-composition-rows';
 import type { GuestInvitationDocument } from '@/modules/wedding-guest/types/guest-invitation';
 import type { WeddingGuestDocument } from '@/modules/wedding-guest/types/wedding-guest';
 import {
@@ -36,31 +29,6 @@ const TABS: Array<{ key: GuestAttributeKey; label: string }> = [
   { key: 'invitedById', label: 'Theo khách của' },
 ];
 
-function getAttributeLabel(
-  attributeKey: GuestAttributeKey,
-  attributeId: string,
-) {
-  if (attributeKey === 'sideId') {
-    return (
-      WEDDING_GUEST_SIDES.find((side) => side.id === attributeId)?.label ??
-      attributeId
-    );
-  }
-
-  if (attributeKey === 'relationshipId') {
-    return (
-      WEDDING_GUEST_RELATIONSHIPS.find(
-        (relationship) => relationship.id === attributeId,
-      )?.label ?? attributeId
-    );
-  }
-
-  return (
-    WEDDING_GUEST_INVITED_BY.find((invitedBy) => invitedBy.id === attributeId)
-      ?.label ?? attributeId
-  );
-}
-
 export function WeddingGuestCompositionCard({
   guests,
   invitations,
@@ -77,7 +45,6 @@ export function WeddingGuestCompositionCard({
     activeTab,
   );
   const metric = activeTab === 'sideId' ? sideMetric : 'guestCount';
-  const totalBasis = rows.reduce((sum, row) => sum + row[metric], 0);
 
   return (
     <Card>
@@ -131,49 +98,14 @@ export function WeddingGuestCompositionCard({
         </div>
       ) : null}
 
-      {rows.length === 0 ? (
-        <p className="text-sm text-slate-500">Chưa có dữ liệu.</p>
-      ) : (
-        <ul className="space-y-1">
-          {rows.map((row, index) => {
-            const color = getCategoryColor(index);
-            const value = row[metric];
-            const percent = totalBasis > 0 ? (value / totalBasis) * 100 : 0;
-            const label = getAttributeLabel(activeTab, row.attributeId);
-
-            return (
-              <li key={row.attributeId}>
-                <button
-                  className="flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-2.5 text-left transition hover:bg-slate-50"
-                  onClick={() => onSelectAttribute(activeTab, row.attributeId)}
-                  type="button"
-                >
-                  <span className="flex items-center gap-2 text-sm text-slate-700">
-                    <span
-                      className={cn(
-                        'size-2.5 shrink-0 rounded-full',
-                        color.dot,
-                      )}
-                    />
-                    {label}
-                  </span>
-                  <span className="flex items-center gap-3 text-right">
-                    <span className="hidden w-24 sm:block">
-                      <ShareBar className={color.bar} percent={percent} />
-                    </span>
-                    <span className="block w-10 shrink-0 text-sm font-semibold text-slate-950">
-                      {Math.round(percent)}%
-                    </span>
-                    <span className="block w-16 shrink-0 text-xs text-slate-500">
-                      {row.guestCount} khách
-                    </span>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      <WeddingGuestCompositionRows
+        getLabel={(attributeId) =>
+          getWeddingGuestAttributeLabel(activeTab, attributeId)
+        }
+        metric={metric}
+        onSelect={(attributeId) => onSelectAttribute(activeTab, attributeId)}
+        rows={rows}
+      />
     </Card>
   );
 }

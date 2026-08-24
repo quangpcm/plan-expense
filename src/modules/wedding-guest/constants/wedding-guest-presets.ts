@@ -3,6 +3,7 @@ import type {
   WeddingGuestRelationshipId,
   WeddingGuestSideId,
 } from '@/modules/wedding-guest/types/wedding-guest';
+import type { GuestAttributeKey } from '@/modules/wedding-guest/utils/wedding-guest-statistic';
 import { normalizeVietnameseName } from '@/modules/wedding-guest/utils/normalize-name';
 
 export const WEDDING_GUEST_SIDES: Array<{
@@ -75,6 +76,23 @@ export function getGuestRsvpLabel(
   rsvp: 'pending' | 'attending' | 'not_attending',
 ): string {
   return GUEST_RSVP_OPTIONS.find((option) => option.id === rsvp)?.label ?? rsvp;
+}
+
+export function getWeddingGuestAttributeLabel(
+  attributeKey: GuestAttributeKey,
+  attributeId: string,
+): string {
+  if (attributeKey === 'sideId') {
+    return getWeddingGuestSideLabel(attributeId as WeddingGuestSideId);
+  }
+
+  if (attributeKey === 'relationshipId') {
+    return getWeddingGuestRelationshipLabel(
+      attributeId as WeddingGuestRelationshipId,
+    );
+  }
+
+  return getWeddingGuestInvitedByLabel(attributeId as WeddingGuestInvitedById);
 }
 
 function matchNormalizedLabel<T extends string>(
