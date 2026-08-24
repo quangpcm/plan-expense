@@ -41,7 +41,10 @@ import type { GuestInvitationDocument } from '@/modules/wedding-guest/types/gues
 import type { WeddingGuestDocument } from '@/modules/wedding-guest/types/wedding-guest';
 import type { WeddingGuestGroupDocument } from '@/modules/wedding-guest/types/wedding-guest-group';
 import { normalizeVietnameseName } from '@/modules/wedding-guest/utils/normalize-name';
-import { calculateOverallGuestStatistic } from '@/modules/wedding-guest/utils/wedding-guest-statistic';
+import {
+  calculateOverallGuestStatistic,
+  type GuestAttributeKey,
+} from '@/modules/wedding-guest/utils/wedding-guest-statistic';
 import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
@@ -70,17 +73,17 @@ function ViewAllAction({ onClick }: { onClick: () => void }) {
 
 const WeddingGuestImportDialog = dynamic(
   () =>
-    import(
-      '@/modules/wedding-guest/components/wedding-guest-import-dialog'
-    ).then((module) => module.WeddingGuestImportDialog),
+    import('@/modules/wedding-guest/components/wedding-guest-import-dialog').then(
+      (module) => module.WeddingGuestImportDialog,
+    ),
   { ssr: false },
 );
 
 const WeddingGuestExportDialog = dynamic(
   () =>
-    import(
-      '@/modules/wedding-guest/components/wedding-guest-export-dialog'
-    ).then((module) => module.WeddingGuestExportDialog),
+    import('@/modules/wedding-guest/components/wedding-guest-export-dialog').then(
+      (module) => module.WeddingGuestExportDialog,
+    ),
   { ssr: false },
 );
 
@@ -208,21 +211,44 @@ export function WeddingGuestPanel({
       }));
   }, [activeGroupId, filters, guests, invitations, searchQuery]);
 
-  const previewRows = useMemo(
-    () => rows.slice(0, GUEST_PREVIEW_LIMIT),
-    [rows],
+  const previewRows = useMemo(() => rows.slice(0, GUEST_PREVIEW_LIMIT), [rows]);
+
+  const scopedInvitations = useMemo(
+    () =>
+      activeGroupId
+        ? invitations.filter(
+            (invitation) => invitation.groupId === activeGroupId,
+          )
+        : invitations,
+    [activeGroupId, invitations],
   );
-
-  const scopedStat = useMemo(() => {
-    const scopedInvitations = activeGroupId
-      ? invitations.filter((invitation) => invitation.groupId === activeGroupId)
-      : invitations;
-
-    return calculateOverallGuestStatistic(scopedInvitations);
-  }, [activeGroupId, invitations]);
+  const scopedStat = useMemo(
+    () => calculateOverallGuestStatistic(scopedInvitations),
+    [scopedInvitations],
+  );
 
   function resetActionState() {
     setActionError(null);
+  }
+
+  function handleSelectAttribute(
+    attributeKey: GuestAttributeKey,
+    attributeId: string,
+  ) {
+    setFilters({
+      ...DEFAULT_WEDDING_GUEST_FILTERS,
+      [attributeKey]: attributeId,
+    });
+    setShowGuestListModal(true);
+  }
+
+  function handleViewPendingList(groupId: string | null) {
+    if (groupId && groupId !== activeGroupId) {
+      setActiveGroupId(groupId);
+    }
+
+    setFilters({ ...DEFAULT_WEDDING_GUEST_FILTERS, rsvp: 'pending' });
+    setShowGuestListModal(true);
   }
 
   async function handleCreateGroup(name: string) {
@@ -582,9 +608,8 @@ export function WeddingGuestPanel({
           />
 
           <WeddingGuestInsights
-            groups={groups}
             guests={guests}
-            invitations={invitations}
+            invitations={scopedInvitations}
           />
         </div>
 
@@ -660,9 +685,14 @@ export function WeddingGuestPanel({
       </div>
 
       <WeddingGuestStats
+        activeGroupId={activeGroupId}
         groups={groups}
         guests={guests}
         invitations={invitations}
+        onSelectAttribute={handleSelectAttribute}
+        onViewPendingList={handleViewPendingList}
+        scopedInvitations={scopedInvitations}
+        scopedStat={scopedStat}
       />
 
       <ResponsiveModal

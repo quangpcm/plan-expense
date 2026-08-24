@@ -10,6 +10,7 @@ export type GuestRsvpBreakdown = Record<GuestRsvpStatus, number>;
 export type GuestAggregateStatistic = {
   guestCount: number;
   attendeeCount: number;
+  attendeeCountByRsvp: GuestRsvpBreakdown;
   moneyGiftTotal: number;
   goldGiftTotal: number;
   rsvpBreakdown: GuestRsvpBreakdown;
@@ -23,6 +24,7 @@ function aggregateInvitations(
   invitations: GuestInvitationDocument[],
 ): GuestAggregateStatistic {
   const rsvpBreakdown = createEmptyRsvpBreakdown();
+  const attendeeCountByRsvp = createEmptyRsvpBreakdown();
   const guestIds = new Set<string>();
   let attendeeCount = 0;
   let moneyGiftTotal = 0;
@@ -34,11 +36,13 @@ function aggregateInvitations(
     moneyGiftTotal += invitation.moneyGiftAmount ?? 0;
     goldGiftTotal += invitation.goldGiftAmount ?? 0;
     rsvpBreakdown[invitation.rsvp] += 1;
+    attendeeCountByRsvp[invitation.rsvp] += invitation.attendeeCount;
   }
 
   return {
     guestCount: guestIds.size,
     attendeeCount,
+    attendeeCountByRsvp,
     moneyGiftTotal,
     goldGiftTotal,
     rsvpBreakdown,
@@ -63,7 +67,7 @@ export function calculateGuestStatisticByGroup(
   }));
 }
 
-type GuestAttributeKey = 'sideId' | 'relationshipId' | 'invitedById';
+export type GuestAttributeKey = 'sideId' | 'relationshipId' | 'invitedById';
 
 export function calculateGuestStatisticByAttribute(
   guests: WeddingGuestDocument[],

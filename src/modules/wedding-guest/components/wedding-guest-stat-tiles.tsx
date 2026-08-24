@@ -29,7 +29,7 @@ export function WeddingGuestStatTiles({
   const tiles: Tile[] = [
     {
       key: 'guests',
-      label: 'Tổng khách',
+      label: 'Khách mời',
       value: String(guestCount),
       icon: UsersRound,
     },
