@@ -102,10 +102,10 @@ export function PinCodeInput({
         <input
           autoComplete="one-time-code"
           className={cn(
-            'size-14 rounded-2xl border text-center text-2xl font-semibold outline-none transition sm:size-16',
+            'size-14 rounded-[var(--radius-ds-lg)] border text-center text-2xl font-semibold outline-none transition sm:size-16',
             error
-              ? 'border-[var(--color-danger)] text-[var(--color-danger)] focus:ring-4 focus:ring-[var(--color-danger-soft)]'
-              : 'border-[var(--color-border)] text-[var(--color-foreground)] focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent-soft)]',
+              ? 'border-[var(--color-status-danger)] text-[var(--color-status-danger)] focus:ring-4 focus:ring-[var(--color-status-danger-surface)]'
+              : 'border-[var(--color-border-default)] text-[var(--color-text-primary)] focus:border-[var(--color-border-focus)] focus:ring-4 focus:ring-[var(--color-focus-ring-soft)]',
           )}
           disabled={disabled}
           inputMode="numeric"

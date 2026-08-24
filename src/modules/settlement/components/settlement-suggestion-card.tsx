@@ -46,7 +46,7 @@ export function SettlementSuggestionCard({
         <span className="ml-1 shrink-0 font-semibold text-slate-950">{formatCurrency(suggestion.amount)}</span>
       </div>
       {canConfirm ? (
-        <Button className="min-h-9 shrink-0 px-4 py-2 text-xs" disabled={isSubmitting} onClick={onConfirm}>
+        <Button className="shrink-0" disabled={isSubmitting} onClick={onConfirm} size="sm">
           {isSubmitting ? 'Đang lưu...' : 'Xác nhận đã chuyển'}
         </Button>
       ) : null}

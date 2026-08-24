@@ -2,10 +2,16 @@
 
 import type { ReactNode } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
+import { X } from 'lucide-react';
 import { Drawer } from 'vaul';
 
 import { useMediaQuery } from '@/shared/hooks/use-media-query';
 import { cn } from '@/shared/utils/cn';
+
+// Harvested verbatim from bottom-sheet.tsx's existing (optional) close button — same position,
+// size and color recipe, not a new visual decision.
+const closeButtonClassName =
+  'absolute right-4 top-4 rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600';
 
 type ResponsiveModalProps = {
   open: boolean;
@@ -30,15 +36,18 @@ export function ResponsiveModal({
     return (
       <Dialog.Root onOpenChange={onOpenChange} open={open}>
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-40 bg-slate-950/40 data-[state=closed]:animate-overlay-hide data-[state=open]:animate-overlay-show" />
-          <div className="fixed inset-0 z-40 flex items-center justify-center px-4">
+          <Dialog.Overlay className="fixed inset-0 z-[var(--z-index-overlay)] bg-[var(--color-overlay-backdrop)] data-[state=closed]:animate-overlay-hide data-[state=open]:animate-overlay-show" />
+          <div className="fixed inset-0 z-[var(--z-index-overlay)] flex items-center justify-center px-4">
             <Dialog.Content
               className={cn(
-                'relative w-full rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_16px_60px_rgba(15,23,42,0.1)] focus:outline-none data-[state=closed]:animate-content-hide data-[state=open]:animate-content-show',
+                'relative w-full rounded-[28px] border border-slate-200 bg-white p-5 shadow-[var(--shadow-overlay)] focus:outline-none data-[state=closed]:animate-content-hide data-[state=open]:animate-content-show',
                 className,
               )}
             >
-              <div className="space-y-1">
+              <Dialog.Close aria-label="Đóng" className={closeButtonClassName}>
+                <X className="size-5" />
+              </Dialog.Close>
+              <div className="space-y-1 pr-8">
                 <Dialog.Title className="text-lg font-semibold text-slate-950">
                   {title}
                 </Dialog.Title>
@@ -62,7 +71,7 @@ export function ResponsiveModal({
     <Drawer.Root onOpenChange={onOpenChange} open={open}>
       <Drawer.Portal>
         <Drawer.Overlay
-          className="fixed inset-0 z-40 bg-slate-950/40"
+          className="fixed inset-0 z-[var(--z-index-overlay)] bg-[var(--color-overlay-backdrop)]"
           onClick={() => onOpenChange(false)}
         />
         {/*
@@ -77,9 +86,12 @@ export function ResponsiveModal({
           trắng dưới đáy sheet trên mobile. Trên mobile Drawer luôn full-width (`inset-x-0`) nên
           phần `max-w-*` của className vốn cũng không có tác dụng gì, không mất gì khi bỏ.
         */}
-        <Drawer.Content className="fixed inset-x-0 bottom-0 z-40 flex max-h-[85vh] flex-col overflow-hidden rounded-t-[32px] border border-b-0 border-slate-200 bg-white p-5 shadow-[0_-16px_60px_rgba(15,23,42,0.08)] focus:outline-none">
+        <Drawer.Content className="fixed inset-x-0 bottom-0 z-[var(--z-index-overlay)] flex max-h-[85vh] flex-col overflow-hidden rounded-t-[32px] border border-b-0 border-slate-200 bg-white p-5 shadow-[0_-16px_60px_rgba(15,23,42,0.08)] focus:outline-none">
+          <Drawer.Close aria-label="Đóng" className={closeButtonClassName}>
+            <X className="size-5" />
+          </Drawer.Close>
           <div className="mx-auto mb-4 h-1.5 w-14 shrink-0 rounded-full bg-slate-200" />
-          <div className="shrink-0">
+          <div className="shrink-0 pr-8">
             <Drawer.Title className="text-lg font-semibold text-slate-950">{title}</Drawer.Title>
             {description ? (
               <Drawer.Description className="mt-1 text-sm leading-6 text-slate-600">

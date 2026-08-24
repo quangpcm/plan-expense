@@ -4,10 +4,9 @@ import { useMemo, useState } from 'react';
 import { Check, ImageIcon, Smile, Sparkles, X } from 'lucide-react';
 
 import { Avatar } from '@/shared/components/ui/avatar';
-import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
-import { Dialog } from '@/shared/components/ui/dialog';
 import { Input } from '@/shared/components/ui/input';
+import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 import { avatarIconMap, avatarIconOptions, parseAvatarValue } from '@/shared/utils/avatar';
 import { cn } from '@/shared/utils/cn';
 
@@ -161,32 +160,19 @@ export function MemberAvatarPicker({
     </div>
   );
 
-  if (!open) {
-    return null;
-  }
-
   return (
-    <>
-      <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 md:flex">
-        <button aria-label="Đóng chọn avatar" className="absolute inset-0" onClick={onClose} type="button" />
-        <Dialog
-          className="relative z-10 w-full max-w-2xl"
-          description="Avatar có thể là ảnh URL, icon hoặc emoji."
-          title={`Chọn avatar cho ${memberName}`}
-        >
-          {content}
-        </Dialog>
-      </div>
-      <div className="md:hidden">
-        <BottomSheet
-          description="Avatar có thể là ảnh URL, icon hoặc emoji."
-          onClose={onClose}
-          open={open}
-          title={`Chọn avatar cho ${memberName}`}
-        >
-          {content}
-        </BottomSheet>
-      </div>
-    </>
+    <ResponsiveModal
+      className="max-w-2xl"
+      description="Avatar có thể là ảnh URL, icon hoặc emoji."
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          onClose();
+        }
+      }}
+      open={open}
+      title={`Chọn avatar cho ${memberName}`}
+    >
+      {content}
+    </ResponsiveModal>
   );
 }

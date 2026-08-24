@@ -12,6 +12,13 @@ type BottomSheetProps = HTMLAttributes<HTMLDivElement> & {
   children?: ReactNode;
 };
 
+/**
+ * @deprecated Design System V2: use `ResponsiveModal` instead, which provides this same mobile
+ * sheet presentation plus portal rendering, focus lifecycle and Escape handling (this component
+ * has neither). Existing consumers continue to work — do not add new usage. Remove only once all
+ * consumers have migrated (see
+ * docs/design-sys-v2/implement-specs/reports/03.OverlayArchitecture.Report.md).
+ */
 export function BottomSheet({
   title,
   description,

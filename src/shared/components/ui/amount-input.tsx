@@ -30,9 +30,9 @@ export function AmountInput({ id, value, onChange, placeholder = '0' }: AmountIn
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className="flex items-end justify-center gap-0.5 border-b-2 border-[var(--color-border-strong)] pb-0.5 focus-within:border-[var(--color-primary)]">
+      <div className="flex items-end justify-center gap-0.5 border-b-2 border-[var(--color-border-strong)] pb-0.5 focus-within:border-[var(--color-brand-primary)]">
         <input
-          className="border-0 bg-transparent text-right text-[clamp(2.2rem,10vw,3rem)] font-bold leading-[0.92] text-[var(--color-primary)] outline-none placeholder:text-[var(--color-border-strong)]"
+          className="border-0 bg-transparent text-right text-[clamp(2.2rem,10vw,3rem)] font-bold leading-[0.92] text-[var(--color-brand-primary)] outline-none placeholder:text-[var(--color-border-strong)]"
           id={id}
           inputMode="numeric"
           onBlur={() => setIsFocused(false)}
@@ -45,13 +45,13 @@ export function AmountInput({ id, value, onChange, placeholder = '0' }: AmountIn
           style={{ width: `${inputWidth}ch` }}
           value={displayValue}
         />
-        <span className="mb-0.5 text-sm font-medium leading-none text-[var(--color-muted)] sm:text-base">đ</span>
+        <span className="mb-0.5 text-sm font-medium leading-none text-[var(--color-text-secondary)] sm:text-base">đ</span>
       </div>
       {showSuggestions ? (
         <div className="flex flex-wrap items-center justify-center gap-2">
           {suggestions.map((suggestion) => (
             <button
-              className="rounded-full bg-[var(--color-secondary)] px-3 py-1 text-sm font-medium text-[var(--color-secondary-foreground)] transition hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-info)]"
+              className="rounded-full bg-[var(--color-secondary)] px-3 py-1 text-sm font-medium text-[var(--color-secondary-foreground)] transition hover:bg-[var(--color-brand-subtle)] hover:text-[var(--color-status-info)]"
               key={suggestion}
               onClick={() => {
                 setSuggestionsHidden(true);

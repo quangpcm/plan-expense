@@ -13,8 +13,8 @@ export function Switch({ checked, onCheckedChange, disabled = false, className, 
     <button
       aria-checked={checked}
       className={cn(
-        'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-60',
-        checked ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-border-strong)]',
+        'relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60',
+        checked ? 'bg-[var(--color-brand-primary)]' : 'bg-[var(--color-border-strong)]',
         className,
       )}
       disabled={disabled}

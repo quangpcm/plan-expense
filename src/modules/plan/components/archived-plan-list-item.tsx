@@ -83,11 +83,7 @@ export function ArchivedPlanListItem({ plan, userId }: ArchivedPlanListItemProps
               <Button disabled={isDeleting} onClick={() => setShowDeleteConfirm(false)} variant="ghost">
                 Hủy
               </Button>
-              <Button
-                className="bg-red-600 text-white hover:bg-red-700"
-                disabled={isDeleting}
-                onClick={handleDelete}
-              >
+              <Button disabled={isDeleting} onClick={handleDelete} variant="destructive">
                 {isDeleting ? 'Đang xóa...' : 'Xóa vĩnh viễn'}
               </Button>
             </div>

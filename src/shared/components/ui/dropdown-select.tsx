@@ -59,8 +59,8 @@ export function DropdownSelect({
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         className={cn(
-          'flex min-h-11 w-full items-center justify-between rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-left text-sm text-[var(--color-foreground)] outline-none transition focus-visible:border-[var(--color-accent)] focus-visible:ring-4 focus-visible:ring-[var(--color-accent-soft)] disabled:cursor-not-allowed disabled:opacity-60',
-          !selectedOption ? 'text-[var(--color-subtle)]' : '',
+          'flex min-h-11 w-full items-center justify-between rounded-[var(--radius-ds-lg)] border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-4 py-2.5 text-left text-sm text-[var(--color-text-primary)] outline-none transition focus-visible:border-[var(--color-border-focus)] focus-visible:ring-4 focus-visible:ring-[var(--color-focus-ring-soft)] disabled:cursor-not-allowed disabled:opacity-60',
+          !selectedOption ? 'text-[var(--color-text-muted)]' : '',
         )}
         disabled={disabled}
         id={id}
@@ -71,11 +71,11 @@ export function DropdownSelect({
           {selectedOption?.icon ? <selectedOption.icon className="size-4 shrink-0" /> : null}
           <span className="truncate">{selectedOption?.label ?? placeholder}</span>
         </span>
-        <ChevronDown className={cn('size-4 shrink-0 text-[var(--color-subtle)] transition', isOpen ? 'rotate-180' : '')} />
+        <ChevronDown className={cn('size-4 shrink-0 text-[var(--color-text-muted)] transition', isOpen ? 'rotate-180' : '')} />
       </button>
 
       {isOpen ? (
-        <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[0_18px_50px_rgba(15,23,42,0.14)]">
+        <div className="absolute z-[var(--z-index-dropdown)] mt-2 w-full overflow-hidden rounded-[var(--radius-ds-lg)] border border-[var(--color-border-default)] bg-[var(--color-surface-default)] shadow-[0_18px_50px_rgba(15,23,42,0.14)]">
           <ul className="max-h-72 overflow-y-auto py-1" role="listbox">
             {options.map((option) => {
               const isSelected = option.value === value;
@@ -86,8 +86,8 @@ export function DropdownSelect({
                   <button
                     aria-selected={isSelected}
                     className={cn(
-                      'flex min-h-11 w-full items-center justify-between gap-2 px-4 py-2 text-left text-sm transition hover:bg-[var(--color-accent-soft)]',
-                      isSelected ? 'text-[var(--color-primary)]' : 'text-[var(--color-foreground)]',
+                      'flex min-h-11 w-full items-center justify-between gap-2 px-4 py-2 text-left text-sm transition hover:bg-[var(--color-brand-subtle)]',
+                      isSelected ? 'text-[var(--color-brand-primary)]' : 'text-[var(--color-text-primary)]',
                     )}
                     onClick={() => {
                       onValueChange(option.value);
