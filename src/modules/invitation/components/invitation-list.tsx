@@ -1,12 +1,8 @@
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
-import type { InvitationDocument, InviteRole, InvitationStatus } from '@/modules/invitation/types/invitation';
-
-const inviteRoleLabel: Record<InviteRole, string> = {
-  editor: 'Thành viên',
-  viewer: 'Chỉ xem',
-};
+import type { InvitationDocument, InvitationStatus } from '@/modules/invitation/types/invitation';
+import { PLAN_ROLE_LABEL } from '@/modules/member/constants/role-labels';
 
 const invitationStatusLabel: Record<InvitationStatus, string> = {
   pending: 'Đang chờ',
@@ -38,7 +34,7 @@ export function InvitationList({ invitations, canRevoke, isSubmitting, onRevoke 
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-semibold text-slate-950">{invitation.email || 'Liên kết mời'}</p>
-              <p className="text-sm text-slate-500">Vai trò: {inviteRoleLabel[invitation.role]}</p>
+              <p className="text-sm text-slate-500">Vai trò: {PLAN_ROLE_LABEL[invitation.role]}</p>
             </div>
             <Badge variant={invitation.status === 'pending' ? 'info' : 'neutral'}>
               {invitationStatusLabel[invitation.status]}

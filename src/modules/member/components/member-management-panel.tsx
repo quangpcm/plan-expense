@@ -9,6 +9,7 @@ import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
 import { invitationService } from '@/modules/invitation/services';
 import { createInvitationSchema, type CreateInvitationSchema } from '@/modules/invitation/schemas/create-invitation.schema';
 import { memberService } from '@/modules/member/services';
+import { PLAN_ROLE_LABEL } from '@/modules/member/constants/role-labels';
 import { addGuestSchema, type AddGuestSchema } from '@/modules/member/schemas/add-guest.schema';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { PlanDocument } from '@/modules/plan/types/plan';
@@ -125,20 +126,28 @@ export function MemberManagementPanel({
       <Card>
         <Collapsible
           title="Thêm khách"
-          description="Thêm người tham gia không cần tài khoản."
+          description="Tạo thành viên không cần tài khoản."
           icon={<UserRoundPlus className="size-5" />}
         >
           <form className="space-y-4" onSubmit={submitGuest}>
-            <Input placeholder="Biệt danh của khách" {...guestForm.register('nickname')} />
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-700" htmlFor="guest-nickname">
+                Tên hiển thị
+              </label>
+              <Input id="guest-nickname" placeholder="Ví dụ: Nhà Trai, Mẹ, Anh Minh" {...guestForm.register('nickname')} />
+            </div>
             <input type="hidden" {...guestForm.register('role')} />
-            <DropdownSelect
-              onValueChange={(value) => guestForm.setValue('role', value as AddGuestSchema['role'], { shouldDirty: true, shouldValidate: true })}
-              options={[
-                { value: 'editor', label: 'Thành viên' },
-                { value: 'viewer', label: 'Chỉ xem' },
-              ]}
-              value={guestRole}
-            />
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-700">Vai trò</label>
+              <DropdownSelect
+                onValueChange={(value) => guestForm.setValue('role', value as AddGuestSchema['role'], { shouldDirty: true, shouldValidate: true })}
+                options={[
+                  { value: 'editor', label: PLAN_ROLE_LABEL.editor },
+                  { value: 'viewer', label: PLAN_ROLE_LABEL.viewer },
+                ]}
+                value={guestRole}
+              />
+            </div>
             <p className="text-sm text-slate-500">
               Khách có thể được chọn trong các khoản thu, chi và chia sẻ chi phí.
             </p>
@@ -155,20 +164,23 @@ export function MemberManagementPanel({
       <Card>
         <Collapsible
           title="Mời thành viên"
-          description="Mời qua email hoặc chia sẻ liên kết mời."
+          description="Mời người khác tham gia bằng email hoặc liên kết."
           icon={<UserPlus2 className="size-5" />}
         >
           <form className="space-y-4" onSubmit={submitInvitation}>
             <Input placeholder="member@example.com (tùy chọn)" {...inviteForm.register('email')} />
             <input type="hidden" {...inviteForm.register('role')} />
-            <DropdownSelect
-              onValueChange={(value) => inviteForm.setValue('role', value as CreateInvitationSchema['role'], { shouldDirty: true, shouldValidate: true })}
-              options={[
-                { value: 'viewer', label: 'Chỉ xem' },
-                { value: 'editor', label: 'Thành viên' },
-              ]}
-              value={inviteRole}
-            />
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-700">Vai trò</label>
+              <DropdownSelect
+                onValueChange={(value) => inviteForm.setValue('role', value as CreateInvitationSchema['role'], { shouldDirty: true, shouldValidate: true })}
+                options={[
+                  { value: 'viewer', label: PLAN_ROLE_LABEL.viewer },
+                  { value: 'editor', label: PLAN_ROLE_LABEL.editor },
+                ]}
+                value={inviteRole}
+              />
+            </div>
             <p className="text-sm text-slate-500">
               Nếu không nhập email, liên kết mời có thể được chia sẻ với bất kỳ ai.
             </p>

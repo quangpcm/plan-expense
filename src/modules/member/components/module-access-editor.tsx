@@ -1,26 +1,11 @@
 'use client';
 
+import { CONFIGURABLE_MODULE_IDS, getAccessLevelLabel } from '@/modules/member/constants/module-access';
 import { EDITOR_DEFAULT_MODULE_ACCESS } from '@/modules/member/services/permission.service';
 import type { PlanRole } from '@/modules/member/types/member';
 import { planModuleRegistry } from '@/modules/plan/constants/plan-module-registry';
 import type { ConfigurableModuleId, ModuleAccessLevel, PlanModuleId } from '@/modules/plan/types/plan-modular';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
-
-const CONFIGURABLE_MODULE_IDS: ConfigurableModuleId[] = [
-  'planning',
-  'finance',
-  'weddingGuests',
-  'travelItinerary',
-  'members',
-  'debtTracking',
-];
-
-const ACCESS_LEVEL_LABEL: Record<ModuleAccessLevel, string> = {
-  hidden: 'Ẩn',
-  view: 'Chỉ xem',
-  manage_own: 'Quản lý nội dung của mình',
-  manage_all: 'Quản lý toàn bộ',
-};
 
 type ModuleAccessEditorProps = {
   role: Exclude<PlanRole, 'owner'>;
@@ -41,7 +26,14 @@ export function ModuleAccessEditor({ role, enabledModuleIds, value, onChange }: 
 
   return (
     <div className="grid gap-2 rounded-2xl border border-slate-200 bg-white p-3">
-      <p className="text-sm font-medium text-slate-700">Quyền truy cập</p>
+      {role === 'viewer' ? (
+        <p className="text-sm font-medium text-slate-700">Khu vực được phép xem</p>
+      ) : (
+        <div>
+          <p className="text-sm font-medium text-slate-700">Quyền theo khu vực</p>
+          <p className="text-sm text-slate-500">Chọn mức quyền của thành viên trong từng khu vực.</p>
+        </div>
+      )}
       {modules.map((moduleId) => {
         const definition = planModuleRegistry[moduleId];
         const supportedLevels = definition.supportedAccessLevels ?? ['hidden', 'view'];
@@ -72,7 +64,7 @@ export function ModuleAccessEditor({ role, enabledModuleIds, value, onChange }: 
             <span className="text-sm text-slate-700">{definition.defaultLabel}</span>
             <DropdownSelect
               onValueChange={(next) => onChange(moduleId, next as ModuleAccessLevel)}
-              options={supportedLevels.map((level) => ({ value: level, label: ACCESS_LEVEL_LABEL[level] }))}
+              options={supportedLevels.map((level) => ({ value: level, label: getAccessLevelLabel(moduleId, level) }))}
               value={currentLevel}
             />
           </div>

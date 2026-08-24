@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Copy, Link2, Trash2, Unlink } from 'lucide-react';
+import { Check, Copy, Link2, Trash2, Unlink, UserCheck, UserX } from 'lucide-react';
 
 import { Avatar } from '@/shared/components/ui/avatar';
 import { Badge } from '@/shared/components/ui/badge';
@@ -11,16 +11,14 @@ import { Card } from '@/shared/components/ui/card';
 import { Collapsible } from '@/shared/components/ui/collapsible';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
+import { MemberActionsMenu } from '@/modules/member/components/member-actions-menu';
+import type { MemberActionMenuItem } from '@/modules/member/components/member-actions-menu';
 import { MemberAvatarPicker } from '@/modules/member/components/member-avatar-picker';
 import { ModuleAccessEditor } from '@/modules/member/components/module-access-editor';
+import { PLAN_ROLE_LABEL } from '@/modules/member/constants/role-labels';
 import type { PlanMemberDocument, PlanMemberStatus, PlanRole } from '@/modules/member/types/member';
+import { summarizeMemberAccess } from '@/modules/member/utils/member-access-summary';
 import type { ConfigurableModuleId, ModuleAccessLevel, PlanModuleId } from '@/modules/plan/types/plan-modular';
-
-const roleLabel: Record<PlanRole, string> = {
-  owner: 'Chủ kế hoạch',
-  editor: 'Thành viên',
-  viewer: 'Chỉ xem',
-};
 
 const memberStatusLabel: Record<PlanMemberStatus, string> = {
   invited: 'Đang chờ',
@@ -91,6 +89,7 @@ function EditableMemberRow({
   );
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [isConfirmUnlinkOpen, setIsConfirmUnlinkOpen] = useState(false);
+  const [isConfirmDeactivateOpen, setIsConfirmDeactivateOpen] = useState(false);
   const [isClaimSheetOpen, setIsClaimSheetOpen] = useState(false);
   const [claimEmail, setClaimEmail] = useState('');
   const [claimLink, setClaimLink] = useState<string | null>(null);
@@ -145,6 +144,11 @@ function EditableMemberRow({
       JSON.stringify(moduleAccess) !== JSON.stringify(member.permissions.moduleAccess ?? {}));
   const isRemoved = member.status === 'removed';
 
+  const identityLabel = member.memberType === 'guest' ? 'Khách' : member.email || 'Đã đăng ký';
+  const accessSummaryLabel =
+    member.role === 'owner' ? null : summarizeMemberAccess(member, enabledModuleIds);
+  const secondaryLine = [identityLabel, accessSummaryLabel].filter(Boolean).join(' · ');
+
   const summary = (
     <div className="flex items-center gap-3">
       <button
@@ -159,32 +163,52 @@ function EditableMemberRow({
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="truncate font-semibold text-slate-950">{member.nickname}</p>
-          <Badge variant="info">{roleLabel[member.role]}</Badge>
+          <Badge variant="info">{PLAN_ROLE_LABEL[member.role]}</Badge>
           {member.status !== 'active' ? (
             <Badge variant={member.status === 'invited' ? 'info' : 'neutral'}>
               {memberStatusLabel[member.status]}
             </Badge>
           ) : null}
         </div>
-        {member.memberType === 'guest' ? null : (
-          <p className="text-sm text-slate-500">{member.email || 'Thành viên đã đăng ký'}</p>
-        )}
+        <p className="text-sm text-slate-500">{secondaryLine}</p>
       </div>
     </div>
   );
+
+  const menuItems: MemberActionMenuItem[] = [
+    ...(isClaimable && onCreateClaimInvitation
+      ? [{ key: 'claim', label: 'Mời liên kết tài khoản', icon: Link2, onSelect: () => setIsClaimSheetOpen(true) }]
+      : []),
+    ...((isRemoved ? onReactivate : onRemove)
+      ? [
+          {
+            key: 'toggle-status',
+            label: isRemoved ? 'Kích hoạt lại' : 'Ngừng hoạt động',
+            icon: isRemoved ? UserCheck : UserX,
+            onSelect: () => setIsConfirmDeactivateOpen(true),
+          },
+        ]
+      : []),
+    ...(canUnlink && onUnlinkAccount
+      ? [{ key: 'unlink', label: 'Gỡ liên kết tài khoản', icon: Unlink, onSelect: () => setIsConfirmUnlinkOpen(true) }]
+      : []),
+    ...(onDelete
+      ? [{ key: 'delete', label: 'Xóa thành viên', icon: Trash2, destructive: true, onSelect: () => setIsConfirmDeleteOpen(true) }]
+      : []),
+  ];
 
   const editForm = (
     <div className="grid gap-3 rounded-[24px] bg-slate-50 p-4">
       <Input
         onChange={(event) => setNickname(event.target.value)}
-        placeholder="Biệt danh"
+        placeholder="Tên hiển thị"
         value={nickname}
       />
       <DropdownSelect
         onValueChange={(value) => setRole(value as Exclude<PlanRole, 'owner'>)}
         options={[
-          { value: 'editor', label: 'Thành viên' },
-          { value: 'viewer', label: 'Chỉ xem' },
+          { value: 'editor', label: PLAN_ROLE_LABEL.editor },
+          { value: 'viewer', label: PLAN_ROLE_LABEL.viewer },
         ]}
         value={role}
       />
@@ -204,47 +228,9 @@ function EditableMemberRow({
             onUpdateMember?.(member, { nickname: trimmedNickname, role, moduleAccess })
           }
         >
-          Lưu
+          Lưu thay đổi
         </Button>
-        <Button
-          className="flex-1"
-          disabled={isSaving || (isRemoved ? !onReactivate : !onRemove)}
-          onClick={() => (isRemoved ? onReactivate?.(member) : onRemove?.(member))}
-          variant="secondary"
-        >
-          {isRemoved ? 'Kích hoạt lại' : 'Ngừng hoạt động'}
-        </Button>
-        {canUnlink ? (
-          <Button
-            aria-label="Gỡ liên kết tài khoản"
-            className="size-11 shrink-0 p-0"
-            disabled={isSaving || !onUnlinkAccount}
-            onClick={() => setIsConfirmUnlinkOpen(true)}
-            variant="ghost"
-          >
-            <Unlink className="size-4" />
-          </Button>
-        ) : null}
-        {isClaimable ? (
-          <Button
-            aria-label="Mời liên kết tài khoản"
-            className="size-11 shrink-0 p-0"
-            disabled={isSaving || !onCreateClaimInvitation}
-            onClick={() => setIsClaimSheetOpen(true)}
-            variant="ghost"
-          >
-            <Link2 className="size-4" />
-          </Button>
-        ) : null}
-        <Button
-          aria-label="Xóa thành viên"
-          className="size-11 shrink-0 p-0 text-red-600 hover:bg-red-50"
-          disabled={isSaving || !onDelete}
-          onClick={() => setIsConfirmDeleteOpen(true)}
-          variant="ghost"
-        >
-          <Trash2 className="size-4" />
-        </Button>
+        <MemberActionsMenu ariaLabel={`Thêm tùy chọn cho ${member.nickname}`} disabled={isSaving} items={menuItems} />
       </div>
     </div>
   );
@@ -302,6 +288,31 @@ function EditableMemberRow({
             }}
           >
             Gỡ liên kết
+          </Button>
+        </div>
+      </BottomSheet>
+      <BottomSheet
+        description={
+          isRemoved
+            ? `${member.nickname} sẽ có thể được chọn lại trong dữ liệu mới.`
+            : 'Thành viên sẽ không thể được chọn trong dữ liệu mới, nhưng lịch sử cũ vẫn được giữ lại.'
+        }
+        onClose={() => setIsConfirmDeactivateOpen(false)}
+        open={isConfirmDeactivateOpen}
+        title={isRemoved ? 'Kích hoạt lại thành viên?' : 'Ngừng hoạt động thành viên?'}
+      >
+        <div className="flex justify-end gap-2">
+          <Button onClick={() => setIsConfirmDeactivateOpen(false)} variant="secondary">
+            Hủy
+          </Button>
+          <Button
+            disabled={isSaving || (isRemoved ? !onReactivate : !onRemove)}
+            onClick={async () => {
+              await (isRemoved ? onReactivate?.(member) : onRemove?.(member));
+              setIsConfirmDeactivateOpen(false);
+            }}
+          >
+            {isRemoved ? 'Kích hoạt lại' : 'Ngừng hoạt động'}
           </Button>
         </div>
       </BottomSheet>

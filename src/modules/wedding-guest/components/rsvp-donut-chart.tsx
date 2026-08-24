@@ -36,7 +36,9 @@ const SEGMENTS: Segment[] = [
   {
     key: 'not_attending',
     label: 'Không tham dự',
-    color: 'var(--color-danger)',
+    // Muted rose instead of --color-danger: a decline is an RSVP outcome,
+    // not an error state, so it shouldn't read with the same alarm weight.
+    color: '#fb7185',
     icon: XCircle,
   },
 ];
@@ -51,8 +53,14 @@ export function RsvpDonutChart({ breakdown }: RsvpDonutChartProps) {
     (sum, segment) => sum + breakdown[segment.key],
     0,
   );
-  const attendingPercent =
-    total > 0 ? Math.round((breakdown.attending / total) * 100) : 0;
+  // "Đã phản hồi" = attending + not_attending, not attending alone — the
+  // widget tracks RSVP progress (who has replied), not attendance rate.
+  const respondedPercent =
+    total > 0
+      ? Math.round(
+          ((breakdown.attending + breakdown.not_attending) / total) * 100,
+        )
+      : 0;
 
   let offset = 0;
   const arcs = SEGMENTS.map((segment) => {
@@ -103,10 +111,10 @@ export function RsvpDonutChart({ breakdown }: RsvpDonutChartProps) {
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center px-1 text-center">
           <p className="text-base font-semibold text-slate-950 lg:text-3xl">
-            {total > 0 ? `${attendingPercent}%` : '—'}
+            {total > 0 ? `${respondedPercent}%` : '—'}
           </p>
-          <p className="text-[9px] leading-tight text-slate-500 lg:text-xs">
-            đã xác nhận tham dự
+          <p className="text-[10px] font-medium leading-tight text-slate-600 lg:text-sm">
+            đã phản hồi
           </p>
         </div>
       </div>

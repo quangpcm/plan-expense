@@ -10,6 +10,7 @@ import type { PlanDocument } from '@/modules/plan/types/plan';
 import type { ConfigurableModuleId, ModuleAccessLevel } from '@/modules/plan/types/plan-modular';
 import { getEnabledPlanModules } from '@/modules/plan/utils/plan-type-config';
 import { Card } from '@/shared/components/ui/card';
+import { Collapsible } from '@/shared/components/ui/collapsible';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 
 type MembersTabProps = {
@@ -68,12 +69,15 @@ export function MembersTab({
   plan,
   planId,
 }: MembersTabProps) {
+  const pendingInvitations = invitations.filter((invitation) => invitation.status === 'pending');
+  const invitationHistory = invitations.filter((invitation) => invitation.status !== 'pending');
+
   return (
     <div className="space-y-5">
       <SectionHeading
         eyebrow="Thành viên"
         title="Thành viên kế hoạch"
-        description="Thêm và quản lý những người tham gia kế hoạch."
+        description="Thêm, mời và quản lý những người tham gia kế hoạch."
       />
       {canManageMembers ? (
         <MemberManagementPanel currentMember={currentMember} plan={plan} />
@@ -107,13 +111,23 @@ export function MembersTab({
         onUpdateMember={onUpdateMember}
         planId={planId}
       />
-      <SectionHeading eyebrow="Lời mời" title="Đang chờ tham gia" />
+      <SectionHeading eyebrow="Lời mời" title={`Lời mời đang chờ (${pendingInvitations.length})`} />
       <InvitationList
         canRevoke={canManageMembers}
-        invitations={invitations}
+        invitations={pendingInvitations}
         isSubmitting={isSubmitting}
         onRevoke={onRevokeInvitation}
       />
+      {invitationHistory.length > 0 ? (
+        <Collapsible title="Lịch sử lời mời">
+          <InvitationList
+            canRevoke={false}
+            invitations={invitationHistory}
+            isSubmitting={isSubmitting}
+            onRevoke={onRevokeInvitation}
+          />
+        </Collapsible>
+      ) : null}
     </div>
   );
 }
