@@ -1,5 +1,6 @@
 import { Card } from '@/shared/components/ui/card';
-import { cn } from '@/shared/utils/cn';
+import { Metric } from '@/shared/components/ui/metric';
+import { MetricGroup } from '@/shared/components/ui/metric-group';
 import { formatCurrency } from '@/shared/utils/currency';
 import type { StatisticResult } from '@/modules/statistic/types/statistic';
 
@@ -13,31 +14,16 @@ export function FinanceSummaryHero({ statistic }: FinanceSummaryHeroProps) {
 
   return (
     <Card className="gap-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Tổng chi</p>
-          <p className="mt-1 text-2xl font-semibold text-slate-950">
-            {formatCurrency(overview.totalExpense)}
-          </p>
-        </div>
-        <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Đã đối soát</p>
-          <p className="mt-1 text-2xl font-semibold text-[color:var(--color-success)]">
-            {formatCurrency(overview.settledAmount)}
-          </p>
-        </div>
-        <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Còn đối soát</p>
-          <p
-            className={cn(
-              'mt-1 text-2xl font-semibold',
-              hasPending ? 'text-[color:var(--color-warning)]' : 'text-slate-950',
-            )}
-          >
-            {formatCurrency(overview.pendingSettlementAmount)}
-          </p>
-        </div>
-      </div>
+      <MetricGroup columns={3}>
+        <Metric label="Tổng chi" size="lg" value={formatCurrency(overview.totalExpense)} />
+        <Metric label="Đã đối soát" size="lg" tone="success" value={formatCurrency(overview.settledAmount)} />
+        <Metric
+          label="Còn đối soát"
+          size="lg"
+          tone={hasPending ? 'warning' : 'default'}
+          value={formatCurrency(overview.pendingSettlementAmount)}
+        />
+      </MetricGroup>
       <p className="text-sm text-slate-500">
         {overview.expenseCount} khoản chi · {overview.memberCount} thành viên
         {overview.totalIncome > 0 ? ` · Tổng thu ${formatCurrency(overview.totalIncome)}` : ''}

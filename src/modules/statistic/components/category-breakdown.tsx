@@ -1,5 +1,6 @@
 import { getCategoryIcon } from '@/modules/category/utils/category-icon';
 import { Card } from '@/shared/components/ui/card';
+import { DataRow } from '@/shared/components/ui/data-row';
 import { formatCurrency } from '@/shared/utils/currency';
 import type { StatisticResult } from '@/modules/statistic/types/statistic';
 
@@ -16,18 +17,17 @@ export function CategoryBreakdown({ statistic }: CategoryBreakdownProps) {
           const Icon = getCategoryIcon(row.icon);
 
           return (
-            <div
+            <DataRow
+              className="rounded-2xl border border-slate-200 bg-white px-4 text-sm"
               key={row.categoryId || 'none'}
-              className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
-            >
-              <div className="flex items-center gap-3">
+              leading={
                 <span className={`flex size-10 items-center justify-center rounded-full ${row.iconBgColor}`}>
                   <Icon className={`size-4 ${row.iconColor}`} />
                 </span>
-                <span className="font-medium text-slate-900">{row.categoryName}</span>
-              </div>
-              <span className="text-slate-600">{formatCurrency(row.totalAmount)}</span>
-            </div>
+              }
+              main={<span className="font-medium text-slate-900">{row.categoryName}</span>}
+              trailing={<span className="text-slate-600">{formatCurrency(row.totalAmount)}</span>}
+            />
           );
         })}
         {statistic.categoryBreakdown.length === 0 ? (

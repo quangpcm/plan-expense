@@ -1,4 +1,6 @@
 import { Card } from '@/shared/components/ui/card';
+import { Metric } from '@/shared/components/ui/metric';
+import { MetricGroup } from '@/shared/components/ui/metric-group';
 import { formatCurrency } from '@/shared/utils/currency';
 import type { StatisticResult } from '@/modules/statistic/types/statistic';
 
@@ -8,33 +10,20 @@ type StatisticOverviewProps = {
 
 export function StatisticOverview({ statistic }: StatisticOverviewProps) {
   return (
-    <Card className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-      <div>
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Tổng chi</p>
-        <p className="mt-1 text-lg font-semibold text-slate-950">
-          {formatCurrency(statistic.overview.totalExpense)}
-        </p>
-      </div>
-      <div>
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Tổng thu</p>
-        <p className="mt-1 text-lg font-semibold text-emerald-700">
-          {formatCurrency(statistic.overview.totalIncome)}
-        </p>
-      </div>
-      {/* <div>
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Chi trung bình</p>
-        <p className="mt-1 text-lg font-semibold text-slate-950">
-          {formatCurrency(statistic.overview.averageExpense)}
-        </p>
-      </div> */}
-      <div>
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Thành viên</p>
-        <p className="mt-1 text-lg font-semibold text-slate-950">{statistic.overview.memberCount}</p>
-      </div>
-      <div>
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Khoản chi</p>
-        <p className="mt-1 text-lg font-semibold text-slate-950">{statistic.overview.expenseCount}</p>
-      </div>
+    <Card>
+      <MetricGroup columns={4}>
+        <Metric label="Tổng chi" size="sm" value={formatCurrency(statistic.overview.totalExpense)} />
+        <Metric
+          label="Tổng thu"
+          size="sm"
+          // Kept as the pre-existing literal `emerald-700` (not `tone="success"`, which resolves to
+          // `--color-status-success` = emerald-600 — a different, non-exact shade) to preserve the
+          // exact rendered color unchanged by this presentation migration.
+          value={<span className="text-emerald-700">{formatCurrency(statistic.overview.totalIncome)}</span>}
+        />
+        <Metric label="Thành viên" size="sm" value={statistic.overview.memberCount} />
+        <Metric label="Khoản chi" size="sm" value={statistic.overview.expenseCount} />
+      </MetricGroup>
     </Card>
   );
 }
