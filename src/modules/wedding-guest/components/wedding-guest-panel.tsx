@@ -853,6 +853,7 @@ export function WeddingGuestPanel({
       <ResponsiveModal
         onOpenChange={setShowGroupManager}
         open={showGroupManager}
+        size="sm"
         title="Quản lý nhóm/tiệc"
       >
         <WeddingGuestGroupList
@@ -891,6 +892,7 @@ export function WeddingGuestPanel({
           }
         }}
         open={showCreateForm && Boolean(activeGroup)}
+        size="md"
         title={`Thêm khách vào ${activeGroup?.name ?? ''}`}
       >
         {activeGroup ? (
@@ -916,6 +918,7 @@ export function WeddingGuestPanel({
           }
         }}
         open={Boolean(editingGuest)}
+        size="md"
         title="Chỉnh sửa khách mời"
       >
         {editingGuest ? (
@@ -937,6 +940,7 @@ export function WeddingGuestPanel({
           }
         }}
         open={Boolean(editingInvitation)}
+        size="md"
         title="Chỉnh sửa khách mời"
       >
         {editingInvitation && editingInvitationGuest ? (

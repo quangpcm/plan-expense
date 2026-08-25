@@ -13,6 +13,21 @@ import { cn } from '@/shared/utils/cn';
 const closeButtonClassName =
   'absolute right-4 top-4 rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600';
 
+// Desktop-only max-width contract (Overlay Architecture Amendment #2, Bug 3). Values are the
+// already-observed widths in real consumers before this amendment (max-w-md: plan lock form;
+// max-w-lg family absorbed into md; max-w-xl: expense/income forms; max-w-2xl: the most common
+// existing size, milestone/todo/edit-plan forms; max-w-4xl: statistic sheet / Wedding Guest list)
+// — no new pixel value invented. Omitting `size` preserves today's behavior exactly (no max-width
+// unless the caller's own `className` supplies one).
+const sizeClassName = {
+  sm: 'max-w-md',
+  md: 'max-w-xl',
+  lg: 'max-w-2xl',
+  xl: 'max-w-4xl',
+} as const;
+
+type ResponsiveModalSize = keyof typeof sizeClassName;
+
 type ResponsiveModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -20,6 +35,7 @@ type ResponsiveModalProps = {
   description?: string | undefined;
   children?: ReactNode;
   className?: string | undefined;
+  size?: ResponsiveModalSize | undefined;
 };
 
 export function ResponsiveModal({
@@ -29,6 +45,7 @@ export function ResponsiveModal({
   description,
   children,
   className,
+  size,
 }: ResponsiveModalProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
@@ -65,6 +82,7 @@ export function ResponsiveModal({
             <Dialog.Content
               className={cn(
                 'relative w-full rounded-[28px] border border-slate-200 bg-white p-5 shadow-[var(--shadow-overlay)] focus:outline-none data-[state=closed]:animate-content-hide data-[state=open]:animate-content-show',
+                size ? sizeClassName[size] : undefined,
                 className,
               )}
               onCloseAutoFocus={restoreFocusToTrigger}
@@ -130,7 +148,13 @@ export function ResponsiveModal({
             )}
           </div>
           {children ? (
-            <div className="mt-4 min-h-0 overflow-y-auto overscroll-contain pr-1">
+            // data-vaul-no-drag: vaul's own supported opt-out (checked in its shouldDrag()) —
+            // without it, a touch-drag starting anywhere in this region while scrollTop is 0
+            // (e.g. right after opening, or after scrolling back to the top) is interpreted as
+            // "drag the sheet" instead of "scroll the content," dismissing the drawer
+            // unexpectedly. The drag handle and header below remain outside this wrapper, so
+            // intentional drag-to-dismiss via the handle is unaffected.
+            <div className="mt-4 min-h-0 overflow-y-auto overscroll-contain pr-1" data-vaul-no-drag>
               {children}
             </div>
           ) : null}

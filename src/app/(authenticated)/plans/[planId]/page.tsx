@@ -2933,10 +2933,14 @@ export default function PlanDetailPage() {
           />
         </ResponsiveModal>
 
-        <BottomSheet
-          onClose={() => setStatisticMemberDrilldown(null)}
+        <ResponsiveModal
+          onOpenChange={(next) => {
+            if (!next) {
+              setStatisticMemberDrilldown(null);
+            }
+          }}
           open={Boolean(statisticMemberDrilldownMember)}
-          showCloseButton
+          size="sm"
           title={
             statisticMemberDrilldownMember
               ? `Khoản chi của ${statisticMemberDrilldownMember.nickname}`
@@ -2955,15 +2959,19 @@ export default function PlanDetailPage() {
               planId={planId}
             />
           ) : null}
-        </BottomSheet>
+        </ResponsiveModal>
 
-        <BottomSheet
-          onClose={() => setStatisticMilestoneMemberDrilldown(null)}
+        <ResponsiveModal
+          onOpenChange={(next) => {
+            if (!next) {
+              setStatisticMilestoneMemberDrilldown(null);
+            }
+          }}
           open={Boolean(
             statisticMilestoneMemberDrilldownMilestone &&
             statisticMilestoneMemberDrilldownMember,
           )}
-          showCloseButton
+          size="sm"
           title={
             statisticMilestoneMemberDrilldownMilestone &&
             statisticMilestoneMemberDrilldownMember
@@ -2988,7 +2996,7 @@ export default function PlanDetailPage() {
               }
             />
           ) : null}
-        </BottomSheet>
+        </ResponsiveModal>
       </Card>
     </main>
   );

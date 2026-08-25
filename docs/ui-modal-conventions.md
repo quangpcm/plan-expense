@@ -56,6 +56,13 @@ import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 Lưu ý: `ResponsiveModal` nhận `onOpenChange(open: boolean)`, không phải `onClose()` — nếu form
 con dùng `onClose`/`onCancel`, bọc lại như ví dụ trên.
 
+`ResponsiveModal` có prop `size?: 'sm' | 'md' | 'lg' | 'xl'` (desktop-only — mobile Drawer luôn
+full-width, `size` không có tác dụng ở mobile). Bỏ qua `size` giữ nguyên hành vi cũ (không giới
+hạn max-width trừ khi tự truyền `className`). Dùng `size` khi nội dung không cần chiếm gần hết
+chiều rộng viewport trên desktop — xem `03.OverlayArchitecture.Amendment2.Report.md` để biết bảng
+mapping `sm/md/lg/xl` → `max-w-md/xl/2xl/4xl` và ví dụ đã áp dụng (Wedding Guest quick-add/edit/
+group-manager/export).
+
 Form component bên trong (`MilestoneForm`, `TodoForm`, `TodoVendorForm`, `EditPlanForm`,
 `ExpenseForm`, `IncomeForm`, `CreatePlanForm`, `TravelActivityForm`...) phải nhận
 `onSuccess`/`onCancel` (hoặc `onClose`) qua props — **không tự điều hướng bằng `router.push`/
@@ -91,5 +98,34 @@ Tất cả trong `src/app/(authenticated)/plans/[planId]/page.tsx`:
 - Menu/popover đơn giản không phải form (ví dụ menu 3-chấm của Header) — có thể tự chọn cách hiển
   thị khác, không bắt buộc `ResponsiveModal`.
 - Drilldown/xem dữ liệu thuần túy không có hành động tạo/sửa (ví dụ bảng chi tiêu của 1 thành
-  viên) — có thể dùng `BottomSheet` đơn giản nếu không cần khác biệt desktop/mobile.
+  viên) — có thể dùng `BottomSheet` đơn giản, **nhưng chỉ khi trường hợp đó không thể đồng thời
+  tồn tại với, chứa, hoặc bị chứa trong một `ResponsiveModal` khác** (xem rule mới ngay dưới đây).
 - Nếu không chắc 1 case có thuộc "form tạo/sửa" hay không, hỏi lại trước khi chọn cách implement.
+
+## 4.1 Rule bắt buộc: BottomSheet không được đứng trong một chuỗi overlay có ResponsiveModal
+
+Root cause (Overlay Architecture Amendment #2, Bug 2 — xem
+`03.OverlayArchitecture.Amendment2.PreCode.md` và `.Report.md`): `BottomSheet` là component tự
+viết tay, không đăng ký với Radix's `DismissableLayerContext` như `ResponsiveModal` (Dialog/Drawer)
+làm. Khi bất kỳ `ResponsiveModal` nào đang mở, Radix/vaul set
+`document.body.style.pointerEvents = 'none'` toàn cục để chỉ layer cao nhất được tương tác —
+`BottomSheet` không có cơ chế được "miễn trừ" khỏi việc này, nên toàn bộ nội dung của nó (kể cả
+nút đóng riêng) trở nên hoàn toàn không thể bấm được ngay khi có một `ResponsiveModal` khác cùng
+tồn tại, bất kể `BottomSheet` mở trước hay sau. Đây là lỗi thật đã xác nhận bằng đo lường trực
+tiếp (`pointer-events` tính toán, không phải suy đoán), không phải lỗi z-index đơn thuần.
+
+> **Một `BottomSheet` chỉ được giữ lại cho menu/drilldown đọc-thuần-túy khi nó KHÔNG THỂ đồng thời
+> tồn tại với, mở ra, hoặc bị mở ra từ bên trong một `ResponsiveModal`. Nếu có thể — dù chỉ một
+> đường dẫn thực tế duy nhất — nó phải dùng `ResponsiveModal` để mọi layer overlay cùng tham gia
+> chung một hệ thống điều phối (Radix `DismissableLayerContext` / vaul).**
+
+Không giải quyết bằng cách tăng z-index hay override `pointer-events` thủ công — đó là vá triệu
+chứng, không sửa nguyên nhân (component không tham gia hệ thống điều phối chung).
+
+Ví dụ đã áp dụng: 2 drilldown thống kê trong
+`src/app/(authenticated)/plans/[planId]/page.tsx` (`statisticMemberDrilldown`,
+`statisticMilestoneMemberDrilldown`) từng là `BottomSheet` KEEP theo rule cũ (drilldown đọc-thuần-
+túy), nhưng vì mỗi dòng trong đó có thể mở tiếp `ResponsiveModal` "Chi tiết khoản chi" — nên đã
+migrate sang `ResponsiveModal` (Amendment #2). Các `BottomSheet` KEEP khác (menu 3-chấm ở Header,
+drilldown milestone-expense của `PlanningTab`, menu "⋮" của `member-actions-menu.tsx`) **không**
+đổi — chúng không bao giờ mở một `ResponsiveModal` từ bên trong, nên rule mới không áp dụng.

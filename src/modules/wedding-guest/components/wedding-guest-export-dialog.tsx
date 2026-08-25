@@ -71,6 +71,7 @@ export function WeddingGuestExportDialog({
         }
       }}
       open={open}
+      size="sm"
       title="Export khách mời"
     >
       <div className="space-y-5">
