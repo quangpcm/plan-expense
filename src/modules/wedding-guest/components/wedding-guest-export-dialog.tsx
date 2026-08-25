@@ -8,8 +8,8 @@ import type { GuestInvitationDocument } from '@/modules/wedding-guest/types/gues
 import type { WeddingGuestGroupDocument } from '@/modules/wedding-guest/types/wedding-guest-group';
 import type { WeddingGuestDocument } from '@/modules/wedding-guest/types/wedding-guest';
 import { Button } from '@/shared/components/ui/button';
-import { Dialog } from '@/shared/components/ui/dialog';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
+import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 
 type WeddingGuestExportDialogProps = {
   open: boolean;
@@ -62,45 +62,38 @@ export function WeddingGuestExportDialog({
     onClose();
   }
 
-  if (!open) {
-    return null;
-  }
-
   return (
-    <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 lg:flex">
-      <button
-        aria-label="Đóng export khách mời"
-        className="absolute inset-0"
-        onClick={onClose}
-        type="button"
-      />
-      <Dialog
-        className="relative z-10 w-full max-w-lg"
-        description="Chọn xuất toàn bộ hoặc riêng một nhóm khách rồi tải xuống CSV."
-        title="Export khách mời"
-      >
-        <div className="space-y-5">
-          <div className="space-y-1.5">
-            <p className="text-sm font-medium text-slate-700">Phạm vi export</p>
-            <DropdownSelect
-              onValueChange={setSelectedGroupId}
-              options={groupOptions}
-              value={selectedGroupId}
-            />
-          </div>
-
-          <div className="flex items-center justify-end gap-3">
-            <Button onClick={onClose} variant="ghost">
-              <X className="size-4" />
-              Đóng
-            </Button>
-            <Button onClick={handleDownload}>
-              <Download className="size-4" />
-              Tải xuống
-            </Button>
-          </div>
+    <ResponsiveModal
+      description="Chọn xuất toàn bộ hoặc riêng một nhóm khách rồi tải xuống CSV."
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          onClose();
+        }
+      }}
+      open={open}
+      title="Export khách mời"
+    >
+      <div className="space-y-5">
+        <div className="space-y-1.5">
+          <p className="text-sm font-medium text-slate-700">Phạm vi export</p>
+          <DropdownSelect
+            onValueChange={setSelectedGroupId}
+            options={groupOptions}
+            value={selectedGroupId}
+          />
         </div>
-      </Dialog>
-    </div>
+
+        <div className="flex items-center justify-end gap-3">
+          <Button onClick={onClose} variant="ghost">
+            <X className="size-4" />
+            Đóng
+          </Button>
+          <Button onClick={handleDownload}>
+            <Download className="size-4" />
+            Tải xuống
+          </Button>
+        </div>
+      </div>
+    </ResponsiveModal>
   );
 }

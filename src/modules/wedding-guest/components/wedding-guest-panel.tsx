@@ -50,9 +50,9 @@ import {
   type GuestAttributeKey,
 } from '@/modules/wedding-guest/utils/wedding-guest-statistic';
 import { Badge } from '@/shared/components/ui/badge';
-import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
+import { ConfirmDialog } from '@/shared/components/ui/confirm-dialog';
 import { Input } from '@/shared/components/ui/input';
 import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
@@ -135,6 +135,12 @@ export function WeddingGuestPanel({
     useState<GuestInvitationDocument | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [pendingDeleteGuest, setPendingDeleteGuest] =
+    useState<WeddingGuestDocument | null>(null);
+  const [pendingDeleteGroup, setPendingDeleteGroup] =
+    useState<WeddingGuestGroupDocument | null>(null);
+  const [showRemoveInvitationConfirm, setShowRemoveInvitationConfirm] =
+    useState(false);
   const hasAutoSelectedGroupRef = useRef(false);
 
   useEffect(() => {
@@ -151,6 +157,18 @@ export function WeddingGuestPanel({
   const editingInvitationGuest = editingInvitation
     ? (guests.find((guest) => guest.id === editingInvitation.guestId) ?? null)
     : null;
+  const pendingDeleteGuestGroupCount = pendingDeleteGuest
+    ? new Set(
+        invitations
+          .filter((invitation) => invitation.guestId === pendingDeleteGuest.id)
+          .map((invitation) => invitation.groupId),
+      ).size
+    : 0;
+  const pendingDeleteGroupInvitationCount = pendingDeleteGroup
+    ? invitations.filter(
+        (invitation) => invitation.groupId === pendingDeleteGroup.id,
+      ).length
+    : 0;
 
   const { rows, filteredInvitations } = useMemo(() => {
     const guestById = new Map(guests.map((guest) => [guest.id, guest]));
@@ -350,20 +368,12 @@ export function WeddingGuestPanel({
     }
   }
 
-  async function handleDeleteGroup(group: WeddingGuestGroupDocument) {
-    const invitationCount = invitations.filter(
-      (invitation) => invitation.groupId === group.id,
-    ).length;
-    const confirmed = window.confirm(
-      invitationCount > 0
-        ? `Xóa nhóm "${group.name}"? ${invitationCount} lượt mời trong nhóm này sẽ bị xóa theo. Hành động này không thể hoàn tác.`
-        : `Xóa nhóm "${group.name}"? Hành động này không thể hoàn tác.`,
-    );
+  async function requestDeleteGroup(group: WeddingGuestGroupDocument) {
+    resetActionState();
+    setPendingDeleteGroup(group);
+  }
 
-    if (!confirmed) {
-      return;
-    }
-
+  async function performDeleteGroup(group: WeddingGuestGroupDocument) {
     resetActionState();
     setIsSubmitting(true);
 
@@ -373,6 +383,8 @@ export function WeddingGuestPanel({
       if (activeGroupId === group.id) {
         setActiveGroupId(null);
       }
+
+      setPendingDeleteGroup(null);
     } catch (error) {
       setActionError(
         error instanceof Error ? error.message : 'Hiện chưa thể xóa nhóm này.',
@@ -501,27 +513,18 @@ export function WeddingGuestPanel({
     }
   }
 
-  async function handleDeleteGuest(guest: WeddingGuestDocument) {
-    const groupCount = new Set(
-      invitations
-        .filter((invitation) => invitation.guestId === guest.id)
-        .map((invitation) => invitation.groupId),
-    ).size;
-    const confirmed = window.confirm(
-      groupCount > 0
-        ? `Xóa khách "${guest.name}"? Khách này đang thuộc ${groupCount} nhóm, toàn bộ lượt mời sẽ bị xóa theo. Hành động này không thể hoàn tác.`
-        : `Xóa khách "${guest.name}"? Hành động này không thể hoàn tác.`,
-    );
+  function requestDeleteGuest(guest: WeddingGuestDocument) {
+    resetActionState();
+    setPendingDeleteGuest(guest);
+  }
 
-    if (!confirmed) {
-      return;
-    }
-
+  async function performDeleteGuest(guest: WeddingGuestDocument) {
     resetActionState();
     setIsSubmitting(true);
 
     try {
       await weddingGuestService.deleteGuest(plan, guest.id, currentMember);
+      setPendingDeleteGuest(null);
     } catch (error) {
       setActionError(
         error instanceof Error ? error.message : 'Hiện chưa thể xóa khách này.',
@@ -584,16 +587,17 @@ export function WeddingGuestPanel({
     }
   }
 
-  async function handleRemoveInvitation() {
+  async function requestRemoveInvitation() {
     if (!editingInvitation) {
       return;
     }
 
-    const confirmed = window.confirm(
-      'Xóa khách này khỏi nhóm hiện tại? Hành động này không thể hoàn tác.',
-    );
+    resetActionState();
+    setShowRemoveInvitationConfirm(true);
+  }
 
-    if (!confirmed) {
+  async function performRemoveInvitation() {
+    if (!editingInvitation) {
       return;
     }
 
@@ -606,6 +610,7 @@ export function WeddingGuestPanel({
         editingInvitation.id,
         currentMember,
       );
+      setShowRemoveInvitationConfirm(false);
       setEditingInvitation(null);
     } catch (error) {
       setActionError(
@@ -721,7 +726,7 @@ export function WeddingGuestPanel({
                 : 'Chưa có khách mời nào. Chọn một nhóm/tiệc để bắt đầu thêm khách.'
             }
             onDeleteGuest={
-              !activeGroupId && canManage ? handleDeleteGuest : undefined
+              !activeGroupId && canManage ? requestDeleteGuest : undefined
             }
             onSelectRow={(row) => {
               if (activeGroupId && row.invitation) {
@@ -820,7 +825,7 @@ export function WeddingGuestPanel({
                 : 'Chưa có khách mời nào. Chọn một nhóm/tiệc để bắt đầu thêm khách.'
             }
             onDeleteGuest={
-              !activeGroupId && canManage ? handleDeleteGuest : undefined
+              !activeGroupId && canManage ? requestDeleteGuest : undefined
             }
             onSelectRow={(row) => {
               if (activeGroupId && row.invitation) {
@@ -845,8 +850,8 @@ export function WeddingGuestPanel({
         </button>
       ) : null}
 
-      <BottomSheet
-        onClose={() => setShowGroupManager(false)}
+      <ResponsiveModal
+        onOpenChange={setShowGroupManager}
         open={showGroupManager}
         title="Quản lý nhóm/tiệc"
       >
@@ -856,10 +861,10 @@ export function WeddingGuestPanel({
           groups={groups}
           isSubmitting={isSubmitting}
           onCreateGroup={handleCreateGroup}
-          onDeleteGroup={handleDeleteGroup}
+          onDeleteGroup={requestDeleteGroup}
           onUpdateGroup={handleUpdateGroup}
         />
-      </BottomSheet>
+      </ResponsiveModal>
 
       <WeddingGuestImportDialog
         currentMember={currentMember}
@@ -879,8 +884,12 @@ export function WeddingGuestPanel({
         open={showExportDialog}
       />
 
-      <BottomSheet
-        onClose={() => setShowCreateForm(false)}
+      <ResponsiveModal
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setShowCreateForm(false);
+          }
+        }}
         open={showCreateForm && Boolean(activeGroup)}
         title={`Thêm khách vào ${activeGroup?.name ?? ''}`}
       >
@@ -898,10 +907,14 @@ export function WeddingGuestPanel({
             onCreateNewGuest={handleCreateNewGuest}
           />
         ) : null}
-      </BottomSheet>
+      </ResponsiveModal>
 
-      <BottomSheet
-        onClose={() => setEditingGuest(null)}
+      <ResponsiveModal
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setEditingGuest(null);
+          }
+        }}
         open={Boolean(editingGuest)}
         title="Chỉnh sửa khách mời"
       >
@@ -915,10 +928,14 @@ export function WeddingGuestPanel({
             onSave={handleUpdateGuestIdentity}
           />
         ) : null}
-      </BottomSheet>
+      </ResponsiveModal>
 
-      <BottomSheet
-        onClose={() => setEditingInvitation(null)}
+      <ResponsiveModal
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setEditingInvitation(null);
+          }
+        }}
         open={Boolean(editingInvitation)}
         title="Chỉnh sửa khách mời"
       >
@@ -930,11 +947,80 @@ export function WeddingGuestPanel({
             invitation={editingInvitation}
             isSubmitting={isSubmitting}
             onCancel={() => setEditingInvitation(null)}
-            onRemoveFromGroup={handleRemoveInvitation}
+            onRemoveFromGroup={requestRemoveInvitation}
             onSave={handleSaveGuestInvitation}
           />
         ) : null}
-      </BottomSheet>
+      </ResponsiveModal>
+
+      <ConfirmDialog
+        confirmLabel="Xóa"
+        confirmVariant="destructive"
+        description={
+          pendingDeleteGuestGroupCount > 0
+            ? `Khách này đang thuộc ${pendingDeleteGuestGroupCount} nhóm, toàn bộ lượt mời sẽ bị xóa theo. Hành động này không thể hoàn tác.`
+            : 'Hành động này không thể hoàn tác.'
+        }
+        errorMessage={pendingDeleteGuest ? (actionError ?? undefined) : undefined}
+        loading={isSubmitting}
+        onConfirm={() => {
+          if (pendingDeleteGuest) {
+            void performDeleteGuest(pendingDeleteGuest);
+          }
+        }}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setPendingDeleteGuest(null);
+            resetActionState();
+          }
+        }}
+        open={Boolean(pendingDeleteGuest)}
+        title={`Xóa khách "${pendingDeleteGuest?.name ?? ''}"?`}
+      />
+
+      <ConfirmDialog
+        confirmLabel="Xóa"
+        confirmVariant="destructive"
+        description={
+          pendingDeleteGroupInvitationCount > 0
+            ? `${pendingDeleteGroupInvitationCount} lượt mời trong nhóm này sẽ bị xóa theo. Hành động này không thể hoàn tác.`
+            : 'Hành động này không thể hoàn tác.'
+        }
+        errorMessage={pendingDeleteGroup ? (actionError ?? undefined) : undefined}
+        loading={isSubmitting}
+        onConfirm={() => {
+          if (pendingDeleteGroup) {
+            void performDeleteGroup(pendingDeleteGroup);
+          }
+        }}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setPendingDeleteGroup(null);
+            resetActionState();
+          }
+        }}
+        open={Boolean(pendingDeleteGroup)}
+        title={`Xóa nhóm "${pendingDeleteGroup?.name ?? ''}"?`}
+      />
+
+      <ConfirmDialog
+        confirmLabel="Xóa"
+        confirmVariant="destructive"
+        description="Hành động này không thể hoàn tác."
+        errorMessage={
+          showRemoveInvitationConfirm ? (actionError ?? undefined) : undefined
+        }
+        loading={isSubmitting}
+        onConfirm={() => void performRemoveInvitation()}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setShowRemoveInvitationConfirm(false);
+            resetActionState();
+          }
+        }}
+        open={showRemoveInvitationConfirm}
+        title="Xóa khách này khỏi nhóm hiện tại?"
+      />
     </div>
   );
 }

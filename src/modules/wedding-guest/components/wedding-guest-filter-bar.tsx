@@ -16,6 +16,7 @@ import type {
   WeddingGuestSideId,
 } from '@/modules/wedding-guest/types/wedding-guest';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
+import { FilterBar } from '@/shared/components/ui/filter-bar';
 import { Input } from '@/shared/components/ui/input';
 import { cn } from '@/shared/utils/cn';
 
@@ -83,31 +84,34 @@ export function WeddingGuestFilterBar({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <Input
-          className="flex-1"
-          onChange={(event) => onSearchQueryChange(event.target.value)}
-          placeholder="Tìm khách theo tên..."
-          value={searchQuery}
-        />
-        <button
-          aria-expanded={showFilters}
-          aria-label="Bộ lọc"
-          className={cn(
-            'relative flex size-11 shrink-0 items-center justify-center rounded-full border transition',
-            showFilters || hasActiveFilters
-              ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
-              : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300',
-          )}
-          onClick={() => setShowFilters((value) => !value)}
-          type="button"
-        >
-          <SlidersHorizontal className="size-4" />
-          {hasActiveFilters ? (
-            <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full bg-[var(--color-accent)]" />
-          ) : null}
-        </button>
-      </div>
+      <FilterBar
+        actions={
+          <button
+            aria-expanded={showFilters}
+            aria-label="Bộ lọc"
+            className={cn(
+              'relative flex size-11 shrink-0 items-center justify-center rounded-full border transition',
+              showFilters || hasActiveFilters
+                ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
+                : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300',
+            )}
+            onClick={() => setShowFilters((value) => !value)}
+            type="button"
+          >
+            <SlidersHorizontal className="size-4" />
+            {hasActiveFilters ? (
+              <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full bg-[var(--color-accent)]" />
+            ) : null}
+          </button>
+        }
+        search={
+          <Input
+            onChange={(event) => onSearchQueryChange(event.target.value)}
+            placeholder="Tìm khách theo tên..."
+            value={searchQuery}
+          />
+        }
+      />
 
       {showFilters ? (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
