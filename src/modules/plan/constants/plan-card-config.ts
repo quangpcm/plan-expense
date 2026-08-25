@@ -10,7 +10,7 @@ import {
   isEffectiveBudgetEstimated,
 } from '@/modules/plan/utils/get-effective-budget-amount';
 import { resolvePlanDebtModel } from '@/modules/plan/utils/plan-type-config';
-import { formatCurrency } from '@/shared/utils/currency';
+import { formatCompactCurrency } from '@/shared/utils/currency';
 import {
   formatDate,
   formatDueCountdown,
@@ -45,8 +45,12 @@ function getSafeCountLabel(value: number | null | undefined, noun: string) {
   return `${getSafeNumber(value)} ${noun}`;
 }
 
+// PlanCard's metric slots are fixed-width and truncate — full-precision formatCurrency produced
+// mid-number ellipsis for large values (e.g. "315.602.00…"). formatCompactCurrency is already the
+// established pattern for every other space-constrained card/summary slot in the app; it falls
+// back to formatCurrency's own exact output below 1,000, so small/zero amounts are unaffected.
 function getSafeCurrency(value: number | null | undefined) {
-  return formatCurrency(getSafeNumber(value));
+  return formatCompactCurrency(getSafeNumber(value));
 }
 
 function getSafeBalance(plan: PlanSummary) {

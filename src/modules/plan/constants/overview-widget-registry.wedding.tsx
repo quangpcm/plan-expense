@@ -133,8 +133,11 @@ function AttentionItemRow({
     <button
       className={cn(
         'block w-full px-4 py-4 text-left transition hover:bg-slate-50',
-        'lg:rounded-[26px] lg:border lg:border-slate-200 lg:bg-white lg:shadow-[0_10px_32px_rgba(15,23,42,0.05)]',
-        'lg:hover:-translate-y-0.5 lg:hover:border-slate-300 lg:hover:bg-white lg:hover:shadow-[0_16px_40px_rgba(15,23,42,0.08)]',
+        // Desktop: lightweight bordered row instead of a nested elevated card — matches the
+        // canonical 20px radius already used by the "Sắp tới" DataRow rows below in this same
+        // widget, no independent drop shadow/hover-lift layered on top of the parent Card.
+        'lg:rounded-[20px] lg:border lg:border-slate-200 lg:bg-white',
+        'lg:hover:border-slate-300 lg:hover:bg-slate-50',
       )}
       onClick={onSelect}
       type="button"

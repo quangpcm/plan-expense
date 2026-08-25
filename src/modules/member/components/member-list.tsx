@@ -150,29 +150,37 @@ function EditableMemberRow({
     member.role === 'owner' ? null : summarizeMemberAccess(member, enabledModuleIds);
   const secondaryLine = [identityLabel, accessSummaryLabel].filter(Boolean).join(' · ');
 
+  const avatarButton = (
+    <button
+      aria-label={`Đổi avatar của ${member.nickname}`}
+      className="rounded-full transition hover:scale-[1.03] disabled:cursor-default disabled:hover:scale-100"
+      disabled={!canManageMembers}
+      onClick={() => setIsAvatarPickerOpen(true)}
+      type="button"
+    >
+      <Avatar initials={member.nickname.slice(0, 2).toUpperCase()} src={member.avatarUrl} />
+    </button>
+  );
+
+  const nameBlock = (
+    <div className="min-w-0 flex-1 space-y-1">
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="truncate font-semibold text-slate-950">{member.nickname}</p>
+        <Badge variant="info">{PLAN_ROLE_LABEL[member.role]}</Badge>
+        {member.status !== 'active' ? (
+          <Badge variant={member.status === 'invited' ? 'info' : 'neutral'}>
+            {memberStatusLabel[member.status]}
+          </Badge>
+        ) : null}
+      </div>
+      <p className="text-sm text-slate-500">{secondaryLine}</p>
+    </div>
+  );
+
   const summary = (
     <div className="flex items-center gap-3">
-      <button
-        aria-label={`Đổi avatar của ${member.nickname}`}
-        className="rounded-full transition hover:scale-[1.03] disabled:cursor-default disabled:hover:scale-100"
-        disabled={!canManageMembers}
-        onClick={() => setIsAvatarPickerOpen(true)}
-        type="button"
-      >
-        <Avatar initials={member.nickname.slice(0, 2).toUpperCase()} src={member.avatarUrl} />
-      </button>
-      <div className="min-w-0 flex-1 space-y-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="truncate font-semibold text-slate-950">{member.nickname}</p>
-          <Badge variant="info">{PLAN_ROLE_LABEL[member.role]}</Badge>
-          {member.status !== 'active' ? (
-            <Badge variant={member.status === 'invited' ? 'info' : 'neutral'}>
-              {memberStatusLabel[member.status]}
-            </Badge>
-          ) : null}
-        </div>
-        <p className="text-sm text-slate-500">{secondaryLine}</p>
-      </div>
+      {avatarButton}
+      {nameBlock}
     </div>
   );
 
@@ -241,7 +249,9 @@ function EditableMemberRow({
       {!canManageMembers || member.role === 'owner' ? (
         summary
       ) : (
-        <Collapsible header={summary}>{editForm}</Collapsible>
+        <Collapsible header={nameBlock} leading={avatarButton}>
+          {editForm}
+        </Collapsible>
       )}
       <ConfirmDialog
         cancelLabel={isLinked ? 'Đóng' : 'Hủy'}

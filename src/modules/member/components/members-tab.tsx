@@ -85,7 +85,7 @@ export function MembersTab({
         <Card>
           <p className="text-sm leading-6 text-slate-600">
             Bạn có thể xem danh sách thành viên, nhưng chỉ chủ kế hoạch
-            mới được quản lý khách và lời mời.
+            mới được quản lý thành viên và lời mời.
           </p>
         </Card>
       )}

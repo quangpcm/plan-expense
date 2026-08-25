@@ -65,14 +65,14 @@ export function MemberManagementPanel({
       const parsed = addGuestSchema.parse(values);
       await memberService.addGuest(plan.id, parsed, user, currentMember);
       guestForm.reset({ nickname: '', role: 'editor' });
-      setGuestMessage('Đã thêm khách vào kế hoạch.');
+      setGuestMessage('Đã thêm thành viên vào kế hoạch.');
     } catch (error) {
       if (error instanceof ZodError) {
-        setGuestError(error.issues[0]?.message || 'Vui lòng kiểm tra lại thông tin khách.');
+        setGuestError(error.issues[0]?.message || 'Vui lòng kiểm tra lại thông tin thành viên.');
       } else if (error instanceof Error) {
         setGuestError(error.message);
       } else {
-        setGuestError('Hiện chưa thể thêm khách.');
+        setGuestError('Hiện chưa thể thêm thành viên.');
       }
     } finally {
       setIsGuestSubmitting(false);
@@ -125,8 +125,8 @@ export function MemberManagementPanel({
     <div className="grid gap-4 lg:grid-cols-2">
       <Card>
         <Collapsible
-          title="Thêm khách"
-          description="Tạo thành viên không cần tài khoản."
+          title="Thêm thành viên"
+          description="Tạo thành viên chưa có tài khoản."
           icon={<UserRoundPlus className="size-5" />}
         >
           <form className="space-y-4" onSubmit={submitGuest}>
@@ -149,13 +149,13 @@ export function MemberManagementPanel({
               />
             </div>
             <p className="text-sm text-slate-500">
-              Khách có thể được chọn trong các khoản thu, chi và chia sẻ chi phí.
+              Thành viên có thể được chọn trong các khoản thu, chi và chia sẻ chi phí.
             </p>
             {guestError ? <AuthFormMessage message={guestError} type="error" /> : null}
             {guestMessage ? <AuthFormMessage message={guestMessage} type="success" /> : null}
             <Button className="w-full" disabled={isGuestSubmitting} type="submit">
               <UserRoundPlus className="size-4" />
-              {isGuestSubmitting ? 'Đang thêm khách...' : 'Thêm khách'}
+              {isGuestSubmitting ? 'Đang thêm thành viên...' : 'Thêm thành viên'}
             </Button>
           </form>
         </Collapsible>

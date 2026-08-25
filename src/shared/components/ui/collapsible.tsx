@@ -11,6 +11,11 @@ type CollapsibleProps = {
   description?: string;
   icon?: ReactNode;
   header?: ReactNode;
+  // Rendered as a DOM sibling immediately before the trigger button, never inside it — lets a
+  // consumer place its own interactive control (e.g. an avatar-change button) next to the trigger
+  // without nesting one <button> inside another (invalid HTML, breaks hydration, and would let a
+  // click on that control bubble into the trigger's own onClick and toggle the row too).
+  leading?: ReactNode;
   defaultOpen?: boolean;
   className?: string;
   children: ReactNode;
@@ -21,6 +26,7 @@ export function Collapsible({
   description,
   icon,
   header,
+  leading,
   defaultOpen = false,
   className,
   children,
@@ -29,32 +35,35 @@ export function Collapsible({
 
   return (
     <div className={className}>
-      <button
-        type="button"
-        className="flex min-h-11 w-full items-center justify-between gap-3 text-left"
-        aria-expanded={isOpen}
-        onClick={() => setIsOpen((value) => !value)}
-      >
-        <span className="min-w-0 flex-1">
-          {header ?? (
-            <span className="flex items-start gap-3">
-              {icon ? <span className="mt-0.5 text-slate-500">{icon}</span> : null}
-              <span className="space-y-1">
-                <span className="block text-lg font-semibold text-slate-950">{title}</span>
-                {description ? (
-                  <span className="block text-sm text-slate-600">{description}</span>
-                ) : null}
+      <div className="flex items-center gap-3">
+        {leading}
+        <button
+          type="button"
+          className="flex min-h-11 flex-1 items-center justify-between gap-3 text-left"
+          aria-expanded={isOpen}
+          onClick={() => setIsOpen((value) => !value)}
+        >
+          <span className="min-w-0 flex-1">
+            {header ?? (
+              <span className="flex items-start gap-3">
+                {icon ? <span className="mt-0.5 text-slate-500">{icon}</span> : null}
+                <span className="space-y-1">
+                  <span className="block text-lg font-semibold text-slate-950">{title}</span>
+                  {description ? (
+                    <span className="block text-sm text-slate-600">{description}</span>
+                  ) : null}
+                </span>
               </span>
-            </span>
-          )}
-        </span>
-        <ChevronDown
-          className={cn(
-            'size-5 shrink-0 text-slate-400 transition-transform duration-200',
-            isOpen ? 'rotate-180' : 'rotate-0',
-          )}
-        />
-      </button>
+            )}
+          </span>
+          <ChevronDown
+            className={cn(
+              'size-5 shrink-0 text-slate-400 transition-transform duration-200',
+              isOpen ? 'rotate-180' : 'rotate-0',
+            )}
+          />
+        </button>
+      </div>
       <div
         className={cn(
           'grid transition-[grid-template-rows] duration-200 ease-out',

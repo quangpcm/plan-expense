@@ -1067,14 +1067,16 @@ function TravelItinerarySummaryWidget({
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-4">
+            {/* Plain typography, no bordered/filled box — deliberately lower visual weight than
+                the upcoming activity title on the left (text-lg vs. that column's text-xl). */}
+            <div className="text-right">
               <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
                 Tổng lịch trình
               </p>
-              <p className="mt-2 text-3xl font-semibold text-slate-950">
+              <p className="mt-2 text-lg font-semibold text-slate-700">
                 {travelActivities.length}
               </p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <p className="mt-1 text-xs leading-5 text-slate-500">
                 hoạt động đã được ghi nhận cho chuyến đi.
               </p>
             </div>

@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
-import type { MouseEventHandler } from 'react';
 
 import { Avatar } from '@/shared/components/ui/avatar';
 import { Button } from '@/shared/components/ui/button';
+import { ConfirmDialog } from '@/shared/components/ui/confirm-dialog';
 import { formatCurrency } from '@/shared/utils/currency';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { SettlementSuggestion } from '@/modules/settlement/types/settlement';
@@ -11,7 +12,7 @@ type SettlementSuggestionCardProps = {
   canConfirm: boolean;
   isSubmitting: boolean;
   members: PlanMemberDocument[];
-  onConfirm: MouseEventHandler<HTMLButtonElement>;
+  onConfirm: () => void;
   suggestion: SettlementSuggestion;
 };
 
@@ -22,6 +23,7 @@ export function SettlementSuggestionCard({
   onConfirm,
   suggestion,
 }: SettlementSuggestionCardProps) {
+  const [showConfirm, setShowConfirm] = useState(false);
   const fromMember = members.find((member) => member.id === suggestion.fromMemberId);
   const toMember = members.find((member) => member.id === suggestion.toMemberId);
   const fromName = fromMember?.nickname || suggestion.fromMemberId;
@@ -46,10 +48,23 @@ export function SettlementSuggestionCard({
         <span className="ml-1 shrink-0 font-semibold text-slate-950">{formatCurrency(suggestion.amount)}</span>
       </div>
       {canConfirm ? (
-        <Button className="shrink-0" disabled={isSubmitting} onClick={onConfirm} size="sm">
+        <Button className="shrink-0" disabled={isSubmitting} onClick={() => setShowConfirm(true)} size="sm">
           {isSubmitting ? 'Đang lưu...' : 'Xác nhận đã chuyển'}
         </Button>
       ) : null}
+      <ConfirmDialog
+        confirmLabel="Xác nhận"
+        confirmVariant="default"
+        description={`${fromName} → ${toName} · ${formatCurrency(suggestion.amount)}. Khoản chuyển này sẽ được ghi nhận là đã hoàn tất.`}
+        loading={isSubmitting}
+        onConfirm={() => {
+          onConfirm();
+          setShowConfirm(false);
+        }}
+        onOpenChange={setShowConfirm}
+        open={showConfirm}
+        title="Xác nhận đã chuyển khoản?"
+      />
     </div>
   );
 }

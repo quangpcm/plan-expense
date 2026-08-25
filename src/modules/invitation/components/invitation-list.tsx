@@ -1,6 +1,7 @@
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
+import { DataRow } from '@/shared/components/ui/data-row';
 import type { InvitationDocument, InvitationStatus } from '@/modules/invitation/types/invitation';
 import { PLAN_ROLE_LABEL } from '@/modules/member/constants/role-labels';
 
@@ -28,26 +29,37 @@ export function InvitationList({ invitations, canRevoke, isSubmitting, onRevoke 
   }
 
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-2">
       {invitations.map((invitation) => (
-        <Card key={invitation.id} className="gap-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="font-semibold text-slate-950">{invitation.email || 'Liên kết mời'}</p>
-              <p className="text-sm text-slate-500">Vai trò: {PLAN_ROLE_LABEL[invitation.role]}</p>
+        <DataRow
+          className="rounded-2xl border border-slate-200 px-4"
+          key={invitation.id}
+          main={
+            <div className="min-w-0">
+              {/* break-words, not truncate: a long invitation email must stay fully readable
+                  (may wrap to 2 lines) rather than being clipped mid-address. */}
+              <p className="font-semibold break-words text-slate-950">
+                {invitation.email || 'Liên kết mời'}
+              </p>
+              <p className="text-sm text-slate-500">{PLAN_ROLE_LABEL[invitation.role]}</p>
             </div>
-            <Badge variant={invitation.status === 'pending' ? 'info' : 'neutral'}>
-              {invitationStatusLabel[invitation.status]}
-            </Badge>
-          </div>
-          {canRevoke && invitation.status === 'pending' ? (
-            <div className="flex justify-end">
-              <Button disabled={isSubmitting} onClick={() => onRevoke(invitation)} variant="ghost">
-                Hủy lời mời
-              </Button>
+          }
+          trailing={
+            // Badge + action stacked in one column (rather than side-by-side) so `main` keeps
+            // the most available width on narrow viewports, letting long emails wrap instead of
+            // being squeezed down to only a few visible characters.
+            <div className="flex flex-col items-end gap-1.5">
+              <Badge variant={invitation.status === 'pending' ? 'info' : 'neutral'}>
+                {invitationStatusLabel[invitation.status]}
+              </Badge>
+              {canRevoke && invitation.status === 'pending' ? (
+                <Button disabled={isSubmitting} onClick={() => onRevoke(invitation)} variant="ghost">
+                  Hủy lời mời
+                </Button>
+              ) : null}
             </div>
-          ) : null}
-        </Card>
+          }
+        />
       ))}
     </div>
   );
