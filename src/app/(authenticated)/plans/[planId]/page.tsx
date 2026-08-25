@@ -351,6 +351,8 @@ export default function PlanDetailPage() {
   const [milestoneActionError, setMilestoneActionError] = useState<
     string | null
   >(null);
+  const [pendingDeleteMilestone, setPendingDeleteMilestone] =
+    useState<MilestoneDocument | null>(null);
   const [editingTodo, setEditingTodo] = useState<TodoDocument | null>(null);
   const [showTodoForm, setShowTodoForm] = useState(false);
   const [isTodoSubmitting, setIsTodoSubmitting] = useState(false);
@@ -362,6 +364,12 @@ export default function PlanDetailPage() {
   const [detailTodo, setDetailTodo] = useState<TodoDocument | null>(null);
   const [todoToRestoreAfterVendor, setTodoToRestoreAfterVendor] =
     useState<TodoDocument | null>(null);
+  const [pendingDeleteTodo, setPendingDeleteTodo] =
+    useState<TodoDocument | null>(null);
+  const [pendingDeleteVendor, setPendingDeleteVendor] = useState<{
+    todo: TodoDocument;
+    vendorId: string;
+  } | null>(null);
   const [expenseSheetMilestoneId, setExpenseSheetMilestoneId] = useState<
     string | null
   >(null);
@@ -382,6 +390,8 @@ export default function PlanDetailPage() {
   const [expenseActionError, setExpenseActionError] = useState<string | null>(
     null,
   );
+  const [pendingDeleteExpense, setPendingDeleteExpense] =
+    useState<ExpenseDocument | null>(null);
   const [detailIncome, setDetailIncome] = useState<IncomeDocument | null>(
     null,
   );
@@ -396,11 +406,17 @@ export default function PlanDetailPage() {
   const [incomeActionError, setIncomeActionError] = useState<string | null>(
     null,
   );
+  const [pendingDeleteIncome, setPendingDeleteIncome] =
+    useState<IncomeDocument | null>(null);
   const [desktopFinanceDetail, setDesktopFinanceDetail] =
     useState<FinanceDesktopDetail | null>(null);
   const [travelActionError, setTravelActionError] = useState<string | null>(
     null,
   );
+  const [isDeletingTravelActivity, setIsDeletingTravelActivity] =
+    useState(false);
+  const [pendingDeleteTravelActivity, setPendingDeleteTravelActivity] =
+    useState<TravelActivityDocument | null>(null);
   const [showTravelActivityForm, setShowTravelActivityForm] = useState(false);
   const [editingTravelActivity, setEditingTravelActivity] =
     useState<TravelActivityDocument | null>(null);
@@ -855,20 +871,23 @@ export default function PlanDetailPage() {
     mySummary?.isLocked && userProfile?.secretNumberHash,
   );
 
-  async function handleDeleteTravelActivity(activity: TravelActivityDocument) {
+  function requestDeleteTravelActivity(activity: TravelActivityDocument) {
     if (!user) {
       return;
     }
 
-    const shouldDelete = window.confirm(
-      `Xóa hoạt động "${activity.title}" khỏi itinerary?`,
-    );
+    setTravelActionError(null);
+    setPendingDeleteTravelActivity(activity);
+  }
 
-    if (!shouldDelete) {
+  async function performDeleteTravelActivity() {
+    if (!user || !pendingDeleteTravelActivity) {
       return;
     }
 
+    const activity = pendingDeleteTravelActivity;
     setTravelActionError(null);
+    setIsDeletingTravelActivity(true);
 
     try {
       await travelActivityService.deleteActivity(
@@ -881,12 +900,16 @@ export default function PlanDetailPage() {
       if (detailTravelActivity?.id === activity.id) {
         setDetailTravelActivity(null);
       }
+
+      setPendingDeleteTravelActivity(null);
     } catch (error) {
       setTravelActionError(
         error instanceof Error
           ? error.message
           : 'Không thể xóa hoạt động lịch trình.',
       );
+    } finally {
+      setIsDeletingTravelActivity(false);
     }
   }
 
@@ -1284,16 +1307,17 @@ export default function PlanDetailPage() {
     }
   }
 
-  async function handleDeleteMilestone(milestone: MilestoneDocument) {
+  function requestDeleteMilestone(milestone: MilestoneDocument) {
     if (!user) {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Xoá mốc "${milestone.title}"? Toàn bộ công việc thuộc mốc này sẽ bị xoá theo. Hành động này không thể hoàn tác.`,
-    );
+    setMilestoneActionError(null);
+    setPendingDeleteMilestone(milestone);
+  }
 
-    if (!confirmed) {
+  async function performDeleteMilestone() {
+    if (!user || !pendingDeleteMilestone) {
       return;
     }
 
@@ -1303,10 +1327,11 @@ export default function PlanDetailPage() {
     try {
       await milestoneService.deleteMilestone(
         ensuredPlan,
-        milestone,
+        pendingDeleteMilestone,
         user,
         currentMember,
       );
+      setPendingDeleteMilestone(null);
     } catch (error) {
       setMilestoneActionError(
         error instanceof Error
@@ -1371,6 +1396,14 @@ export default function PlanDetailPage() {
   const editingVendor = vendorFormTodo?.vendors.find(
     (vendor) => vendor.id === editingVendorId,
   );
+  const pendingDeleteVendorName = (() => {
+    if (!pendingDeleteVendor) {
+      return undefined;
+    }
+
+    const { todo, vendorId } = pendingDeleteVendor;
+    return todo.vendors.find((vendor) => vendor.id === vendorId)?.name;
+  })();
 
   async function handleSelectTodoVendor(todo: TodoDocument, vendorId: string) {
     if (!user) {
@@ -1399,20 +1432,21 @@ export default function PlanDetailPage() {
     }
   }
 
-  async function handleDeleteVendor(todo: TodoDocument, vendorId: string) {
+  function requestDeleteVendor(todo: TodoDocument, vendorId: string) {
     if (!user) {
       return;
     }
 
-    const vendor = todo.vendors.find((item) => item.id === vendorId);
-    const confirmed = window.confirm(
-      `Xoá nhà cung cấp "${vendor?.name ?? ''}"? Hành động này không thể hoàn tác.`,
-    );
+    setTodoActionError(null);
+    setPendingDeleteVendor({ todo, vendorId });
+  }
 
-    if (!confirmed) {
+  async function performDeleteVendor() {
+    if (!user || !pendingDeleteVendor) {
       return;
     }
 
+    const { todo, vendorId } = pendingDeleteVendor;
     setIsTodoSubmitting(true);
     setTodoActionError(null);
 
@@ -1424,6 +1458,7 @@ export default function PlanDetailPage() {
         user,
         currentMember,
       );
+      setPendingDeleteVendor(null);
     } catch (error) {
       setTodoActionError(
         error instanceof Error
@@ -1501,16 +1536,17 @@ export default function PlanDetailPage() {
     }
   }
 
-  async function handleDeleteTodo(todo: TodoDocument) {
+  function requestDeleteTodo(todo: TodoDocument) {
     if (!user) {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Xóa công việc "${todo.title}"? Hành động này không thể hoàn tác.`,
-    );
+    setTodoActionError(null);
+    setPendingDeleteTodo(todo);
+  }
 
-    if (!confirmed) {
+  async function performDeleteTodo() {
+    if (!user || !pendingDeleteTodo) {
       return;
     }
 
@@ -1518,7 +1554,13 @@ export default function PlanDetailPage() {
     setTodoActionError(null);
 
     try {
-      await todoService.deleteTodo(ensuredPlan, todo, user, currentMember);
+      await todoService.deleteTodo(
+        ensuredPlan,
+        pendingDeleteTodo,
+        user,
+        currentMember,
+      );
+      setPendingDeleteTodo(null);
     } catch (error) {
       setTodoActionError(
         error instanceof Error
@@ -1552,16 +1594,17 @@ export default function PlanDetailPage() {
     setExpenseFormActivityId(null);
   }
 
-  async function handleDeleteExpenseInline(expense: ExpenseDocument) {
+  function requestDeleteExpense(expense: ExpenseDocument) {
     if (!user) {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Xoá khoản chi "${expense.title}"? Hành động này không thể hoàn tác.`,
-    );
+    setExpenseActionError(null);
+    setPendingDeleteExpense(expense);
+  }
 
-    if (!confirmed) {
+  async function performDeleteExpense() {
+    if (!user || !pendingDeleteExpense) {
       return;
     }
 
@@ -1571,10 +1614,11 @@ export default function PlanDetailPage() {
     try {
       await expenseService.deleteExpense(
         ensuredPlan,
-        expense,
+        pendingDeleteExpense,
         user,
         currentMember,
       );
+      setPendingDeleteExpense(null);
       setDetailExpense(null);
       setDesktopFinanceDetail(null);
     } catch (error) {
@@ -1608,16 +1652,17 @@ export default function PlanDetailPage() {
     setIncomeFormMilestoneId(null);
   }
 
-  async function handleDeleteIncomeInline(income: IncomeDocument) {
+  function requestDeleteIncome(income: IncomeDocument) {
     if (!user) {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Xoá khoản thu "${income.title}"? Hành động này không thể hoàn tác.`,
-    );
+    setIncomeActionError(null);
+    setPendingDeleteIncome(income);
+  }
 
-    if (!confirmed) {
+  async function performDeleteIncome() {
+    if (!user || !pendingDeleteIncome) {
       return;
     }
 
@@ -1625,10 +1670,17 @@ export default function PlanDetailPage() {
     setIncomeActionError(null);
 
     try {
-      await incomeService.deleteIncome(ensuredPlan, income, user, currentMember, {
-        expenses,
-        incomes,
-      });
+      await incomeService.deleteIncome(
+        ensuredPlan,
+        pendingDeleteIncome,
+        user,
+        currentMember,
+        {
+          expenses,
+          incomes,
+        },
+      );
+      setPendingDeleteIncome(null);
       setDetailIncome(null);
       setDesktopFinanceDetail(null);
     } catch (error) {
@@ -1800,9 +1852,9 @@ export default function PlanDetailPage() {
               }
 
               if (desktopFinanceDetail.kind === 'expense') {
-                void handleDeleteExpenseInline(desktopFinanceDetail.expense);
+                requestDeleteExpense(desktopFinanceDetail.expense);
               } else {
-                void handleDeleteIncomeInline(desktopFinanceDetail.income);
+                requestDeleteIncome(desktopFinanceDetail.income);
               }
             }}
             onEditDesktopDetail={() => {
@@ -1883,7 +1935,7 @@ export default function PlanDetailPage() {
                 setShowTodoForm(true);
               }}
               onChangeTodoStatus={handleChangeTodoStatus}
-              onDeleteMilestone={handleDeleteMilestone}
+              onDeleteMilestone={requestDeleteMilestone}
               onEditMilestone={(milestone) => {
                 setEditingMilestone(milestone);
                 setShowMilestoneForm(true);
@@ -2025,7 +2077,7 @@ export default function PlanDetailPage() {
               setEditingTravelActivity(null);
               setShowTravelActivityForm(true);
             }}
-            onDelete={(activity) => void handleDeleteTravelActivity(activity)}
+            onDelete={requestDeleteTravelActivity}
             onEdit={(activity) => {
               setDetailTravelActivity(null);
               setEditingTravelActivity(activity);
@@ -2310,7 +2362,7 @@ export default function PlanDetailPage() {
               onClose={() => setDetailTodo(null)}
               onDeleteTodo={(todo) => {
                 setDetailTodo(null);
-                void handleDeleteTodo(todo);
+                requestDeleteTodo(todo);
               }}
               onEdit={(todo) => {
                 setDetailTodo(null);
@@ -2324,7 +2376,7 @@ export default function PlanDetailPage() {
                 setEditingVendorId(vendorId);
                 setVendorFormTodo(todo);
               }}
-              onDeleteVendor={handleDeleteVendor}
+              onDeleteVendor={requestDeleteVendor}
               onMoveToMilestone={handleMoveTodoToMilestone}
               onSelectVendor={handleSelectTodoVendor}
               todo={detailTodo}
@@ -2350,7 +2402,7 @@ export default function PlanDetailPage() {
               members={members}
               milestones={visibleMilestones}
               onClose={() => setDetailExpense(null)}
-              onDelete={() => void handleDeleteExpenseInline(detailExpense)}
+              onDelete={() => requestDeleteExpense(detailExpense)}
               onEdit={() => openEditExpense(detailExpense)}
               planId={planId}
               travelActivities={travelActivities}
@@ -2377,7 +2429,7 @@ export default function PlanDetailPage() {
               members={members}
               milestones={visibleMilestones}
               onClose={() => setDetailIncome(null)}
-              onDelete={() => void handleDeleteIncomeInline(detailIncome)}
+              onDelete={() => requestDeleteIncome(detailIncome)}
               onEdit={() => openEditIncome(detailIncome)}
               {...getIncomeDetailPermissions(detailIncome)}
             />
@@ -2695,6 +2747,104 @@ export default function PlanDetailPage() {
                 },
               }
             : {})}
+        />
+        <ConfirmDialog
+          confirmLabel="Xóa"
+          confirmVariant="destructive"
+          description="Hoạt động này sẽ bị xóa khỏi itinerary. Hành động này không thể hoàn tác."
+          errorMessage={
+            pendingDeleteTravelActivity ? (travelActionError ?? undefined) : undefined
+          }
+          loading={isDeletingTravelActivity}
+          onConfirm={() => void performDeleteTravelActivity()}
+          onOpenChange={(next) => {
+            if (!next) {
+              setPendingDeleteTravelActivity(null);
+            }
+          }}
+          open={Boolean(pendingDeleteTravelActivity)}
+          title={`Xóa hoạt động "${pendingDeleteTravelActivity?.title ?? ''}"?`}
+        />
+        <ConfirmDialog
+          confirmLabel="Xoá"
+          confirmVariant="destructive"
+          description="Toàn bộ công việc thuộc mốc này sẽ bị xoá theo. Hành động này không thể hoàn tác."
+          errorMessage={
+            pendingDeleteMilestone ? (milestoneActionError ?? undefined) : undefined
+          }
+          loading={isMilestoneSubmitting}
+          onConfirm={() => void performDeleteMilestone()}
+          onOpenChange={(next) => {
+            if (!next) {
+              setPendingDeleteMilestone(null);
+            }
+          }}
+          open={Boolean(pendingDeleteMilestone)}
+          title={`Xoá mốc "${pendingDeleteMilestone?.title ?? ''}"?`}
+        />
+        <ConfirmDialog
+          confirmLabel="Xóa"
+          confirmVariant="destructive"
+          description="Hành động này không thể hoàn tác."
+          errorMessage={pendingDeleteTodo ? (todoActionError ?? undefined) : undefined}
+          loading={isTodoSubmitting}
+          onConfirm={() => void performDeleteTodo()}
+          onOpenChange={(next) => {
+            if (!next) {
+              setPendingDeleteTodo(null);
+            }
+          }}
+          open={Boolean(pendingDeleteTodo)}
+          title={`Xóa công việc "${pendingDeleteTodo?.title ?? ''}"?`}
+        />
+        <ConfirmDialog
+          confirmLabel="Xoá"
+          confirmVariant="destructive"
+          description="Hành động này không thể hoàn tác."
+          errorMessage={pendingDeleteVendor ? (todoActionError ?? undefined) : undefined}
+          loading={isTodoSubmitting}
+          onConfirm={() => void performDeleteVendor()}
+          onOpenChange={(next) => {
+            if (!next) {
+              setPendingDeleteVendor(null);
+            }
+          }}
+          open={Boolean(pendingDeleteVendor)}
+          title={`Xoá nhà cung cấp "${pendingDeleteVendorName ?? ''}"?`}
+        />
+        <ConfirmDialog
+          confirmLabel="Xoá"
+          confirmVariant="destructive"
+          description="Hành động này không thể hoàn tác."
+          errorMessage={
+            pendingDeleteExpense ? (expenseActionError ?? undefined) : undefined
+          }
+          loading={isDeletingExpenseInline}
+          onConfirm={() => void performDeleteExpense()}
+          onOpenChange={(next) => {
+            if (!next) {
+              setPendingDeleteExpense(null);
+            }
+          }}
+          open={Boolean(pendingDeleteExpense)}
+          title={`Xoá khoản chi "${pendingDeleteExpense?.title ?? ''}"?`}
+        />
+        <ConfirmDialog
+          confirmLabel="Xoá"
+          confirmVariant="destructive"
+          description="Hành động này không thể hoàn tác."
+          errorMessage={
+            pendingDeleteIncome ? (incomeActionError ?? undefined) : undefined
+          }
+          loading={isDeletingIncomeInline}
+          onConfirm={() => void performDeleteIncome()}
+          onOpenChange={(next) => {
+            if (!next) {
+              setPendingDeleteIncome(null);
+            }
+          }}
+          open={Boolean(pendingDeleteIncome)}
+          title={`Xoá khoản thu "${pendingDeleteIncome?.title ?? ''}"?`}
         />
         <ResponsiveModal
           className="max-h-[85vh] w-full max-w-4xl overflow-y-auto"
