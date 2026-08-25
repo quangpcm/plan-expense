@@ -17,8 +17,13 @@ import {
   calculateOverallGuestStatistic,
 } from '@/modules/wedding-guest/utils/wedding-guest-statistic';
 import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
-import { SectionHeading } from '@/shared/components/ui/section-heading';
+import { DataRow } from '@/shared/components/ui/data-row';
+import { EmptyState } from '@/shared/components/ui/empty-state';
+import { ErrorState } from '@/shared/components/ui/error-state';
+import { Metric } from '@/shared/components/ui/metric';
+import { Section } from '@/shared/components/ui/section';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { formatCompactCurrency } from '@/shared/utils/currency';
 import { formatDueCountdown, getDueUrgency } from '@/shared/utils/date';
@@ -54,15 +59,19 @@ function selectAttentionItems(todos: OverviewRendererProps['todos']) {
     );
 }
 
+// Adopts the canonical Button (Wave 2 ghost variant) for real button semantics/focus-visible,
+// but overrides size/shape back down to a plain text link — Button's own sm/md sizes assume real
+// button chrome (padding, min-height, pill shape), which this lightweight "Xem thêm" link never
+// had. Foundation finding for later: Core Primitives has no canonical "link" footprint yet.
 function ViewAllAction({ onClick }: { onClick: () => void }) {
   return (
-    <button
-      className="text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+    <Button
+      className="h-auto min-h-0 gap-0 rounded-none p-0 text-sm font-medium text-[var(--color-brand-primary)] hover:bg-transparent hover:text-[color:color-mix(in_srgb,var(--color-brand-primary)_78%,black)]"
       onClick={onClick}
-      type="button"
+      variant="ghost"
     >
       Xem thêm ➔
-    </button>
+    </Button>
   );
 }
 
@@ -190,18 +199,17 @@ function WeddingAttentionSummaryWidget({
     .join(' · ');
 
   return (
-    <div className="space-y-3">
-      <SectionHeading
-        action={<ViewAllAction onClick={onOpenPlanningTodos} />}
-        eyebrow="Cần chú ý"
-        title="Công việc"
-        {...(summary ? { description: summary } : {})}
-      />
+    <Section
+      action={<ViewAllAction onClick={onOpenPlanningTodos} />}
+      description={summary}
+      eyebrow="Cần chú ý"
+      title="Công việc"
+    >
       {todoActionError ? <AuthFormMessage message={todoActionError} type="error" /> : null}
       {isTodosLoading ? (
-        <Skeleton className="h-56 rounded-[28px]" />
+        <Skeleton className="h-56 rounded-[var(--radius-ds-lg)]" />
       ) : (
-        <Card className="gap-5">
+        <Card className="gap-5 rounded-[var(--radius-ds-lg)] shadow-none">
           <div className="space-y-3">
             <div className="space-y-1">
               <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
@@ -211,9 +219,11 @@ function WeddingAttentionSummaryWidget({
                 {summary || 'Không có việc quá hạn hoặc đến hạn hôm nay.'}
               </p>
             </div>
+            {/* Positive/all-clear state, not "nothing to show" — kept as a lightweight
+                product-specific state rather than EmptyState (Pilot review decision). */}
             {attentionItems.length === 0 ? (
               <div className="flex items-center gap-3 rounded-[24px] border border-slate-200 bg-slate-50 px-4 py-4">
-                <CheckCircle2 className="size-5 shrink-0 text-[color:var(--color-success)]" />
+                <CheckCircle2 className="size-5 shrink-0 text-[var(--color-status-success)]" />
                 <p className="text-sm leading-6 text-slate-600">
                   Mọi việc đang trong tầm kiểm soát.
                 </p>
@@ -251,38 +261,44 @@ function WeddingAttentionSummaryWidget({
                 Các công việc tiếp theo trong thời gian tới.
               </p>
             </div>
+            {/* Sub-section zero state, not a full EmptyState — kept lightweight (Pilot review
+                decision). */}
             {nextTodoItems.length === 0 ? (
               <p className="text-sm leading-6 text-slate-500">
                 Không có công việc nào sắp đến hạn.
               </p>
             ) : (
               <div className="space-y-3">
+                {/* COMPOSE DataRow: clean fit here (no responsive card-ification unlike
+                    AttentionItemRow below), so unlike that one this genuinely simplifies. */}
                 {nextTodoItems.map((item) => (
-                  <button
-                    className="flex w-full items-start justify-between gap-4 rounded-[20px] border border-slate-200 px-4 py-3 text-left transition hover:border-slate-300 hover:bg-slate-50"
+                  <DataRow
+                    className="rounded-[20px] border border-slate-200 px-4 hover:border-slate-300"
                     key={item.todo.id}
+                    main={
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-950">
+                          {item.todo.title}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {milestoneTitleById.get(item.todo.milestoneId) ?? 'Không có mốc'}
+                        </p>
+                      </div>
+                    }
                     onClick={() => onViewTodo(item.todo)}
-                    type="button"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-950">
-                        {item.todo.title}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {milestoneTitleById.get(item.todo.milestoneId) ?? 'Không có mốc'}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-sm font-medium text-slate-500">
-                      {formatDueCountdown(item.dueDate)}
-                    </span>
-                  </button>
+                    trailing={
+                      <span className="shrink-0 text-sm font-medium text-slate-500">
+                        {formatDueCountdown(item.dueDate)}
+                      </span>
+                    }
+                  />
                 ))}
               </div>
             )}
           </div>
         </Card>
       )}
-    </div>
+    </Section>
   );
 }
 
@@ -302,14 +318,16 @@ function WeddingMilestoneCard({
   const statusLabel = getMilestoneCountdownLabel(milestone);
 
   return (
-    <Card className="gap-3">
+    // Per-consumer classification (Pilot review decision): standard contained surface →
+    // radius-ds-lg / elevation.none, same as the other widget-body Cards in this file.
+    <Card className="min-w-0 gap-3 rounded-[var(--radius-ds-lg)] shadow-none">
       <div className="space-y-3">
         <div className="flex items-start justify-between gap-3">
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
               {title}
             </p>
-            <p className="mt-1 min-w-0 truncate text-lg font-semibold text-slate-950">
+            <p className="mt-1 truncate text-lg font-semibold text-slate-950">
               {milestone.title}
             </p>
           </div>
@@ -325,7 +343,7 @@ function WeddingMilestoneCard({
           <div className="space-y-1.5">
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
               <div
-                className="h-full rounded-full bg-[var(--color-primary)]"
+                className="h-full rounded-full bg-[var(--color-brand-primary)]"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -372,18 +390,18 @@ function WeddingMilestoneSnapshotWidget({
     : upcomingMilestones[1] ?? null;
 
   return (
-    <div className="space-y-3">
-      <SectionHeading
-        action={<ViewAllAction onClick={onOpenPlanningMilestones} />}
-        eyebrow="Kế hoạch"
-        title="Tiến độ kế hoạch"
-      />
+    <Section
+      action={<ViewAllAction onClick={onOpenPlanningMilestones} />}
+      eyebrow="Kế hoạch"
+      title="Tiến độ kế hoạch"
+    >
       {milestoneActionError ? <AuthFormMessage message={milestoneActionError} type="error" /> : null}
       {isMilestonesLoading ? (
-        <Skeleton className="h-32 rounded-[28px]" />
+        <Skeleton className="h-32 rounded-[var(--radius-ds-lg)]" />
       ) : !currentMilestone ? (
-        <Card className="border-slate-200 bg-slate-50 shadow-none">
-          <p className="text-sm leading-6 text-slate-600">Không có mốc nào đang diễn ra hoặc sắp diễn ra.</p>
+        // EmptyState candidate approved in Pilot review — genuine "nothing to show" state.
+        <Card className="rounded-[var(--radius-ds-lg)] border-slate-200 bg-slate-50 shadow-none">
+          <EmptyState title="Không có mốc nào đang diễn ra hoặc sắp diễn ra." />
         </Card>
       ) : (
         <div className="grid gap-3 lg:grid-cols-2">
@@ -403,7 +421,7 @@ function WeddingMilestoneSnapshotWidget({
           ) : null}
         </div>
       )}
-    </div>
+    </Section>
   );
 }
 
@@ -419,18 +437,19 @@ const RSVP_LABEL: Record<RsvpStatus, string> = {
 // màu tự do — để nhất quán với toàn bộ hệ thống, không riêng widget này.
 const RSVP_TONE: Record<RsvpStatus, { barClass: string; colorClass: string; icon: LucideIcon }> = {
   attending: {
-    barClass: 'bg-[color:var(--color-success)]',
-    colorClass: 'text-[color:var(--color-success)]',
+    barClass: 'bg-[var(--color-status-success)]',
+    colorClass: 'text-[var(--color-status-success)]',
     icon: CheckCircle2,
   },
   pending: {
-    barClass: 'bg-[color:var(--color-warning)]',
-    colorClass: 'text-[color:var(--color-warning)]',
+    barClass: 'bg-[var(--color-status-warning)]',
+    colorClass: 'text-[var(--color-status-warning)]',
     icon: Clock3,
   },
   not_attending: {
-    barClass: 'bg-[color:var(--color-muted)]',
-    colorClass: 'text-[color:var(--color-muted)]',
+    // --color-muted aliases to --color-text-secondary (Wave 1), not --color-text-muted.
+    barClass: 'bg-[var(--color-text-secondary)]',
+    colorClass: 'text-[var(--color-text-secondary)]',
     icon: XCircle,
   },
 };
@@ -470,35 +489,37 @@ function WeddingGuestSummaryWidget({ onOpenWeddingGuests, planId }: OverviewRend
   );
 
   return (
-    <div className="space-y-3">
-      <SectionHeading
-        action={<ViewAllAction onClick={onOpenWeddingGuests} />}
-        description=""
-        eyebrow="Khách mời"
-        title="Tình hình khách mời"
-      />
-      <Card className="gap-3">
+    <Section
+      action={<ViewAllAction onClick={onOpenWeddingGuests} />}
+      eyebrow="Khách mời"
+      title="Tình hình khách mời"
+    >
+      <Card className="gap-3 rounded-[var(--radius-ds-lg)] shadow-none">
         {errorMessage ? (
-          <p className="text-sm text-[color:var(--color-danger)]">{errorMessage}</p>
+          // ErrorState approved in Pilot review: genuine content-area data-fetch failure.
+          // Title is new structural scaffolding (ErrorState requires one); errorMessage itself
+          // — the only content that existed before — is preserved verbatim as the description.
+          <ErrorState description={errorMessage} title="Không thể tải thông tin khách mời" />
         ) : isLoading ? (
-          <Skeleton className="h-24 rounded-2xl" />
+          <Skeleton className="h-24 rounded-[var(--radius-ds-lg)]" />
         ) : total === 0 ? (
-          <p className="text-sm text-slate-600">Chưa có khách mời nào được thêm vào kế hoạch.</p>
+          // EmptyState candidate approved in Pilot review — genuine "nothing to show" state.
+          <EmptyState title="Chưa có khách mời nào được thêm vào kế hoạch." />
         ) : (
           <>
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--color-accent-soft)] text-[color:var(--color-accent)]">
-                <Users className="size-5" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-slate-950">
-                  {total} lời mời
-                </p>
-                <p className="text-sm text-slate-600">
-                  {statistic.attendeeCount} người dự kiến
-                </p>
-              </div>
-            </div>
+            {/* Metric candidate approved in Pilot review — must keep `total` (invitation count)
+                and `statistic.attendeeCount` (expected-attendee count) as two distinct values;
+                never merge into one number (see Pre-Code §6 invariant mapping). */}
+            <Metric
+              label="Lời mời"
+              leading={
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-subtle)] text-[var(--color-brand-accent)]">
+                  <Users className="size-5" />
+                </div>
+              }
+              supporting={`${statistic.attendeeCount} người dự kiến`}
+              value={total}
+            />
             <div className="space-y-2 text-sm">
               {(['attending', 'pending', 'not_attending'] as const).map((status) => {
                 const tone = RSVP_TONE[status];
@@ -527,11 +548,11 @@ function WeddingGuestSummaryWidget({ onOpenWeddingGuests, planId }: OverviewRend
                   ) : null,
                 )}
               </div>
-              <p className="text-xs font-medium text-[color:var(--color-success)]">{confirmedPercent}% đã phản hồi</p>
+              <p className="text-xs font-medium text-[var(--color-status-success)]">{confirmedPercent}% đã phản hồi</p>
             </div>
             {rsvpBreakdown.pending > 0 ? (
-              <div className="rounded-2xl border border-[color:var(--color-warning-soft)] bg-[color:var(--color-warning-soft)]/40 px-4 py-3">
-                <p className="text-sm font-medium text-[color:var(--color-warning)]">
+              <div className="rounded-2xl border border-[var(--color-status-warning-surface)] bg-[var(--color-status-warning-surface)]/40 px-4 py-3">
+                <p className="text-sm font-medium text-[var(--color-status-warning)]">
                   {rsvpBreakdown.pending} lời mời đang chờ phản hồi
                 </p>
                 {pendingGroups[0] ? (
@@ -555,7 +576,7 @@ function WeddingGuestSummaryWidget({ onOpenWeddingGuests, planId }: OverviewRend
           </>
         )}
       </Card>
-    </div>
+    </Section>
   );
 }
 
@@ -563,14 +584,14 @@ function WeddingGuestSummaryWidget({ onOpenWeddingGuests, planId }: OverviewRend
 // progress bar trở thành tín hiệu cảnh báo thật, không chỉ trang trí.
 function getBudgetHealthTone(usedPercent: number) {
   if (usedPercent > 100) {
-    return { barClass: 'bg-[color:var(--color-danger)]', textClass: 'text-[color:var(--color-danger)]' };
+    return { barClass: 'bg-[var(--color-status-danger)]', textClass: 'text-[var(--color-status-danger)]' };
   }
 
   if (usedPercent >= 70) {
-    return { barClass: 'bg-[color:var(--color-warning)]', textClass: 'text-[color:var(--color-warning)]' };
+    return { barClass: 'bg-[var(--color-status-warning)]', textClass: 'text-[var(--color-status-warning)]' };
   }
 
-  return { barClass: 'bg-[color:var(--color-success)]', textClass: 'text-[color:var(--color-success)]' };
+  return { barClass: 'bg-[var(--color-status-success)]', textClass: 'text-[var(--color-status-success)]' };
 }
 
 // "Tài chính": thay financeSummary cho wedding — chỉ hiện đã chi/dự kiến (ratio, insight
@@ -590,14 +611,12 @@ function WeddingFinanceSummaryWidget({
     .slice(0, 3);
 
   return (
-    <div className="space-y-3">
-      <SectionHeading
-        action={<ViewAllAction onClick={onOpenFinance} />}
-        description=""
-        eyebrow="Tài chính"
-        title="Ngân sách kế hoạch"
-      />
-      <Card className="gap-3">
+    <Section
+      action={<ViewAllAction onClick={onOpenFinance} />}
+      eyebrow="Tài chính"
+      title="Ngân sách kế hoạch"
+    >
+      <Card className="gap-3 rounded-[var(--radius-ds-lg)] shadow-none">
         <div className="space-y-1.5">
           <p className="text-sm text-slate-600">
             Đã chi <span className="font-semibold text-slate-950">{formatCompactCurrency(spent)}</span>
@@ -651,7 +670,7 @@ function WeddingFinanceSummaryWidget({
           </div>
         ) : null}
       </Card>
-    </div>
+    </Section>
   );
 }
 
