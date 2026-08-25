@@ -5,9 +5,13 @@ import Link from 'next/link';
 import { ArrowRight, BellRing, Clock3 } from 'lucide-react';
 
 import type { PlanSummary } from '@/modules/plan/types/plan';
-import { useAttentionTodos, type AttentionTodo, type AttentionBellTone } from '@/modules/todo/hooks/use-attention-todos';
+import { useAttentionTodos, type AttentionBellTone } from '@/modules/todo/hooks/use-attention-todos';
+import { getTodoUrgencyTone } from '@/modules/todo/utils/todo-urgency';
+import { Badge } from '@/shared/components/ui/badge';
 import { Card } from '@/shared/components/ui/card';
-import { formatDate, formatDueCountdown, getDueUrgency } from '@/shared/utils/date';
+import { ErrorState } from '@/shared/components/ui/error-state';
+import { Skeleton } from '@/shared/components/ui/skeleton';
+import { formatDate, formatDueCountdown } from '@/shared/utils/date';
 
 type TodoAttentionSectionProps = {
   plans: PlanSummary[];
@@ -23,30 +27,6 @@ function getBellToneClass(tone: AttentionBellTone) {
   }
 
   return 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]';
-}
-
-function getUrgencyTone(urgency: AttentionTodo['urgency']) {
-  if (urgency === 'overdue') {
-    return {
-      itemClass: 'border-rose-200 bg-rose-50/80',
-      badgeClass: 'bg-rose-100 text-rose-700',
-      iconClass: 'text-rose-500',
-    };
-  }
-
-  if (urgency === 'danger') {
-    return {
-      itemClass: 'border-amber-200 bg-amber-50/80',
-      badgeClass: 'bg-amber-100 text-amber-700',
-      iconClass: 'text-amber-500',
-    };
-  }
-
-  return {
-    itemClass: 'border-sky-200 bg-sky-50/80',
-    badgeClass: 'bg-sky-100 text-sky-700',
-    iconClass: 'text-sky-500',
-  };
 }
 
 export function TodoAttentionSection({ plans }: TodoAttentionSectionProps) {
@@ -70,25 +50,19 @@ export function TodoAttentionSection({ plans }: TodoAttentionSectionProps) {
             </div>
           </div>
         </div>
-        {attentionTodos.length > 0 ? (
-          <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-            {attentionTodos.length} việc
-          </div>
-        ) : null}
+        {attentionTodos.length > 0 ? <Badge>{attentionTodos.length} việc</Badge> : null}
       </div>
 
       {errorMessage ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-          Chưa tải được danh sách việc cần chú ý.
-        </div>
+        <ErrorState className="py-4" title="Chưa tải được danh sách việc cần chú ý." />
       ) : isLoading ? (
         <div className="space-y-3">
-          <div className="h-20 animate-pulse rounded-[24px] bg-slate-100" />
+          <Skeleton className="h-20 rounded-[24px]" />
         </div>
       ) : (
         <div className="space-y-3">
           {attentionTodos.slice(0, 1).map((item) => {
-            const tone = getUrgencyTone(item.urgency);
+            const tone = getTodoUrgencyTone(item.urgency);
 
             return (
               <Link

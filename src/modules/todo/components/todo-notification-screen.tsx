@@ -10,7 +10,9 @@ import {
   type AttentionTodo,
 } from '@/modules/todo/hooks/use-attention-todos';
 import { priorityLabel } from '@/modules/todo/utils/todo-display';
+import { getTodoUrgencyTone } from '@/modules/todo/utils/todo-urgency';
 import { Button } from '@/shared/components/ui/button';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 import { formatDate, formatDueCountdown } from '@/shared/utils/date';
 
 type TodoNotificationScreenProps = {
@@ -29,30 +31,6 @@ function getBellToneClass(tone: AttentionBellTone) {
   }
 
   return 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]';
-}
-
-function getUrgencyTone(item: AttentionTodo) {
-  if (item.urgency === 'overdue') {
-    return {
-      badgeClass: 'bg-rose-100 text-rose-700',
-      iconClass: 'text-rose-500',
-      priorityClass: 'text-rose-700',
-    };
-  }
-
-  if (item.urgency === 'danger') {
-    return {
-      badgeClass: 'bg-amber-100 text-amber-700',
-      iconClass: 'text-amber-500',
-      priorityClass: 'text-amber-700',
-    };
-  }
-
-  return {
-    badgeClass: 'bg-sky-100 text-sky-700',
-    iconClass: 'text-sky-500',
-    priorityClass: 'text-sky-700',
-  };
 }
 
 export function TodoNotificationScreen({ plans, open, onClose }: TodoNotificationScreenProps) {
@@ -104,9 +82,9 @@ export function TodoNotificationScreen({ plans, open, onClose }: TodoNotificatio
           </div>
         ) : isLoading ? (
           <div className="space-y-3">
-            <div className="h-24 animate-pulse rounded-[24px] bg-slate-100" />
-            <div className="h-24 animate-pulse rounded-[24px] bg-slate-100/80" />
-            <div className="h-24 animate-pulse rounded-[24px] bg-slate-100/70" />
+            <Skeleton className="h-24 rounded-[24px]" />
+            <Skeleton className="h-24 rounded-[24px] opacity-80" />
+            <Skeleton className="h-24 rounded-[24px] opacity-70" />
           </div>
         ) : attentionTodos.length === 0 ? (
           <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-[28px] border border-dashed border-slate-200 bg-slate-50 px-6 text-center">
@@ -121,7 +99,7 @@ export function TodoNotificationScreen({ plans, open, onClose }: TodoNotificatio
         ) : (
           <div className="space-y-3">
             {attentionTodos.map((item) => {
-              const tone = getUrgencyTone(item);
+              const tone = getTodoUrgencyTone(item.urgency);
 
               return (
                 <button

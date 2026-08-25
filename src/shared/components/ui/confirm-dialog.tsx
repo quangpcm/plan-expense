@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import { Drawer } from 'vaul';
 
@@ -51,6 +52,31 @@ export function ConfirmDialog({
   errorMessage,
 }: ConfirmDialogProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)');
+
+  // Radix's modal AlertDialog/Dialog (and vaul's Drawer, built on the same primitive) restores
+  // focus on close via `context.triggerRef.current?.focus()` — populated only by a Trigger
+  // subcomponent. ConfirmDialog is controlled from arbitrary external elements with no Trigger,
+  // so that ref is always null and the library's own restoration silently no-ops (verified: focus
+  // landed on <body> after Cancel, both desktop and mobile, before this fix). Capture the real
+  // trigger ourselves — via React's documented "adjusting state during render" pattern
+  // (https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes,
+  // using state, not a ref write, since the React Compiler's lint rules disallow mutating a ref
+  // during render), not a useEffect/setTimeout — and hand it back through the library's own
+  // supported `onCloseAutoFocus` extension point below. Same fix as responsive-modal.tsx's
+  // identical defect.
+  const [trigger, setTrigger] = useState<HTMLElement | null>(null);
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setTrigger(document.activeElement as HTMLElement | null);
+    }
+  }
+
+  function restoreFocusToTrigger(event: Event) {
+    event.preventDefault();
+    trigger?.focus();
+  }
 
   // Safe initial focus (destructive confirmation must not default focus onto the destructive
   // action). Desktop: wrapping Cancel in AlertDialog.Cancel activates Radix's own built-in
@@ -124,6 +150,7 @@ export function ConfirmDialog({
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
             <AlertDialog.Content
               className="relative w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-5 shadow-[var(--shadow-overlay)] focus:outline-none data-[state=closed]:animate-content-hide data-[state=open]:animate-content-show"
+              onCloseAutoFocus={restoreFocusToTrigger}
               onEscapeKeyDown={(event) => event.preventDefault()}
             >
               {titleBlock}
@@ -141,6 +168,7 @@ export function ConfirmDialog({
         <Drawer.Overlay className="fixed inset-0 z-50 bg-[var(--color-overlay-backdrop)]" />
         <Drawer.Content
           className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col overflow-hidden rounded-t-[32px] border border-b-0 border-slate-200 bg-white p-5 shadow-[0_-16px_60px_rgba(15,23,42,0.08)] focus:outline-none"
+          onCloseAutoFocus={restoreFocusToTrigger}
           onEscapeKeyDown={(event) => event.preventDefault()}
           onOpenAutoFocus={(event) => {
             event.preventDefault();

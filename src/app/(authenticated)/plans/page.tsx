@@ -6,7 +6,6 @@ import { useMemo, useState } from 'react';
 import { ArrowUpDown, Bell, Plus, Search } from 'lucide-react';
 
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
-import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
 import { useUserPlans } from '@/modules/plan/hooks/use-user-plans';
 import { CreatePlanCard } from '@/modules/plan/components/create-plan-card';
 import { CreatePlanForm } from '@/modules/plan/components/create-plan-form';
@@ -16,6 +15,8 @@ import { TodoAttentionSection } from '@/modules/todo/components/todo-attention-s
 import { useAttentionTodos, type AttentionBellTone } from '@/modules/todo/hooks/use-attention-todos';
 import { useCurrentUserProfile } from '@/modules/user/hooks/use-current-user-profile';
 import { Avatar } from '@/shared/components/ui/avatar';
+import { DropdownSelect, type DropdownOption } from '@/shared/components/ui/dropdown-select';
+import { ErrorState } from '@/shared/components/ui/error-state';
 import { FilterBar } from '@/shared/components/ui/filter-bar';
 import { Input } from '@/shared/components/ui/input';
 import { PageHeader } from '@/shared/components/ui/page-header';
@@ -23,6 +24,11 @@ import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 
 type SortOption = 'updatedAt' | 'createdAt';
+
+const sortOptions: DropdownOption[] = [
+  { value: 'updatedAt', label: 'Mới nhất', icon: ArrowUpDown },
+  { value: 'createdAt', label: 'Ngày tạo', icon: ArrowUpDown },
+];
 
 function getBellToneClass(tone: AttentionBellTone) {
   if (tone === 'urgent') {
@@ -89,16 +95,15 @@ export default function PlansPage() {
         <FilterBar
           filters={
             <div className="relative shrink-0">
-              <ArrowUpDown className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-subtle)]" />
-              <select
-                aria-label="Sắp xếp kế hoạch"
-                className="h-11 appearance-none rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] pl-9 pr-3 text-xs text-[var(--color-foreground)] outline-none transition focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent-soft)]"
+              <label className="sr-only" htmlFor="plan-sort">
+                Sắp xếp kế hoạch
+              </label>
+              <DropdownSelect
+                id="plan-sort"
+                onValueChange={(value) => setSortBy(value as SortOption)}
+                options={sortOptions}
                 value={sortBy}
-                onChange={(event) => setSortBy(event.target.value as SortOption)}
-              >
-                <option value="updatedAt">Mới nhất</option>
-                <option value="createdAt">Ngày tạo</option>
-              </select>
+              />
             </div>
           }
           search={
@@ -115,10 +120,11 @@ export default function PlansPage() {
         />
       </section>
 
-      {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
+      {errorMessage ? <ErrorState title={errorMessage} /> : null}
 
       {isLoading ? (
-        <div className="grid gap-4">
+        <div className="grid gap-4 pb-24 sm:grid-cols-2 lg:grid-cols-3">
+          <Skeleton className="h-44 rounded-[28px]" />
           <Skeleton className="h-44 rounded-[28px]" />
           <Skeleton className="h-44 rounded-[28px]" />
         </div>

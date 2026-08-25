@@ -78,10 +78,10 @@ export function PlanCard({ plan }: PlanCardProps) {
               </span>
             ) : null}
             {viewModel.statusTone === 'active' ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-success-soft)] px-3 py-1 text-xs font-semibold text-[var(--color-success)]">
-                <span className="size-2 rounded-full bg-[var(--color-success)]" />
+              <Badge className="gap-1.5" variant="success">
+                <span className="size-2 rounded-full bg-[var(--color-status-success)]" />
                 Đang chạy
-              </span>
+              </Badge>
             ) : (
               <Badge className="inline-flex items-center gap-1.5 bg-[var(--color-secondary)] text-[var(--color-muted)]">
                 {viewModel.statusLabel}
