@@ -7,9 +7,9 @@ import type { AttachmentDraft } from '@/modules/storage/types/attachment';
 import { compressImageFile } from '@/modules/storage/utils/compress-image';
 import { resolveAttachmentUrl } from '@/modules/storage/utils/public-url';
 import { MEDIA_MAX_COUNT } from '@/modules/storage/utils/validate-media';
-import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 
 type AttachmentPickerProps = {
   value: AttachmentDraft[];
@@ -178,8 +178,12 @@ export function AttachmentPicker({
         </div>
       )}
 
-      <BottomSheet
-        onClose={closeSheet}
+      <ResponsiveModal
+        onOpenChange={(next) => {
+          if (!next) {
+            closeSheet();
+          }
+        }}
         open={sheetMode !== 'closed'}
         title={sheetMode === 'url' ? 'Nhập URL ảnh' : 'Thêm hình ảnh'}
       >
@@ -225,7 +229,7 @@ export function AttachmentPicker({
             </button>
           </div>
         )}
-      </BottomSheet>
+      </ResponsiveModal>
     </div>
   );
 }

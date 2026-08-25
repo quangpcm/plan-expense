@@ -27,11 +27,11 @@ import { useIncomes } from '@/modules/income/hooks/use-incomes';
 import { calculateFundBalance } from '@/modules/statistic/utils/fund-balance';
 import { AttachmentPicker, type AttachmentDraft } from '@/modules/storage';
 import { AmountInput } from '@/shared/components/ui/amount-input';
-import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
 import { DateTimeInput } from '@/shared/components/ui/date-time-input';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
+import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { splitMethods } from '@/shared/constants';
 import { formatCurrency } from '@/shared/utils/currency';
@@ -508,8 +508,8 @@ export function ExpenseForm({
                 <ChevronRight className="size-4 text-[#727687]" />
               </button>
 
-              <BottomSheet
-                onClose={() => setIsPaidByOpen(false)}
+              <ResponsiveModal
+                onOpenChange={setIsPaidByOpen}
                 open={isPaidByOpen}
                 title="Chọn người chi trả"
               >
@@ -539,7 +539,7 @@ export function ExpenseForm({
                     );
                   })}
                 </div>
-              </BottomSheet>
+              </ResponsiveModal>
             </>
           )}
         </>
