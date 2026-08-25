@@ -15,9 +15,9 @@ import { DebtNativeList } from '@/modules/debt-tracking/components/debt-native-l
 import { DebtTransactionForm } from '@/modules/debt-tracking/components/debt-transaction-form';
 import { usePlan } from '@/modules/plan/hooks/use-plan';
 import { usePlanMembers } from '@/modules/member/hooks/use-plan-members';
-import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
+import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 import { SectionHeading } from '@/shared/components/ui/section-heading';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { cn } from '@/shared/utils/cn';
@@ -296,13 +296,16 @@ export function DebtNativeTab({
         </div>
       </div>
 
-      <BottomSheet
+      <ResponsiveModal
         {...(sheetCounterpartyName
           ? { description: `Với ${sheetCounterpartyName}` }
           : {})}
-        onClose={() => setSheet(null)}
+        onOpenChange={(next) => {
+          if (!next) {
+            setSheet(null);
+          }
+        }}
         open={sheet !== null}
-        showCloseButton
         title={
           sheet?.mode === 'edit'
             ? sheet.transaction.type === 'loan'
@@ -342,7 +345,7 @@ export function DebtNativeTab({
             }
           />
         ) : null}
-      </BottomSheet>
+      </ResponsiveModal>
     </div>
   );
 }

@@ -36,10 +36,10 @@ import {
 } from '@/modules/debt-tracking/utils/date-range-presets';
 import { Avatar } from '@/shared/components/ui/avatar';
 import { Badge } from '@/shared/components/ui/badge';
-import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { DateField } from '@/shared/components/ui/date-field';
+import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 import { formatCompactCurrency } from '@/shared/utils/currency';
 import { formatDate, formatDateTimePickerDisplay } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
@@ -575,10 +575,9 @@ export function DebtNativeDetail({
         </div>
       </Card>
 
-      <BottomSheet
-        onClose={() => setIsCustomRangeOpen(false)}
+      <ResponsiveModal
+        onOpenChange={setIsCustomRangeOpen}
         open={isCustomRangeOpen}
-        showCloseButton
         title="Chọn khoảng thời gian"
       >
         <div className="space-y-4">
@@ -617,7 +616,7 @@ export function DebtNativeDetail({
             Áp dụng
           </Button>
         </div>
-      </BottomSheet>
+      </ResponsiveModal>
     </>
   );
 }

@@ -4,10 +4,10 @@ import { useMemo, useState } from 'react';
 
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import { AuthFormMessage } from '@/modules/auth/components/auth-form-message';
-import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
+import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 
 const ADD_NEW_VALUE = '__add_new_counterparty__';
 
@@ -83,10 +83,9 @@ export function CounterpartyPicker({
         value={value}
       />
 
-      <BottomSheet
-        onClose={() => setIsAddOpen(false)}
+      <ResponsiveModal
+        onOpenChange={setIsAddOpen}
         open={isAddOpen}
-        showCloseButton
         title="Thêm đối tượng mới"
       >
         <div className="space-y-3">
@@ -101,7 +100,7 @@ export function CounterpartyPicker({
             {isSubmitting ? 'Đang thêm...' : 'Thêm đối tượng'}
           </Button>
         </div>
-      </BottomSheet>
+      </ResponsiveModal>
     </div>
   );
 }

@@ -5,12 +5,13 @@ import { Check, Copy, Link2, Trash2, Unlink, UserCheck, UserX } from 'lucide-rea
 
 import { Avatar } from '@/shared/components/ui/avatar';
 import { Badge } from '@/shared/components/ui/badge';
-import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { Collapsible } from '@/shared/components/ui/collapsible';
+import { ConfirmDialog } from '@/shared/components/ui/confirm-dialog';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
+import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 import { MemberActionsMenu } from '@/modules/member/components/member-actions-menu';
 import type { MemberActionMenuItem } from '@/modules/member/components/member-actions-menu';
 import { MemberAvatarPicker } from '@/modules/member/components/member-avatar-picker';
@@ -242,83 +243,63 @@ function EditableMemberRow({
       ) : (
         <Collapsible header={summary}>{editForm}</Collapsible>
       )}
-      <BottomSheet
+      <ConfirmDialog
+        cancelLabel={isLinked ? 'Đóng' : 'Hủy'}
+        {...(isLinked ? {} : { confirmLabel: 'Xóa' })}
+        confirmVariant="destructive"
         description={
           isLinked
             ? `${member.nickname} đã có khoản chi, khoản thu hoặc đối soát liên quan nên không thể xóa hẳn. Hãy dùng "Ngừng hoạt động" để giữ nguyên lịch sử.`
             : `Xóa vĩnh viễn ${member.nickname} khỏi kế hoạch. Hành động này không thể hoàn tác.`
         }
-        onClose={() => setIsConfirmDeleteOpen(false)}
+        loading={isSaving}
+        onConfirm={async () => {
+          await onDelete?.(member);
+          setIsConfirmDeleteOpen(false);
+        }}
+        onOpenChange={setIsConfirmDeleteOpen}
         open={isConfirmDeleteOpen}
         title={isLinked ? 'Không thể xóa thành viên' : 'Xóa thành viên?'}
-      >
-        <div className="flex justify-end gap-2">
-          <Button onClick={() => setIsConfirmDeleteOpen(false)} variant="secondary">
-            {isLinked ? 'Đóng' : 'Hủy'}
-          </Button>
-          {isLinked ? null : (
-            <Button
-              className="bg-red-600 text-white hover:bg-red-700"
-              disabled={isSaving || !onDelete}
-              onClick={async () => {
-                await onDelete?.(member);
-                setIsConfirmDeleteOpen(false);
-              }}
-            >
-              Xóa
-            </Button>
-          )}
-        </div>
-      </BottomSheet>
-      <BottomSheet
+      />
+      <ConfirmDialog
+        cancelLabel="Hủy"
+        confirmLabel="Gỡ liên kết"
+        confirmVariant="default"
         description={`Tài khoản hiện tại sẽ không còn xem được kế hoạch này nữa, nhưng ${member.nickname} vẫn giữ nguyên trong danh sách thành viên cùng lịch sử chi tiêu/thu cũ, giờ ở dạng khách.`}
-        onClose={() => setIsConfirmUnlinkOpen(false)}
+        loading={isSaving}
+        onConfirm={async () => {
+          await onUnlinkAccount?.(member);
+          setIsConfirmUnlinkOpen(false);
+        }}
+        onOpenChange={setIsConfirmUnlinkOpen}
         open={isConfirmUnlinkOpen}
         title="Gỡ liên kết tài khoản?"
-      >
-        <div className="flex justify-end gap-2">
-          <Button onClick={() => setIsConfirmUnlinkOpen(false)} variant="secondary">
-            Hủy
-          </Button>
-          <Button
-            disabled={isSaving || !onUnlinkAccount}
-            onClick={async () => {
-              await onUnlinkAccount?.(member);
-              setIsConfirmUnlinkOpen(false);
-            }}
-          >
-            Gỡ liên kết
-          </Button>
-        </div>
-      </BottomSheet>
-      <BottomSheet
+      />
+      <ConfirmDialog
+        cancelLabel="Hủy"
+        confirmLabel={isRemoved ? 'Kích hoạt lại' : 'Ngừng hoạt động'}
+        confirmVariant="default"
         description={
           isRemoved
             ? `${member.nickname} sẽ có thể được chọn lại trong dữ liệu mới.`
             : 'Thành viên sẽ không thể được chọn trong dữ liệu mới, nhưng lịch sử cũ vẫn được giữ lại.'
         }
-        onClose={() => setIsConfirmDeactivateOpen(false)}
+        loading={isSaving}
+        onConfirm={async () => {
+          await (isRemoved ? onReactivate?.(member) : onRemove?.(member));
+          setIsConfirmDeactivateOpen(false);
+        }}
+        onOpenChange={setIsConfirmDeactivateOpen}
         open={isConfirmDeactivateOpen}
         title={isRemoved ? 'Kích hoạt lại thành viên?' : 'Ngừng hoạt động thành viên?'}
-      >
-        <div className="flex justify-end gap-2">
-          <Button onClick={() => setIsConfirmDeactivateOpen(false)} variant="secondary">
-            Hủy
-          </Button>
-          <Button
-            disabled={isSaving || (isRemoved ? !onReactivate : !onRemove)}
-            onClick={async () => {
-              await (isRemoved ? onReactivate?.(member) : onRemove?.(member));
-              setIsConfirmDeactivateOpen(false);
-            }}
-          >
-            {isRemoved ? 'Kích hoạt lại' : 'Ngừng hoạt động'}
-          </Button>
-        </div>
-      </BottomSheet>
-      <BottomSheet
+      />
+      <ResponsiveModal
         description={`Người nhận link sẽ liên kết tài khoản của họ với ${member.nickname} — giữ nguyên lịch sử chi tiêu/thu đã có, không tạo thành viên mới.`}
-        onClose={closeClaimSheet}
+        onOpenChange={(next) => {
+          if (!next) {
+            closeClaimSheet();
+          }
+        }}
         open={isClaimSheetOpen}
         title="Mời liên kết tài khoản"
       >
@@ -347,7 +328,7 @@ function EditableMemberRow({
             </Button>
           )}
         </div>
-      </BottomSheet>
+      </ResponsiveModal>
       <MemberAvatarPicker
         isSaving={isSaving}
         memberName={member.nickname}
