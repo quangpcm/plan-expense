@@ -4,6 +4,11 @@
 dung này là source of truth khi implement feature mới — nếu một case cụ thể không rõ có thuộc
 phạm vi rule này hay không, hỏi lại thay vì tự suy đoán.
 
+> Tài liệu này giữ nguyên vai trò source of truth cho **quy ước product** (page vs. modal). Chi
+> tiết kiến trúc overlay (focus lifecycle, size contract, nested chains, lý do BottomSheet bị
+> deprecate...) nay ở `docs/design-system/OverlayRules.md` — đây là tài liệu canonical cho phần
+> đó, xem thêm `docs/design-system/README.md` cho toàn bộ Design System governance.
+
 ---
 
 # 1. Rule
