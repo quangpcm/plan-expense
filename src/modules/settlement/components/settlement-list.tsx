@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { CheckCircle2, XCircle } from 'lucide-react';
 
+import { DataRow } from '@/shared/components/ui/data-row';
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDateTime } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
@@ -43,35 +44,40 @@ export function SettlementList({
         const isCompleted = settlement.status === 'completed';
 
         return (
-          <div
-            className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm"
+          <DataRow
+            className="rounded-2xl border border-slate-200 bg-white px-4 text-sm"
             key={settlement.id}
-          >
-            <div className="flex min-w-0 items-center gap-2">
-              {isCompleted ? (
+            leading={
+              isCompleted ? (
                 <CheckCircle2 className="size-4 shrink-0 text-[color:var(--color-success)]" />
               ) : (
                 <XCircle className="size-4 shrink-0 text-slate-400" />
-              )}
-              <span className={isCompleted ? 'font-medium text-slate-900' : 'font-medium text-slate-400 line-through'}>
-                {fromMember?.nickname || settlement.fromMemberId} {'->'} {toMember?.nickname || settlement.toMemberId}
-              </span>
-              <span className="text-slate-600">{formatCurrency(settlement.amount)}</span>
-              <span className="text-xs text-slate-400">
-                {settledAt ? formatDateTime(settledAt) : 'Không rõ thời gian'}
-              </span>
-            </div>
-            {canCancel && isCompleted ? (
-              <button
-                className="shrink-0 text-xs font-medium text-slate-500 hover:text-rose-600 disabled:pointer-events-none disabled:opacity-60"
-                disabled={isSubmitting}
-                onClick={() => onCancel(settlement)}
-                type="button"
-              >
-                Hủy
-              </button>
-            ) : null}
-          </div>
+              )
+            }
+            main={
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={isCompleted ? 'font-medium text-slate-900' : 'font-medium text-slate-400 line-through'}>
+                  {fromMember?.nickname || settlement.fromMemberId} {'->'} {toMember?.nickname || settlement.toMemberId}
+                </span>
+                <span className="text-slate-600">{formatCurrency(settlement.amount)}</span>
+                <span className="text-xs text-slate-400">
+                  {settledAt ? formatDateTime(settledAt) : 'Không rõ thời gian'}
+                </span>
+              </div>
+            }
+            trailing={
+              canCancel && isCompleted ? (
+                <button
+                  className="shrink-0 text-xs font-medium text-slate-500 hover:text-rose-600 disabled:pointer-events-none disabled:opacity-60"
+                  disabled={isSubmitting}
+                  onClick={() => onCancel(settlement)}
+                  type="button"
+                >
+                  Hủy
+                </button>
+              ) : null
+            }
+          />
         );
       })}
       {!showAll && settlements.length > VISIBLE_LIMIT ? (

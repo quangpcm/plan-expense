@@ -12,6 +12,7 @@ import type { SettlementDocument, SettlementSuggestion } from '@/modules/settlem
 import { computeSettlementProgress } from '@/modules/settlement/utils/settlement-progress';
 import type { StatisticResult, MemberBalanceRow } from '@/modules/statistic/types/statistic';
 import { Avatar } from '@/shared/components/ui/avatar';
+import { DataRow } from '@/shared/components/ui/data-row';
 import { cn } from '@/shared/utils/cn';
 import { formatCurrency } from '@/shared/utils/currency';
 
@@ -40,35 +41,38 @@ function MemberBalanceRowItem({ row }: { row: MemberBalanceRow }) {
   const willReceive = row.adjustedBalance >= 0;
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-2.5">
-      <div className="flex min-w-0 items-center gap-2.5">
+    <DataRow
+      className="rounded-2xl border border-slate-200 bg-white px-4"
+      leading={
         <Avatar
           className="size-8 text-xs"
           initials={row.nickname.slice(0, 2).toUpperCase()}
           src={row.avatarUrl ?? null}
         />
-        <span className="truncate font-medium text-slate-900">{row.nickname}</span>
-      </div>
-      <div className="flex shrink-0 flex-col items-end">
-        <span
-          className={cn(
-            'text-sm font-semibold',
-            willReceive ? 'text-[color:var(--color-success)]' : 'text-[color:var(--color-danger)]',
-          )}
-        >
-          {willReceive ? '+' : '−'}
-          {formatCurrency(Math.abs(row.adjustedBalance))}
-        </span>
-        <span
-          className={cn(
-            'text-[11px]',
-            willReceive ? 'text-[color:var(--color-success)]' : 'text-[color:var(--color-danger)]',
-          )}
-        >
-          {willReceive ? 'Còn được nhận' : 'Cần trả'}
-        </span>
-      </div>
-    </div>
+      }
+      main={<span className="truncate font-medium text-slate-900">{row.nickname}</span>}
+      trailing={
+        <div className="flex flex-col items-end">
+          <span
+            className={cn(
+              'text-sm font-semibold',
+              willReceive ? 'text-[color:var(--color-success)]' : 'text-[color:var(--color-danger)]',
+            )}
+          >
+            {willReceive ? '+' : '−'}
+            {formatCurrency(Math.abs(row.adjustedBalance))}
+          </span>
+          <span
+            className={cn(
+              'text-[11px]',
+              willReceive ? 'text-[color:var(--color-success)]' : 'text-[color:var(--color-danger)]',
+            )}
+          >
+            {willReceive ? 'Còn được nhận' : 'Cần trả'}
+          </span>
+        </div>
+      }
+    />
   );
 }
 
