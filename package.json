@@ -30,6 +30,7 @@
     "@aws-sdk/s3-request-presigner": "^3.1108.0",
     "@radix-ui/react-alert-dialog": "^1.1.23",
     "@radix-ui/react-dialog": "^1.1.23",
+    "@radix-ui/react-dropdown-menu": "^2.1.24",
     "@types/papaparse": "^5.5.2",
     "clsx": "^2.1.1",
     "firebase": "^12.17.1",
