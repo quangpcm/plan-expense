@@ -113,4 +113,11 @@ export class TravelActivityService {
   ) {
     return this.travelActivityRepository.watchActivities(planId, callback, onError);
   }
+
+  getActivitiesStartingBetween(
+    planId: string,
+    params: Parameters<TravelActivityRepository['getActivitiesStartingBetween']>[1],
+  ) {
+    return this.travelActivityRepository.getActivitiesStartingBetween(planId, params);
+  }
 }

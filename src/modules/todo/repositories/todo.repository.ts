@@ -44,6 +44,17 @@ export type UpdateTodoVendorPersistenceInput = {
   attachments?: TodoDocument['attachments'] | undefined;
 };
 
+export type TodoOverdueQuery = {
+  beforeAt: Date;
+  limitCount: number;
+};
+
+export type TodoDueWindowQuery = {
+  startAt: Date;
+  endAt: Date;
+  limitCount: number;
+};
+
 export interface TodoRepository {
   generateTodoId(planId: string): string;
   createTodo(input: CreateTodoPersistenceInput): Promise<{ todoId: string }>;
@@ -66,4 +77,8 @@ export interface TodoRepository {
     callback: (todos: TodoDocument[]) => void,
     onError?: (error: Error) => void,
   ): () => void;
+  // One-shot (getDocs) bounded queries for the Today dashboard read-model —
+  // never use onSnapshot/full-collection reads for this (docs/today-dashboard-specs.md).
+  getOverdueActiveTodos(planId: string, params: TodoOverdueQuery): Promise<TodoDocument[]>;
+  getActiveTodosDueBetween(planId: string, params: TodoDueWindowQuery): Promise<TodoDocument[]>;
 }

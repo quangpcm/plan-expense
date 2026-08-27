@@ -16,6 +16,12 @@ export type UpdateTravelActivityPersistenceInput = Omit<UpdateTravelActivityInpu
   attachments: TravelActivityDocument['attachments'];
 };
 
+export type TravelActivityStartWindowQuery = {
+  startAt: Date;
+  endAt: Date;
+  limitCount: number;
+};
+
 export interface TravelActivityRepository {
   generateActivityId(planId: string): string;
   createActivity(input: CreateTravelActivityPersistenceInput): Promise<{ activityId: string }>;
@@ -32,4 +38,7 @@ export interface TravelActivityRepository {
     callback: (activities: TravelActivityDocument[]) => void,
     onError?: (error: Error) => void,
   ): () => void;
+  // One-shot (getDocs) bounded query for the Today dashboard read-model — no
+  // "overdue" variant by design, a past startsAt is not a Today attention item.
+  getActivitiesStartingBetween(planId: string, params: TravelActivityStartWindowQuery): Promise<TravelActivityDocument[]>;
 }

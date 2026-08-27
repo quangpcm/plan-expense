@@ -31,8 +31,35 @@ service cloud.firestore {
         getAfter(/databases/$(database)/documents/plans/$(planId)).data.ownerUserId == request.auth.uid;
     }
 
+    // Legacy milestones created before `isSystemHidden` existed have no such
+    // key at all — a direct `data.isSystemHidden` dot-access throws an
+    // evaluation error on those docs (confirmed via emulator), which denies
+    // the whole containing `allow` regardless of role/ownership. Missing
+    // must behave exactly like `false` (not hidden), so every isSystemHidden
+    // read goes through this existence-checked helper instead of a raw
+    // dot-access — same `key in map` idiom already used by
+    // memberModuleAccess() above for the same class of problem.
+    function milestoneSystemHiddenFlag(data) {
+      return 'isSystemHidden' in data && data.isSystemHidden == true;
+    }
+
     function milestoneIsWritable(planId, milestoneId) {
-      return milestoneDoc(planId, milestoneId).data.isSystemHidden != true;
+      return !milestoneSystemHiddenFlag(milestoneDoc(planId, milestoneId).data);
+    }
+
+    // General-purpose immutability check for a field that some legacy
+    // documents may not have at all (e.g. Expense/Income.createdByMemberId,
+    // added after some existing documents were created). A raw
+    // `oldData.field == newData.field` throws the moment either side is
+    // missing the key. Semantics: absent-on-both stays "unchanged" (allowed
+    // — this is what a legacy doc's normal edit looks like, since nothing in
+    // this app ever sets this field on update); present-on-both requires the
+    // same value; any transition between absent and present (either
+    // direction) is denied — an edit can never quietly introduce or drop the
+    // field.
+    function optionalFieldUnchanged(oldData, newData, fieldName) {
+      return (fieldName in oldData) == (fieldName in newData) &&
+        (!(fieldName in oldData) || oldData[fieldName] == newData[fieldName]);
     }
 
     function weddingGuestGroupDoc(planId, groupId) {
@@ -308,6 +335,12 @@ service cloud.firestore {
         request.resource.data.updatedAt != null;
     }
 
+    // Today dashboard cache — disposable per-user read-model, not source of
+    // truth (docs/today-dashboard-specs.md). Owner-only, no cross-user access.
+    match /users/{userId}/todaySummary/{summaryId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
     match /plans/{planId} {
       allow read: if isPlanVisible(planId);
       allow create: if isSignedIn() &&
@@ -541,22 +574,37 @@ service cloud.firestore {
           (resource.data.createdByUserId == request.auth.uid && canManageOwnPlanning(planId)) ||
           canManageAllPlanning(planId)
         ) &&
-        resource.data.isSystemHidden != true &&
+        !milestoneSystemHiddenFlag(resource.data) &&
         request.resource.data.id == resource.data.id &&
         request.resource.data.planId == resource.data.planId &&
         request.resource.data.createdByUserId == resource.data.createdByUserId &&
         request.resource.data.createdAt == resource.data.createdAt &&
-        request.resource.data.isSystemHidden == resource.data.isSystemHidden &&
+        // Immutability via the effective flag, not raw equality: missing and
+        // `false` both count as "not hidden" on either side, so a legacy
+        // doc's masked aggregate update (which never touches this field) is
+        // "unchanged" without needing to. A transition that actually flips
+        // the effective value (false/missing -> true, or true -> anything)
+        // is still blocked — true -> * is already unreachable above since
+        // milestoneSystemHiddenFlag(resource.data) already denied by then.
+        milestoneSystemHiddenFlag(request.resource.data) == milestoneSystemHiddenFlag(resource.data) &&
         request.resource.data.totalExpense is int &&
         request.resource.data.todoCount is int &&
-        request.resource.data.completedTodoCount is int &&
+        // Legacy milestones created before `completedTodoCount` existed have
+        // no such key — a masked aggregate update that never touches it
+        // (e.g. an Expense/Income write, or Todo create's own
+        // todoCount-only touch) would otherwise leave it absent and throw on
+        // direct dot-access. Absent stays allowed; once present it must
+        // still be an int — this is a presence/type check, not an
+        // immutability check, so (unlike isSystemHidden above) there's no
+        // old-vs-new symmetry to enforce here.
+        (!('completedTodoCount' in request.resource.data) || request.resource.data.completedTodoCount is int) &&
         request.resource.data.orderIndex is int &&
         request.resource.data.status in ['upcoming', 'in_progress', 'completed', 'cancelled'];
       allow delete: if (
           isPlanOwner(planId) ||
           canManageAllPlanning(planId) ||
           (resource.data.createdByUserId == request.auth.uid && canManageOwnPlanning(planId))
-        ) && resource.data.isSystemHidden != true;
+        ) && !milestoneSystemHiddenFlag(resource.data);
     }
 
     match /plans/{planId}/weddingGuestGroups/{groupId} {
@@ -701,7 +749,10 @@ service cloud.firestore {
         request.resource.data.id == resource.data.id &&
         request.resource.data.planId == resource.data.planId &&
         request.resource.data.createdByUserId == resource.data.createdByUserId &&
-        request.resource.data.createdByMemberId == resource.data.createdByMemberId &&
+        // Legacy Expense docs created before createdByMemberId existed have
+        // no such key — a raw equality dot-access throws on those. See
+        // optionalFieldUnchanged() above.
+        optionalFieldUnchanged(resource.data, request.resource.data, 'createdByMemberId') &&
         request.resource.data.createdAt == resource.data.createdAt &&
         request.resource.data.milestoneId is string &&
         milestoneDoc(planId, request.resource.data.milestoneId).data.planId == planId &&
@@ -749,7 +800,9 @@ service cloud.firestore {
         request.resource.data.id == resource.data.id &&
         request.resource.data.planId == resource.data.planId &&
         request.resource.data.createdByUserId == resource.data.createdByUserId &&
-        request.resource.data.createdByMemberId == resource.data.createdByMemberId &&
+        // Legacy Income docs created before createdByMemberId existed have
+        // no such key — same reasoning as the Expense update rule above.
+        optionalFieldUnchanged(resource.data, request.resource.data, 'createdByMemberId') &&
         request.resource.data.createdAt == resource.data.createdAt &&
         request.resource.data.amount is int &&
         request.resource.data.amount > 0 &&

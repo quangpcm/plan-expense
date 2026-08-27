@@ -16,6 +16,10 @@ export class MemberService {
     return this.memberRepository.watchMembers(planId, callback, onError);
   }
 
+  getMember(planId: string, memberId: string) {
+    return this.memberRepository.getMember(planId, memberId);
+  }
+
   async addGuest(
     planId: string,
     input: AddGuestInput,

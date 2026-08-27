@@ -1,6 +1,6 @@
 'use client';
 
-import { Timestamp, doc, getDoc, getDocs, onSnapshot, orderBy, query, where, writeBatch } from 'firebase/firestore';
+import { Timestamp, doc, getDoc, getDocs, limit, onSnapshot, orderBy, query, where, writeBatch } from 'firebase/firestore';
 
 import { getFirebaseFirestore } from '@/config/firebase.config';
 import { getPlanCollectionRef, getPlanDocumentRef, getPlanRootRef, queryByPlanCollection } from '@/modules/plan';
@@ -8,6 +8,7 @@ import { diffRemovedAttachments } from '@/modules/storage/utils/diff-attachments
 import type {
   CreateTravelActivityPersistenceInput,
   TravelActivityRepository,
+  TravelActivityStartWindowQuery,
   UpdateTravelActivityPersistenceInput,
 } from '@/modules/travel-activity/repositories/travel-activity.repository';
 import type { TravelActivityDocument } from '@/modules/travel-activity/types/travel-activity';
@@ -164,5 +165,21 @@ export class FirestoreTravelActivityRepository implements TravelActivityReposito
         );
       },
     );
+  }
+
+  async getActivitiesStartingBetween(planId: string, params: TravelActivityStartWindowQuery) {
+    const activitiesQuery = queryByPlanCollection(
+      getFirebaseFirestore(),
+      planId,
+      'travelActivities',
+      where('startsAt', '>=', Timestamp.fromDate(params.startAt)),
+      where('startsAt', '<', Timestamp.fromDate(params.endAt)),
+      orderBy('startsAt', 'asc'),
+      limit(params.limitCount),
+    );
+
+    const snapshot = await getDocs(activitiesQuery);
+
+    return snapshot.docs.map((item) => normalizeTravelActivity(item.data() as TravelActivityDocument));
   }
 }

@@ -458,6 +458,19 @@ export class FirestorePlanRepository implements PlanRepository {
     );
   }
 
+  async getUserPlans(userId: string): Promise<PlanSummary[]> {
+    const plansQuery = query(
+      collection(getFirebaseFirestore(), 'userPlans', userId, 'plans'),
+      orderBy('updatedAt', 'desc'),
+    );
+
+    const snapshot = await getDocs(plansQuery);
+
+    return snapshot.docs
+      .map((item) => item.data() as PlanSummary)
+      .filter((item) => item.memberStatus === 'active' && item.planStatus !== 'archived');
+  }
+
   watchArchivedUserPlans(
     userId: string,
     callback: (plans: PlanSummary[]) => void,

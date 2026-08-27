@@ -5,6 +5,7 @@ import {
   doc,
   getDocs,
   increment,
+  limit,
   onSnapshot,
   orderBy,
   runTransaction,
@@ -19,9 +20,12 @@ import {
   getPlanRootRef,
   queryByPlanCollection,
 } from '@/modules/plan';
+import { ACTIVE_TODO_STATUSES } from '@/modules/todo/constants/todo-status';
 import type {
   AddTodoVendorPersistenceInput,
   CreateTodoPersistenceInput,
+  TodoDueWindowQuery,
+  TodoOverdueQuery,
   TodoRepository,
   UpdateTodoPersistenceInput,
   UpdateTodoVendorPersistenceInput,
@@ -621,5 +625,38 @@ export class FirestoreTodoRepository implements TodoRepository {
         onError?.(mapFirebaseError(error, 'Unable to load todos for this milestone.', 'TODO_BY_MILESTONE_WATCH_FAILED'));
       },
     );
+  }
+
+  async getOverdueActiveTodos(planId: string, params: TodoOverdueQuery) {
+    const todosQuery = queryByPlanCollection(
+      getFirebaseFirestore(),
+      planId,
+      'todos',
+      where('status', 'in', ACTIVE_TODO_STATUSES),
+      where('dueDate', '<', Timestamp.fromDate(params.beforeAt)),
+      orderBy('dueDate', 'asc'),
+      limit(params.limitCount),
+    );
+
+    const snapshot = await getDocs(todosQuery);
+
+    return snapshot.docs.map((item) => normalizeTodo(item.data() as TodoDocument));
+  }
+
+  async getActiveTodosDueBetween(planId: string, params: TodoDueWindowQuery) {
+    const todosQuery = queryByPlanCollection(
+      getFirebaseFirestore(),
+      planId,
+      'todos',
+      where('status', 'in', ACTIVE_TODO_STATUSES),
+      where('dueDate', '>=', Timestamp.fromDate(params.startAt)),
+      where('dueDate', '<', Timestamp.fromDate(params.endAt)),
+      orderBy('dueDate', 'asc'),
+      limit(params.limitCount),
+    );
+
+    const snapshot = await getDocs(todosQuery);
+
+    return snapshot.docs.map((item) => normalizeTodo(item.data() as TodoDocument));
   }
 }

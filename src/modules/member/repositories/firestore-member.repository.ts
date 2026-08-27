@@ -45,6 +45,12 @@ export class FirestoreMemberRepository implements MemberRepository {
     );
   }
 
+  async getMember(planId: string, memberId: string) {
+    const snapshot = await getDoc(getPlanDocumentRef(getFirebaseFirestore(), planId, 'members', memberId));
+
+    return snapshot.exists() ? (snapshot.data() as PlanMemberDocument) : null;
+  }
+
   async addGuest(planId: string, input: AddGuestInput, actor: AuthUser) {
     const db = getFirebaseFirestore();
     const now = Timestamp.now();

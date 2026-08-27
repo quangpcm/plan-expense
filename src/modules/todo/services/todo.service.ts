@@ -294,4 +294,12 @@ export class TodoService {
   ) {
     return this.todoRepository.watchTodosByMilestone(planId, milestoneId, callback, onError);
   }
+
+  getOverdueActiveTodos(planId: string, params: Parameters<TodoRepository['getOverdueActiveTodos']>[1]) {
+    return this.todoRepository.getOverdueActiveTodos(planId, params);
+  }
+
+  getActiveTodosDueBetween(planId: string, params: Parameters<TodoRepository['getActiveTodosDueBetween']>[1]) {
+    return this.todoRepository.getActiveTodosDueBetween(planId, params);
+  }
 }

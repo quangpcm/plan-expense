@@ -45,6 +45,9 @@ export interface PlanRepository {
     callback: (plans: PlanSummary[]) => void,
     onError?: (error: Error) => void,
   ): () => void;
+  // One-shot (getDocs) equivalent of watchUserPlans, for consumers that must
+  // not hold a realtime listener open (e.g. the Today dashboard read-model).
+  getUserPlans(userId: string): Promise<PlanSummary[]>;
   watchArchivedUserPlans(
     userId: string,
     callback: (plans: PlanSummary[]) => void,

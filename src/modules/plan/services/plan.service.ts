@@ -63,6 +63,10 @@ export class PlanService {
     return this.planRepository.watchUserPlans(userId, callback, onError);
   }
 
+  getUserPlans(userId: string) {
+    return this.planRepository.getUserPlans(userId);
+  }
+
   async updatePlan(
     plan: PlanDocument,
     input: UpdatePlanInput,

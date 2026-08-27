@@ -121,6 +121,7 @@ export type PlanSummary = {
   planType: PlanType;
   debtModel?: DebtModel | undefined;
   role: PlanRole;
+  memberId: string;
   memberStatus: PlanMemberStatus;
   planStatus: PlanStatus;
   archivedAt: Timestamp | null;

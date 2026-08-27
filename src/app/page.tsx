@@ -7,11 +7,11 @@ import { AuthGuard } from '@/modules/auth/components/auth-guard';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { appRoutes } from '@/shared/constants';
 
-function RedirectToPlans() {
+function RedirectToToday() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace(appRoutes.plans);
+    router.replace(appRoutes.today);
   }, [router]);
 
   return (
@@ -26,7 +26,7 @@ function RedirectToPlans() {
 export default function RootPage() {
   return (
     <AuthGuard>
-      <RedirectToPlans />
+      <RedirectToToday />
     </AuthGuard>
   );
 }

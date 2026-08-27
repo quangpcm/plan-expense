@@ -12,6 +12,9 @@ export interface MemberRepository {
     callback: (members: PlanMemberDocument[]) => void,
     onError?: (error: Error) => void,
   ): () => void;
+  // One-shot (getDoc) fetch of a single member, for consumers that must not
+  // hold a realtime listener open (e.g. the Today dashboard read-model).
+  getMember(planId: string, memberId: string): Promise<PlanMemberDocument | null>;
   addGuest(planId: string, input: AddGuestInput, actor: AuthUser): Promise<PlanMemberDocument>;
   updateMember(planId: string, input: UpdateMemberInput, actor: AuthUser): Promise<void>;
   updateMemberAvatar(planId: string, input: UpdateMemberAvatarInput, actor: AuthUser): Promise<void>;
