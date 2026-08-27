@@ -21,8 +21,8 @@ function getBellToneClass(tone: AttentionBellTone) {
 
 // Global header's notification entry point — same attention-todo logic that used to live inline
 // in PlansPage, just relocated so it renders next to the Avatar in the header instead of inside
-// the page's own PageHeader row. Only mounted while on the Kế hoạch route (see AppHeader), so it
-// fetches no differently than before: still scoped to that route, not global.
+// the page's own PageHeader row. Now mounted unconditionally in AppHeader (desktop and mobile,
+// every authenticated route) so the bell no longer disappears on /today.
 export function PlansAttentionBell() {
   const { plans } = useUserPlans();
   const { todayAttentionCount, bellTone } = useAttentionTodos(plans);

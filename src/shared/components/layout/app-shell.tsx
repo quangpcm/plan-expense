@@ -3,6 +3,7 @@
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 
+import { AppBottomNav } from '@/shared/components/layout/app-bottom-nav';
 import { AppHeader } from '@/shared/components/layout/app-header';
 import { RouteLoadingScreen } from '@/shared/components/layout/route-loading-screen';
 
@@ -126,7 +127,10 @@ export function AppShell({ children }: AppShellProps) {
         </div>
       ) : null}
       <AppHeader />
-      <div className="mx-auto w-full max-w-[1500px] flex-1 px-4 pb-8 pt-5 sm:px-6 lg:px-6">{children}</div>
+      <div className="mx-auto w-full max-w-[1500px] flex-1 px-4 pb-[calc(4.5rem_+_env(safe-area-inset-bottom))] pt-5 sm:px-6 md:pb-8 lg:px-6">
+        {children}
+      </div>
+      <AppBottomNav />
     </div>
   );
 }

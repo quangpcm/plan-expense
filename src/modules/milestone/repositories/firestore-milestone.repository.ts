@@ -227,7 +227,17 @@ export class FirestoreMilestoneRepository implements MilestoneRepository {
     finalBatch.update(planRef, planUpdate);
     await finalBatch.commit();
 
-    await syncUserPlansAggregate(planId, planUpdate);
+    // Best-effort: the milestone and its todos are already durably deleted above (both batches
+    // committed). This aggregate refresh into every member's `userPlans` dashboard mirror doc is a
+    // secondary, derived-data sync — if it fails (e.g. one member's mirror doc predates a field the
+    // "any active member" rule branch checks, rejecting the whole batch), that must not surface as
+    // "failed to delete the milestone." Logged for diagnosability, same treatment as
+    // deleteAttachmentsInBackground's fire-and-forget cleanup below.
+    try {
+      await syncUserPlansAggregate(planId, planUpdate);
+    } catch (error) {
+      console.error('Không thể đồng bộ userPlans sau khi xoá milestone:', error);
+    }
 
     return { orphanedAttachments };
   }

@@ -7,13 +7,11 @@ import { usePathname } from 'next/navigation';
 import { PlansAttentionBell } from '@/modules/todo/components/plans-attention-bell';
 import { AccountMenu } from '@/shared/components/layout/account-menu';
 import { getAppNavigationItems } from '@/shared/components/layout/navigation-items';
-import { appRoutes } from '@/shared/constants';
 import { cn } from '@/shared/utils/cn';
 
 export function AppHeader() {
   const pathname = usePathname();
   const navigationItems = getAppNavigationItems(pathname);
-  const isPlansRoute = pathname.startsWith(appRoutes.plans);
 
   return (
     <header className="sticky top-0 z-[var(--z-index-sticky)] border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur">
@@ -56,7 +54,7 @@ export function AppHeader() {
         </div>
 
         <div className="flex shrink-0 items-center gap-3">
-          {isPlansRoute ? <PlansAttentionBell /> : null}
+          <PlansAttentionBell />
           <AccountMenu />
         </div>
       </div>

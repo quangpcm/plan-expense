@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { createPortal } from 'react-dom';
 import { BellRing, CalendarClock, Clock3, FolderOpen, X } from 'lucide-react';
 
 import type { PlanSummary } from '@/modules/plan/types/plan';
@@ -147,10 +148,16 @@ export function TodoNotificationScreen({ plans, open, onClose }: TodoNotificatio
     </div>
   );
 
-  return (
+  // Portalled to `document.body`: this can be opened from PlansAttentionBell inside AppHeader,
+  // which is `position: sticky` with an explicit z-index — that combination creates a stacking
+  // context, so a plain nested `fixed` element (even at z-50) would be confined inside it instead
+  // of stacking above the rest of the page. Escaping to the body root is the correct fix (same
+  // reason ResponsiveModal/ConfirmDialog use Radix's own Portal), not a z-index bump.
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center md:bg-slate-950/40">
       <button aria-label="Đóng thông báo" className="absolute inset-0 hidden md:block" onClick={onClose} type="button" />
       <div className="relative flex h-full w-full flex-col md:h-auto md:max-w-2xl">{panelContent}</div>
-    </div>
+    </div>,
+    document.body,
   );
 }

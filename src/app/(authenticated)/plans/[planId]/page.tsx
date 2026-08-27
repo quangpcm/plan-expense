@@ -2777,6 +2777,7 @@ export default function PlanDetailPage() {
           onOpenChange={(next) => {
             if (!next) {
               setPendingDeleteMilestone(null);
+              setMilestoneActionError(null);
             }
           }}
           open={Boolean(pendingDeleteMilestone)}

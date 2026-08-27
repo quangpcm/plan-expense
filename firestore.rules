@@ -1012,12 +1012,19 @@ service cloud.firestore {
           request.resource.data.lastActivityAt == resource.data.lastActivityAt &&
           request.resource.data.createdAt == resource.data.createdAt &&
           (!('estimatedAmount' in request.resource.data) || request.resource.data.estimatedAmount is int) &&
-          request.resource.data.totalExpense is int &&
-          // totalIncome is backfilled by the first income sync after this
-          // field shipped, so older userPlans docs may still lack it — only
-          // enforce the type once it's actually present.
+          // totalExpense/memberCount predate the conditional-check pattern used
+          // below for totalIncome/estimatedAmount, but the same legacy-doc gap
+          // applies: a non-owner member's syncUserPlansAggregate() write (e.g.
+          // deleteMilestone, which never touches these two fields at all) is a
+          // plain batch.update(), so request.resource.data here just reflects
+          // whatever value (or absence) the target member's doc already had —
+          // requiring it unconditionally denies the whole batch for any plan
+          // with one legacy userPlans doc predating these fields, even though
+          // the write never asked to change them. Only enforce the type once
+          // the field is actually present, matching totalIncome/estimatedAmount.
+          (!('totalExpense' in request.resource.data) || request.resource.data.totalExpense is int) &&
           (!('totalIncome' in request.resource.data) || request.resource.data.totalIncome is int) &&
-          request.resource.data.memberCount is int
+          (!('memberCount' in request.resource.data) || request.resource.data.memberCount is int)
         );
       allow delete: if isSignedIn() && isPlanOwner(planId);
     }
