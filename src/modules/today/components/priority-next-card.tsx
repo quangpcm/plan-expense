@@ -37,7 +37,7 @@ export function PriorityNextCard({ item, now }: PriorityNextCardProps) {
 
   return (
     <button
-      className="flex w-full items-stretch justify-between gap-3 rounded-[var(--radius-card)] border border-[var(--color-border-default)] bg-[color:var(--color-surface-default)] p-4 text-left shadow-[0_18px_54px_rgba(23,32,51,0.06)] outline-none transition hover:border-[var(--color-border-strong)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] focus-visible:ring-offset-2"
+      className="flex w-full items-stretch justify-between gap-3 rounded-[var(--radius-card)] border border-[var(--color-border-default)] bg-[color:var(--color-surface-default)] p-4 text-left shadow-[0_18px_54px_rgba(23,32,51,0.06)] outline-none transition hover:-translate-y-0.5 hover:border-[var(--color-border-strong)] hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] focus-visible:ring-offset-2"
       onClick={() => router.push(resolveTodayItemHref(item))}
       type="button"
     >

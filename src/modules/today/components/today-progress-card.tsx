@@ -1,3 +1,7 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
 import { resolveTodayProgressCopy } from '@/modules/today/utils/today-progress';
 import { Card } from '@/shared/components/ui/card';
 
@@ -22,6 +26,17 @@ export function TodayProgressCard({ completedTodayCount, totalTodayCount }: Toda
   const percentage = totalTodayCount > 0 ? Math.round((completedTodayCount / totalTodayCount) * 100) : 0;
   const supportingCopy = resolveTodayProgressCopy({ completedTodayCount, totalTodayCount });
 
+  // Fill-on-mount motion (Phase 5 §14): the bar must render at 0% first, then transition to the
+  // real percentage — a CSS transition never fires on a value already present at first paint, so
+  // this needs one deferred state update. `prefers-reduced-motion` is handled globally
+  // (globals.css collapses all transition-duration to ~0, independent of this component), not
+  // re-implemented here.
+  const [displayPercentage, setDisplayPercentage] = useState(0);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setDisplayPercentage(percentage));
+    return () => cancelAnimationFrame(frame);
+  }, [percentage]);
+
   return (
     <Card className="gap-2 py-4">
       <div className="flex items-center justify-between gap-3">
@@ -31,7 +46,10 @@ export function TodayProgressCard({ completedTodayCount, totalTodayCount }: Toda
         <p className="text-body-strong text-[var(--color-text-primary)]">{percentage}%</p>
       </div>
       <div className="h-2 w-full overflow-hidden rounded-full border border-[var(--color-border-default)] bg-[var(--color-surface-subtle)]">
-        <div className="h-full rounded-full bg-[var(--color-brand-primary)]" style={{ width: `${percentage}%` }} />
+        <div
+          className="h-full rounded-full bg-[var(--color-brand-primary)] transition-[width] duration-[400ms] ease-out"
+          style={{ width: `${displayPercentage}%` }}
+        />
       </div>
       <p className="text-metadata text-[var(--color-text-secondary)]">{supportingCopy}</p>
     </Card>

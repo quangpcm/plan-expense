@@ -22,13 +22,16 @@ type TodayContextCardProps = {
 // surface, no separate CTA text (Phase 3.1: the whole card is the affordance, nothing extra to
 // avoid a redundant CTA). Stays width-agnostic (`w-full`) — the caller controls sizing/arrangement
 // (compact desktop width, 1-2 cards side by side), same separation already used by TodayItemCard.
+// Phase 5: bumped p-4 -> p-5 (breathing room for the fuller info this card already carries) and
+// added the app's established restrained hover-lift (-translate-y-0.5 + heavier shadow), the same
+// recipe already used by PriorityNextCard/PlanCard/overview-widget-registry cards — not a new value.
 export function TodayContextCard({ context }: TodayContextCardProps) {
   const router = useRouter();
   const otherActivitiesToday = Math.max(context.remainingActivitiesToday - (context.nextActivity ? 1 : 0), 0);
 
   return (
     <button
-      className="flex w-full flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--color-border-default)] bg-[color:var(--color-surface-default)] p-4 text-left shadow-[0_18px_54px_rgba(23,32,51,0.06)] outline-none transition hover:border-[var(--color-border-strong)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] focus-visible:ring-offset-2"
+      className="flex w-full flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--color-border-default)] bg-[color:var(--color-surface-default)] p-5 text-left shadow-[0_18px_54px_rgba(23,32,51,0.06)] outline-none transition hover:-translate-y-0.5 hover:border-[var(--color-border-strong)] hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] focus-visible:ring-offset-2"
       onClick={() => router.push(`/plans/${context.planId}?tab=travelItinerary`)}
       type="button"
     >

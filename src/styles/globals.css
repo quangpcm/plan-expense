@@ -127,6 +127,10 @@
   --animate-overlay-hide: overlay-hide 150ms ease-in;
   --animate-content-show: content-show 200ms cubic-bezier(0.16, 1, 0.3, 1);
   --animate-content-hide: content-hide 150ms ease-in;
+  /* Today V2 Phase 5 — restrained page-settle entrance for section groups (not per-card/per-item)
+     and for items newly revealed by "Xem thêm". Duration/offset chosen at the low end of the
+     180-240ms / ~6px range so it reads as "the page settled", not as a visible animation. */
+  --animate-section-in: section-in 200ms ease-out both;
 }
 
 /*
@@ -236,6 +240,17 @@
   to {
     opacity: 0;
     transform: scale(0.96);
+  }
+}
+
+@keyframes section-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

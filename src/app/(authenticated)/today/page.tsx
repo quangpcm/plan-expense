@@ -57,6 +57,8 @@ export default function TodayPage() {
   });
   const now = new Date();
   const priorityItem = resolveNextPriorityItem({ attentionItems, todayItems, now });
+  const hasPriority = priorityItem !== null;
+  const hasProgress = totalTodayCount > 0;
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 pb-10 sm:px-6">
@@ -92,10 +94,13 @@ export default function TodayPage() {
       ) : (
         <div className="flex flex-col gap-8">
           {/* Composition-only width cap (not fit-content, so it never resizes with day-to-day copy
-              length): Daily Brief ~55-60%, Priority ~60-70% of the ~900px desktop reading column,
-              left-aligned. Below `lg:` (mobile+tablet, matching Today's existing breakpoint
-              convention), both stay full width. No change to either component's own API. */}
-          <div className="w-full lg:max-w-[560px]">
+              length): Daily Brief ~55-60% of the ~900px desktop reading column, left-aligned. Below
+              `lg:` (mobile+tablet, matching Today's existing breakpoint convention), full width.
+              Section-entrance motion (Phase 5 §12, globals.css `animate-section-in`): staggered by
+              group, not by individual card — reduced motion is handled globally, not per-component
+              (globals.css already collapses all animation/transition durations under
+              `prefers-reduced-motion: reduce`). */}
+          <div className="w-full animate-section-in lg:max-w-[560px]" style={{ animationDelay: '40ms' }}>
             <DailyBrief
               action={isFullyEmpty ? { href: appRoutes.plans, label: 'Xem kế hoạch' } : undefined}
               headline={brief.headline}
@@ -103,18 +108,65 @@ export default function TodayPage() {
             />
           </div>
 
-          {priorityItem ? (
-            <div className="w-full lg:max-w-[620px]">
-              <Section title="Ưu tiên tiếp theo">
-                <PriorityNextCard item={priorityItem} now={now} />
-              </Section>
+          {/* Priority + Progress "Focus group" (Phase 5 §4). Desktop: side by side in a
+              1.4fr/0.9fr grid when both exist, collapsing to a single compact column when only one
+              does (no dead grid column — §17). Mobile/tablet: linear stack, Priority here,
+              Progress instead rendered in its own standalone slot further down (after "Hôm nay"),
+              matching the mobile order the spec calls for (§10: Brief, Priority, Cần chú ý, Hôm
+              nay, Progress, ...).
+              Deliberately two small DOM instances of TodayProgressCard (here, desktop-only via
+              `hidden lg:block`; and again below Today, mobile-only via `lg:hidden`) rather than one
+              instance repositioned with CSS `order`/`grid-area`: this component's desktop position
+              (beside Priority, near the top) and its mobile position (after Today) are genuinely
+              different sequences, not just a different arrangement of the same sequence — reflowing
+              a single instance with `order` would make visual order diverge from DOM/reading order
+              between breakpoints, breaking screen-reader/keyboard sequence. Same reasoning as this
+              app's separate mobile-bottom-nav vs desktop-top-nav components. Each instance is cheap
+              and presentational (props only, no data fetching); only one is ever visible at a time
+              per breakpoint (`display:none` removes the hidden one from the accessibility tree and
+              tab order). */}
+          {hasPriority || hasProgress ? (
+            <div
+              className={
+                hasPriority && hasProgress
+                  ? 'w-full animate-section-in lg:max-w-[900px]'
+                  : hasPriority
+                    ? 'w-full animate-section-in lg:max-w-[620px]'
+                    : 'hidden animate-section-in lg:block lg:max-w-[560px]'
+              }
+              style={{ animationDelay: '80ms' }}
+            >
+              <div
+                className={
+                  hasPriority && hasProgress
+                    ? 'flex flex-col gap-8 lg:grid lg:grid-cols-[1.4fr_0.9fr] lg:items-start lg:gap-4'
+                    : 'flex flex-col gap-8'
+                }
+              >
+                {priorityItem ? (
+                  <Section title="Ưu tiên tiếp theo">
+                    <PriorityNextCard item={priorityItem} now={now} />
+                  </Section>
+                ) : null}
+                {hasProgress ? (
+                  <div className={hasPriority ? 'hidden lg:block' : undefined}>
+                    <Section title="Tiến độ hôm nay">
+                      <TodayProgressCard completedTodayCount={completedTodayCount} totalTodayCount={totalTodayCount} />
+                    </Section>
+                  </div>
+                ) : null}
+              </div>
             </div>
           ) : null}
 
           {isFullyEmpty ? null : (
             <>
               {attentionItems.length > 0 ? (
-                <Section title={`Cần chú ý (${attentionItems.length})`}>
+                <Section
+                  className="animate-section-in"
+                  style={{ animationDelay: '120ms' }}
+                  title={`Cần chú ý (${attentionItems.length})`}
+                >
                   <TodaySectionList
                     getKey={getTodayItemKey}
                     initialMobileCount={INITIAL_MOBILE_VISIBLE_COUNT}
@@ -124,7 +176,7 @@ export default function TodayPage() {
                 </Section>
               ) : null}
 
-              <Section title={`Hôm nay (${todayItems.length})`}>
+              <Section className="animate-section-in" style={{ animationDelay: '120ms' }} title={`Hôm nay (${todayItems.length})`}>
                 {todayItems.length > 0 ? (
                   <TodaySectionList
                     getKey={getTodayItemKey}
@@ -142,17 +194,15 @@ export default function TodayPage() {
             </>
           )}
 
-          {/* Independent of isFullyEmpty by design (same reasoning as Active Context below): a day
-              can have zero remaining active todos/activities (isFullyEmpty) while still having
-              completed something today (e.g. 3 todos due today, all 3 done) — Progress should
-              still show "3/3, Xong hết rồi" instead of disappearing just because nothing is left
-              to do. Self-gated purely on totalTodayCount > 0.
-              NOTE for Final Polish (Phase 4.1 explicitly deferred this, not this round): evaluate
-              placing Priority + Progress side by side on desktop as a 2-column composition to use
-              horizontal space better — both are already compact (620px/560px caps) and sit
-              directly adjacent in the current single-column layout. */}
-          {totalTodayCount > 0 ? (
-            <div className="w-full lg:max-w-[560px]">
+          {/* Mobile/tablet-only standalone Progress slot — see the Focus-group comment above for
+              why this is a second DOM instance rather than a repositioned single one. Independent
+              of isFullyEmpty by design (same reasoning as Active Context below): a day can have
+              zero remaining active todos/activities (isFullyEmpty) while still having completed
+              something today (e.g. 3 todos due today, all 3 done) — Progress should still show
+              "3/3, Bạn đã hoàn thành..." instead of disappearing just because nothing is left to
+              do. Self-gated purely on totalTodayCount > 0. */}
+          {hasProgress ? (
+            <div className="w-full animate-section-in lg:hidden lg:max-w-[560px]" style={{ animationDelay: '140ms' }}>
               <Section title="Tiến độ hôm nay">
                 <TodayProgressCard completedTodayCount={completedTodayCount} totalTodayCount={totalTodayCount} />
               </Section>
@@ -164,12 +214,14 @@ export default function TodayPage() {
               on an otherwise-empty Today instead of disappearing along with the Todo/Activity
               sections above. Each card stays width-agnostic; this wrapper is what keeps it compact
               (not the full ~900px reading column) and lets 1-2 cards sit side by side on desktop
-              when there's room, matching Daily Brief/Priority's own compact-column treatment. */}
+              when there's room. Width bumped 380px -> 400px (Phase 5 §7, within the 360-420px
+              target) to give the card's existing content a little more breathing room; no content/
+              semantics change. */}
           {contexts.length > 0 ? (
-            <Section title="Đang diễn ra">
+            <Section className="animate-section-in" style={{ animationDelay: '160ms' }} title="Đang diễn ra">
               <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap">
                 {contexts.map((context) => (
-                  <div className="w-full lg:max-w-[380px]" key={`${context.kind}:${context.planId}`}>
+                  <div className="w-full lg:max-w-[400px]" key={`${context.kind}:${context.planId}`}>
                     <TodayContextCard context={context} />
                   </div>
                 ))}
@@ -180,7 +232,11 @@ export default function TodayPage() {
           {isFullyEmpty ? null : (
             <>
               {upcomingItems.length > 0 ? (
-                <Section title={`Sắp tới (${upcomingItems.length})`}>
+                <Section
+                  className="animate-section-in"
+                  style={{ animationDelay: '200ms' }}
+                  title={`Sắp tới (${upcomingItems.length})`}
+                >
                   <TodaySectionList
                     getKey={getTodayItemKey}
                     initialMobileCount={INITIAL_MOBILE_VISIBLE_COUNT}
@@ -196,7 +252,7 @@ export default function TodayPage() {
               Progress above. Compact borderless list (no per-item Card chrome), max 3 items
               already enforced by buildRecentlyCompletedItems. */}
           {recentlyCompletedItems.length > 0 ? (
-            <div className="w-full lg:max-w-[560px]">
+            <div className="w-full animate-section-in lg:max-w-[560px]" style={{ animationDelay: '240ms' }}>
               <Section title="Gần đây bạn đã hoàn thành">
                 <div className="flex flex-col gap-1">
                   {recentlyCompletedItems.map((item) => (

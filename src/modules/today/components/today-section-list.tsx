@@ -46,8 +46,15 @@ export function TodaySectionList<T>({
       </div>
 
       <div className="flex flex-col gap-2 lg:hidden">
-        {visibleMobileItems.map((item) => (
-          <div key={getKey(item)}>{renderItem(item)}</div>
+        {visibleMobileItems.map((item, index) => (
+          // Only items revealed by "Xem thêm" (index beyond the initial batch) get the entrance
+          // fade/slide — the initial batch already animates once as part of its parent Section's
+          // own page-settle entrance (globals.css `animate-section-in`), so animating it again here
+          // would double up. Each newly revealed item mounts fresh exactly once (stable key), so
+          // re-clicking "Xem thêm" never replays this on already-visible items.
+          <div className={index >= initialMobileCount ? 'animate-section-in' : undefined} key={getKey(item)}>
+            {renderItem(item)}
+          </div>
         ))}
         {remainingMobileCount > 0 ? (
           <button
