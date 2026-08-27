@@ -659,4 +659,27 @@ export class FirestoreTodoRepository implements TodoRepository {
 
     return snapshot.docs.map((item) => normalizeTodo(item.data() as TodoDocument));
   }
+
+  // Today Progress (Phase 4) — bounded one-shot query for completed todos due today, so
+  // completedTodayCount isn't undercounted just because today-summary's other queries only ever
+  // fetch active statuses. Same composite index as getActiveTodosDueBetween/getOverdueActiveTodos
+  // (firestore.indexes.json: todos → status ASC, dueDate ASC) already covers this — an equality
+  // filter on `status` plus a range/orderBy on `dueDate` is the same index shape regardless of
+  // whether the equality side uses `==` or `in`. No new index required.
+  async getCompletedTodosDueBetween(planId: string, params: TodoDueWindowQuery) {
+    const todosQuery = queryByPlanCollection(
+      getFirebaseFirestore(),
+      planId,
+      'todos',
+      where('status', '==', 'done'),
+      where('dueDate', '>=', Timestamp.fromDate(params.startAt)),
+      where('dueDate', '<', Timestamp.fromDate(params.endAt)),
+      orderBy('dueDate', 'asc'),
+      limit(params.limitCount),
+    );
+
+    const snapshot = await getDocs(todosQuery);
+
+    return snapshot.docs.map((item) => normalizeTodo(item.data() as TodoDocument));
+  }
 }

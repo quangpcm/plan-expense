@@ -81,4 +81,5 @@ export interface TodoRepository {
   // never use onSnapshot/full-collection reads for this (docs/today-dashboard-specs.md).
   getOverdueActiveTodos(planId: string, params: TodoOverdueQuery): Promise<TodoDocument[]>;
   getActiveTodosDueBetween(planId: string, params: TodoDueWindowQuery): Promise<TodoDocument[]>;
+  getCompletedTodosDueBetween(planId: string, params: TodoDueWindowQuery): Promise<TodoDocument[]>;
 }

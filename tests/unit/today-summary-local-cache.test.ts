@@ -57,10 +57,35 @@ function makeSummary(overrides: Partial<TodaySummaryDocument> = {}): TodaySummar
         title: 'Overdue todo',
         dueAt: Timestamp.fromMillis(1_699_000_000_000),
         urgency: 'overdue',
+        priority: 'medium',
       },
     ],
     todayItems: [],
     upcomingItems: [],
+    contexts: [
+      {
+        kind: 'travel',
+        planId: 'plan-2',
+        planName: 'Đà Nẵng 2026',
+        currentDay: 2,
+        totalDays: 4,
+        startDate: Timestamp.fromMillis(1_698_900_000_000),
+        endDate: Timestamp.fromMillis(1_699_300_000_000),
+        nextActivity: { title: 'Check-in khách sạn', startsAt: Timestamp.fromMillis(1_699_100_000_000) },
+        remainingActivitiesToday: 1,
+      },
+    ],
+    completedTodayCount: 2,
+    totalTodayCount: 5,
+    recentlyCompletedItems: [
+      {
+        planId: 'plan-1',
+        planName: 'Plan One',
+        todoId: 'todo-2',
+        title: 'Xác nhận nhà hàng',
+        completedAt: Timestamp.fromMillis(1_699_050_000_000),
+      },
+    ],
     ...overrides,
   };
 }
@@ -79,6 +104,16 @@ describe('readTodaySummaryCache / writeTodaySummaryCache', () => {
     expect(result?.attentionItems[0]?.dueAt?.toMillis()).toBe(1_699_000_000_000);
     expect(result?.rebuiltAt).toBeInstanceOf(Timestamp);
     expect(result?.rebuiltAt.toMillis()).toBe(1_700_000_000_000);
+    expect(result?.contexts).toHaveLength(1);
+    expect(result?.contexts[0]?.startDate).toBeInstanceOf(Timestamp);
+    expect(result?.contexts[0]?.endDate).toBeInstanceOf(Timestamp);
+    expect(result?.contexts[0]?.nextActivity?.startsAt).toBeInstanceOf(Timestamp);
+    expect(result?.contexts[0]?.nextActivity?.startsAt.toMillis()).toBe(1_699_100_000_000);
+    expect(result?.completedTodayCount).toBe(2);
+    expect(result?.totalTodayCount).toBe(5);
+    expect(result?.recentlyCompletedItems).toHaveLength(1);
+    expect(result?.recentlyCompletedItems[0]?.completedAt).toBeInstanceOf(Timestamp);
+    expect(result?.recentlyCompletedItems[0]?.completedAt.toMillis()).toBe(1_699_050_000_000);
   });
 
   it('returns null on a userId mismatch (cache miss, no throw)', () => {
@@ -121,6 +156,163 @@ describe('readTodaySummaryCache / writeTodaySummaryCache', () => {
 
     expect(() => readTodaySummaryCache(namespace)).not.toThrow();
     expect(readTodaySummaryCache(namespace)).toBeNull();
+  });
+
+  it('normalizes a legacy cache entry with no `contexts` key at all (pre-Phase-3) to [], without throwing', () => {
+    // Simulates a summary cached by a client from before Active Context existed — the raw JSON
+    // genuinely has no `contexts` field (not `null`, entirely absent), same as a pre-Phase-3
+    // Firestore document would.
+    const legacySerializedSummary = {
+      userId: namespace.userId,
+      dateKey: namespace.dateKey,
+      timezone: namespace.timezone,
+      rebuiltAt: 1_700_000_000_000,
+      sourcePlanIds: ['plan-1'],
+      attentionItems: [],
+      todayItems: [],
+      upcomingItems: [],
+    };
+
+    memoryStorage.setItem(
+      `today-summary:${namespace.userId}`,
+      JSON.stringify({
+        userId: namespace.userId,
+        dateKey: namespace.dateKey,
+        timezone: namespace.timezone,
+        cachedAt: Date.now(),
+        summary: legacySerializedSummary,
+      }),
+    );
+
+    expect(() => readTodaySummaryCache(namespace)).not.toThrow();
+
+    const result = readTodaySummaryCache(namespace);
+
+    expect(result).not.toBeNull();
+    expect(result?.contexts).toEqual([]);
+    expect(result?.userId).toBe(namespace.userId);
+  });
+
+  it('normalizes a legacy cache entry with no Progress fields at all (pre-Phase-4) to safe defaults, without throwing', () => {
+    // Simulates a summary cached before Progress/Recently Completed existed — completedTodayCount/
+    // totalTodayCount/recentlyCompletedItems are all entirely absent from the raw JSON. Both counts
+    // default to 0 (not e.g. todayItems.length) specifically so TodayProgressCard's own
+    // "totalTodayCount === 0 → don't render" rule hides Progress for this stale summary instead of
+    // showing a denominator that would be wrong.
+    const legacySerializedSummary = {
+      userId: namespace.userId,
+      dateKey: namespace.dateKey,
+      timezone: namespace.timezone,
+      rebuiltAt: 1_700_000_000_000,
+      sourcePlanIds: ['plan-1'],
+      attentionItems: [],
+      todayItems: [],
+      upcomingItems: [],
+      contexts: [],
+    };
+
+    memoryStorage.setItem(
+      `today-summary:${namespace.userId}`,
+      JSON.stringify({
+        userId: namespace.userId,
+        dateKey: namespace.dateKey,
+        timezone: namespace.timezone,
+        cachedAt: Date.now(),
+        summary: legacySerializedSummary,
+      }),
+    );
+
+    expect(() => readTodaySummaryCache(namespace)).not.toThrow();
+
+    const result = readTodaySummaryCache(namespace);
+
+    expect(result).not.toBeNull();
+    expect(result?.completedTodayCount).toBe(0);
+    expect(result?.totalTodayCount).toBe(0);
+    expect(result?.recentlyCompletedItems).toEqual([]);
+  });
+
+  it('filters out a Phase-3-shaped context item missing startDate/endDate instead of producing an Invalid Date', () => {
+    // Simulates a cache entry written during Phase 3 (before 3.1 added startDate/endDate/
+    // remainingActivitiesToday to TodayContextItem) — the real bug this regression-tests: without
+    // filtering, Timestamp.fromMillis(undefined) silently builds a Timestamp with a NaN internal
+    // value, and formatDate() only throws much later, at render time, far from the actual cause.
+    const legacySerializedSummary = {
+      userId: namespace.userId,
+      dateKey: namespace.dateKey,
+      timezone: namespace.timezone,
+      rebuiltAt: 1_700_000_000_000,
+      sourcePlanIds: ['plan-1'],
+      attentionItems: [],
+      todayItems: [],
+      upcomingItems: [],
+      contexts: [
+        {
+          kind: 'travel',
+          planId: 'plan-2',
+          planName: 'Đà Nẵng 2026',
+          currentDay: 2,
+          totalDays: 4,
+          nextActivity: null,
+          // no startDate/endDate/remainingActivitiesToday — the Phase 3 shape.
+        },
+      ],
+    };
+
+    memoryStorage.setItem(
+      `today-summary:${namespace.userId}`,
+      JSON.stringify({
+        userId: namespace.userId,
+        dateKey: namespace.dateKey,
+        timezone: namespace.timezone,
+        cachedAt: Date.now(),
+        summary: legacySerializedSummary,
+      }),
+    );
+
+    expect(() => readTodaySummaryCache(namespace)).not.toThrow();
+
+    const result = readTodaySummaryCache(namespace);
+
+    expect(result).not.toBeNull();
+    expect(result?.contexts).toEqual([]);
+  });
+
+  it('filters out a recentlyCompletedItems entry with a non-numeric completedAt instead of producing an Invalid Date', () => {
+    const legacySerializedSummary = {
+      userId: namespace.userId,
+      dateKey: namespace.dateKey,
+      timezone: namespace.timezone,
+      rebuiltAt: 1_700_000_000_000,
+      sourcePlanIds: ['plan-1'],
+      attentionItems: [],
+      todayItems: [],
+      upcomingItems: [],
+      contexts: [],
+      completedTodayCount: 1,
+      totalTodayCount: 1,
+      recentlyCompletedItems: [
+        { planId: 'plan-1', planName: 'Plan One', todoId: 'todo-1', title: 'Malformed', completedAt: null },
+      ],
+    };
+
+    memoryStorage.setItem(
+      `today-summary:${namespace.userId}`,
+      JSON.stringify({
+        userId: namespace.userId,
+        dateKey: namespace.dateKey,
+        timezone: namespace.timezone,
+        cachedAt: Date.now(),
+        summary: legacySerializedSummary,
+      }),
+    );
+
+    expect(() => readTodaySummaryCache(namespace)).not.toThrow();
+
+    const result = readTodaySummaryCache(namespace);
+
+    expect(result).not.toBeNull();
+    expect(result?.recentlyCompletedItems).toEqual([]);
   });
 
   it('returns null and does not throw on structurally implausible JSON (missing fields)', () => {

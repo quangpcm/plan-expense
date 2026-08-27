@@ -1,7 +1,14 @@
 export { todaySummaryService } from './services';
-export type { TodaySummaryDocument, TodaySummaryItem, TodaySummaryItemKind } from './types/today-summary';
+export type {
+  RecentlyCompletedItem,
+  TodayContextItem,
+  TodaySummaryDocument,
+  TodaySummaryItem,
+  TodaySummaryItemKind,
+} from './types/today-summary';
 export {
   MAX_ATTENTION_ITEMS,
+  MAX_COMPLETED_TODAY_QUERY_LIMIT,
   MAX_TODAY_ITEMS,
   MAX_UPCOMING_ITEMS,
   TODAY_SUMMARY_TTL_MS,
@@ -22,4 +29,18 @@ export { validateTodaySummary } from './utils/today-summary-validation';
 export type { TodaySummaryValidationSource, ValidateTodaySummaryParams } from './utils/today-summary-validation';
 export { useTodaySummary } from './hooks/use-today-summary';
 export type { UseTodaySummaryResult } from './hooks/use-today-summary';
-export { TodayItemRow } from './components/today-item-row';
+export { TodayItemCard } from './components/today-item-card';
+export { TodaySectionList } from './components/today-section-list';
+export { DailyBrief } from './components/daily-brief';
+export { resolveTodayBrief } from './utils/today-brief';
+export type { TodayBriefMessage, TodayBriefState } from './utils/today-brief';
+export { PriorityNextCard } from './components/priority-next-card';
+export { resolveNextPriorityItem, resolvePriorityUrgency } from './utils/today-priority';
+export type { PriorityUrgency, PriorityUrgencyTone } from './utils/today-priority';
+export { TodayContextCard } from './components/today-context-card';
+export { buildTodayContexts } from './utils/today-context';
+export type { TravelContextPlanInput } from './utils/today-context';
+export { TodayProgressCard } from './components/today-progress-card';
+export { RecentlyCompletedRow } from './components/recently-completed-row';
+export { buildRecentlyCompletedItems, buildTodayProgress, resolveTodayProgressCopy } from './utils/today-progress';
+export type { CompletedTodoSourceItem, TodayProgress } from './utils/today-progress';

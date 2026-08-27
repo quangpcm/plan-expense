@@ -8,6 +8,22 @@ export function formatDate(input: DateInput, locale = 'vi-VN') {
   }).format(new Date(input));
 }
 
+// Compact human-readable range, e.g. "27 – 29 tháng 8" (same month/year), "28 tháng 8 – 2 tháng 9"
+// (cross-month), "30 tháng 12, 2026 – 2 tháng 1, 2027" (cross-year). Uses the standard
+// Intl.DateTimeFormat.formatRange, which already collapses shared day/month/year parts on its
+// own — the only branching needed here is whether to include `year` in the options at all, so a
+// same-year range doesn't show a redundant year on both sides.
+export function formatCompactDateRange(start: DateInput, end: DateInput, locale = 'vi-VN') {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  const options: Intl.DateTimeFormatOptions =
+    startDate.getFullYear() === endDate.getFullYear()
+      ? { day: 'numeric', month: 'long' }
+      : { day: 'numeric', month: 'long', year: 'numeric' };
+
+  return new Intl.DateTimeFormat(locale, options).formatRange(startDate, endDate);
+}
+
 export function formatTime(input: DateInput, locale = 'vi-VN') {
   return new Intl.DateTimeFormat(locale, {
     hour: '2-digit',

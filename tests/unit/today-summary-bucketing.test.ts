@@ -13,6 +13,7 @@ import type {
   TodoSourceItem,
 } from '@/modules/today/utils/today-summary-bucketing';
 import { buildTodaySummary } from '@/modules/today/utils/today-summary-bucketing';
+import type { CompletedTodoSourceItem } from '@/modules/today/utils/today-progress';
 import { getTodaySummaryWindows } from '@/modules/today/utils/today-summary-window';
 
 const timezone = 'Asia/Ho_Chi_Minh';
@@ -31,6 +32,19 @@ function makeTodo(overrides: Partial<TodoSourceItem> & { status?: TodoStatus }):
     title: 'A todo',
     dueDate: ts(windows.todayStart),
     status: 'todo',
+    priority: 'medium',
+    ...overrides,
+  };
+}
+
+function makeCompletedTodo(overrides: Partial<CompletedTodoSourceItem> = {}): CompletedTodoSourceItem {
+  return {
+    planId: 'plan-1',
+    planName: 'Plan One',
+    todoId: 'completed-1',
+    title: 'A completed todo',
+    status: 'done',
+    completedAt: ts(windows.todayStart),
     ...overrides,
   };
 }
@@ -225,6 +239,64 @@ describe('buildTodaySummary — duplicate prevention', () => {
     );
 
     expect(summary.attentionItems).toHaveLength(2);
+  });
+});
+
+describe('buildTodaySummary — Progress + Recently Completed (Phase 4)', () => {
+  it('computes the denominator as completedToday + remainingToday, not todayItems.length', () => {
+    // 3 completed + 4 still-active due today must read "3/7", not "3/4" — and todayItems only ever
+    // holds the 4 active ones (completed Todos are never in that bucket), which is exactly the
+    // undercount buildTodayProgress exists to avoid.
+    const remainingTodos = Array.from({ length: 4 }, (_, index) => makeTodo({ todoId: `remaining-${index}` }));
+    const completedTodos = Array.from({ length: 3 }, (_, index) => makeCompletedTodo({ todoId: `completed-${index}` }));
+
+    const summary = buildTodaySummary(
+      baseInput({ todayTodos: remainingTodos, completedTodayTodos: completedTodos }),
+    );
+
+    expect(summary.todayItems).toHaveLength(4);
+    expect(summary.completedTodayCount).toBe(3);
+    expect(summary.totalTodayCount).toBe(7);
+  });
+
+  it('defaults completedTodayCount/totalTodayCount to 0 when completedTodayTodos is omitted and nothing is due today', () => {
+    const summary = buildTodaySummary(baseInput());
+
+    expect(summary.completedTodayCount).toBe(0);
+    expect(summary.totalTodayCount).toBe(0);
+    expect(summary.recentlyCompletedItems).toEqual([]);
+  });
+
+  it('excludes Travel Activity from the Progress denominator entirely (Todo-only V1)', () => {
+    const summary = buildTodaySummary(
+      baseInput({ todayActivities: [makeActivity({ activityId: 'today-activity' })] }),
+    );
+
+    expect(summary.todayItems).toHaveLength(1);
+    expect(summary.totalTodayCount).toBe(0);
+  });
+
+  it('populates recentlyCompletedItems, newest first, from completedTodayTodos', () => {
+    const older = makeCompletedTodo({ todoId: 'older', completedAt: ts(windows.todayStart.getTime()) });
+    const newer = makeCompletedTodo({ todoId: 'newer', completedAt: ts(windows.todayStart.getTime() + 60_000) });
+
+    const summary = buildTodaySummary(baseInput({ completedTodayTodos: [older, newer] }));
+
+    expect(summary.recentlyCompletedItems.map((item) => item.todoId)).toEqual(['newer', 'older']);
+  });
+
+  it('excludes a cancelled todo from both completedTodayCount and recentlyCompletedItems', () => {
+    const summary = buildTodaySummary(
+      baseInput({
+        completedTodayTodos: [
+          makeCompletedTodo({ todoId: 'done-1', status: 'done' }),
+          makeCompletedTodo({ todoId: 'cancelled-1', status: 'cancelled' }),
+        ],
+      }),
+    );
+
+    expect(summary.completedTodayCount).toBe(1);
+    expect(summary.recentlyCompletedItems.map((item) => item.todoId)).toEqual(['done-1']);
   });
 });
 

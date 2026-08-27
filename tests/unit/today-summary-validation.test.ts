@@ -20,6 +20,10 @@ function makeSummary(overrides: Partial<TodaySummaryDocument> = {}): TodaySummar
     attentionItems: [],
     todayItems: [],
     upcomingItems: [],
+    contexts: [],
+    completedTodayCount: 0,
+    totalTodayCount: 0,
+    recentlyCompletedItems: [],
     ...overrides,
   };
 }

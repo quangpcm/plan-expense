@@ -1,12 +1,18 @@
 import { Timestamp } from 'firebase/firestore';
 
-import type { TodoStatus } from '@/modules/todo/types/todo';
+import type { TodoPriority, TodoStatus } from '@/modules/todo/types/todo';
 import {
   MAX_ATTENTION_ITEMS,
   MAX_TODAY_ITEMS,
   MAX_UPCOMING_ITEMS,
 } from '@/modules/today/constants/today-summary.constants';
 import type { TodaySummaryDocument, TodaySummaryItem } from '@/modules/today/types/today-summary';
+import { buildTodayContexts, type TravelContextPlanInput } from '@/modules/today/utils/today-context';
+import {
+  buildRecentlyCompletedItems,
+  buildTodayProgress,
+  type CompletedTodoSourceItem,
+} from '@/modules/today/utils/today-progress';
 import { getDateKey } from '@/modules/today/utils/today-summary-freshness';
 import { ONE_DAY_MS, getTodaySummaryWindows, type TodaySummaryWindows } from '@/modules/today/utils/today-summary-window';
 import type { DueUrgency } from '@/shared/utils/date';
@@ -25,6 +31,7 @@ export type TodoSourceItem = {
   title: string;
   dueDate: Timestamp;
   status: TodoStatus;
+  priority: TodoPriority;
 };
 
 export type ActivitySourceItem = {
@@ -45,10 +52,21 @@ export type BuildTodaySummaryInput = {
   upcomingTodos: TodoSourceItem[];
   todayActivities: ActivitySourceItem[];
   upcomingActivities: ActivitySourceItem[];
+  // Phase 3 (Active Context) — plans eligible for a "Đang diễn ra" context card (Travel-only V1,
+  // see today-context.ts). Defaults to [] so existing callers/tests that don't care about context
+  // don't need updating.
+  contextPlans?: TravelContextPlanInput[];
+  // Phase 4 (Progress + Recently Completed) — Todos with status='done' and dueDate today
+  // (Todo-only V1, see today-progress.ts). Defaults to [] for the same reason as contextPlans.
+  completedTodayTodos?: CompletedTodoSourceItem[];
 };
 
 function isActiveTodoSource(todo: TodoSourceItem): boolean {
   return ACTIVE_TODO_STATUSES.includes(todo.status);
+}
+
+function countUniqueTodos(todos: TodoSourceItem[]): number {
+  return new Set(todos.map((todo) => `${todo.planId}:${todo.todoId}`)).size;
 }
 
 // Upcoming-only distinction (today/attention urgency is implied by which
@@ -68,6 +86,7 @@ function toTodoSummaryItem(source: TodoSourceItem, urgency: DueUrgency): TodaySu
     title: source.title,
     dueAt: source.dueDate,
     urgency,
+    priority: source.priority,
   };
 }
 
@@ -80,6 +99,7 @@ function toActivitySummaryItem(source: ActivitySourceItem, urgency: DueUrgency):
     title: source.title,
     dueAt: source.startsAt,
     urgency,
+    priority: null,
   };
 }
 
@@ -130,6 +150,22 @@ export function buildTodaySummary(input: BuildTodaySummaryInput): TodaySummaryDo
     ),
   ]).slice(0, MAX_UPCOMING_ITEMS);
 
+  // Uses the raw, uncapped input.todayActivities (not the deduped/capped todayItems above) so a
+  // plan's "next activity today" can't be silently dropped by the global MAX_TODAY_ITEMS cap.
+  const contexts = buildTodayContexts({
+    plans: input.contextPlans ?? [],
+    todayActivities: input.todayActivities,
+    now: input.now,
+    timezone: input.timezone,
+  });
+
+  // Progress denominator uses the raw, uncapped, active-today-Todo count (not todayItems.length,
+  // which mixes in Travel Activity and is capped at MAX_TODAY_ITEMS) — see today-progress.ts.
+  const completedTodayTodos = input.completedTodayTodos ?? [];
+  const remainingTodayTodoCount = countUniqueTodos(input.todayTodos.filter(isActiveTodoSource));
+  const { completedTodayCount, totalTodayCount } = buildTodayProgress(completedTodayTodos, remainingTodayTodoCount);
+  const recentlyCompletedItems = buildRecentlyCompletedItems(completedTodayTodos);
+
   return {
     userId: input.userId,
     dateKey: getDateKey(input.now, input.timezone),
@@ -139,5 +175,9 @@ export function buildTodaySummary(input: BuildTodaySummaryInput): TodaySummaryDo
     attentionItems,
     todayItems,
     upcomingItems,
+    contexts,
+    completedTodayCount,
+    totalTodayCount,
+    recentlyCompletedItems,
   };
 }

@@ -6,12 +6,15 @@ import type { TravelActivityStartWindowQuery } from '@/modules/travel-activity/r
 import type { TravelActivityDocument } from '@/modules/travel-activity/types/travel-activity';
 import type { TodaySummaryRepository } from '@/modules/today/repositories/today-summary.repository';
 import type { TodaySummaryDocument } from '@/modules/today/types/today-summary';
+import type { TravelContextPlanInput } from '@/modules/today/utils/today-context';
+import type { CompletedTodoSourceItem } from '@/modules/today/utils/today-progress';
 import { resolveTodayAccessibleModules } from '@/modules/today/utils/today-summary-access';
 import type { ActivitySourceItem, TodoSourceItem } from '@/modules/today/utils/today-summary-bucketing';
 import { buildTodaySummary } from '@/modules/today/utils/today-summary-bucketing';
 import { getTodaySummaryWindows } from '@/modules/today/utils/today-summary-window';
 import {
   MAX_ATTENTION_ITEMS,
+  MAX_COMPLETED_TODAY_QUERY_LIMIT,
   MAX_TODAY_ITEMS,
   MAX_UPCOMING_ITEMS,
 } from '@/modules/today/constants/today-summary.constants';
@@ -31,6 +34,7 @@ export interface TodayMemberSource {
 export interface TodayTodoSource {
   getOverdueActiveTodos(planId: string, params: TodoOverdueQuery): Promise<TodoDocument[]>;
   getActiveTodosDueBetween(planId: string, params: TodoDueWindowQuery): Promise<TodoDocument[]>;
+  getCompletedTodosDueBetween(planId: string, params: TodoDueWindowQuery): Promise<TodoDocument[]>;
 }
 
 export interface TodayTravelActivitySource {
@@ -67,6 +71,21 @@ function toTodoSourceItems(plan: PlanSummary, todos: TodoDocument[]): TodoSource
     title: todo.title,
     dueDate: todo.dueDate,
     status: todo.status,
+    priority: todo.priority,
+  }));
+}
+
+// No hasDueDate-style filter needed here (unlike toTodoSourceItems) — dueDate is only used
+// upstream by the Firestore query's range filter to select these docs, CompletedTodoSourceItem
+// doesn't carry it at all, just completedAt.
+function toCompletedTodoSourceItems(plan: PlanSummary, todos: TodoDocument[]): CompletedTodoSourceItem[] {
+  return todos.map((todo) => ({
+    planId: plan.planId,
+    planName: plan.planName,
+    todoId: todo.id,
+    title: todo.title,
+    status: todo.status,
+    completedAt: todo.completedAt,
   }));
 }
 
@@ -78,6 +97,16 @@ function toActivitySourceItems(plan: PlanSummary, activities: TravelActivityDocu
     title: activity.title,
     startsAt: activity.startsAt,
   }));
+}
+
+function toContextPlanInput(plan: PlanSummary): TravelContextPlanInput {
+  return {
+    planId: plan.planId,
+    planName: plan.planName,
+    planType: plan.planType,
+    startDate: plan.startDate,
+    endDate: plan.endDate,
+  };
 }
 
 export class TodaySummaryService {
@@ -125,6 +154,8 @@ export class TodaySummaryService {
     const upcomingTodos: TodoSourceItem[] = [];
     const todayActivities: ActivitySourceItem[] = [];
     const upcomingActivities: ActivitySourceItem[] = [];
+    const contextPlans: TravelContextPlanInput[] = [];
+    const completedTodayTodos: CompletedTodoSourceItem[] = [];
 
     await Promise.all(
       plans.map(async (plan) => {
@@ -157,6 +188,13 @@ export class TodaySummaryService {
 
         const { canViewTodo, canViewTravelActivity } = resolveTodayAccessibleModules(member);
 
+        // Active Context (Phase 3) needs a plan's own type/dates, gated behind the same
+        // Travel Activity module permission as the itinerary data it pairs with — a member who
+        // can't see Travel Activities shouldn't get a context card implying itinerary access.
+        if (canViewTravelActivity) {
+          contextPlans.push(toContextPlanInput(plan));
+        }
+
         const todoFetch = canViewTodo
           ? Promise.all([
               this.todoSource.getOverdueActiveTodos(plan.planId, {
@@ -173,9 +211,14 @@ export class TodaySummaryService {
                 endAt: windows.upcomingEnd,
                 limitCount: MAX_UPCOMING_ITEMS,
               }),
+              this.todoSource.getCompletedTodosDueBetween(plan.planId, {
+                startAt: windows.todayStart,
+                endAt: windows.tomorrowStart,
+                limitCount: MAX_COMPLETED_TODAY_QUERY_LIMIT,
+              }),
             ]).catch((error: unknown) => {
               logTodayFirestoreError(
-                'Todo bounded queries (getOverdueActiveTodos/getActiveTodosDueBetween — requires the status+dueDate composite index)',
+                'Todo bounded queries (getOverdueActiveTodos/getActiveTodosDueBetween/getCompletedTodosDueBetween — requires the status+dueDate composite index)',
                 { planId: plan.planId },
                 error,
               );
@@ -204,11 +247,12 @@ export class TodaySummaryService {
         const [todoResult, activityResult] = await Promise.all([todoFetch, activityFetch]);
 
         if (todoResult) {
-          const [overdue, dueToday, dueUpcoming] = todoResult;
+          const [overdue, dueToday, dueUpcoming, completedDueToday] = todoResult;
 
           overdueTodos.push(...toTodoSourceItems(plan, overdue));
           todayTodos.push(...toTodoSourceItems(plan, dueToday));
           upcomingTodos.push(...toTodoSourceItems(plan, dueUpcoming));
+          completedTodayTodos.push(...toCompletedTodoSourceItems(plan, completedDueToday));
         }
 
         if (activityResult) {
@@ -230,6 +274,8 @@ export class TodaySummaryService {
       upcomingTodos,
       todayActivities,
       upcomingActivities,
+      contextPlans,
+      completedTodayTodos,
     });
 
     try {

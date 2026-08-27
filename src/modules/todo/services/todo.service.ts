@@ -302,4 +302,8 @@ export class TodoService {
   getActiveTodosDueBetween(planId: string, params: Parameters<TodoRepository['getActiveTodosDueBetween']>[1]) {
     return this.todoRepository.getActiveTodosDueBetween(planId, params);
   }
+
+  getCompletedTodosDueBetween(planId: string, params: Parameters<TodoRepository['getCompletedTodosDueBetween']>[1]) {
+    return this.todoRepository.getCompletedTodosDueBetween(planId, params);
+  }
 }
