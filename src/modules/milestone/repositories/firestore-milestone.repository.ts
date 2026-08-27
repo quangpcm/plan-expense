@@ -23,6 +23,7 @@ import type { MilestoneDocument, ReorderMilestoneInput, UpdateMilestoneInput } f
 import { getPlanCollectionRef, getPlanDocumentRef, getPlanRootRef, queryByPlanCollection } from '@/modules/plan';
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
+import { logFirestorePermissionDebug } from '@/shared/utils/firestore-permission-debug';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
 
 export class FirestoreMilestoneRepository implements MilestoneRepository {
@@ -31,45 +32,55 @@ export class FirestoreMilestoneRepository implements MilestoneRepository {
     const milestoneRef = doc(getPlanCollectionRef(db, input.planId, 'milestones'));
     const planRef = getPlanRootRef(db, input.planId);
     const now = Timestamp.now();
+    try {
+      await runTransaction(db, async (transaction) => {
+        const planSnapshot = await transaction.get(planRef);
+        const storedMilestoneCount = planSnapshot.data()?.milestoneCount;
+        const nextOrderIndex =
+          typeof storedMilestoneCount === 'number'
+            ? storedMilestoneCount
+            : Number.isFinite(input.orderIndex)
+              ? input.orderIndex
+              : 0;
 
-    await runTransaction(db, async (transaction) => {
-      const planSnapshot = await transaction.get(planRef);
-      const storedMilestoneCount = planSnapshot.data()?.milestoneCount;
-      const nextOrderIndex =
-        typeof storedMilestoneCount === 'number'
-          ? storedMilestoneCount
-          : Number.isFinite(input.orderIndex)
-            ? input.orderIndex
-            : 0;
+        transaction.set(milestoneRef, {
+          id: milestoneRef.id,
+          planId: input.planId,
+          title: input.title,
+          description: input.description,
+          iconId: input.iconId,
+          isSystemHidden: false,
+          startDate: input.startDate ? Timestamp.fromDate(input.startDate) : null,
+          endDate: input.endDate ? Timestamp.fromDate(input.endDate) : null,
+          status: 'upcoming',
+          orderIndex: nextOrderIndex,
+          budgetAmount: input.budgetAmount,
+          estimatedAmount: 0,
+          totalExpense: 0,
+          todoCount: 0,
+          completedTodoCount: 0,
+          createdByUserId: input.createdByUserId,
+          createdAt: now,
+          updatedAt: now,
+          completedAt: null,
+          cancelledAt: null,
+        } satisfies MilestoneDocument);
 
-      transaction.set(milestoneRef, {
-        id: milestoneRef.id,
-        planId: input.planId,
-        title: input.title,
-        description: input.description,
-        iconId: input.iconId,
-        isSystemHidden: false,
-        startDate: input.startDate ? Timestamp.fromDate(input.startDate) : null,
-        endDate: input.endDate ? Timestamp.fromDate(input.endDate) : null,
-        status: 'upcoming',
-        orderIndex: nextOrderIndex,
-        budgetAmount: input.budgetAmount,
-        estimatedAmount: 0,
-        totalExpense: 0,
-        todoCount: 0,
-        completedTodoCount: 0,
-        createdByUserId: input.createdByUserId,
-        createdAt: now,
-        updatedAt: now,
-        completedAt: null,
-        cancelledAt: null,
-      } satisfies MilestoneDocument);
-
-      transaction.update(planRef, {
-        milestoneCount: increment(1),
-        updatedAt: now,
+        transaction.update(planRef, {
+          milestoneCount: increment(1),
+          updatedAt: now,
+        });
       });
-    });
+    } catch (error) {
+      await logFirestorePermissionDebug({
+        operation: 'createMilestone',
+        db,
+        planId: input.planId,
+        userId: input.createdByUserId,
+        error,
+      });
+      throw mapFirebaseError(error, 'Không thể tạo mốc lúc này.', 'MILESTONE_CREATE_FAILED');
+    }
 
     await syncUserPlansAggregate(input.planId, {
       milestoneCount: increment(1),

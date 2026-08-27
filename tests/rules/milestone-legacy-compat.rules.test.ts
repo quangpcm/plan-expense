@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { assertFails, assertSucceeds, type RulesTestEnvironment, initializeTestEnvironment } from '@firebase/rules-unit-testing';
-import { deleteDoc, doc, increment, setDoc, updateDoc } from 'firebase/firestore';
+import { deleteDoc, doc, increment, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { afterAll, beforeAll, describe, it } from 'vitest';
 
 // Regression coverage for the "owner can't add a Todo vendor" investigation.
@@ -22,8 +22,16 @@ const now = new Date('2026-08-05T10:00:00.000Z');
 
 type MilestoneShape = 'modern-false' | 'legacy-missing' | 'system-hidden-true';
 type CompletedTodoCountShape = 'present-int' | 'absent' | 'present-non-int';
+type FieldPresenceShape = 'present' | 'absent';
+type LegacyMilestoneMetadataShape = 'present' | 'absent';
 
-async function seed(milestoneShape: MilestoneShape, completedTodoCountShape: CompletedTodoCountShape = 'present-int') {
+async function seed(
+  milestoneShape: MilestoneShape,
+  completedTodoCountShape: CompletedTodoCountShape = 'present-int',
+  totalExpenseShape: FieldPresenceShape = 'present',
+  todoCountShape: FieldPresenceShape = 'present',
+  metadataShape: LegacyMilestoneMetadataShape = 'present',
+) {
   await testEnv.withSecurityRulesDisabled(async (context) => {
     const db = context.firestore();
 
@@ -105,20 +113,27 @@ async function seed(milestoneShape: MilestoneShape, completedTodoCountShape: Com
       startDate: null,
       endDate: null,
       orderIndex: 0,
-      todoCount: 1,
       estimatedAmount: 0,
-      totalExpense: 0,
       status: 'in_progress',
-      createdByUserId: 'owner-user',
-      createdAt: now,
       updatedAt: now,
     };
+    if (metadataShape === 'present') {
+      baseMilestone.createdByUserId = 'owner-user';
+      baseMilestone.createdAt = now;
+    }
     if (completedTodoCountShape === 'present-int') {
       baseMilestone.completedTodoCount = 0;
     } else if (completedTodoCountShape === 'present-non-int') {
       baseMilestone.completedTodoCount = 'not-a-number';
     }
     // 'absent' — leave the key out entirely.
+    if (totalExpenseShape === 'present') {
+      baseMilestone.totalExpense = 0;
+    }
+    if (todoCountShape === 'present') {
+      baseMilestone.todoCount = 1;
+    }
+    // 'absent' — leave the key out entirely, same as a real pre-migration doc.
 
     const milestoneDoc =
       milestoneShape === 'modern-false'
@@ -203,12 +218,52 @@ describe('milestone isSystemHidden legacy compatibility', () => {
     });
   }
 
+  function createTodoTransactionShapedCommit() {
+    const db = ownerDb();
+    const batch = writeBatch(db);
+
+    batch.set(doc(db, 'plans', 'plan-1', 'todos', 'todo-new'), {
+      id: 'todo-new',
+      planId: 'plan-1',
+      milestoneId: 'milestone-1',
+      orderIndex: 1000,
+      title: 'New todo',
+      description: null,
+      assigneeMemberId: null,
+      dueDate: null,
+      priority: 'medium',
+      status: 'todo',
+      budget: 1230000,
+      vendors: [],
+      selectedTodoVendorId: null,
+      attachments: [],
+      createdByUserId: 'owner-user',
+      createdAt: now,
+      updatedAt: now,
+      completedAt: null,
+      cancelledAt: null,
+    });
+    batch.update(doc(db, 'plans', 'plan-1'), {
+      todoCount: increment(1),
+      estimatedAmount: increment(1230000),
+      updatedAt: now,
+    });
+    batch.update(doc(db, 'plans', 'plan-1', 'milestones', 'milestone-1'), {
+      todoCount: increment(1),
+      estimatedAmount: increment(1230000),
+      updatedAt: now,
+    });
+
+    return batch.commit();
+  }
+
   function createExpenseAgainstMilestone1() {
     // Isolated expense-create-rule check — the expense rule itself never
     // references isSystemHidden. The real createExpense() transaction also
-    // writes the milestone's aggregate fields in the same commit, which is
-    // exactly `milestoneAggregateUpdate()` above applied from a different
-    // call site — covered there, not duplicated here.
+    // writes the milestone's aggregate fields in the same commit — that
+    // touch is `expenseAggregateTouch()` below (totalExpense-only, never
+    // todoCount), not `milestoneAggregateUpdate()` — covered there, not
+    // duplicated here.
     return setDoc(doc(ownerDb(), 'plans', 'plan-1', 'expenses', 'expense-new'), {
       id: 'expense-new',
       planId: 'plan-1',
@@ -224,6 +279,18 @@ describe('milestone isSystemHidden legacy compatibility', () => {
       createdByUserId: 'owner-user',
       createdByMemberId: 'member-owner',
       createdAt: now,
+      updatedAt: now,
+    });
+  }
+
+  // Mirrors FirestoreExpenseRepository.createExpense's actual milestone
+  // touch (firestore-expense.repository.ts) — a plain totalExpense set, no
+  // todoCount and no increment transform at all. This is the write shape
+  // that most exercises the "todoCount legacy-absent" gap, since it never
+  // touches todoCount to auto-create it the way Todo writes do.
+  function expenseAggregateTouch() {
+    return updateDoc(doc(ownerDb(), 'plans', 'plan-1', 'milestones', 'milestone-1'), {
+      totalExpense: 100,
       updatedAt: now,
     });
   }
@@ -350,6 +417,20 @@ describe('milestone isSystemHidden legacy compatibility', () => {
     });
   });
 
+  describe('legacy milestone metadata absent', () => {
+    it('aggregate update still succeeds when createdByUserId/createdAt are absent', async () => {
+      await testEnv.clearFirestore();
+      await seed('modern-false', 'present-int', 'present', 'present', 'absent');
+      await assertSucceeds(milestoneAggregateUpdate());
+    });
+
+    it('Todo create transaction shape still succeeds when createdByUserId/createdAt are absent', async () => {
+      await testEnv.clearFirestore();
+      await seed('modern-false', 'present-int', 'present', 'present', 'absent');
+      await assertSucceeds(createTodoTransactionShapedCommit());
+    });
+  });
+
   describe('modern milestone — completedTodoCount: 0 (int)', () => {
     it('Todo create succeeds', async () => {
       await testEnv.clearFirestore();
@@ -387,6 +468,61 @@ describe('milestone isSystemHidden legacy compatibility', () => {
       await testEnv.clearFirestore();
       await seed('modern-false', 'present-non-int');
       await assertFails(milestoneAggregateUpdate());
+    });
+  });
+
+  // Regression coverage for the "add Todo fails on some old plans" investigation.
+  // Root cause: totalExpense/todoCount were unconditionally required (`is int`)
+  // in the milestone update rule, unlike completedTodoCount which already had
+  // the presence-guard pattern above. A masked aggregate write that never
+  // touches one of them (Todo create/delete's todoCount-only or
+  // completedTodoCount-only touch; Expense/Income's totalExpense-only touch)
+  // left the untouched field exactly as it already was on the target
+  // milestone — absent, for a milestone old enough to predate that field —
+  // and threw on direct dot-access, denying the whole write.
+  describe('legacy milestone — totalExpense field absent (a write that never touches it succeeds)', () => {
+    it('Todo update (todoCount/completedTodoCount touch, never touches totalExpense) succeeds', async () => {
+      await testEnv.clearFirestore();
+      await seed('modern-false', 'present-int', 'absent', 'present');
+      await assertSucceeds(updateTodoMilestoneAggregateTouch());
+    });
+
+    it('milestone aggregate update (todoCount touch, never touches totalExpense) succeeds', async () => {
+      await testEnv.clearFirestore();
+      await seed('modern-false', 'present-int', 'absent', 'present');
+      await assertSucceeds(milestoneAggregateUpdate());
+    });
+  });
+
+  describe('legacy milestone — todoCount field absent (a write that never touches it succeeds)', () => {
+    it('Expense aggregate touch (the write shape that never touches todoCount at all) succeeds', async () => {
+      await testEnv.clearFirestore();
+      await seed('modern-false', 'present-int', 'present', 'absent');
+      await assertSucceeds(expenseAggregateTouch());
+    });
+  });
+
+  describe('totalExpense/todoCount present but not an int — still denied', () => {
+    it('a write that would leave totalExpense as a non-int value is denied', async () => {
+      await testEnv.clearFirestore();
+      await seed('modern-false', 'present-int', 'present', 'present');
+      await assertFails(
+        updateDoc(doc(ownerDb(), 'plans', 'plan-1', 'milestones', 'milestone-1'), {
+          totalExpense: 'not-a-number',
+          updatedAt: now,
+        }),
+      );
+    });
+
+    it('a write that would leave todoCount as a non-int value is denied', async () => {
+      await testEnv.clearFirestore();
+      await seed('modern-false', 'present-int', 'present', 'present');
+      await assertFails(
+        updateDoc(doc(ownerDb(), 'plans', 'plan-1', 'milestones', 'milestone-1'), {
+          todoCount: 'not-a-number',
+          updatedAt: now,
+        }),
+      );
     });
   });
 });

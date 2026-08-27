@@ -39,6 +39,7 @@ import type {
 import { diffRemovedAttachments } from '@/modules/storage/utils/diff-attachments';
 import { recalculateEstimatedAmounts } from '@/shared/lib/firestore/recalculate-estimated-amounts';
 import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
+import { logFirestorePermissionDebug } from '@/shared/utils/firestore-permission-debug';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
 import { getTodoBudgetAmount } from '@/modules/todo/utils/todo-budget';
 import { getFallbackTodoOrderIndex, sortTodosByMilestoneOrder, TODO_ORDER_INDEX_STEP } from '@/modules/todo/utils/todo-order';
@@ -78,42 +79,53 @@ export class FirestoreTodoRepository implements TodoRepository {
     const milestoneRef = getPlanDocumentRef(db, input.planId, 'milestones', input.milestoneId);
     const now = Timestamp.now();
     const estimatedAmount = input.budget ?? 0;
+    try {
+      await runTransaction(db, async (transaction) => {
+        transaction.set(todoRef, {
+          id: todoRef.id,
+          planId: input.planId,
+          milestoneId: input.milestoneId,
+          orderIndex: now.toMillis(),
+          title: input.title,
+          description: input.description,
+          assigneeMemberId: input.assigneeMemberId,
+          dueDate: input.dueDate ? Timestamp.fromDate(input.dueDate) : null,
+          priority: input.priority,
+          status: 'todo',
+          budget: input.budget,
+          vendors: [],
+          selectedTodoVendorId: null,
+          attachments: input.attachments,
+          createdByUserId: input.createdByUserId,
+          createdAt: now,
+          updatedAt: now,
+          completedAt: null,
+          cancelledAt: null,
+        } satisfies TodoDocument);
 
-    await runTransaction(db, async (transaction) => {
-      transaction.set(todoRef, {
-        id: todoRef.id,
+        transaction.update(planRef, {
+          todoCount: increment(1),
+          estimatedAmount: increment(estimatedAmount),
+          updatedAt: now,
+        });
+
+        transaction.update(milestoneRef, {
+          todoCount: increment(1),
+          estimatedAmount: increment(estimatedAmount),
+          updatedAt: now,
+        });
+      });
+    } catch (error) {
+      await logFirestorePermissionDebug({
+        operation: 'createTodo',
+        db,
         planId: input.planId,
         milestoneId: input.milestoneId,
-        orderIndex: now.toMillis(),
-        title: input.title,
-        description: input.description,
-        assigneeMemberId: input.assigneeMemberId,
-        dueDate: input.dueDate ? Timestamp.fromDate(input.dueDate) : null,
-        priority: input.priority,
-        status: 'todo',
-        budget: input.budget,
-        vendors: [],
-        selectedTodoVendorId: null,
-        attachments: input.attachments,
-        createdByUserId: input.createdByUserId,
-        createdAt: now,
-        updatedAt: now,
-        completedAt: null,
-        cancelledAt: null,
-      } satisfies TodoDocument);
-
-      transaction.update(planRef, {
-        todoCount: increment(1),
-        estimatedAmount: increment(estimatedAmount),
-        updatedAt: now,
+        userId: input.createdByUserId,
+        error,
       });
-
-      transaction.update(milestoneRef, {
-        todoCount: increment(1),
-        estimatedAmount: increment(estimatedAmount),
-        updatedAt: now,
-      });
-    });
+      throw mapFirebaseError(error, 'Không thể tạo công việc lúc này.', 'TODO_CREATE_FAILED');
+    }
 
     await syncUserPlansAggregate(input.planId, {
       todoCount: increment(1),
