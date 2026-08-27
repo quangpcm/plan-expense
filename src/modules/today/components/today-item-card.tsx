@@ -64,10 +64,18 @@ function renderTodoStatus(item: TodaySummaryItem) {
   }
 
   if (item.urgency === 'danger') {
-    return <Badge variant="neutral">Hôm nay</Badge>;
+    return (
+      <Badge className="border border-[var(--color-border-strong)] bg-[var(--color-surface-default)]" variant="neutral">
+        Hôm nay
+      </Badge>
+    );
   }
 
-  return <Badge variant={URGENCY_BADGE_VARIANT[item.urgency]}>{formatDueCountdown(item.dueAt.toDate())}</Badge>;
+  return (
+    <Badge className="border border-transparent" variant={URGENCY_BADGE_VARIANT[item.urgency]}>
+      {formatDueCountdown(item.dueAt.toDate())}
+    </Badge>
+  );
 }
 
 // Travel Activity's dueAt is a real schedule time (startsAt, entered via a datetime input) — its
@@ -78,7 +86,11 @@ function renderStatus(item: TodaySummaryItem) {
   }
 
   if (item.kind === 'travelActivity') {
-    return <Badge variant="neutral">{formatTime(item.dueAt.toDate())}</Badge>;
+    return (
+      <Badge className="border border-[var(--color-border-strong)] bg-[var(--color-surface-default)]" variant="neutral">
+        {formatTime(item.dueAt.toDate())}
+      </Badge>
+    );
   }
 
   return renderTodoStatus(item);
@@ -103,14 +115,14 @@ export function TodayItemCard({ item }: TodayItemCardProps) {
 
   return (
     <DataRow
-      className="w-full rounded-[var(--radius-ds-xl)] border border-[var(--color-border-default)] px-4 hover:border-[var(--color-border-strong)]"
+      className="w-full rounded-[var(--radius-ds-xl)] border border-[var(--color-border-strong)] bg-[var(--color-surface-default)] px-4 hover:border-[var(--color-text-muted)] hover:bg-[var(--color-surface-default)]"
       density="compact"
       leading={
         <div
           className={
             isAttention
               ? 'flex size-9 items-center justify-center rounded-full bg-[var(--color-status-danger-surface)] text-[color:var(--color-status-danger)]'
-              : 'flex size-9 items-center justify-center rounded-full bg-[var(--color-surface-subtle)] text-[var(--color-text-primary)]'
+              : 'flex size-9 items-center justify-center rounded-full border border-[var(--color-border-default)] bg-[var(--color-surface-subtle)] text-[var(--color-text-primary)]'
           }
         >
           <Icon aria-hidden="true" className="size-[18px]" />

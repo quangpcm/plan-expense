@@ -25,12 +25,11 @@ type DailyBriefProps = {
 // Priority hero is meant to be the screen's one actionable hero, so Brief stays editorial/quiet.
 export function DailyBrief({ headline, supportingText, action }: DailyBriefProps) {
   return (
-    <Card className="gap-1 py-4">
-      <div className="flex items-center gap-1.5 text-metadata font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
-        <Sparkles aria-hidden="true" className="size-3.5 text-[var(--color-accent)]" />
-        Tóm tắt hôm nay
+    <Card className="gap-2 py-4">
+      <div className="flex items-start gap-2">
+        <Sparkles aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-[var(--color-accent)]" />
+        <p className="text-section-title text-[var(--color-text-primary)]">{headline}</p>
       </div>
-      <p className="text-section-title text-[var(--color-text-primary)]">{headline}</p>
       <p className="text-body text-[var(--color-text-secondary)]">{supportingText}</p>
       {action ? (
         // Same Button-ghost-stripped-to-a-text-link override already established at

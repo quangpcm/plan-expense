@@ -15,6 +15,7 @@ export function AppShell({ children }: AppShellProps) {
   const ROUTE_LOADING_DELAY_MS = 240;
   const ROUTE_LOADING_MIN_VISIBLE_MS = 360;
   const pathname = usePathname();
+  const isTodayRoute = pathname === '/today';
   const searchParams = useSearchParams();
   const routeKey = useMemo(() => `${pathname}?${searchParams.toString()}`, [pathname, searchParams]);
   const [isRouteTransitionVisible, setIsRouteTransitionVisible] = useState(false);
@@ -127,7 +128,13 @@ export function AppShell({ children }: AppShellProps) {
         </div>
       ) : null}
       <AppHeader />
-      <div className="mx-auto w-full max-w-[1500px] flex-1 px-4 pb-[calc(4.5rem_+_env(safe-area-inset-bottom))] pt-5 sm:px-6 md:pb-8 lg:px-6">
+      <div
+        className={
+          isTodayRoute
+            ? 'mx-auto w-full max-w-[1500px] flex-1 pb-[calc(4.5rem_+_env(safe-area-inset-bottom))] md:pb-8'
+            : 'mx-auto w-full max-w-[1500px] flex-1 px-4 pb-[calc(4.5rem_+_env(safe-area-inset-bottom))] pt-5 sm:px-6 md:pb-8 lg:px-6'
+        }
+      >
         {children}
       </div>
       <AppBottomNav />

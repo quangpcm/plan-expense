@@ -41,13 +41,19 @@ export function PriorityNextCard({ item, now }: PriorityNextCardProps) {
       onClick={() => router.push(resolveTodayItemHref(item))}
       type="button"
     >
-      <div className="flex min-w-0 items-stretch gap-2.5">
-        <div className="flex size-10 shrink-0 items-center justify-center self-start rounded-full bg-[var(--color-brand-subtle)] text-[var(--color-brand-primary)]">
-          <Icon aria-hidden="true" className="size-[18px]" />
+      <div className="flex min-w-0 flex-1 flex-col gap-3">
+        <div className="text-metadata font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+          Nên làm trước
         </div>
-        <div className="flex min-w-0 flex-col justify-between">
-          <p className="truncate text-component-title text-[var(--color-text-primary)]">{item.title}</p>
-          <p className="truncate text-metadata text-[var(--color-text-secondary)]">{item.planName}</p>
+
+        <div className="flex min-w-0 items-stretch gap-2.5">
+          <div className="flex size-10 shrink-0 items-center justify-center self-start rounded-full bg-[var(--color-brand-subtle)] text-[var(--color-brand-primary)]">
+            <Icon aria-hidden="true" className="size-[18px]" />
+          </div>
+          <div className="flex min-w-0 flex-col justify-between">
+            <p className="truncate text-component-title text-[var(--color-text-primary)]">{item.title}</p>
+            <p className="truncate text-metadata text-[var(--color-text-secondary)]">{item.planName}</p>
+          </div>
         </div>
       </div>
 
