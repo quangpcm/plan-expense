@@ -1,8 +1,12 @@
 'use client';
 
+import * as Dialog from '@radix-ui/react-dialog';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import type { PointerEvent as ReactPointerEvent, TransitionEvent as ReactTransitionEvent, WheelEvent as ReactWheelEvent } from 'react';
+import { Drawer } from 'vaul';
+
+import { useMediaQuery } from '@/shared/hooks/use-media-query';
 
 export type PhotoPreviewItem = {
   id: string;
@@ -62,6 +66,7 @@ function createGestureState(): GestureState {
 }
 
 export function PhotoPreview({ items, initialIndex = 0, onClose }: PhotoPreviewProps) {
+  const isDesktop = useMediaQuery('(min-width: 768px)');
   const total = items.length;
   const [index, setIndex] = useState(() => (total > 0 ? ((initialIndex % total) + total) % total : 0));
   const [scale, setScale] = useState(1);
@@ -283,11 +288,9 @@ export function PhotoPreview({ items, initialIndex = 0, onClose }: PhotoPreviewP
     setPan(nextScale <= 1 ? { x: 0, y: 0 } : clampPan(pan, nextScale));
   }
 
-  return (
+  const previewBody = (
     <div className="fixed inset-0 z-50 flex flex-col bg-black/90 backdrop-blur-md">
-      <div
-        className="flex items-center justify-between gap-3 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] text-white sm:px-6"
-      >
+      <div className="flex items-center justify-between gap-3 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] text-white sm:px-6">
         <span className="text-sm font-medium text-white/70">{total > 1 ? `${index + 1}/${total}` : ''}</span>
         <button
           aria-label="Đóng"
@@ -343,6 +346,34 @@ export function PhotoPreview({ items, initialIndex = 0, onClose }: PhotoPreviewP
         </>
       ) : null}
     </div>
+  );
+
+  if (isDesktop) {
+    return (
+      <Dialog.Root onOpenChange={(open) => !open && onClose()} open>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md" />
+          <Dialog.Content className="fixed inset-0 z-50 focus:outline-none" onCloseAutoFocus={(event) => event.preventDefault()}>
+            <Dialog.Title className="sr-only">Xem ảnh</Dialog.Title>
+            <Dialog.Description className="sr-only">Xem trước ảnh đính kèm toàn màn hình</Dialog.Description>
+            {previewBody}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+    );
+  }
+
+  return (
+    <Drawer.Root onOpenChange={(open) => !open && onClose()} open>
+      <Drawer.Portal>
+        <Drawer.Overlay className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md" />
+        <Drawer.Content className="fixed inset-0 z-50 focus:outline-none" onCloseAutoFocus={(event) => event.preventDefault()}>
+          <Drawer.Title className="sr-only">Xem ảnh</Drawer.Title>
+          <Drawer.Description className="sr-only">Xem trước ảnh đính kèm toàn màn hình</Drawer.Description>
+          {previewBody}
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
   );
 }
 

@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { CalendarDays, Check, CheckCircle2, Clock3, Copy, PencilLine, Phone, Plus, Trash2, Wallet, X } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Clock3, PencilLine, Phone, Plus, Trash2, Wallet, X } from 'lucide-react';
 
 import type { TodoDocument } from '@/modules/todo/types/todo';
 import { priorityLabel, statusLabel, toTelHref, toVendorHref } from '@/modules/todo/utils/todo-display';
 import { getSelectedTodoVendor, getTodoBudgetAmount } from '@/modules/todo/utils/todo-budget';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
-import { AttachmentGallery } from '@/modules/storage';
+import { AttachmentGallery, resolveAttachmentUrl } from '@/modules/storage';
+import { ThumbnailCompact } from '@/shared/components/media/thumbnail-compact';
 import { Avatar } from '@/shared/components/ui/avatar';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { DropdownSelect, type DropdownOption } from '@/shared/components/ui/dropdown-select';
+import { PhotoPreview, type PhotoPreviewItem } from '@/shared/components/ui/photo-preview';
 import { cn } from '@/shared/utils/cn';
 import { formatCurrency } from '@/shared/utils/currency';
 import { formatDate } from '@/shared/utils/date';
@@ -52,6 +54,9 @@ export function TodoDetailView({
   const selectedVendor = getSelectedTodoVendor(todo);
   const displayedBudget = getTodoBudgetAmount(todo);
   const [copiedVendorId, setCopiedVendorId] = useState<string | null>(null);
+  const [vendorPhotoPreview, setVendorPhotoPreview] = useState<{ items: PhotoPreviewItem[]; index: number } | null>(
+    null,
+  );
 
   async function handleCopyVendorPhone(vendorId: string, phoneNumber: string) {
     await navigator.clipboard.writeText(phoneNumber);
@@ -123,11 +128,14 @@ export function TodoDetailView({
           <ul className="space-y-2">
             {todo.vendors.map((vendor) => {
               const phoneNumber = vendor.phoneNumber;
+              const vendorImages: PhotoPreviewItem[] = vendor.attachments
+                .filter((attachment) => attachment.mimeType.startsWith('image/'))
+                .map((attachment) => ({ id: attachment.id, url: resolveAttachmentUrl(attachment), alt: attachment.fileName }));
 
               return (
               <li
                 className={cn(
-                  'space-y-1 rounded-2xl border px-4 py-2.5 text-sm transition',
+                  'flex items-start gap-2.5 rounded-2xl border px-3 py-2 text-sm transition',
                   vendor.id === todo.selectedTodoVendorId
                     ? 'border-[#cfe0ff] bg-[#eef4ff]'
                     : 'border-transparent bg-slate-50 hover:border-[#dbe5f7]',
@@ -143,85 +151,98 @@ export function TodoDetailView({
                 role="button"
                 tabIndex={0}
               >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <span className="block truncate font-medium text-slate-900">
-                      {vendor.link ? (
-                        <a
-                          className="text-sky-700 hover:underline"
-                          href={toVendorHref(vendor.link)}
-                          onClick={(event) => event.stopPropagation()}
-                          rel="noreferrer"
-                          target="_blank"
-                        >
-                          {vendor.name}
-                        </a>
-                      ) : (
-                        vendor.name
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <span className={cn('font-medium', vendor.id === todo.selectedTodoVendorId ? 'text-[#1d4ed8]' : 'text-slate-600')}>
-                      {formatCurrency(vendor.price)}
-                    </span>
-                    {canManagePlan ? (
-                      <button
-                        aria-label={`Sửa nhà cung cấp ${vendor.name}`}
-                        className="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-white hover:text-slate-700"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onEditVendor(todo, vendor.id);
-                        }}
-                        type="button"
-                      >
-                        <PencilLine className="size-3.5" />
-                      </button>
-                    ) : null}
-                    {canManagePlan ? (
-                      <button
-                        aria-label={`Xoá nhà cung cấp ${vendor.name}`}
-                        className="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onDeleteVendor(todo, vendor.id);
-                        }}
-                        type="button"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-                {phoneNumber ? (
-                  <div className="flex items-center gap-1.5 text-xs text-slate-600" onClick={(event) => event.stopPropagation()}>
-                    <span className="truncate">{phoneNumber}</span>
-                    <a
-                      aria-label={`Gọi ${phoneNumber}`}
-                      className="inline-flex items-center gap-1 rounded-full px-1.5 py-1 font-medium text-[#1d4ed8] hover:bg-[#eef4ff]"
-                      href={toTelHref(phoneNumber)}
-                    >
-                      <Phone className="size-3.5" />
-                      Gọi
-                    </a>
-                    <button
-                      aria-label={`Sao chép số điện thoại ${phoneNumber}`}
-                      className="inline-flex size-6 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                      onClick={() => handleCopyVendorPhone(vendor.id, phoneNumber)}
-                      type="button"
-                    >
-                      {copiedVendorId === vendor.id ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-                    </button>
-                  </div>
-                ) : null}
-                {vendor.description ? (
-                  <p className="line-clamp-2 text-xs leading-5 text-slate-500">{vendor.description}</p>
-                ) : null}
-                {vendor.attachments.length > 0 ? (
+                {vendorImages.length > 0 ? (
                   <div onClick={(event) => event.stopPropagation()} role="presentation">
-                    <AttachmentGallery attachments={vendor.attachments} size="sm" />
+                    <ThumbnailCompact
+                      ariaLabelSuffix={`của ${vendor.name}`}
+                      onPhotoClick={(_photo, index) => setVendorPhotoPreview({ items: vendorImages, index })}
+                      photos={vendorImages}
+                    />
                   </div>
                 ) : null}
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <span className="block truncate font-medium text-slate-900">
+                        {vendor.link ? (
+                          <a
+                            className="text-sky-700 hover:underline"
+                            href={toVendorHref(vendor.link)}
+                            onClick={(event) => event.stopPropagation()}
+                            rel="noreferrer"
+                            target="_blank"
+                          >
+                            {vendor.name}
+                          </a>
+                        ) : (
+                          vendor.name
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-0.5">
+                      {vendor.price > 0 ? (
+                        <span
+                          className={cn(
+                            'mr-0.5 font-medium',
+                            vendor.id === todo.selectedTodoVendorId ? 'text-[#1d4ed8]' : 'text-slate-600',
+                          )}
+                        >
+                          {formatCurrency(vendor.price)}
+                        </span>
+                      ) : null}
+                      {canManagePlan ? (
+                        <button
+                          aria-label={`Sửa nhà cung cấp ${vendor.name}`}
+                          className="inline-flex size-6 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-white hover:text-slate-700"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onEditVendor(todo, vendor.id);
+                          }}
+                          type="button"
+                        >
+                          <PencilLine className="size-3" />
+                        </button>
+                      ) : null}
+                      {canManagePlan ? (
+                        <button
+                          aria-label={`Xoá nhà cung cấp ${vendor.name}`}
+                          className="inline-flex size-6 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onDeleteVendor(todo, vendor.id);
+                          }}
+                          type="button"
+                        >
+                          <Trash2 className="size-3" />
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                  {phoneNumber ? (
+                    <div className="flex items-center gap-1 text-xs text-slate-600" onClick={(event) => event.stopPropagation()}>
+                      <button
+                        aria-label={
+                          copiedVendorId === vendor.id ? 'Đã sao chép số điện thoại' : `Sao chép số điện thoại ${phoneNumber}`
+                        }
+                        className="truncate text-left hover:text-slate-900"
+                        onClick={() => handleCopyVendorPhone(vendor.id, phoneNumber)}
+                        type="button"
+                      >
+                        {copiedVendorId === vendor.id ? 'Đã sao chép' : phoneNumber}
+                      </button>
+                      <a
+                        aria-label={`Gọi ${phoneNumber}`}
+                        className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-[#1d4ed8] hover:bg-[#eef4ff]"
+                        href={toTelHref(phoneNumber)}
+                      >
+                        <Phone className="size-3.5" />
+                      </a>
+                    </div>
+                  ) : null}
+                  {vendor.description ? (
+                    <p className="line-clamp-2 text-xs leading-5 text-slate-500">{vendor.description}</p>
+                  ) : null}
+                </div>
               </li>
               );
             })}
@@ -300,6 +321,14 @@ export function TodoDetailView({
           </div>
         ) : null}
       </div>
+
+      {vendorPhotoPreview ? (
+        <PhotoPreview
+          initialIndex={vendorPhotoPreview.index}
+          items={vendorPhotoPreview.items}
+          onClose={() => setVendorPhotoPreview(null)}
+        />
+      ) : null}
     </div>
   );
 }

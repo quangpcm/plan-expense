@@ -5,16 +5,14 @@ import { FileText } from 'lucide-react';
 
 import type { MediaAttachment } from '@/modules/storage/types/attachment';
 import { resolveAttachmentUrl } from '@/modules/storage/utils/public-url';
-import { cn } from '@/shared/utils/cn';
 import { PhotoPreview } from '@/shared/components/ui/photo-preview';
 
 type AttachmentGalleryProps = {
   attachments: MediaAttachment[];
-  size?: 'sm' | 'md';
   emptyLabel?: string;
 };
 
-export function AttachmentGallery({ attachments, size = 'md', emptyLabel }: AttachmentGalleryProps) {
+export function AttachmentGallery({ attachments, emptyLabel }: AttachmentGalleryProps) {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
   const images = useMemo(
@@ -35,7 +33,7 @@ export function AttachmentGallery({ attachments, size = 'md', emptyLabel }: Atta
 
   return (
     <>
-      <div className={cn(size === 'sm' ? 'flex flex-wrap gap-2' : 'grid grid-cols-3 gap-2')}>
+      <div className="grid grid-cols-3 gap-2">
         {attachments.map((attachment) => {
           const url = resolveAttachmentUrl(attachment);
 
@@ -45,15 +43,12 @@ export function AttachmentGallery({ attachments, size = 'md', emptyLabel }: Atta
             return (
               <button
                 key={attachment.id}
-                className={cn(
-                  'block shrink-0 overflow-hidden border border-slate-200 bg-white',
-                  size === 'sm' ? 'size-10 rounded-[var(--radius-ds-sm)] md:size-14' : 'aspect-square w-full rounded-2xl',
-                )}
+                className="block overflow-hidden rounded-2xl border border-slate-200 bg-white"
                 onClick={() => setPreviewIndex(imageIndex)}
                 type="button"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element -- external R2/user-provided URL, next/image domain not configured */}
-                <img src={url} alt={attachment.fileName} className="size-full object-cover" />
+                <img src={url} alt={attachment.fileName} className="aspect-square w-full object-cover" />
               </button>
             );
           }
