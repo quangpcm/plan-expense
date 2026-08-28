@@ -32,28 +32,16 @@ export function TodayContextStrip({ contexts }: TodayContextStripProps) {
 
   return (
     <button
-      className="flex min-h-[42px] w-full items-center justify-between gap-3 px-4 py-2 text-left outline-none transition hover:bg-[color:color-mix(in_srgb,var(--color-brand-subtle)_58%,white)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] focus-visible:ring-inset"
+      className="flex min-h-[56px] w-full items-center justify-between gap-3 px-4 py-3 text-left outline-none transition hover:bg-[color:color-mix(in_srgb,var(--color-brand-subtle)_58%,white)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] focus-visible:ring-inset"
       onClick={() => router.push(`/plans/${primaryContext.planId}?tab=travelItinerary`)}
       type="button"
     >
-      <div className="flex min-w-0 items-center gap-3">
-        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-subtle)] text-[var(--color-brand-primary)]">
+      <div className="flex min-w-0 items-start gap-3">
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-subtle)] text-[var(--color-brand-primary)]">
           <Plane aria-hidden="true" className="size-4" />
         </div>
         <div className="min-w-0">
-          <div className="hidden min-w-0 items-center gap-2 md:flex">
-            <p className="truncate text-body-strong text-[var(--color-text-primary)]">{primaryContext.planName}</p>
-            <Badge className="shrink-0 bg-[var(--color-brand-subtle)] text-[var(--color-brand-primary)]" variant="info">
-              Ngày {primaryContext.currentDay}/{primaryContext.totalDays}
-            </Badge>
-            <span aria-hidden="true" className="text-[var(--color-text-muted)]">
-              ·
-            </span>
-            <p className="truncate text-metadata text-[var(--color-text-secondary)]">{buildContextSummary(primaryContext)}</p>
-            {extraCount > 0 ? <Badge variant="neutral">+{extraCount}</Badge> : null}
-          </div>
-
-          <div className="min-w-0 space-y-0.5 md:hidden">
+          <div className="min-w-0 space-y-0.5">
             <div className="flex min-w-0 items-center gap-2">
               <p className="truncate text-body-strong text-[var(--color-text-primary)]">{primaryContext.planName}</p>
               <Badge className="shrink-0 bg-[var(--color-brand-subtle)] text-[var(--color-brand-primary)]" variant="info">

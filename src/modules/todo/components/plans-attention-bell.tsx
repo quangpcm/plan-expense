@@ -32,13 +32,13 @@ export function PlansAttentionBell() {
     <>
       <button
         aria-label="Thông báo"
-        className={`relative inline-flex size-11 items-center justify-center rounded-full border shadow-[0_8px_24px_rgba(15,23,42,0.06)] transition ${getBellToneClass(bellTone)}`}
+        className={`relative inline-flex size-7 items-center justify-center rounded-full border shadow-[0_8px_24px_rgba(15,23,42,0.06)] transition ${getBellToneClass(bellTone)}`}
         onClick={() => setIsNotificationOpen(true)}
         type="button"
       >
-        <Bell className="size-5" />
+        <Bell className="size-4" />
         {todayAttentionCount > 0 ? (
-          <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold leading-none text-white shadow-[0_8px_18px_rgba(244,63,94,0.35)]">
+          <span className="absolute -right-1 -top-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold leading-none text-white shadow-[0_8px_18px_rgba(244,63,94,0.35)]">
             {todayAttentionCount > 9 ? '9+' : todayAttentionCount}
           </span>
         ) : null}
