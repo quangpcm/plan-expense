@@ -1,12 +1,13 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { BriefcaseBusiness, CalendarClock, CheckSquare, ListChecks, Plane } from 'lucide-react';
+import { BriefcaseBusiness, CalendarClock, ListChecks, Plane } from 'lucide-react';
 
 import { Badge } from '@/shared/components/ui/badge';
 import { DataRow } from '@/shared/components/ui/data-row';
 import { formatDueCountdown, formatTime } from '@/shared/utils/date';
 import type { TodaySummaryItem, TodaySummaryItemKind } from '@/modules/today/types/today-summary';
+import { inferTodoVisualCategory, TODO_VISUAL_CATEGORY_META } from '@/modules/today/utils/todo-visual-category';
 
 type TodayItemCardProps = {
   item: TodaySummaryItem;
@@ -82,9 +83,15 @@ function renderStatus(item: TodaySummaryItem, section: TodayItemCardProps['secti
 
 function renderLeading(item: TodaySummaryItem) {
   if (item.kind === 'todo') {
+    const visualCategory = inferTodoVisualCategory(item.title);
+    const meta = TODO_VISUAL_CATEGORY_META[visualCategory];
+    const Icon = meta.icon;
+
     return (
-      <div className="flex size-9 items-center justify-center rounded-full border border-[var(--color-border-default)] bg-[var(--color-surface-default)] text-[var(--color-text-muted)]">
-        <CheckSquare aria-hidden="true" className="size-4" />
+      <div
+        className={`flex size-9 items-center justify-center rounded-full border border-[var(--color-border-default)] ${meta.backgroundClassName} ${meta.iconClassName}`}
+      >
+        <Icon aria-hidden="true" className="size-4" />
         <span className="sr-only">{TYPE_LABEL[item.kind]}</span>
       </div>
     );

@@ -50,7 +50,7 @@ export function TodoNotificationScreen({ plans, open, onClose }: TodoNotificatio
 
   return (
     <ResponsiveModal
-      className="max-h-[85vh] w-full overflow-hidden p-0"
+      className="max-h-[85vh] w-full overflow-hidden p-0 md:p-5"
       description={description}
       onOpenChange={(nextOpen) => {
         if (!nextOpen) {
