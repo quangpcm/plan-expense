@@ -144,13 +144,13 @@ export function PlanningTab({
         }
       />
       <div className="flex items-center justify-between gap-2">
-        <div className="inline-flex gap-1 rounded-full bg-slate-100 p-1">
+        <div className="inline-flex gap-1 rounded-full bg-[var(--color-surface-subtle)] p-1">
           <button
             className={cn(
               'rounded-full px-4 py-2 text-sm font-medium transition',
               workViewMode === 'milestones'
-                ? 'bg-white text-slate-950 shadow-sm'
-                : 'text-slate-600',
+                ? 'bg-[var(--color-surface-default)] text-[var(--color-text-primary)] shadow-sm'
+                : 'text-[var(--color-text-secondary)]',
             )}
             onClick={() => onWorkViewModeChange('milestones')}
             type="button"
@@ -161,8 +161,8 @@ export function PlanningTab({
             className={cn(
               'rounded-full px-4 py-2 text-sm font-medium transition',
               workViewMode === 'todos'
-                ? 'bg-white text-slate-950 shadow-sm'
-                : 'text-slate-600',
+                ? 'bg-[var(--color-surface-default)] text-[var(--color-text-primary)] shadow-sm'
+                : 'text-[var(--color-text-secondary)]',
             )}
             onClick={() => onWorkViewModeChange('todos')}
             type="button"
@@ -239,8 +239,8 @@ export function PlanningTab({
                   </div>
                 </div>
               ) : (
-                <Card className="border-slate-200 bg-slate-50 shadow-none">
-                  <p className="text-sm leading-6 text-slate-600">
+                <Card className="border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] shadow-none">
+                  <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
                     Chọn một mốc kế hoạch để xem chi tiết hoặc tạo mốc đầu
                     tiên nếu kế hoạch của bạn chưa có giai đoạn nào.
                   </p>

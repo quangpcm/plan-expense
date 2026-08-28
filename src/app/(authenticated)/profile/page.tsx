@@ -46,8 +46,8 @@ export default function ProfilePage() {
           src={userProfile?.avatarUrl ?? user?.photoURL ?? null}
         />
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold text-slate-950">{user?.displayName || 'User'}</h1>
-          <p className="text-sm text-slate-600">{user?.email || 'No email found'}</p>
+          <h1 className="text-2xl font-semibold text-[var(--color-text-primary)]">{user?.displayName || 'User'}</h1>
+          <p className="text-sm text-[var(--color-text-secondary)]">{user?.email || 'No email found'}</p>
         </div>
       </div>
 
@@ -71,7 +71,7 @@ export default function ProfilePage() {
         {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
       </Button>
 
-      <p className="text-center text-xs text-slate-400">Go Plan · Phiên bản 1.0.0</p>
+      <p className="text-center text-xs text-[var(--color-text-muted)]">Go Plan · Phiên bản 1.0.0</p>
 
       <DisplayNameSheet onClose={() => setShowNameSheet(false)} open={showNameSheet} />
       {user ? (
