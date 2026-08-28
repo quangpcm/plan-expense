@@ -25,7 +25,7 @@ export function Switch({ checked, onCheckedChange, disabled = false, className, 
     >
       <span
         className={cn(
-          'inline-block size-5 translate-x-1 rounded-full bg-white transition-transform',
+          'inline-block size-5 translate-x-1 rounded-full bg-[var(--color-surface-default)] transition-transform',
           checked ? 'translate-x-6' : 'translate-x-1',
         )}
       />

@@ -22,7 +22,9 @@ export function Avatar({ className, initials = 'PE', src, ...props }: AvatarProp
     <div
       className={cn(
         'flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full text-sm font-semibold',
-        parsedAvatar.kind === 'empty' ? 'bg-slate-950 text-white' : toneClass,
+        parsedAvatar.kind === 'empty'
+          ? 'bg-[var(--color-surface-subtle)] text-[var(--color-text-primary)]'
+          : toneClass,
         className,
       )}
       {...props}

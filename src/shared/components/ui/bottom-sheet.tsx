@@ -36,7 +36,7 @@ export function BottomSheet({
   const content = (
     <div
       className={cn(
-        'relative flex max-h-[85vh] flex-col overflow-hidden rounded-t-[32px] border border-b-0 border-slate-200 bg-white p-5 shadow-[0_-16px_60px_rgba(15,23,42,0.08)]',
+        'relative flex max-h-[85vh] flex-col overflow-hidden rounded-t-[32px] border border-b-0 border-[var(--color-border-default)] bg-[var(--color-surface-overlay)] p-5 text-[var(--color-text-primary)] shadow-[var(--shadow-overlay)]',
         className,
       )}
       {...props}
@@ -44,17 +44,17 @@ export function BottomSheet({
       {showCloseButton && onClose ? (
         <button
           aria-label="Đóng"
-          className="absolute right-4 top-4 rounded-full p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+          className="absolute right-4 top-4 rounded-full p-1.5 text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-secondary)]"
           onClick={onClose}
           type="button"
         >
           <X className="size-5" />
         </button>
       ) : null}
-      <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200" />
+      <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-[var(--color-border-default)]" />
       <div className="shrink-0">
-        <h2 className="text-lg font-semibold text-slate-950">{title}</h2>
-        {description ? <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p> : null}
+        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{title}</h2>
+        {description ? <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">{description}</p> : null}
       </div>
       {children ? <div className="mt-4 min-h-0 overflow-y-auto overscroll-contain pr-1">{children}</div> : null}
     </div>
@@ -68,7 +68,7 @@ export function BottomSheet({
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       <button
         aria-label="Đóng"
-        className="absolute inset-0 bg-slate-950/40"
+        className="absolute inset-0 bg-[var(--color-overlay-backdrop)]"
         onClick={onClose}
         type="button"
       />

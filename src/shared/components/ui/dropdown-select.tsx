@@ -75,7 +75,7 @@ export function DropdownSelect({
       </button>
 
       {isOpen ? (
-        <div className="absolute z-[var(--z-index-dropdown)] mt-2 w-full overflow-hidden rounded-[var(--radius-ds-lg)] border border-[var(--color-border-default)] bg-[var(--color-surface-default)] shadow-[0_18px_50px_rgba(15,23,42,0.14)]">
+        <div className="absolute z-[var(--z-index-dropdown)] mt-2 w-full overflow-hidden rounded-[var(--radius-ds-lg)] border border-[var(--color-border-default)] bg-[var(--color-surface-overlay)] shadow-[0_18px_50px_color-mix(in_srgb,var(--color-overlay-backdrop)_24%,transparent)]">
           <ul className="max-h-72 overflow-y-auto py-1" role="listbox">
             {options.map((option) => {
               const isSelected = option.value === value;

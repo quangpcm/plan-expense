@@ -20,7 +20,7 @@ const confirmButtonVariant: Record<ConfirmDialogVariant, 'primary' | 'destructiv
   success: 'primary',
 };
 
-const successButtonClassName = 'bg-emerald-600 text-white hover:bg-emerald-700';
+const successButtonClassName = 'bg-[var(--color-status-success)] text-[var(--color-text-inverse)] hover:bg-emerald-700';
 
 type ConfirmDialogProps = {
   open: boolean;
@@ -118,19 +118,19 @@ export function ConfirmDialog({
   const titleBlock = (
     <div className="space-y-1">
       {isDesktop ? (
-        <AlertDialog.Title className="text-lg font-semibold text-slate-950">
+        <AlertDialog.Title className="text-lg font-semibold text-[var(--color-text-primary)]">
           {title}
         </AlertDialog.Title>
       ) : (
-        <Drawer.Title className="text-lg font-semibold text-slate-950">{title}</Drawer.Title>
+        <Drawer.Title className="text-lg font-semibold text-[var(--color-text-primary)]">{title}</Drawer.Title>
       )}
       {description ? (
         isDesktop ? (
-          <AlertDialog.Description className="text-sm leading-6 text-slate-600">
+          <AlertDialog.Description className="text-sm leading-6 text-[var(--color-text-secondary)]">
             {description}
           </AlertDialog.Description>
         ) : (
-          <Drawer.Description className="mt-1 text-sm leading-6 text-slate-600">
+          <Drawer.Description className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">
             {description}
           </Drawer.Description>
         )
@@ -149,7 +149,7 @@ export function ConfirmDialog({
           <AlertDialog.Overlay className="fixed inset-0 z-50 bg-[var(--color-overlay-backdrop)] data-[state=closed]:animate-overlay-hide data-[state=open]:animate-overlay-show" />
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
             <AlertDialog.Content
-              className="relative w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-5 shadow-[var(--shadow-overlay)] focus:outline-none data-[state=closed]:animate-content-hide data-[state=open]:animate-content-show"
+              className="relative w-full max-w-md rounded-[28px] border border-[var(--color-border-default)] bg-[var(--color-surface-overlay)] p-5 text-[var(--color-text-primary)] shadow-[var(--shadow-overlay)] focus:outline-none data-[state=closed]:animate-content-hide data-[state=open]:animate-content-show"
               onCloseAutoFocus={restoreFocusToTrigger}
               onEscapeKeyDown={(event) => event.preventDefault()}
             >
@@ -167,7 +167,7 @@ export function ConfirmDialog({
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-50 bg-[var(--color-overlay-backdrop)]" />
         <Drawer.Content
-          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col overflow-hidden rounded-t-[32px] border border-b-0 border-slate-200 bg-white p-5 shadow-[0_-16px_60px_rgba(15,23,42,0.08)] focus:outline-none"
+          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col overflow-hidden rounded-t-[32px] border border-b-0 border-[var(--color-border-default)] bg-[var(--color-surface-overlay)] p-5 text-[var(--color-text-primary)] shadow-[var(--shadow-overlay)] focus:outline-none"
           onCloseAutoFocus={restoreFocusToTrigger}
           onEscapeKeyDown={(event) => event.preventDefault()}
           onOpenAutoFocus={(event) => {
@@ -178,7 +178,7 @@ export function ConfirmDialog({
           }}
           onPointerDownOutside={(event) => event.preventDefault()}
         >
-          <div className="mx-auto mb-4 h-1.5 w-14 shrink-0 rounded-full bg-slate-200" />
+          <div className="mx-auto mb-4 h-1.5 w-14 shrink-0 rounded-full bg-[var(--color-border-default)]" />
           {titleBlock}
           {footer}
         </Drawer.Content>

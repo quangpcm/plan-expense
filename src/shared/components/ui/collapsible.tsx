@@ -46,11 +46,11 @@ export function Collapsible({
           <span className="min-w-0 flex-1">
             {header ?? (
               <span className="flex items-start gap-3">
-                {icon ? <span className="mt-0.5 text-slate-500">{icon}</span> : null}
+                {icon ? <span className="mt-0.5 text-[var(--color-text-secondary)]">{icon}</span> : null}
                 <span className="space-y-1">
-                  <span className="block text-lg font-semibold text-slate-950">{title}</span>
+                  <span className="block text-lg font-semibold text-[var(--color-text-primary)]">{title}</span>
                   {description ? (
-                    <span className="block text-sm text-slate-600">{description}</span>
+                    <span className="block text-sm text-[var(--color-text-secondary)]">{description}</span>
                   ) : null}
                 </span>
               </span>
@@ -58,7 +58,7 @@ export function Collapsible({
           </span>
           <ChevronDown
             className={cn(
-              'size-5 shrink-0 text-slate-400 transition-transform duration-200',
+              'size-5 shrink-0 text-[var(--color-text-muted)] transition-transform duration-200',
               isOpen ? 'rotate-180' : 'rotate-0',
             )}
           />

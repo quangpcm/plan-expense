@@ -16,7 +16,7 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
         // NOT read this as the canonical target — it is not. Do not add a "legacy" variant prop to
         // carry this; when a consumer's context is reviewed, its Card usage should move straight to
         // the V2 recipe, not to an intermediate opt-in flag.
-        'flex flex-col gap-5 rounded-[var(--radius-card)] border border-[var(--color-border-default)] bg-[color:var(--color-surface-default)] p-5 shadow-[0_18px_54px_rgba(23,32,51,0.06)]',
+        'flex flex-col gap-5 rounded-[var(--radius-card)] border border-[var(--color-border-default)] bg-[color:var(--color-surface-default)] p-5 shadow-[0_18px_54px_color-mix(in_srgb,var(--color-overlay-backdrop)_18%,transparent)]',
         className,
       )}
       {...props}

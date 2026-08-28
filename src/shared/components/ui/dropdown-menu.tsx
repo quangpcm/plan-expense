@@ -17,7 +17,7 @@ export const DropdownMenuContent = forwardRef<
       <RadixDropdownMenu.Content
         align={align}
         className={cn(
-          'z-[var(--z-index-dropdown)] w-64 rounded-[var(--radius-ds-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-2 shadow-[var(--shadow-overlay)] focus:outline-none data-[state=closed]:animate-content-hide data-[state=open]:animate-content-show',
+          'z-[var(--z-index-dropdown)] w-64 rounded-[var(--radius-ds-lg)] border border-[var(--color-border-default)] bg-[var(--color-surface-overlay)] p-2 shadow-[var(--shadow-overlay)] focus:outline-none data-[state=closed]:animate-content-hide data-[state=open]:animate-content-show',
           className,
         )}
         ref={ref}
@@ -35,8 +35,8 @@ export const DropdownMenuItem = forwardRef<
   return (
     <RadixDropdownMenu.Item
       className={cn(
-        'flex min-h-11 cursor-pointer items-center gap-3 rounded-[var(--radius-ds-md)] px-3 text-sm font-medium outline-none transition data-[highlighted]:bg-[var(--color-surface-soft)]',
-        destructive ? 'text-[var(--color-status-danger)]' : 'text-[var(--color-foreground)]',
+        'flex min-h-11 cursor-pointer items-center gap-3 rounded-[var(--radius-ds-md)] px-3 text-sm font-medium outline-none transition data-[highlighted]:bg-[var(--color-surface-subtle)]',
+        destructive ? 'text-[var(--color-status-danger)]' : 'text-[var(--color-text-primary)]',
         className,
       )}
       ref={ref}
@@ -49,7 +49,7 @@ export const DropdownMenuSeparator = forwardRef<
   ElementRef<typeof RadixDropdownMenu.Separator>,
   ComponentPropsWithoutRef<typeof RadixDropdownMenu.Separator>
 >(function DropdownMenuSeparator({ className, ...props }, ref) {
-  return <RadixDropdownMenu.Separator className={cn('my-1 h-px bg-[var(--color-border)]', className)} ref={ref} {...props} />;
+  return <RadixDropdownMenu.Separator className={cn('my-1 h-px bg-[var(--color-border-default)]', className)} ref={ref} {...props} />;
 });
 
 export const DropdownMenuLabel = RadixDropdownMenu.Label;

@@ -21,17 +21,17 @@ export function SettingsRow({ label, value, description, badge, href, onClick, c
   const content = (
     <>
       <div className="min-w-0">
-        <p className="text-sm font-medium text-slate-950">{label}</p>
-        {description ? <p className="mt-0.5 text-xs text-slate-500">{description}</p> : null}
+        <p className="text-sm font-medium text-[var(--color-text-primary)]">{label}</p>
+        {description ? <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">{description}</p> : null}
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        {value !== undefined ? <span className="text-sm text-slate-500">{value}</span> : null}
+        {value !== undefined ? <span className="text-sm text-[var(--color-text-secondary)]">{value}</span> : null}
         {badge && badge > 0 ? (
           <Badge className="min-w-6 justify-center px-2 py-0.5" variant="neutral">
             {badge}
           </Badge>
         ) : null}
-        {isInteractive ? <ChevronRight className="size-4 text-slate-400" /> : null}
+        {isInteractive ? <ChevronRight className="size-4 text-[var(--color-text-muted)]" /> : null}
       </div>
     </>
   );

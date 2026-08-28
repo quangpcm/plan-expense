@@ -5,17 +5,17 @@ import { cn } from '@/shared/utils/cn';
 
 const buttonVariants = {
   primary:
-    'bg-[var(--color-brand-primary)] text-[var(--color-brand-foreground)] shadow-[0_12px_28px_rgba(81,71,229,0.24)] hover:bg-[var(--color-brand-primary-hover)] active:bg-[var(--color-brand-primary-active)] visited:text-[var(--color-brand-foreground)] active:text-[var(--color-brand-foreground)] focus:text-[var(--color-brand-foreground)]',
+    'bg-[var(--color-brand-primary)] text-[var(--color-brand-foreground)] shadow-[0_12px_28px_color-mix(in_srgb,var(--color-brand-primary)_24%,transparent)] hover:bg-[var(--color-brand-primary-hover)] active:bg-[var(--color-brand-primary-active)] visited:text-[var(--color-brand-foreground)] active:text-[var(--color-brand-foreground)] focus:text-[var(--color-brand-foreground)]',
   secondary:
-    'bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)] hover:bg-[color-mix(in_srgb,var(--color-secondary)_78%,white)]',
-  ghost: 'bg-transparent text-[var(--color-secondary-foreground)] hover:bg-[var(--color-brand-subtle)] hover:text-[var(--color-status-info)]',
+    'border border-[var(--color-border-default)] bg-[var(--color-surface-subtle)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-default)]',
+  ghost: 'bg-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-brand-subtle)] hover:text-[var(--color-brand-primary)]',
   // Harvested byte-for-byte from confirm-dialog.tsx's existing destructive className override
   // (bg-red-600 text-white hover:bg-red-700) — --color-status-danger equals Tailwind's red-600
   // exactly, so the base color is an exact rename. No shadow: the existing evidence doesn't have
   // one, and inventing a new colored shadow here would repeat the Wave 1 lesson about not adding
   // unsourced decorative values.
   destructive:
-    'bg-[var(--color-status-danger)] text-white hover:bg-red-700 visited:text-white active:text-white focus:text-white',
+    'bg-[var(--color-status-danger)] text-[var(--color-text-inverse)] hover:bg-red-700 visited:text-[var(--color-text-inverse)] active:text-[var(--color-text-inverse)] focus:text-[var(--color-text-inverse)]',
 } as const;
 
 const buttonSizes = {

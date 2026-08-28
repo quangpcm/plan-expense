@@ -3,9 +3,9 @@ import type { HTMLAttributes } from 'react';
 import { cn } from '@/shared/utils/cn';
 
 const toastVariants = {
-  info: 'bg-[var(--color-status-info)] text-white',
-  success: 'bg-[var(--color-success)] text-white',
-  danger: 'bg-[var(--color-danger)] text-white',
+  info: 'bg-[var(--color-status-info)] text-[var(--color-text-inverse)]',
+  success: 'bg-[var(--color-status-success)] text-[var(--color-text-inverse)]',
+  danger: 'bg-[var(--color-status-danger)] text-[var(--color-text-inverse)]',
 } as const;
 
 type ToastProps = HTMLAttributes<HTMLDivElement> & {

@@ -14,16 +14,15 @@ export function SectionHeading({ eyebrow, title, description, action }: SectionH
   return (
     <div className="space-y-2">
       {eyebrow ? (
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">{eyebrow}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-brand-primary)]">{eyebrow}</p>
       ) : null}
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
-          <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
-          {description ? <p className="text-sm leading-6 text-slate-600">{description}</p> : null}
+          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">{title}</h2>
+          {description ? <p className="text-sm leading-6 text-[var(--color-text-secondary)]">{description}</p> : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>
     </div>
   );
 }
-
