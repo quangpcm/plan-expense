@@ -116,9 +116,9 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col" onClickCapture={handleNavigationIntent}>
+    <div className="flex min-h-screen flex-col bg-[var(--color-surface-page)]" onClickCapture={handleNavigationIntent}>
       {isRouteTransitionVisible ? (
-        <div className="pointer-events-none fixed inset-0 z-50 bg-[rgba(246,248,252,0.74)] backdrop-blur-[6px]">
+        <div className="pointer-events-none fixed inset-0 z-50 bg-[color-mix(in_srgb,var(--color-surface-page)_74%,transparent)] backdrop-blur-[6px]">
           <div className="mx-auto flex min-h-screen w-full max-w-[1500px] flex-col justify-center px-4 pb-8 sm:px-6 lg:px-6">
             <RouteLoadingScreen
               title="Đang tải nội dung..."

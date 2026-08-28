@@ -17,7 +17,7 @@ export function AppBottomNav() {
   return (
     <nav
       aria-label="Điều hướng chính"
-      className="fixed inset-x-0 bottom-0 z-[var(--z-index-sticky)] border-t border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur md:hidden"
+      className="fixed inset-x-0 bottom-0 z-[var(--z-index-sticky)] border-t border-[var(--color-border-subtle)] bg-[color-mix(in_srgb,var(--color-surface-default)_96%,transparent)] backdrop-blur md:hidden"
       style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
     >
       <div className="mx-auto flex w-full max-w-[1500px] items-stretch justify-around px-2 pt-1.5">
@@ -28,7 +28,7 @@ export function AppBottomNav() {
               'flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-3 py-1 text-xs font-medium transition-colors',
               active
                 ? 'text-[var(--color-brand-primary)]'
-                : 'text-[var(--color-muted)] hover:text-[var(--color-brand-primary)]',
+                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]',
             )}
             href={href}
             key={label}

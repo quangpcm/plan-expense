@@ -33,53 +33,53 @@ type TodoVisualMetadata = {
 export const TODO_VISUAL_CATEGORY_META: Record<TodoVisualCategory, TodoVisualMetadata> = {
   call: {
     icon: Phone,
-    iconClassName: 'text-emerald-700',
-    backgroundClassName: 'bg-emerald-100',
+    iconClassName: 'text-emerald-700 dark:text-emerald-300',
+    backgroundClassName: 'bg-emerald-100 dark:bg-emerald-500/16',
   },
   payment: {
     icon: WalletCards,
-    iconClassName: 'text-amber-700',
-    backgroundClassName: 'bg-amber-100',
+    iconClassName: 'text-amber-700 dark:text-amber-300',
+    backgroundClassName: 'bg-amber-100 dark:bg-amber-500/16',
   },
   booking: {
     icon: CalendarCheck,
-    iconClassName: 'text-sky-700',
-    backgroundClassName: 'bg-sky-100',
+    iconClassName: 'text-sky-700 dark:text-sky-300',
+    backgroundClassName: 'bg-sky-100 dark:bg-sky-500/16',
   },
   transport: {
     icon: CarFront,
-    iconClassName: 'text-indigo-700',
-    backgroundClassName: 'bg-indigo-100',
+    iconClassName: 'text-indigo-700 dark:text-indigo-300',
+    backgroundClassName: 'bg-indigo-100 dark:bg-indigo-500/16',
   },
   shopping: {
     icon: ShoppingBag,
-    iconClassName: 'text-fuchsia-700',
-    backgroundClassName: 'bg-fuchsia-100',
+    iconClassName: 'text-fuchsia-700 dark:text-fuchsia-300',
+    backgroundClassName: 'bg-fuchsia-100 dark:bg-fuchsia-500/16',
   },
   document: {
     icon: FileText,
-    iconClassName: 'text-slate-700',
-    backgroundClassName: 'bg-slate-100',
+    iconClassName: 'text-[var(--color-text-secondary)]',
+    backgroundClassName: 'bg-[var(--color-surface-subtle)]',
   },
   people: {
     icon: Users,
-    iconClassName: 'text-teal-700',
-    backgroundClassName: 'bg-teal-100',
+    iconClassName: 'text-teal-700 dark:text-teal-300',
+    backgroundClassName: 'bg-teal-100 dark:bg-teal-500/16',
   },
   location: {
     icon: MapPin,
-    iconClassName: 'text-rose-700',
-    backgroundClassName: 'bg-rose-100',
+    iconClassName: 'text-rose-700 dark:text-rose-300',
+    backgroundClassName: 'bg-rose-100 dark:bg-rose-500/16',
   },
   food: {
     icon: UtensilsCrossed,
-    iconClassName: 'text-orange-700',
-    backgroundClassName: 'bg-orange-100',
+    iconClassName: 'text-orange-700 dark:text-orange-300',
+    backgroundClassName: 'bg-orange-100 dark:bg-orange-500/16',
   },
   general: {
     icon: ListChecks,
-    iconClassName: 'text-[var(--color-text-muted)]',
-    backgroundClassName: 'bg-[var(--color-surface-default)]',
+    iconClassName: 'text-[var(--color-text-secondary)]',
+    backgroundClassName: 'bg-[var(--color-surface-subtle)]',
   },
 };
 

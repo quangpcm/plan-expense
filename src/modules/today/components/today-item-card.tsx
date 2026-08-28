@@ -128,10 +128,10 @@ export function TodayItemCard({ item, section }: TodayItemCardProps) {
 
   const className =
     section === 'upcoming'
-      ? 'w-full border-b border-[var(--color-border-default)] px-0 py-3 last:border-b-0 hover:bg-transparent'
+      ? 'w-full rounded-[var(--radius-ds-md)] border-b border-[var(--color-border-subtle)] px-0 py-3 last:border-b-0 hover:bg-[var(--color-surface-subtle)]'
       : section === 'attention'
-        ? 'w-full rounded-[var(--radius-ds-lg)] border border-[var(--color-border-strong)] bg-[var(--color-surface-default)] px-4 hover:border-[var(--color-status-warning)] hover:bg-[var(--color-surface-default)]'
-      : 'w-full rounded-[var(--radius-ds-lg)] border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-4 hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-default)]';
+        ? 'w-full rounded-[var(--radius-ds-lg)] border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-4 hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-subtle)]'
+        : 'w-full rounded-[var(--radius-ds-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] px-4 hover:border-[var(--color-border-default)] hover:bg-[var(--color-surface-subtle)]';
 
   return (
     <DataRow

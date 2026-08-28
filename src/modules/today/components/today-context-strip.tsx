@@ -32,7 +32,7 @@ export function TodayContextStrip({ contexts }: TodayContextStripProps) {
 
   return (
     <button
-      className="flex min-h-[56px] w-full items-center justify-between gap-3 px-4 py-3 text-left outline-none transition hover:bg-[color:color-mix(in_srgb,var(--color-brand-subtle)_58%,white)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] focus-visible:ring-inset"
+      className="flex min-h-[56px] w-full items-center justify-between gap-3 rounded-[var(--radius-ds-md)] px-4 py-3 text-left outline-none transition hover:bg-[var(--color-surface-subtle)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] focus-visible:ring-inset"
       onClick={() => router.push(`/plans/${primaryContext.planId}?tab=travelItinerary`)}
       type="button"
     >

@@ -41,7 +41,7 @@ function TodaySectionHeading({ title, tone }: TodaySectionHeadingProps) {
 
 function TodayEmptyRow() {
   return (
-    <div className="rounded-[var(--radius-ds-md)] border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-4 py-3">
+    <div className="rounded-[var(--radius-ds-md)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] px-4 py-3">
       <div className="space-y-0.5">
         <p className="text-body-strong text-[var(--color-text-primary)]">Hôm nay khá nhẹ nhàng</p>
         <p className="text-body text-[var(--color-text-secondary)]">Không có công việc hoặc lịch trình nào được lên lịch hôm nay.</p>
@@ -52,7 +52,7 @@ function TodayEmptyRow() {
 
 function TodayAttentionEmptyRow({ attentionCount }: { attentionCount: number }) {
   return (
-    <div className="rounded-[var(--radius-ds-md)] border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-4 py-3">
+    <div className="rounded-[var(--radius-ds-md)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] px-4 py-3">
       <div className="space-y-0.5">
         <p className="text-body-strong text-[var(--color-text-primary)]">Không có việc nào đến hạn hôm nay</p>
         <p className="text-body text-[var(--color-text-secondary)]">
@@ -96,7 +96,7 @@ export default function TodayPage() {
 
         {/* Error-with-existing-summary: a small non-blocking banner, summary content below stays visible (SWR). */}
         {error && summary ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-ds-lg)] border border-[var(--color-border-default)] bg-[var(--color-surface-subtle)] px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-ds-lg)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-4 py-3">
             <p className="text-body text-[var(--color-text-secondary)]">Không thể cập nhật dữ liệu mới nhất.</p>
             <Button onClick={refresh} size="sm" variant="ghost">
               <RefreshCw aria-hidden="true" className="size-3.5" />
@@ -150,7 +150,7 @@ export default function TodayPage() {
                 )}
 
                 {hasCompletedItems ? (
-                  <div className="space-y-2 border-t border-[var(--color-border-default)] pt-4">
+                  <div className="space-y-2 border-t border-[var(--color-border-subtle)] pt-4">
                     <p className="text-body-strong text-[var(--color-text-primary)]">Vừa hoàn thành</p>
                     <div className="flex flex-col gap-1">
                       {recentlyCompletedItems.map((item) => (

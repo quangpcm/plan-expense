@@ -44,7 +44,7 @@ export function AccountMenu() {
       <DropdownMenuTrigger asChild>
         <button
           aria-label="Tài khoản"
-          className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] focus-visible:ring-offset-2"
+          className="shrink-0 rounded-full text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface-default)]"
           type="button"
         >
           <Avatar className="size-10" initials={initials} src={avatarSrc} />
@@ -54,8 +54,8 @@ export function AccountMenu() {
         <div className="flex items-center gap-3 px-2 py-2">
           <Avatar className="size-10 shrink-0" initials={initials} src={avatarSrc} />
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-[var(--color-foreground)]">{displayName}</p>
-            <p className="truncate text-xs text-[var(--color-muted)]">{user?.email || ''}</p>
+            <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">{displayName}</p>
+            <p className="truncate text-xs text-[var(--color-text-secondary)]">{user?.email || ''}</p>
           </div>
         </div>
         <DropdownMenuSeparator />

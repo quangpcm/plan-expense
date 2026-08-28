@@ -14,7 +14,7 @@ export function AppHeader() {
   const navigationItems = getAppNavigationItems(pathname);
 
   return (
-    <header className="sticky top-0 z-[var(--z-index-sticky)] border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur">
+    <header className="sticky top-0 z-[var(--z-index-sticky)] border-b border-[var(--color-border-subtle)] bg-[color-mix(in_srgb,var(--color-surface-default)_94%,transparent)] text-[var(--color-text-primary)] backdrop-blur">
       <div
         className="mx-auto flex w-full max-w-[1500px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-6"
         style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))', paddingBottom: '0.75rem' }}
@@ -36,7 +36,7 @@ export function AppHeader() {
                   'flex min-h-11 items-center gap-2 px-3 text-sm font-medium transition-colors',
                   active
                     ? 'text-[var(--color-brand-primary)]'
-                    : 'text-[var(--color-muted)] hover:text-[var(--color-brand-primary)]',
+                    : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]',
                 )}
                 href={href}
                 key={label}

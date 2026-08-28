@@ -31,7 +31,7 @@ export function TodayContextCard({ context }: TodayContextCardProps) {
 
   return (
     <button
-      className="flex w-full flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--color-border-default)] bg-[color:var(--color-surface-default)] p-5 text-left shadow-[0_18px_54px_rgba(23,32,51,0.06)] outline-none transition hover:-translate-y-0.5 hover:border-[var(--color-border-strong)] hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] focus-visible:ring-offset-2"
+      className="flex w-full flex-col gap-2 rounded-[var(--radius-card)] border border-[var(--color-border-default)] bg-[color:var(--color-surface-default)] p-5 text-left shadow-[0_18px_54px_color-mix(in_srgb,var(--color-overlay-backdrop)_18%,transparent)] outline-none transition hover:-translate-y-0.5 hover:border-[var(--color-border-strong)] hover:shadow-[0_20px_70px_color-mix(in_srgb,var(--color-overlay-backdrop)_24%,transparent)] focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface-page)]"
       onClick={() => router.push(`/plans/${context.planId}?tab=travelItinerary`)}
       type="button"
     >
