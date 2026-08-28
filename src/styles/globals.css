@@ -1,34 +1,428 @@
 @import 'tailwindcss';
 
+/*
+ * ============================================================================
+ * Option D private foundation — Light
+ * ============================================================================
+ * Source: docs/palette/ (approved Option D Radix exports), cross-checked
+ * against docs/palette/ColorArchitecture.Spec.md §4/§6/§7/§9.
+ *
+ * Deliberately declared OUTSIDE @theme: Tailwind v4 only turns @theme keys
+ * into utility classes, so these numbered steps stay invisible to the
+ * utility generator (no `bg-gp-violet-9`, no `text-gp-gray-11`). Components
+ * and product code must never reference `--gp-*` directly — only the
+ * semantic `--color-*` tokens below (@theme block) are the public contract.
+ * See ColorArchitecture.Spec.md §3 "Hard rule".
+ *
+ * Not carried over from the source exports: `.radix-themes`-scoped
+ * selectors and Radix Themes component tokens (`violet-contrast`,
+ * `violet-surface`, `violet-indicator`, `violet-track`, and their `gray-*`
+ * equivalents) — this app has no `@radix-ui/themes` dependency (only
+ * individual `@radix-ui/react-*` primitives), so that selector/variable set
+ * is inert and no current semantic token requires it (spec §4).
+ */
+:root {
+  --gp-violet-1: #f5f6f8;
+  --gp-violet-2: #eff0f9;
+  --gp-violet-3: #e6e9f8;
+  --gp-violet-4: #d9dffe;
+  --gp-violet-5: #cbd3ff;
+  --gp-violet-6: #bbc4ff;
+  --gp-violet-7: #a5b0fb;
+  --gp-violet-8: #8893f5;
+  --gp-violet-9: #5147e5;
+  --gp-violet-10: #463bcb;
+  --gp-violet-11: #4940d0;
+  --gp-violet-12: #26256c;
+
+  --gp-violet-a1: #92933005;
+  --gp-violet-a2: #1516a709;
+  --gp-violet-a3: #0724c412;
+  --gp-violet-a4: #cad3ffaa;
+  --gp-violet-a5: #cbd3ff;
+  --gp-violet-a6: #bbc4ff;
+  --gp-violet-a7: #0120f955;
+  --gp-violet-a8: #0119ed73;
+  --gp-violet-a9: #0e00dcb6;
+  --gp-violet-a10: #1001bcc3;
+  --gp-violet-a11: #0e02c1be;
+  --gp-violet-a12: #010052d9;
+
+  --gp-gray-1: #f3f5f8;
+  --gp-gray-2: #eef2f7;
+  --gp-gray-3: #e2e8f2;
+  --gp-gray-4: #d7e0ed;
+  --gp-gray-5: #cdd9e9;
+  --gp-gray-6: #c4d1e3;
+  --gp-gray-7: #b6c6dd;
+  --gp-gray-8: #9eb3d1;
+  --gp-gray-9: #7185a2;
+  --gp-gray-10: #687b96;
+  --gp-gray-11: #4d5d73;
+  --gp-gray-12: #162130;
+
+  --gp-gray-a1: #2c603005;
+  --gp-gray-a2: #125f7d0a;
+  --gp-gray-a3: #043f8916;
+  --gp-gray-a4: #08448c22;
+  --gp-gray-a5: #04458d2c;
+  --gp-gray-a6: #023d8435;
+  --gp-gray-a7: #043d8844;
+  --gp-gray-a8: #0138855c;
+  --gp-gray-a9: #0225578b;
+  --gp-gray-a10: #00214c94;
+  --gp-gray-a11: #001736b0;
+  --gp-gray-a12: #010d1de9;
+
+  /* Option D approved page canvas (Light). Feeds --color-surface-page only. */
+  --gp-background: #f7f8fc;
+}
+
+/* P3/OKLCH progressive enhancement — Light. Same steps as above, wider gamut
+   where the display supports it. Mirrors docs/palette/ source files exactly. */
+@supports (color: color(display-p3 1 1 1)) {
+  @media (color-gamut: p3) {
+    :root {
+      --gp-violet-1: oklch(97.2% 0.003 277.5);
+      --gp-violet-2: oklch(95.7% 0.0112 277.5);
+      --gp-violet-3: oklch(93.6% 0.0213 277.5);
+      --gp-violet-4: oklch(90.8% 0.0429 277.5);
+      --gp-violet-5: oklch(87.5% 0.0641 277.5);
+      --gp-violet-6: oklch(83.4% 0.0853 277.5);
+      --gp-violet-7: oklch(77.6% 0.108 277.5);
+      --gp-violet-8: oklch(69.6% 0.1441 277.5);
+      --gp-violet-9: oklch(51.3% 0.2286 277.5);
+      --gp-violet-10: oklch(46.4% 0.2118 277.5);
+      --gp-violet-11: oklch(47.8% 0.2118 277.5);
+      --gp-violet-12: oklch(31.4% 0.1195 277.5);
+
+      --gp-violet-a1: color(display-p3 0.4784 0.4863 0.0118 / 0.016);
+      --gp-violet-a2: color(display-p3 0.0196 0.0235 0.5137 / 0.033);
+      --gp-violet-a3: color(display-p3 0.0039 0.0706 0.6902 / 0.065);
+      --gp-violet-a4: color(display-p3 0.0078 0.1451 0.9569 / 0.118);
+      --gp-violet-a5: color(display-p3 0.0078 0.1451 0.9686 / 0.175);
+      --gp-violet-a6: color(display-p3 0.0039 0.1059 0.9569 / 0.235);
+      --gp-violet-a7: color(display-p3 0.0039 0.102 0.9059 / 0.324);
+      --gp-violet-a8: color(display-p3 0.0039 0.0784 0.8627 / 0.442);
+      --gp-violet-a9: color(display-p3 0.0431 0 0.8196 / 0.714);
+      --gp-violet-a10: color(display-p3 0.0471 0 0.6941 / 0.763);
+      --gp-violet-a11: color(display-p3 0.0392 0 0.7137 / 0.742);
+      --gp-violet-a12: color(display-p3 0.0039 0 0.3059 / 0.851);
+
+      --gp-gray-1: oklch(97% 0.0046 257.4);
+      --gp-gray-2: oklch(95.9% 0.0084 257.4);
+      --gp-gray-3: oklch(93% 0.0149 257.4);
+      --gp-gray-4: oklch(90.4% 0.0198 257.4);
+      --gp-gray-5: oklch(88% 0.0255 257.4);
+      --gp-gray-6: oklch(85.6% 0.0295 257.4);
+      --gp-gray-7: oklch(82.2% 0.0364 257.4);
+      --gp-gray-8: oklch(76.1% 0.0494 257.4);
+      --gp-gray-9: oklch(61.2% 0.0499 257.4);
+      --gp-gray-10: oklch(57.7% 0.0475 257.4);
+      --gp-gray-11: oklch(47.3% 0.0407 257.4);
+      --gp-gray-12: oklch(24.4% 0.0332 257.4);
+
+      --gp-gray-a1: color(display-p3 0.0471 0.2824 0.0667 / 0.017);
+      --gp-gray-a2: color(display-p3 0.0196 0.2627 0.2784 / 0.033);
+      --gp-gray-a3: color(display-p3 0.0039 0.2 0.4588 / 0.081);
+      --gp-gray-a4: color(display-p3 0.0078 0.2039 0.4745 / 0.122);
+      --gp-gray-a5: color(display-p3 0.0039 0.2235 0.4824 / 0.162);
+      --gp-gray-a6: color(display-p3 0.0039 0.2039 0.4588 / 0.199);
+      --gp-gray-a7: color(display-p3 0.0039 0.1765 0.4784 / 0.252);
+      --gp-gray-a8: color(display-p3 0.0039 0.1804 0.4667 / 0.345);
+      --gp-gray-a9: color(display-p3 0 0.1098 0.298 / 0.527);
+      --gp-gray-a10: color(display-p3 0 0.098 0.2667 / 0.563);
+      --gp-gray-a11: color(display-p3 0 0.0745 0.1843 / 0.677);
+      --gp-gray-a12: color(display-p3 0 0.0392 0.098 / 0.903);
+    }
+  }
+}
+
+/*
+ * ============================================================================
+ * Option D private foundation — Dark
+ * ============================================================================
+ * Structural only in Phase 1 — nothing applies `.dark` to the document yet
+ * (see the Dark Mode Runtime Direction in ColorArchitecture.Spec.md §12,
+ * implemented in a later phase). Declared now so the semantic layer below
+ * has real Dark values to reference instead of being invented later under
+ * time pressure.
+ */
+.dark {
+  --gp-violet-1: #141521;
+  --gp-violet-2: #161628;
+  --gp-violet-3: #22204d;
+  --gp-violet-4: #2c256c;
+  --gp-violet-5: #352f7c;
+  --gp-violet-6: #3e3a8a;
+  --gp-violet-7: #4b469e;
+  --gp-violet-8: #5954bd;
+  --gp-violet-9: #7067f0;
+  --gp-violet-10: #6459e1;
+  --gp-violet-11: #a7aaff;
+  --gp-violet-12: #dce0ff;
+
+  --gp-violet-a1: #dd160005;
+  --gp-violet-a2: #eb3a9307;
+  --gp-violet-a3: #7251ff2f;
+  --gp-violet-a4: #6546fd54;
+  --gp-violet-a5: #6c56ff66;
+  --gp-violet-a6: #7265fd77;
+  --gp-violet-a7: #7a6dff8e;
+  --gp-violet-a8: #7970ffb2;
+  --gp-violet-a9: #776dffee;
+  --gp-violet-a10: #7264ffdc;
+  --gp-violet-a11: #a7aaff;
+  --gp-violet-a12: #dce0ff;
+
+  --gp-gray-1: #12161c;
+  --gp-gray-2: #181d23;
+  --gp-gray-3: #1f252e;
+  --gp-gray-4: #232c37;
+  --gp-gray-5: #283240;
+  --gp-gray-6: #2f3b4b;
+  --gp-gray-7: #39485d;
+  --gp-gray-8: #4d627e;
+  --gp-gray-9: #5b6f8c;
+  --gp-gray-10: #697d98;
+  --gp-gray-11: #a6b5ca;
+  --gp-gray-12: #eaeef5;
+
+  --gp-gray-a1: #ba6a0003;
+  --gp-gray-a2: #f3f80009;
+  --gp-gray-a3: #e5f7a512;
+  --gp-gray-a4: #cbf7d61a;
+  --gp-gray-a5: #d0fdfd20;
+  --gp-gray-a6: #c0edfd2d;
+  --gp-gray-a7: #afdafe42;
+  --gp-gray-a8: #a5d0fd69;
+  --gp-gray-a9: #afd3ff79;
+  --gp-gray-a10: #b8daff87;
+  --gp-gray-a11: #d5e7fec2;
+  --gp-gray-a12: #f4f8fef4;
+
+  /* Option D approved page canvas (Dark). Feeds --color-surface-page only. */
+  --gp-background: #101525;
+}
+
+/* P3/OKLCH progressive enhancement — Dark. Mirrors docs/palette/ source files exactly. */
+@supports (color: color(display-p3 1 1 1)) {
+  @media (color-gamut: p3) {
+    .dark {
+      --gp-violet-1: oklch(19.9% 0.025 281.4);
+      --gp-violet-2: oklch(21.1% 0.0338 281.4);
+      --gp-violet-3: oklch(27.4% 0.0794 281.4);
+      --gp-violet-4: oklch(31.9% 0.118 281.4);
+      --gp-violet-5: oklch(35.8% 0.1265 281.4);
+      --gp-violet-6: oklch(39.9% 0.1293 281.4);
+      --gp-violet-7: oklch(44.8% 0.139 281.4);
+      --gp-violet-8: oklch(50.7% 0.1598 281.4);
+      --gp-violet-9: oklch(59.6% 0.1991 281.4);
+      --gp-violet-10: oklch(55.2% 0.1991 281.4);
+      --gp-violet-11: oklch(77.6% 0.1517 281.4);
+      --gp-violet-12: oklch(91.4% 0.0485 281.4);
+
+      --gp-violet-a1: color(display-p3 0.9725 0.0824 0 / 0.013);
+      --gp-violet-a2: color(display-p3 0.9608 0.2627 0.6784 / 0.022);
+      --gp-violet-a3: color(display-p3 0.451 0.3333 1 / 0.174);
+      --gp-violet-a4: color(display-p3 0.3961 0.2863 1 / 0.311);
+      --gp-violet-a5: color(display-p3 0.4275 0.349 1 / 0.384);
+      --gp-violet-a6: color(display-p3 0.4588 0.4078 1 / 0.443);
+      --gp-violet-a7: color(display-p3 0.4863 0.4431 1 / 0.535);
+      --gp-violet-a8: color(display-p3 0.4784 0.451 1 / 0.672);
+      --gp-violet-a9: color(display-p3 0.4745 0.4431 1 / 0.895);
+      --gp-violet-a10: color(display-p3 0.451 0.4039 1 / 0.827);
+      --gp-violet-a11: color(display-p3 0.6784 0.6824 1 / 0.973);
+      --gp-violet-a12: color(display-p3 0.8784 0.8902 1 / 0.987);
+
+      --gp-gray-1: oklch(19.9% 0.0134 256.8);
+      --gp-gray-2: oklch(22.8% 0.0138 256.8);
+      --gp-gray-3: oklch(26.3% 0.0193 256.8);
+      --gp-gray-4: oklch(28.9% 0.0248 256.8);
+      --gp-gray-5: oklch(31.4% 0.0279 256.8);
+      --gp-gray-6: oklch(34.7% 0.0335 256.8);
+      --gp-gray-7: oklch(39.8% 0.0407 256.8);
+      --gp-gray-8: oklch(49% 0.0527 256.8);
+      --gp-gray-9: oklch(53.7% 0.0513 256.8);
+      --gp-gray-10: oklch(58.3% 0.0479 256.8);
+      --gp-gray-11: oklch(76.8% 0.0351 256.8);
+      --gp-gray-12: oklch(94.9% 0.0095 256.8);
+
+      --gp-gray-a1: color(display-p3 0.9412 0.5216 0 / 0.009);
+      --gp-gray-a2: color(display-p3 0.9647 0.9804 0 / 0.035);
+      --gp-gray-a3: color(display-p3 0.9216 0.9922 0.651 / 0.069);
+      --gp-gray-a4: color(display-p3 0.8627 0.9961 0.8549 / 0.099);
+      --gp-gray-a5: color(display-p3 0.8588 1 0.9961 / 0.124);
+      --gp-gray-a6: color(display-p3 0.7882 0.9412 1 / 0.174);
+      --gp-gray-a7: color(display-p3 0.7373 0.8784 1 / 0.252);
+      --gp-gray-a8: color(display-p3 0.6941 0.8235 0.9961 / 0.402);
+      --gp-gray-a9: color(display-p3 0.7294 0.8392 1 / 0.462);
+      --gp-gray-a10: color(display-p3 0.7608 0.8588 1 / 0.521);
+      --gp-gray-a11: color(display-p3 0.8627 0.9216 1 / 0.749);
+      --gp-gray-a12: color(display-p3 0.9647 0.9765 1 / 0.95);
+    }
+  }
+}
+
 @theme {
   --font-sans: 'Inter', 'Segoe UI', sans-serif;
-  --color-background: #f6f8fc;
-  --color-foreground: #172033;
-  --color-surface: #ffffff;
-  --color-surface-soft: #f1f5fb;
-  --color-muted: #68738a;
-  --color-subtle: #94a0b5;
-  --color-border: #dfe5ef;
-  --color-border-strong: #cbd5e1;
-  --color-primary: #243b6b;
-  --color-primary-hover: #1d315b;
-  --color-primary-foreground: #ffffff;
-  --color-secondary: #edf2f8;
-  --color-secondary-foreground: #334155;
+
+  /*
+   * ==========================================================================
+   * Semantic color contract — Light defaults
+   * ==========================================================================
+   * Canonical public API (ColorArchitecture.Spec.md §5/§9). Components and
+   * product code consume these `--color-*` names only — never the `--gp-*`
+   * foundation steps above. Values here are the Light mapping; `.dark`
+   * overrides below (after this block) apply only where the correct Dark
+   * value uses a different foundation step than Light, or isn't derived from
+   * the foundation at all — everywhere else, the Dark value flows through
+   * automatically because these definitions reference `--gp-*`, and `--gp-*`
+   * is itself redefined under `.dark` above. Locked/provisional status per
+   * token is noted inline; see the spec for the full rationale per value.
+   */
+
+  /* Surface — LOCKED (Light). surface.default/raised/overlay intentionally
+     share the literal white value: elevation is expressed via shadow, not a
+     distinct tint, per the existing Card/Button/overlay recipes (unchanged
+     in this phase). surface.selected is new (0 pre-existing consumers). */
+  --color-surface-page: var(--gp-background);
+  --color-surface-default: #ffffff;
+  --color-surface-subtle: var(--gp-gray-2);
+  --color-surface-raised: var(--color-surface-default);
+  --color-surface-overlay: var(--color-surface-default);
+  --color-surface-selected: var(--gp-violet-3);
+
+  /* Text — LOCKED (Light). text.secondary and text.muted intentionally
+     resolve to the same gray-11 value: gray-10 fails WCAG AA normal-text
+     contrast (~4.07:1) against every normal surface checked, and Option D's
+     Gray scale has no intermediate step between 10 and 11 — see
+     ColorArchitecture.Spec.md §7. Do not "fix" this by reintroducing gray-10. */
+  --color-text-primary: var(--gp-gray-12);
+  --color-text-secondary: var(--gp-gray-11);
+  --color-text-muted: var(--gp-gray-11);
+  --color-text-disabled: var(--gp-gray-9);
+  --color-text-inverse: #ffffff;
+  --color-text-link: var(--gp-violet-9);
+
+  /* Border — LOCKED (Light). */
+  --color-border-subtle: var(--gp-gray-4);
+  --color-border-default: var(--gp-gray-6);
+  --color-border-strong: var(--gp-gray-8);
+  --color-border-focus: var(--gp-violet-9);
+
+  /* Brand — LOCKED (Light). Single interaction family (violet), replacing
+     the old --color-primary (navy) / --color-accent (blue) split. */
+  --color-brand-primary: var(--gp-violet-9);
+  --color-brand-primary-hover: var(--gp-violet-10);
+  --color-brand-primary-active: var(--gp-violet-11);
+  --color-brand-foreground: #ffffff;
+  --color-brand-subtle: var(--gp-violet-3);
+  --color-brand-selected: var(--gp-violet-4);
+
+  /* Focus — LOCKED (both themes use violet-9: a focus ring is judged under
+     WCAG's 3:1 non-text criterion, which violet-9 clears in both themes —
+     unlike text.link, it does not need a lighter Dark step. */
+  --color-focus-ring: var(--gp-violet-9);
+  --color-focus-ring-soft: var(--gp-violet-a5);
+
+  /* Overlay backdrop — LOCKED (Light), unchanged value (already correct —
+     harvested from ResponsiveModal/BottomSheet's existing bg-slate-950/40).
+     Dark value is PROVISIONAL — see the .dark override block below. */
+  --color-overlay-backdrop: rgb(2 6 23 / 40%);
+
+  /*
+   * ==========================================================================
+   * Legacy compatibility aliases
+   * ==========================================================================
+   * Kept working for existing raw-token consumers during migration. Alias
+   * direction is now canonical-semantic → legacy-raw (reversed from the old
+   * Wave 1 layout, which pointed the other way) per
+   * ColorArchitecture.Spec.md §10/§15 — new/touched code should reach for
+   * the semantic tokens above, not these.
+   */
+
+  /* Foundation-compatibility holders: keep their names, values now sourced
+     from Option D via the semantic layer instead of hand-picked hex. */
+  --color-background: var(--color-surface-page);
+  --color-foreground: var(--color-text-primary);
+  --color-surface: var(--color-surface-default);
+  --color-surface-soft: var(--color-surface-subtle);
+  --color-muted: var(--color-text-secondary);
+  /* DEPRECATED compatibility token — text.muted now equals text.secondary's
+     value (see above), so a raw --color-subtle distinct from --color-muted
+     no longer has a real role. Kept resolving for its 18 existing
+     consumers; new code should use --color-text-secondary/--color-text-muted
+     directly. Remove once its consumer count reaches 0. */
+  --color-subtle: var(--color-text-muted);
+  --color-border: var(--color-border-default);
+
+  /* Brand-family compatibility (reversed alias direction — see header comment). */
+  --color-primary: var(--color-brand-primary);
+  --color-primary-hover: var(--color-brand-primary-hover);
+  --color-primary-foreground: var(--color-brand-foreground);
+
+  /* Secondary — intentionally NOT folded into the brand family (spec §18).
+     No dedicated `secondary.*` semantic tier exists yet, so these reference
+     the neutral foundation directly rather than through an intermediate
+     semantic token; Badge's documented `neutral` tone is the reason this
+     stays as-is (ComponentUsage.md — no exact semantic alias needed). */
+  --color-secondary: var(--gp-gray-3);
+  --color-secondary-foreground: var(--gp-gray-12);
+
+  /*
+   * DEPRECATED — per-consumer migration required (Phase 3/4, not this phase).
+   * --color-accent historically covers at least four different roles (nav
+   * active, link text, focus ring, border-focus) that the new architecture
+   * resolves to different tokens (mostly --color-brand-primary /
+   * --color-text-link / --color-focus-ring / --color-border-focus — see
+   * ColorArchitecture.Spec.md §3/§10/§16). Aliasing it to any single one of
+   * those now would silently change the others' historical meaning and
+   * would visibly recolor AppHeader's nav-active state ahead of its own
+   * migration phase. Frozen at its original literal value on purpose —
+   * zero behavior change for existing consumers until they're triaged
+   * individually.
+   */
   --color-accent: #3b82f6;
   --color-accent-soft: #e8f1ff;
+  /* Same status as --color-accent above — 2 existing consumers, unchanged
+     value, pending the same per-consumer triage. */
+  --color-brand-accent: var(--color-accent);
+
+  /*
+   * ==========================================================================
+   * Status / domain palette
+   * ==========================================================================
+   * Option D (Violet/Gray) does not own status meaning — preserved exactly
+   * as today. Dark status palette pending approved Radix Green/Amber/Red/Blue
+   * source scales (ColorArchitecture.Spec.md §8/§18) — not invented here.
+   */
   --color-success: #059669;
   --color-success-soft: #dff7ec;
   --color-warning: #d97706;
   --color-warning-soft: #fff4d8;
   --color-danger: #dc2626;
   --color-danger-soft: #feecec;
+  --color-info: #2563eb;
+  --color-info-soft: #e8f0ff;
   --color-income: #059669;
   --color-income-soft: #e2f7ef;
   --color-expense: #dc5a4c;
   --color-expense-soft: #fcebe8;
-  --color-info: #2563eb;
-  --color-info-soft: #e8f0ff;
+
+  --color-status-success: var(--color-success);
+  --color-status-success-surface: var(--color-success-soft);
+  --color-status-warning: var(--color-warning);
+  --color-status-warning-surface: var(--color-warning-soft);
+  --color-status-danger: var(--color-danger);
+  --color-status-danger-surface: var(--color-danger-soft);
+  --color-status-info: var(--color-info);
+  --color-status-info-surface: var(--color-info-soft);
+
+  /* Plan-Type/product-owned (Milestone) — untouched, out of scope for this
+     phase per ColorArchitecture.Spec.md §14. Still literal, not yet
+     re-derived from the brand family; that is a product/domain decision,
+     not a Foundation one. */
   --color-milestone-selected: #243b6b;
   --color-milestone-selected-border: #243b6b;
   --color-milestone-selected-foreground: #ffffff;
@@ -41,59 +435,8 @@
   --color-milestone-upcoming-border: #dfe5ef;
   --color-milestone-upcoming-foreground: #172033;
   --color-milestone-upcoming-muted: #68738a;
+
   --radius-card: 1.5rem;
-
-  /*
-   * Design System V2 — Foundation semantic tokens (Wave 1).
-   * These alias the raw values above; they do not replace them yet.
-   * Consumers migrate to semantic names progressively in later waves
-   * (see docs/design-sys-v2/implement-specs/implement/02-05).
-   */
-  --color-brand-primary: var(--color-primary);
-  --color-brand-primary-hover: var(--color-primary-hover);
-  /* No distinct "active" shade exists yet; aliased to hover until a real value is approved. */
-  --color-brand-primary-active: var(--color-primary-hover);
-  --color-brand-foreground: var(--color-primary-foreground);
-  --color-brand-accent: var(--color-accent);
-  --color-brand-subtle: var(--color-accent-soft);
-  /* brand.gradient-start/middle/end intentionally omitted: no existing gradient to preserve,
-     and inventing new hex stops is prohibited by 01.Foundation.md §10. Deferred. */
-
-  --color-surface-page: var(--color-background);
-  --color-surface-default: var(--color-surface);
-  --color-surface-subtle: var(--color-surface-soft);
-  /* raised/overlay differ from default via elevation (shadow), not fill — no distinct tint exists. */
-  --color-surface-raised: var(--color-surface);
-  --color-surface-overlay: var(--color-surface);
-
-  --color-text-primary: var(--color-foreground);
-  --color-text-secondary: var(--color-muted);
-  --color-text-muted: var(--color-subtle);
-  /* No distinct disabled-text color exists yet; aliased to muted. Deferred. */
-  --color-text-disabled: var(--color-subtle);
-  --color-text-inverse: var(--color-primary-foreground);
-  --color-text-link: var(--color-accent);
-
-  --color-border-default: var(--color-border);
-  /* No distinct subtle tier exists yet; aliased to default. Deferred. */
-  --color-border-subtle: var(--color-border);
-  /* --color-border-strong already exists above with this exact semantic name; no alias needed. */
-  --color-border-focus: var(--color-accent);
-
-  --color-status-success: var(--color-success);
-  --color-status-success-surface: var(--color-success-soft);
-  --color-status-warning: var(--color-warning);
-  --color-status-warning-surface: var(--color-warning-soft);
-  --color-status-danger: var(--color-danger);
-  --color-status-danger-surface: var(--color-danger-soft);
-  --color-status-info: var(--color-info);
-  --color-status-info-surface: var(--color-info-soft);
-
-  --color-focus-ring: var(--color-accent);
-  --color-focus-ring-soft: var(--color-accent-soft);
-
-  /* Harvested from ResponsiveModal/BottomSheet backdrop (bg-slate-950/40); not a new value. */
-  --color-overlay-backdrop: rgb(2 6 23 / 40%);
 
   /*
    * Canonical V2 radius scale, namespaced `-ds-` on purpose: Tailwind v4 reserves the bare
@@ -115,6 +458,7 @@
    * - raised: DEFERRED. No existing "raised" surface to harvest a value from, and inventing one
    *   without an approved/existing source violates the same rule already applied to
    *   brand.gradient-* below. Add once Pilot evidence justifies an exact value.
+   * Card/Button's own hardcoded shadows are Phase 3 work — not touched here.
    */
   --shadow-overlay: 0 16px 60px rgb(15 23 42 / 10%);
 
@@ -131,6 +475,56 @@
      and for items newly revealed by "Xem thêm". Duration/offset chosen at the low end of the
      180-240ms / ~6px range so it reads as "the page settled", not as a visible animation. */
   --animate-section-in: section-in 200ms ease-out both;
+}
+
+/*
+ * ============================================================================
+ * Dark provisional surfaces + semantic overrides
+ * ============================================================================
+ * Structural only — Phase 1 does not add `.dark` to any element, so this
+ * block currently has zero runtime effect (see docs/palette/
+ * ColorArchitecture.Spec.md §12 for the future runtime plan). Only tokens
+ * that need a *different foundation step* than Light (not just a themed
+ * value of the same step) are listed explicitly here — every other semantic
+ * token already resolves correctly under `.dark` for free, because its
+ * Light definition above references a `--gp-*` variable that is itself
+ * redefined in the Dark foundation block earlier in this file.
+ */
+.dark {
+  /* Surface — PROVISIONAL — VISUAL PILOT (ColorArchitecture.Spec.md §7/§9/§16).
+     surface.subtle and surface.raised deliberately share one value: Dark
+     elevation is meant to read via a luminance step + border, not a unique
+     tint per role. Do not manufacture an extra shade just to make every
+     token numerically distinct — revisit only if the Phase 6 pilot finds
+     subtle/raised genuinely ambiguous when they co-occur. */
+  --color-surface-default: var(--gp-gray-2);
+  --color-surface-subtle: var(--gp-gray-3);
+  --color-surface-raised: var(--gp-gray-3);
+  --color-surface-overlay: var(--gp-gray-4);
+
+  /* Text — LOCKED. Dark text.link uses violet-11, not violet-9: violet-9
+     only reaches ~4.23:1 against the Dark page background, failing WCAG AA
+     normal-text contrast; violet-11 reaches ~8.51:1. violet-9 stays
+     reserved for solid-fill contexts. */
+  --color-text-link: var(--gp-violet-11);
+
+  /* Brand — LOCKED, amended from a literal step-for-step port of Light.
+     White text on Dark violet-9 (#7067F0) only reaches ~4.30:1 — fails AA.
+     brand.primary uses violet-10 (#6459E1, ~5.17:1) instead. Hover/active
+     continue the accessible ladder outward from violet-10 (8 then 7),
+     deliberately skipping violet-9 everywhere in this ladder since it fails
+     AA with the white foreground every fill in this family uses. Do not
+     revert brand.primary to violet-9. */
+  --color-brand-primary: var(--gp-violet-10);
+  --color-brand-primary-hover: var(--gp-violet-8);
+  --color-brand-primary-active: var(--gp-violet-7);
+
+  /* Overlay backdrop — PROVISIONAL — VISUAL PILOT. Spec recommends a range
+     (~55–60% opacity, vs. Light's 40%) since the same 40% reads too close
+     to an already-dark canvas to visually recede content underneath.
+     Implemented at the low end (55%) pending the Phase 6 pilot; do not
+     treat this exact number as final. */
+  --color-overlay-backdrop: rgb(2 6 23 / 55%);
 }
 
 /*
@@ -266,7 +660,10 @@
   body {
     margin: 0;
     min-width: 320px;
-    background: linear-gradient(180deg, #f8faff 0%, #f4f7fb 45%, #f6f8fc 100%);
+    /* Was a hardcoded light-only gradient bypassing --color-surface-page
+       entirely (audit ColorSystemAudit.Report.md §4/C). Option D's page
+       canvas is now the single source of truth for the root background. */
+    background: var(--color-surface-page);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     text-rendering: optimizeLegibility;
@@ -285,7 +682,11 @@
   }
 
   ::selection {
-    background: color-mix(in srgb, var(--color-accent) 18%, white);
+    /* Was color-mix(..., white) — a literal-white mix breaks under Dark
+       (ColorArchitecture.Spec.md §11). Mixing toward transparent instead of
+       an opaque literal keeps this correct in both themes and now derives
+       from the canonical brand token instead of the deprecated accent one. */
+    background: color-mix(in srgb, var(--color-brand-primary) 24%, transparent);
   }
 }
 

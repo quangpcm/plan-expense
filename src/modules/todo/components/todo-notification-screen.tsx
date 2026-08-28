@@ -31,7 +31,7 @@ function getBellToneClass(tone: AttentionBellTone) {
     return 'bg-amber-100 text-amber-600';
   }
 
-  return 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]';
+  return 'bg-[var(--color-brand-subtle)] text-[var(--color-brand-primary)]';
 }
 
 export function TodoNotificationScreen({ plans, open, onClose }: TodoNotificationScreenProps) {
@@ -87,7 +87,7 @@ export function TodoNotificationScreen({ plans, open, onClose }: TodoNotificatio
             </div>
           ) : attentionTodos.length === 0 ? (
             <div className="flex min-h-[32vh] flex-col items-center justify-center rounded-[28px] border border-dashed border-slate-200 bg-slate-50 px-6 text-center">
-              <div className="flex size-14 items-center justify-center rounded-2xl bg-white text-[var(--color-accent)] shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
+              <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--color-brand-subtle)] text-[var(--color-brand-primary)] shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
                 <CalendarClock className="size-6" />
               </div>
               <h3 className="mt-4 text-lg font-semibold text-slate-950">Hôm nay chưa có việc gấp</h3>

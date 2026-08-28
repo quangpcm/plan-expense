@@ -81,15 +81,18 @@ function renderStatus(item: TodaySummaryItem, section: TodayItemCardProps['secti
   return renderTodoStatus(item, section);
 }
 
-function renderLeading(item: TodaySummaryItem) {
+function renderLeading(item: TodaySummaryItem, section: TodayItemCardProps['section']) {
   if (item.kind === 'todo') {
     const visualCategory = inferTodoVisualCategory(item.title);
     const meta = TODO_VISUAL_CATEGORY_META[visualCategory];
     const Icon = meta.icon;
+    const isImmediate = section === 'attention' || section === 'today';
+    const iconClassName = isImmediate ? meta.iconClassName : 'text-[var(--color-text-muted)]';
+    const backgroundClassName = isImmediate ? meta.backgroundClassName : 'bg-[var(--color-surface-subtle)]';
 
     return (
       <div
-        className={`flex size-9 items-center justify-center rounded-full border border-[var(--color-border-default)] ${meta.backgroundClassName} ${meta.iconClassName}`}
+        className={`flex size-9 items-center justify-center rounded-full border border-[var(--color-border-default)] ${backgroundClassName} ${iconClassName}`}
       >
         <Icon aria-hidden="true" className="size-4" />
         <span className="sr-only">{TYPE_LABEL[item.kind]}</span>
@@ -134,7 +137,7 @@ export function TodayItemCard({ item, section }: TodayItemCardProps) {
     <DataRow
       className={className}
       density={section === 'upcoming' ? 'compact' : 'comfortable'}
-      leading={renderLeading(item)}
+      leading={renderLeading(item, section)}
       main={
         <div className="min-w-0 space-y-1">
           <p className={section === 'upcoming' ? 'truncate text-body-strong text-[var(--color-text-primary)]' : 'truncate text-component-title text-[var(--color-text-primary)]'}>

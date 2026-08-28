@@ -842,7 +842,7 @@ export function WeddingGuestPanel({
       {canManage && activeGroupId ? (
         <button
           aria-label={`Thêm khách vào ${activeGroup?.name ?? ''}`}
-          className="fixed right-4 bottom-24 z-30 flex size-14 items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-[0_14px_34px_rgba(36,59,107,0.32)] transition hover:bg-[var(--color-primary-hover)] lg:hidden"
+          className="fixed right-4 bottom-24 z-30 flex size-14 items-center justify-center rounded-full bg-[var(--color-brand-primary)] text-[var(--color-brand-foreground)] shadow-[0_14px_34px_rgba(81,71,229,0.32)] transition hover:bg-[var(--color-brand-primary-hover)] active:bg-[var(--color-brand-primary-active)] lg:hidden"
           onClick={() => setShowCreateForm(true)}
           type="button"
         >

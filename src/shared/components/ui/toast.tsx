@@ -3,7 +3,7 @@ import type { HTMLAttributes } from 'react';
 import { cn } from '@/shared/utils/cn';
 
 const toastVariants = {
-  info: 'bg-[var(--color-primary)] text-[var(--color-primary-foreground)]',
+  info: 'bg-[var(--color-status-info)] text-white',
   success: 'bg-[var(--color-success)] text-white',
   danger: 'bg-[var(--color-danger)] text-white',
 } as const;

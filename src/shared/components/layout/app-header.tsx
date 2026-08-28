@@ -34,7 +34,9 @@ export function AppHeader() {
               <Link
                 className={cn(
                   'flex min-h-11 items-center gap-2 px-3 text-sm font-medium transition-colors',
-                  active ? 'text-[var(--color-accent)]' : 'text-[var(--color-muted)] hover:text-[var(--color-accent)]',
+                  active
+                    ? 'text-[var(--color-brand-primary)]'
+                    : 'text-[var(--color-muted)] hover:text-[var(--color-brand-primary)]',
                 )}
                 href={href}
                 key={label}
@@ -43,7 +45,7 @@ export function AppHeader() {
                 <span
                   className={cn(
                     'border-b-2 pb-0.5 transition-colors',
-                    active ? 'border-[var(--color-accent)]' : 'border-transparent',
+                    active ? 'border-[var(--color-brand-primary)]' : 'border-transparent',
                   )}
                 >
                   {label}

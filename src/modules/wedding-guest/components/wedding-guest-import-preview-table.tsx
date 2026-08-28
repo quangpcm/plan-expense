@@ -301,7 +301,7 @@ export function WeddingGuestImportPreviewTable({
                           <Button
                             className={cn(
                               invitation.selectedAction === 'sync'
-                                ? 'ring-2 ring-[var(--color-accent)]'
+                                ? 'ring-2 ring-[var(--color-brand-primary)]'
                                 : '',
                             )}
                             onClick={() =>
@@ -318,7 +318,7 @@ export function WeddingGuestImportPreviewTable({
                           <Button
                             className={cn(
                               invitation.selectedAction === 'skip'
-                                ? 'ring-2 ring-[var(--color-accent)]'
+                                ? 'ring-2 ring-[var(--color-brand-primary)]'
                                 : '',
                             )}
                             onClick={() =>

@@ -20,7 +20,7 @@ type WeddingGuestGroupTableProps = {
 type MetricMode = 'attendance' | 'gift';
 
 const ROW_HIGHLIGHT_CLASS =
-  'bg-[var(--color-accent-soft)] ring-1 ring-inset ring-[var(--color-accent)]';
+  'bg-[var(--color-brand-selected)] ring-1 ring-inset ring-[var(--color-brand-primary)]';
 
 export function WeddingGuestGroupTable({
   groups,

@@ -92,7 +92,7 @@ export function WeddingGuestFilterBar({
             className={cn(
               'relative flex size-11 shrink-0 items-center justify-center rounded-full border transition',
               showFilters || hasActiveFilters
-                ? 'border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-[var(--color-accent)]'
+                ? 'border-[var(--color-brand-primary)] bg-[var(--color-brand-selected)] text-[var(--color-brand-primary)]'
                 : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300',
             )}
             onClick={() => setShowFilters((value) => !value)}
@@ -100,7 +100,7 @@ export function WeddingGuestFilterBar({
           >
             <SlidersHorizontal className="size-4" />
             {hasActiveFilters ? (
-              <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full bg-[var(--color-accent)]" />
+              <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full bg-[var(--color-brand-primary)]" />
             ) : null}
           </button>
         }

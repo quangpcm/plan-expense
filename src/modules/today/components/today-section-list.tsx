@@ -40,7 +40,7 @@ export function TodaySectionList<T>({
         ))}
         {remainingMobileCount > 0 ? (
           <button
-            className="inline-flex min-h-11 items-center gap-1.5 self-start px-1 text-sm font-medium text-[var(--color-brand-primary)] transition-colors hover:text-[var(--color-primary-hover)]"
+            className="inline-flex min-h-11 items-center gap-1.5 self-start px-1 text-sm font-medium text-[var(--color-text-link)] transition-colors hover:text-[var(--color-brand-primary-hover)]"
             onClick={() => setMobileVisibleCount((count) => Math.min(count + mobileRevealStep, items.length))}
             type="button"
           >

@@ -26,7 +26,9 @@ export function AppBottomNav() {
             aria-current={active ? 'page' : undefined}
             className={cn(
               'flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-3 py-1 text-xs font-medium transition-colors',
-              active ? 'text-[var(--color-accent)]' : 'text-[var(--color-muted)] hover:text-[var(--color-accent)]',
+              active
+                ? 'text-[var(--color-brand-primary)]'
+                : 'text-[var(--color-muted)] hover:text-[var(--color-brand-primary)]',
             )}
             href={href}
             key={label}

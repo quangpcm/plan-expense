@@ -27,7 +27,7 @@ export function DailyBrief({ headline, supportingText, action }: DailyBriefProps
   return (
     <Card className="gap-2 py-4">
       <div className="flex items-start gap-2">
-        <Sparkles aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-[var(--color-accent)]" />
+        <Sparkles aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-[var(--color-brand-primary)]" />
         <p className="text-section-title text-[var(--color-text-primary)]">{headline}</p>
       </div>
       <p className="text-body text-[var(--color-text-secondary)]">{supportingText}</p>
@@ -38,7 +38,7 @@ export function DailyBrief({ headline, supportingText, action }: DailyBriefProps
         // item: hand-roll consistently with the other 8+ instances, don't build the formal variant
         // off one more consumer).
         <Button
-          className="mt-1 h-auto min-h-0 w-fit self-end gap-0 rounded-none p-0 text-sm font-medium text-[var(--color-brand-primary)] hover:bg-transparent hover:text-[color:color-mix(in_srgb,var(--color-brand-primary)_78%,black)]"
+          className="mt-1 h-auto min-h-0 w-fit self-end gap-0 rounded-none p-0 text-sm font-medium text-[var(--color-text-link)] hover:bg-transparent hover:text-[var(--color-brand-primary-hover)]"
           href={action.href}
           variant="ghost"
         >

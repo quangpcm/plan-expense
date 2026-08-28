@@ -26,7 +26,7 @@ function getBellToneClass(tone: AttentionBellTone) {
     return 'bg-amber-100 text-amber-600';
   }
 
-  return 'bg-[var(--color-accent-soft)] text-[var(--color-accent)]';
+  return 'bg-[var(--color-brand-subtle)] text-[var(--color-brand-primary)]';
 }
 
 export function TodoAttentionSection({ plans }: TodoAttentionSectionProps) {

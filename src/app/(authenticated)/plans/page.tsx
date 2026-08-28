@@ -105,7 +105,7 @@ export default function PlansPage() {
 
       <button
         aria-label="Tạo kế hoạch"
-        className="fixed right-4 bottom-24 z-20 flex size-14 items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-[0_14px_34px_rgba(36,59,107,0.32)] transition hover:bg-[var(--color-primary-hover)] lg:bottom-6"
+        className="fixed right-4 bottom-24 z-20 flex size-14 items-center justify-center rounded-full bg-[var(--color-brand-primary)] text-[var(--color-brand-foreground)] shadow-[0_14px_34px_rgba(81,71,229,0.32)] transition hover:bg-[var(--color-brand-primary-hover)] active:bg-[var(--color-brand-primary-active)] lg:bottom-6"
         onClick={() => setShowCreatePlanForm(true)}
         type="button"
       >

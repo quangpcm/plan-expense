@@ -47,7 +47,7 @@ export function PlanUnlockGate({ secretNumberHash, onUnlock }: PlanUnlockGatePro
         paddingBottom: 'max(2.5rem, env(safe-area-inset-bottom))',
       }}
     >
-      <div className="flex size-14 items-center justify-center rounded-full bg-[var(--color-secondary)] text-[var(--color-primary)]">
+      <div className="flex size-14 items-center justify-center rounded-full bg-[var(--color-brand-subtle)] text-[var(--color-brand-primary)]">
         <Lock className="size-6" />
       </div>
 
@@ -68,7 +68,7 @@ export function PlanUnlockGate({ secretNumberHash, onUnlock }: PlanUnlockGatePro
 
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
 
-      <Link className="text-sm font-medium text-[var(--color-primary)]" href="/plans">
+      <Link className="text-sm font-medium text-[var(--color-text-link)]" href="/plans">
         ← Quay lại danh sách kế hoạch
       </Link>
     </main>

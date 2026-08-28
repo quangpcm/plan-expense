@@ -5,7 +5,7 @@ import { cn } from '@/shared/utils/cn';
 
 const buttonVariants = {
   primary:
-    'bg-[var(--color-brand-primary)] text-[var(--color-brand-foreground)] shadow-[0_12px_28px_rgba(36,59,107,0.2)] hover:bg-[var(--color-brand-primary-hover)] visited:text-[var(--color-brand-foreground)] active:text-[var(--color-brand-foreground)] focus:text-[var(--color-brand-foreground)]',
+    'bg-[var(--color-brand-primary)] text-[var(--color-brand-foreground)] shadow-[0_12px_28px_rgba(81,71,229,0.24)] hover:bg-[var(--color-brand-primary-hover)] active:bg-[var(--color-brand-primary-active)] visited:text-[var(--color-brand-foreground)] active:text-[var(--color-brand-foreground)] focus:text-[var(--color-brand-foreground)]',
   secondary:
     'bg-[var(--color-secondary)] text-[var(--color-secondary-foreground)] hover:bg-[color-mix(in_srgb,var(--color-secondary)_78%,white)]',
   ghost: 'bg-transparent text-[var(--color-secondary-foreground)] hover:bg-[var(--color-brand-subtle)] hover:text-[var(--color-status-info)]',
