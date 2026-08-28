@@ -31,6 +31,7 @@ export type AddTodoVendorPersistenceInput = {
   name: string;
   description: string | null;
   link: string | null;
+  phoneNumber: string | null;
   price: number;
   attachments: TodoDocument['attachments'];
 };
@@ -40,6 +41,7 @@ export type UpdateTodoVendorPersistenceInput = {
   name: string;
   description: string | null;
   link: string | null;
+  phoneNumber: string | null;
   price: number;
   attachments?: TodoDocument['attachments'] | undefined;
 };

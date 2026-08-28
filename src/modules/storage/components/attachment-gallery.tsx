@@ -35,7 +35,7 @@ export function AttachmentGallery({ attachments, size = 'md', emptyLabel }: Atta
 
   return (
     <>
-      <div className={cn('grid', size === 'sm' ? 'grid-cols-4 gap-2' : 'grid-cols-3 gap-2')}>
+      <div className={cn(size === 'sm' ? 'flex flex-wrap gap-2' : 'grid grid-cols-3 gap-2')}>
         {attachments.map((attachment) => {
           const url = resolveAttachmentUrl(attachment);
 
@@ -45,12 +45,15 @@ export function AttachmentGallery({ attachments, size = 'md', emptyLabel }: Atta
             return (
               <button
                 key={attachment.id}
-                className="block overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                className={cn(
+                  'block shrink-0 overflow-hidden border border-slate-200 bg-white',
+                  size === 'sm' ? 'size-10 rounded-[var(--radius-ds-sm)] md:size-14' : 'aspect-square w-full rounded-2xl',
+                )}
                 onClick={() => setPreviewIndex(imageIndex)}
                 type="button"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element -- external R2/user-provided URL, next/image domain not configured */}
-                <img src={url} alt={attachment.fileName} className="aspect-square w-full object-cover" />
+                <img src={url} alt={attachment.fileName} className="size-full object-cover" />
               </button>
             );
           }

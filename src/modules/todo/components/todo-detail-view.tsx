@@ -1,7 +1,8 @@
-import { CalendarDays, CheckCircle2, Clock3, PencilLine, Plus, Trash2, Wallet, X } from 'lucide-react';
+import { useState } from 'react';
+import { CalendarDays, Check, CheckCircle2, Clock3, Copy, PencilLine, Phone, Plus, Trash2, Wallet, X } from 'lucide-react';
 
 import type { TodoDocument } from '@/modules/todo/types/todo';
-import { priorityLabel, statusLabel, toVendorHref } from '@/modules/todo/utils/todo-display';
+import { priorityLabel, statusLabel, toTelHref, toVendorHref } from '@/modules/todo/utils/todo-display';
 import { getSelectedTodoVendor, getTodoBudgetAmount } from '@/modules/todo/utils/todo-budget';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import { AttachmentGallery } from '@/modules/storage';
@@ -50,6 +51,13 @@ export function TodoDetailView({
   const dueDate = timestampToDate(todo.dueDate);
   const selectedVendor = getSelectedTodoVendor(todo);
   const displayedBudget = getTodoBudgetAmount(todo);
+  const [copiedVendorId, setCopiedVendorId] = useState<string | null>(null);
+
+  async function handleCopyVendorPhone(vendorId: string, phoneNumber: string) {
+    await navigator.clipboard.writeText(phoneNumber);
+    setCopiedVendorId(vendorId);
+    setTimeout(() => setCopiedVendorId((current) => (current === vendorId ? null : current)), 2000);
+  }
 
   return (
     <div className="space-y-4">
@@ -113,7 +121,10 @@ export function TodoDetailView({
         <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Danh sách nhà cung cấp</p>
         {todo.vendors.length > 0 ? (
           <ul className="space-y-2">
-            {todo.vendors.map((vendor) => (
+            {todo.vendors.map((vendor) => {
+              const phoneNumber = vendor.phoneNumber;
+
+              return (
               <li
                 className={cn(
                   'space-y-1 rounded-2xl border px-4 py-2.5 text-sm transition',
@@ -182,6 +193,27 @@ export function TodoDetailView({
                     ) : null}
                   </div>
                 </div>
+                {phoneNumber ? (
+                  <div className="flex items-center gap-1.5 text-xs text-slate-600" onClick={(event) => event.stopPropagation()}>
+                    <span className="truncate">{phoneNumber}</span>
+                    <a
+                      aria-label={`Gọi ${phoneNumber}`}
+                      className="inline-flex items-center gap-1 rounded-full px-1.5 py-1 font-medium text-[#1d4ed8] hover:bg-[#eef4ff]"
+                      href={toTelHref(phoneNumber)}
+                    >
+                      <Phone className="size-3.5" />
+                      Gọi
+                    </a>
+                    <button
+                      aria-label={`Sao chép số điện thoại ${phoneNumber}`}
+                      className="inline-flex size-6 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                      onClick={() => handleCopyVendorPhone(vendor.id, phoneNumber)}
+                      type="button"
+                    >
+                      {copiedVendorId === vendor.id ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                    </button>
+                  </div>
+                ) : null}
                 {vendor.description ? (
                   <p className="line-clamp-2 text-xs leading-5 text-slate-500">{vendor.description}</p>
                 ) : null}
@@ -191,7 +223,8 @@ export function TodoDetailView({
                   </div>
                 ) : null}
               </li>
-            ))}
+              );
+            })}
           </ul>
         ) : (
           <p className="text-sm text-slate-500">Chưa có nhà cung cấp nào.</p>

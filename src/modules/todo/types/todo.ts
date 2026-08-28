@@ -10,6 +10,7 @@ export type TodoVendor = {
   name: string;
   description: string | null;
   link: string | null;
+  phoneNumber: string | null;
   price: number;
   attachments: MediaAttachment[];
 };

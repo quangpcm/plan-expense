@@ -41,6 +41,7 @@ import { recalculateEstimatedAmounts } from '@/shared/lib/firestore/recalculate-
 import { syncUserPlansAggregate } from '@/shared/lib/firestore/sync-user-plans';
 import { logFirestorePermissionDebug } from '@/shared/utils/firestore-permission-debug';
 import { mapFirebaseError } from '@/shared/utils/firebase-error';
+import { buildTodoDeleteAggregateUpdate } from '@/modules/todo/utils/todo-aggregate';
 import { getTodoBudgetAmount } from '@/modules/todo/utils/todo-budget';
 import { getFallbackTodoOrderIndex, sortTodosByMilestoneOrder, TODO_ORDER_INDEX_STEP } from '@/modules/todo/utils/todo-order';
 
@@ -48,6 +49,7 @@ function normalizeVendor(raw: TodoVendor): TodoVendor {
   return {
     ...raw,
     description: raw.description ?? null,
+    phoneNumber: raw.phoneNumber ?? null,
     attachments: raw.attachments ?? [],
   };
 }
@@ -343,6 +345,7 @@ export class FirestoreTodoRepository implements TodoRepository {
         name: vendor.name,
         description: vendor.description,
         link: vendor.link,
+        phoneNumber: vendor.phoneNumber,
         price: vendor.price,
         attachments: vendor.attachments,
       };
@@ -381,6 +384,7 @@ export class FirestoreTodoRepository implements TodoRepository {
         name: input.name,
         description: input.description,
         link: input.link,
+        phoneNumber: input.phoneNumber,
         price: input.price,
         attachments: nextAttachments,
       };
@@ -544,52 +548,72 @@ export class FirestoreTodoRepository implements TodoRepository {
     const todoRef = getPlanDocumentRef(db, planId, 'todos', todoId);
     const planRef = getPlanRootRef(db, planId);
     const now = Timestamp.now();
+    try {
+      const deletedTodo = await runTransaction(db, async (transaction) => {
+        const todoSnapshot = await transaction.get(todoRef);
 
-    const deletedTodo = await runTransaction(db, async (transaction) => {
-      const todoSnapshot = await transaction.get(todoRef);
+        if (!todoSnapshot.exists()) {
+          return null;
+        }
 
-      if (!todoSnapshot.exists()) {
-        return null;
+        const previousTodo = normalizeTodo(todoSnapshot.data() as TodoDocument);
+        const milestoneRef = getPlanDocumentRef(db, planId, 'milestones', previousTodo.milestoneId);
+        const [planSnapshot, milestoneSnapshot] = await Promise.all([
+          transaction.get(planRef),
+          transaction.get(milestoneRef),
+        ]);
+        const estimatedAmount = getTodoEstimatedAmount(previousTodo);
+        const planUpdate = buildTodoDeleteAggregateUpdate(
+          (planSnapshot.data() as { todoCount?: number; completedTodoCount?: number; estimatedAmount?: number }) ?? {},
+          previousTodo,
+          estimatedAmount,
+          now,
+        );
+        const milestoneUpdate = buildTodoDeleteAggregateUpdate(
+          (milestoneSnapshot.data() as { todoCount?: number; completedTodoCount?: number; estimatedAmount?: number }) ?? {},
+          previousTodo,
+          estimatedAmount,
+          now,
+        );
+
+        transaction.delete(todoRef);
+        transaction.update(planRef, planUpdate);
+        transaction.update(milestoneRef, milestoneUpdate);
+
+        return previousTodo;
+      });
+
+      if (deletedTodo) {
+        const syncFields: Record<string, unknown> = {
+          todoCount: increment(-1),
+          completedTodoCount: increment(deletedTodo.status === 'done' ? -1 : 0),
+          updatedAt: now,
+        };
+        const deletedEstimatedAmount = getTodoEstimatedAmount(normalizeTodo(deletedTodo));
+
+        if (deletedEstimatedAmount > 0) {
+          syncFields.estimatedAmount = increment(-deletedEstimatedAmount);
+        }
+
+        await syncUserPlansAggregate(planId, syncFields);
       }
+      await recalculateEstimatedAmounts(planId);
 
-      const previousTodo = normalizeTodo(todoSnapshot.data() as TodoDocument);
-      const milestoneRef = getPlanDocumentRef(db, planId, 'milestones', previousTodo.milestoneId);
-      const estimatedAmount = getTodoEstimatedAmount(previousTodo);
+      const orphanedAttachments = deletedTodo
+        ? [...(deletedTodo.attachments ?? []), ...(deletedTodo.vendors ?? []).flatMap((vendor) => vendor.attachments)]
+        : [];
 
-      transaction.delete(todoRef);
-
-      transaction.update(planRef, {
-        todoCount: increment(-1),
-        completedTodoCount: increment(previousTodo.status === 'done' ? -1 : 0),
-        estimatedAmount: increment(-estimatedAmount),
-        updatedAt: now,
+      return { orphanedAttachments };
+    } catch (error) {
+      await logFirestorePermissionDebug({
+        operation: 'deleteTodo',
+        db,
+        planId,
+        userId: null,
+        error,
       });
-
-      transaction.update(milestoneRef, {
-        todoCount: increment(-1),
-        completedTodoCount: increment(previousTodo.status === 'done' ? -1 : 0),
-        estimatedAmount: increment(-estimatedAmount),
-        updatedAt: now,
-      });
-
-      return previousTodo;
-    });
-
-    if (deletedTodo) {
-      await syncUserPlansAggregate(planId, {
-        todoCount: increment(-1),
-        completedTodoCount: increment(deletedTodo.status === 'done' ? -1 : 0),
-        estimatedAmount: increment(-getTodoEstimatedAmount(normalizeTodo(deletedTodo))),
-        updatedAt: now,
-      });
+      throw mapFirebaseError(error, 'Không thể xóa công việc lúc này.', 'TODO_DELETE_FAILED');
     }
-    await recalculateEstimatedAmounts(planId);
-
-    const orphanedAttachments = deletedTodo
-      ? [...(deletedTodo.attachments ?? []), ...(deletedTodo.vendors ?? []).flatMap((vendor) => vendor.attachments)]
-      : [];
-
-    return { orphanedAttachments };
   }
 
   watchTodos(

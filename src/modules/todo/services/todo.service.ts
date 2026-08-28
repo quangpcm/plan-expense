@@ -155,6 +155,7 @@ export class TodoService {
       name,
       description: input.description?.trim() || null,
       link: input.link?.trim() || null,
+      phoneNumber: input.phoneNumber?.trim() || null,
       price: input.price,
       attachments,
     });
@@ -190,6 +191,7 @@ export class TodoService {
       name,
       description: input.description?.trim() || null,
       link: input.link?.trim() || null,
+      phoneNumber: input.phoneNumber?.trim() || null,
       price: input.price,
       attachments,
     });

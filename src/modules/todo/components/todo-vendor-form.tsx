@@ -39,6 +39,7 @@ export function TodoVendorForm({
   const [name, setName] = useState(vendor?.name ?? '');
   const [description, setDescription] = useState(vendor?.description ?? '');
   const [link, setLink] = useState(vendor?.link ?? '');
+  const [phoneNumber, setPhoneNumber] = useState(vendor?.phoneNumber ?? '');
   const [price, setPrice] = useState(vendor?.price ?? 0);
   const [attachmentDrafts, setAttachmentDrafts] = useState<AttachmentDraft[]>(
     (vendor?.attachments ?? []).map((attachment) => ({ kind: 'existing', id: attachment.id, attachment })),
@@ -72,6 +73,7 @@ export function TodoVendorForm({
           name,
           description,
           link,
+          phoneNumber,
           price,
           attachments: attachmentDrafts,
         });
@@ -83,6 +85,7 @@ export function TodoVendorForm({
           name,
           description,
           link,
+          phoneNumber,
           price,
           attachments: attachmentDrafts,
         });
@@ -91,6 +94,7 @@ export function TodoVendorForm({
         setName('');
         setDescription('');
         setLink('');
+        setPhoneNumber('');
         setPrice(0);
         setAttachmentDrafts([]);
       }
@@ -123,6 +127,15 @@ export function TodoVendorForm({
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700">Tên nhà cung cấp</label>
         <Input onChange={(event) => setName(event.target.value)} placeholder="Ví dụ: Studio Ali" value={name} />
+      </div>
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700">Số điện thoại</label>
+        <Input
+          onChange={(event) => setPhoneNumber(event.target.value)}
+          placeholder="VD: 0905 123 456"
+          type="tel"
+          value={phoneNumber}
+        />
       </div>
       <div className="space-y-2">
         <label className="text-sm font-medium text-slate-700">Link tham khảo</label>
