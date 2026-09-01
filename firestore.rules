@@ -88,10 +88,6 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/plans/$(planId)/weddingGuestGroups/$(groupId));
     }
 
-    function weddingGuestDoc(planId, guestId) {
-      return get(/databases/$(database)/documents/plans/$(planId)/weddingGuests/$(guestId));
-    }
-
     function isPlanVisible(planId) {
       return isSignedIn() &&
         exists(/databases/$(database)/documents/userPlans/$(request.auth.uid)/plans/$(planId)) &&
@@ -697,13 +693,22 @@ service cloud.firestore {
       // Doc ID is deterministic (`${guestId}_${groupId}`) so guestId+groupId stays
       // unique per Firestore doc path — the composite check below rejects any
       // create whose ID doesn't match its own guestId/groupId fields.
+      // The guest doc is often created in the same writeBatch as this
+      // invitation (see FirestoreWeddingGuestRepository.createGuestWithInvitation
+      // / bulkCreateGuestsWithInvitations). A plain get() only reflects state
+      // from before the batch is applied, so it would see the guest as
+      // not-yet-existing and throw on `.data.planId` — denying every guest
+      // create. getAfter() reads the post-batch state instead, same fix
+      // already used above for the accept-invitation writeBatch case. The
+      // group is never created in this same batch, so weddingGuestGroupDoc's
+      // plain get() stays correct.
       allow create: if canManageWeddingGuest(planId) &&
         isPlanActive(planId) &&
         request.resource.data.id == invitationId &&
         request.resource.data.planId == planId &&
         request.resource.data.createdByUserId == request.auth.uid &&
         invitationId == request.resource.data.guestId + '_' + request.resource.data.groupId &&
-        weddingGuestDoc(planId, request.resource.data.guestId).data.planId == planId &&
+        getAfter(/databases/$(database)/documents/plans/$(planId)/weddingGuests/$(request.resource.data.guestId)).data.planId == planId &&
         weddingGuestGroupDoc(planId, request.resource.data.groupId).data.planId == planId &&
         request.resource.data.rsvp in ['pending', 'attending', 'not_attending'] &&
         request.resource.data.attendeeCount is int &&

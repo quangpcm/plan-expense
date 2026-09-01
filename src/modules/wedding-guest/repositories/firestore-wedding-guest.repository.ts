@@ -88,11 +88,33 @@ export class FirestoreWeddingGuestRepository implements WeddingGuestRepository {
     const { guestRef, invitationRef, guestData, invitationData } =
       this.buildGuestAndInvitationDocs(input);
 
+    console.debug('[wedding-guest] createGuestWithInvitation: writing batch', {
+      planId: input.planId,
+      guestId: guestRef.id,
+      invitationId: invitationRef.id,
+      groupId: input.groupId,
+      guestData,
+      invitationData,
+    });
+
     const batch = writeBatch(db);
     batch.set(guestRef, guestData);
     batch.set(invitationRef, invitationData);
 
-    await batch.commit();
+    try {
+      await batch.commit();
+    } catch (error) {
+      console.error('[wedding-guest] createGuestWithInvitation: batch.commit failed', {
+        planId: input.planId,
+        guestId: guestRef.id,
+        invitationId: invitationRef.id,
+        groupId: input.groupId,
+        errorCode: (error as { code?: string })?.code,
+        errorMessage: (error as { message?: string })?.message,
+        error,
+      });
+      throw error;
+    }
 
     return { guestId: guestRef.id, invitationId: invitationRef.id };
   }
@@ -104,6 +126,20 @@ export class FirestoreWeddingGuestRepository implements WeddingGuestRepository {
     const results: Array<{ guestId: string; invitationId: string }> = [];
     let batch = writeBatch(db);
     let operationCount = 0;
+
+    const commitBatch = async (context: Record<string, unknown>) => {
+      try {
+        await batch.commit();
+      } catch (error) {
+        console.error('[wedding-guest] bulkCreateGuestsWithInvitations: batch.commit failed', {
+          ...context,
+          errorCode: (error as { code?: string })?.code,
+          errorMessage: (error as { message?: string })?.message,
+          error,
+        });
+        throw error;
+      }
+    };
 
     for (const input of inputs) {
       const guestRef = doc(getPlanCollectionRef(db, input.planId, 'weddingGuests'));
@@ -150,21 +186,21 @@ export class FirestoreWeddingGuestRepository implements WeddingGuestRepository {
         results.push({ guestId: guestRef.id, invitationId: invitationRef.id });
 
         if (operationCount >= CHUNK_SIZE) {
-          await batch.commit();
+          await commitBatch({ planId: input.planId, guestId: guestRef.id, invitationId: invitationRef.id });
           batch = writeBatch(db);
           operationCount = 0;
         }
       }
 
       if (operationCount >= CHUNK_SIZE) {
-        await batch.commit();
+        await commitBatch({ planId: input.planId, guestId: guestRef.id });
         batch = writeBatch(db);
         operationCount = 0;
       }
     }
 
     if (operationCount > 0) {
-      await batch.commit();
+      await commitBatch({ planId: inputs[0]?.planId, guestCount: inputs.length });
     }
 
     return results;

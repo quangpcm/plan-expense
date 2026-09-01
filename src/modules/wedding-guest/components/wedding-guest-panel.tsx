@@ -886,13 +886,13 @@ export function WeddingGuestPanel({
       />
 
       <ResponsiveModal
+        className="max-h-[85vh] w-full max-w-xl overflow-y-auto"
         onOpenChange={(nextOpen) => {
           if (!nextOpen) {
             setShowCreateForm(false);
           }
         }}
         open={showCreateForm && Boolean(activeGroup)}
-        size="md"
         title={`Thêm khách vào ${activeGroup?.name ?? ''}`}
       >
         {activeGroup ? (

@@ -111,7 +111,21 @@ export function ResponsiveModal({
   }
 
   return (
-    <Drawer.Root onOpenChange={onOpenChange} open={open}>
+    <Drawer.Root
+      onOpenChange={onOpenChange}
+      open={open}
+      // vaul's built-in keyboard-avoidance (`repositionInputs`, on by default) recomputes this
+      // sheet's inline height/bottom on every `visualViewport` resize by reading
+      // `drawerRef.current.getBoundingClientRect()` at that instant (vaul/dist/index.mjs
+      // `onVisualViewportChange`, ~line 1113). In practice this has proven unreliable here —
+      // observed live on-device: content squeezed to a sliver up near the status bar with a large
+      // gap above the keyboard, and the wrong height stuck even after the keyboard closed (its
+      // `initialDrawerHeight` reset baseline never recovers once poisoned). Turning it off removes
+      // that whole heuristic; the sheet instead relies on plain CSS (`max-h-[70vh]` +
+      // `viewportFit: 'cover'` in app/layout.tsx) and the platform's native "scroll focused input
+      // into view" behavior.
+      repositionInputs={false}
+    >
       <Drawer.Portal>
         <Drawer.Overlay
           className="fixed inset-0 z-[var(--z-index-overlay)] bg-[var(--color-overlay-backdrop)]"
@@ -129,14 +143,9 @@ export function ResponsiveModal({
           trắng dưới đáy sheet trên mobile. Trên mobile Drawer luôn full-width (`inset-x-0`) nên
           phần `max-w-*` của className vốn cũng không có tác dụng gì, không mất gì khi bỏ.
 
-          max-h giữ ở 70vh (không phải 85vh) để tránh ngưỡng nội bộ của vaul
-          (`isTallEnough = drawerHeight > 0.8 * viewportHeight`, xem node_modules/vaul/dist/index.mjs
-          quanh dòng 1125). Khi vượt ngưỡng đó, cơ chế `repositionInputs` mặc định của vaul (co
-          height + đẩy `bottom` theo chiều cao keyboard khi 1 input được focus) sẽ giữ nguyên
-          khoảng cách gốc từ đỉnh màn hình đến sheet (~15% viewport) làm mốc cố định thay vì co
-          về sát đỉnh (~26px) — khiến vùng nhìn thấy của form bị thu hẹp quá mức khi mở keyboard
-          trên mobile, gây khó nhập liệu. Giữ max-h dưới 80vh (đã chừa biên an toàn 10 điểm %)
-          đảm bảo luôn rơi vào nhánh co tối đa, không phải do khoảng trắng ở dòng 128 phía trên.
+          max-h giữ ở 70vh làm giới hạn kích thước chung (không liên quan bàn phím nữa — kể từ khi
+          `repositionInputs={false}` ở Drawer.Root phía trên, vaul không còn tự resize sheet theo
+          bàn phím, nên ngưỡng `isTallEnough` nội bộ của vaul không còn áp dụng ở đây).
         */}
         <Drawer.Content
           className="fixed inset-x-0 bottom-0 z-[var(--z-index-overlay)] flex max-h-[70vh] flex-col overflow-hidden rounded-t-[32px] border border-b-0 border-[var(--color-border-default)] bg-[var(--color-surface-overlay)] p-5 text-[var(--color-text-primary)] shadow-[var(--shadow-overlay)] focus:outline-none"
