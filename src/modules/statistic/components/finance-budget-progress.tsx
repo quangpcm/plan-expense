@@ -28,18 +28,18 @@ export function FinanceBudgetProgress({ spent, budgetAmount }: FinanceBudgetProg
 
   return (
     <Card className="gap-3">
-      <h3 className="text-lg font-semibold text-slate-950">Ngân sách</h3>
+      <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Ngân sách</h3>
       <div className="flex items-center justify-between gap-4 text-sm">
         <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Đã chi</p>
-          <p className="mt-1 text-lg font-semibold text-slate-950">{formatCurrency(spent)}</p>
+          <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Đã chi</p>
+          <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">{formatCurrency(spent)}</p>
         </div>
         <div className="text-right">
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Ngân sách</p>
-          <p className="mt-1 text-lg font-semibold text-slate-950">{formatCurrency(budgetAmount)}</p>
+          <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Ngân sách</p>
+          <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">{formatCurrency(budgetAmount)}</p>
         </div>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--color-surface-subtle)]">
         <div className={cn('h-full rounded-full', tone.barClass)} style={{ width: `${Math.min(usedPercent, 100)}%` }} />
       </div>
       <p className={cn('text-sm font-medium', tone.textClass)}>

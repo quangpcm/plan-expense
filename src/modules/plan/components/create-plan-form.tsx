@@ -88,7 +88,7 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
     <form className="space-y-5" onSubmit={onSubmit}>
       {showsBudgetField || selectedPlanType === 'saving' ? (
         <div className="space-y-1 text-center">
-          <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#727687]">
+          <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
             {moneyFieldLabel}
             {selectedPlanType === 'saving' ? <RequiredMark /> : null}
           </label>
@@ -118,7 +118,7 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
       ) : null}
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-[var(--color-secondary-foreground)]" htmlFor="name">
+        <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="name">
           Tên kế hoạch
           <RequiredMark />
         </label>
@@ -126,7 +126,7 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-[var(--color-secondary-foreground)]" htmlFor="planType">
+        <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="planType">
           Loại kế hoạch
           <RequiredMark />
         </label>
@@ -141,15 +141,15 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-[var(--color-secondary-foreground)]" htmlFor="startDate">
+          <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="startDate">
             Bắt đầu
           </label>
           <DateField id="startDate" value={watch('startDate') || ''} {...register('startDate')} />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-[var(--color-secondary-foreground)]" htmlFor="endDate">
+          <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="endDate">
             Kết thúc
-            <span className="ml-1 text-xs font-normal text-slate-500">(không bắt buộc)</span>
+            <span className="ml-1 text-xs font-normal text-[var(--color-text-muted)]">(không bắt buộc)</span>
           </label>
           <DateField id="endDate" value={watch('endDate') || ''} {...register('endDate')} />
         </div>
@@ -157,7 +157,7 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
 
       {selectedPlanType === 'saving' ? (
         <div className="space-y-2">
-          <label className="text-sm font-medium text-[var(--color-secondary-foreground)]" htmlFor="savingTargetDate">
+          <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="savingTargetDate">
             Mốc mục tiêu
             <RequiredMark />
           </label>
@@ -166,7 +166,7 @@ export function CreatePlanForm({ onSuccess, onCancel }: CreatePlanFormProps) {
       ) : null}
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-[var(--color-secondary-foreground)]" htmlFor="description">
+        <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="description">
           Mô tả
         </label>
         <Textarea

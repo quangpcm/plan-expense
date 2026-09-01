@@ -2150,13 +2150,13 @@ export default function PlanDetailPage() {
         <div className="flex flex-col gap-6">
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <h1 className="min-w-0 flex-1 truncate text-3xl font-semibold text-slate-950">
+              <h1 className="min-w-0 flex-1 truncate text-3xl font-semibold text-[var(--color-text-primary)]">
                 {plan.name}
               </h1>
               <div className="relative shrink-0">
                 <button
                   aria-label="Tùy chọn kế hoạch"
-                  className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+                  className="flex size-9 items-center justify-center rounded-full bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-default)] hover:text-[var(--color-text-primary)]"
                   onClick={() => setShowHeaderMenu((value) => !value)}
                   type="button"
                 >
@@ -2171,14 +2171,14 @@ export default function PlanDetailPage() {
                         onClick={() => setShowHeaderMenu(false)}
                         type="button"
                       />
-                      <Card className="absolute top-12 right-0 z-50 w-64 gap-1 p-2 shadow-[0_16px_60px_rgba(15,23,42,0.16)]">
+                      <Card className="absolute top-12 right-0 z-50 w-64 gap-1 p-2 shadow-[var(--shadow-overlay)]">
                         {headerMenuItems.map((item) => (
                           <button
                             className={cn(
-                              'flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition hover:bg-slate-100',
+                              'flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition hover:bg-[var(--color-surface-subtle)]',
                               item.destructive
                                 ? 'text-rose-600'
-                                : 'text-slate-700',
+                                : 'text-[var(--color-text-secondary)]',
                             )}
                             key={item.key}
                             onClick={item.onSelect}
@@ -2200,10 +2200,10 @@ export default function PlanDetailPage() {
                           {headerMenuItems.map((item) => (
                             <button
                               className={cn(
-                                'flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition hover:bg-slate-100',
+                                'flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition hover:bg-[var(--color-surface-subtle)]',
                                 item.destructive
                                   ? 'text-rose-600'
-                                  : 'text-slate-700',
+                                  : 'text-[var(--color-text-secondary)]',
                               )}
                               key={item.key}
                               onClick={item.onSelect}
@@ -2221,14 +2221,14 @@ export default function PlanDetailPage() {
               </div>
             </div>
 
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-[var(--color-text-secondary)]">
               {planTypeOptions.find((option) => option.value === plan.planType)
                 ?.label ?? plan.planType}{' '}
               · {planStatusLabel[plan.status]}
             </p>
 
             {plan.description ? (
-              <p className="text-sm leading-6 text-slate-600">
+              <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
                 {plan.description}
               </p>
             ) : null}
@@ -2239,7 +2239,7 @@ export default function PlanDetailPage() {
               {isNativeDebtPlan ? (
                 <>
                   <div>
-                    <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400 sm:text-xs sm:tracking-[0.16em]">
+                    <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--color-text-muted)] sm:text-xs sm:tracking-[0.16em]">
                       Phải thu
                     </p>
                     <p className="mt-1 text-xl font-semibold text-[color:var(--color-income)] sm:text-2xl">
@@ -2249,7 +2249,7 @@ export default function PlanDetailPage() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400 sm:text-xs sm:tracking-[0.16em]">
+                    <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--color-text-muted)] sm:text-xs sm:tracking-[0.16em]">
                       Phải trả
                     </p>
                     <p className="mt-1 text-xl font-semibold text-[color:var(--color-expense)] sm:text-2xl">
@@ -2262,18 +2262,18 @@ export default function PlanDetailPage() {
               ) : (
                 <>
                   <div>
-                    <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400 sm:text-xs sm:tracking-[0.16em]">
+                    <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--color-text-muted)] sm:text-xs sm:tracking-[0.16em]">
                       {spentLabel}
                     </p>
-                    <p className="mt-1 text-xl font-semibold text-slate-950 sm:text-2xl">
+                    <p className="mt-1 text-xl font-semibold text-[var(--color-text-primary)] sm:text-2xl">
                       {formatCompactCurrency(plan.totalExpense)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400 sm:text-xs sm:tracking-[0.16em]">
+                    <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--color-text-muted)] sm:text-xs sm:tracking-[0.16em]">
                       {estimatedLabel}
                     </p>
-                    <p className="mt-1 text-xl font-semibold text-slate-600 sm:text-2xl">
+                    <p className="mt-1 text-xl font-semibold text-[var(--color-text-secondary)] sm:text-2xl">
                       {formatCompactCurrency(effectiveEstimatedTotal)}
                     </p>
                   </div>
@@ -2282,7 +2282,7 @@ export default function PlanDetailPage() {
             </div>
 
             <div className="space-y-1.5">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-slate-400 sm:text-xs sm:tracking-[0.16em]">
+              <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--color-text-muted)] sm:text-xs sm:tracking-[0.16em]">
                 Thành viên
               </p>
               <MemberAvatarStack members={members} />
@@ -2303,8 +2303,8 @@ export default function PlanDetailPage() {
                 className={cn(
                   'flex min-h-11 items-center justify-center gap-2 overflow-hidden rounded-full text-sm font-medium transition-[background-color,color,padding] duration-200',
                   isActive
-                    ? 'flex-1 bg-slate-950 px-4 text-white'
-                    : 'bg-slate-100 px-3 text-slate-600 sm:flex-1 sm:px-4',
+                    ? 'flex-1 bg-[var(--color-brand-primary)] px-4 text-[var(--color-brand-foreground)]'
+                    : 'bg-[var(--color-surface-subtle)] px-3 text-[var(--color-text-secondary)] sm:flex-1 sm:px-4',
                 )}
                 onClick={() => openPlanTab(tab.id)}
                 type="button"
@@ -2623,7 +2623,7 @@ export default function PlanDetailPage() {
             {archivingError ? (
               <AuthFormMessage message={archivingError} type="error" />
             ) : null}
-            <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-600">
+            <div className="rounded-[24px] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-subtle)] p-5 text-sm leading-7 text-[var(--color-text-secondary)]">
               Múi giờ hiện tại: {plan.timezone}
               <br />
               Thành viên chủ kế hoạch: {plan.ownerMemberId}
@@ -2636,9 +2636,9 @@ export default function PlanDetailPage() {
                 : 'Chưa đóng'}
             </div>
 
-            <div className="mt-4 rounded-[24px] border border-slate-200 bg-white p-5">
+            <div className="mt-4 rounded-[24px] border border-[var(--color-border-default)] bg-[var(--color-surface-default)] p-5">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                <div className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)]">
                   <Lock className="size-4 shrink-0" />
                   Khóa kế hoạch cho tôi
                 </div>
@@ -2649,7 +2649,7 @@ export default function PlanDetailPage() {
                   onCheckedChange={handleToggleSecurity}
                 />
               </div>
-              <p className="mt-2 text-xs leading-5 text-slate-500">
+              <p className="mt-2 text-xs leading-5 text-[var(--color-text-muted)]">
                 Chỉ khóa kế hoạch này trên tài khoản của bạn. Khi mở lại, bạn
                 sẽ nhập mã bảo mật cá nhân của mình. Không ảnh hưởng tới thành
                 viên khác.
@@ -2689,7 +2689,7 @@ export default function PlanDetailPage() {
               ) : null}
               {isOwner ? (
                 <Button
-                  className="border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+                  className="border border-[var(--color-border-default)] bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-default)]"
                   disabled={isArchivingPlan || Boolean(isPlanEnded)}
                   onClick={() => setShowArchivePlanConfirm(true)}
                   variant="secondary"

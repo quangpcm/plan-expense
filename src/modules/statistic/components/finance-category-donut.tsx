@@ -69,8 +69,8 @@ export function FinanceCategoryDonut({ statistic }: FinanceCategoryDonutProps) {
             key: 'rest',
             label: 'Khác',
             icon: null,
-            iconColor: 'text-slate-600',
-            iconBgColor: 'bg-slate-100',
+            iconColor: 'text-[var(--color-text-secondary)]',
+            iconBgColor: 'bg-[var(--color-surface-subtle)]',
             amount: restAmount,
             color: '#94a3b8',
           },
@@ -91,16 +91,16 @@ export function FinanceCategoryDonut({ statistic }: FinanceCategoryDonutProps) {
 
   return (
     <Card className="gap-4">
-      <h3 className="text-lg font-semibold text-slate-950">Chi tiêu theo danh mục</h3>
+      <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Chi tiêu theo danh mục</h3>
       {segments.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+        <div className="rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-surface-subtle)] px-4 py-3 text-sm text-[var(--color-text-secondary)]">
           Chưa có dữ liệu danh mục để phân tích.
         </div>
       ) : (
         <div className="flex flex-col items-center gap-5">
           <div className="relative size-40 shrink-0">
             <svg className="size-40 -rotate-90" viewBox="0 0 120 120">
-              <circle cx="60" cy="60" fill="none" r={RADIUS} stroke="var(--color-border)" strokeWidth={STROKE_WIDTH} />
+              <circle cx="60" cy="60" fill="none" r={RADIUS} stroke="var(--color-border-default)" strokeWidth={STROKE_WIDTH} />
               {arcs.map((arc) =>
                 arc.amount > 0 ? (
                   <circle
@@ -123,8 +123,8 @@ export function FinanceCategoryDonut({ statistic }: FinanceCategoryDonutProps) {
               )}
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center px-2 text-center">
-              <p className="text-xl font-semibold text-slate-950">{formatCompactCurrency(total)}</p>
-              <p className="text-xs text-slate-500">Tổng chi</p>
+              <p className="text-xl font-semibold text-[var(--color-text-primary)]">{formatCompactCurrency(total)}</p>
+              <p className="text-xs text-[var(--color-text-muted)]">Tổng chi</p>
             </div>
           </div>
 
@@ -134,7 +134,7 @@ export function FinanceCategoryDonut({ statistic }: FinanceCategoryDonutProps) {
 
               return (
                 <li className="flex items-center justify-between gap-2 text-sm" key={arc.key}>
-                  <span className="flex min-w-0 items-center gap-2 text-slate-700">
+                  <span className="flex min-w-0 items-center gap-2 text-[var(--color-text-secondary)]">
                     {Icon ? (
                       <span className={`flex size-7 shrink-0 items-center justify-center rounded-full ${arc.iconBgColor}`}>
                         <Icon className={`size-3.5 ${arc.iconColor}`} />
@@ -148,8 +148,8 @@ export function FinanceCategoryDonut({ statistic }: FinanceCategoryDonutProps) {
                     <span className="truncate">{arc.label}</span>
                   </span>
                   <span className="flex shrink-0 items-center gap-2">
-                    <span className="text-xs text-slate-400">{Math.round(arc.share * 100)}%</span>
-                    <span className="font-medium text-slate-900">{formatCurrency(arc.amount)}</span>
+                    <span className="text-xs text-[var(--color-text-muted)]">{Math.round(arc.share * 100)}%</span>
+                    <span className="font-medium text-[var(--color-text-primary)]">{formatCurrency(arc.amount)}</span>
                   </span>
                 </li>
               );

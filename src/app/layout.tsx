@@ -32,7 +32,10 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#020617',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#F7F8FC' },
+    { media: '(prefers-color-scheme: dark)', color: '#101525' },
+  ],
 };
 
 type RootLayoutProps = {
@@ -41,7 +44,7 @@ type RootLayoutProps = {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html className={inter.variable} lang="en">
+    <html className={inter.variable} lang="en" suppressHydrationWarning>
       <body>
         <AppProviders>{children}</AppProviders>
       </body>

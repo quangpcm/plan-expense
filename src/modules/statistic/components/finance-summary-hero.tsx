@@ -24,7 +24,7 @@ export function FinanceSummaryHero({ statistic }: FinanceSummaryHeroProps) {
           value={formatCurrency(overview.pendingSettlementAmount)}
         />
       </MetricGroup>
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-[var(--color-text-muted)]">
         {overview.expenseCount} khoản chi · {overview.memberCount} thành viên
         {overview.totalIncome > 0 ? ` · Tổng thu ${formatCurrency(overview.totalIncome)}` : ''}
       </p>

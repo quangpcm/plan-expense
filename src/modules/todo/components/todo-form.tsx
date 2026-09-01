@@ -139,20 +139,20 @@ export function TodoForm({
         </div>
       ) : null}
       <div className="space-y-2 text-center">
-        <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#727687]">Ngân sách dự tính</label>
+        <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Ngân sách dự tính</label>
         <AmountInput onChange={setBudget} value={budget} />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700">Tên công việc</label>
+        <label className="text-sm font-medium text-[var(--color-text-secondary)]">Tên công việc</label>
         <Input onChange={(event) => setTitle(event.target.value)} placeholder="Ví dụ: Khảo sát 3 nhà hàng" value={title} />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700">Mô tả</label>
+        <label className="text-sm font-medium text-[var(--color-text-secondary)]">Mô tả</label>
         <Textarea onChange={(event) => setDescription(event.target.value)} placeholder="Ghi chú ngắn cho việc này" value={description} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Người phụ trách</label>
+          <label className="text-sm font-medium text-[var(--color-text-secondary)]">Người phụ trách</label>
           <DropdownSelect
             onValueChange={setAssigneeMemberId}
             options={[
@@ -163,13 +163,13 @@ export function TodoForm({
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Hạn hoàn thành</label>
+          <label className="text-sm font-medium text-[var(--color-text-secondary)]">Hạn hoàn thành</label>
           <DateField onChange={(event) => setDueDate(event.target.value)} value={dueDate} />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Ưu tiên</label>
+          <label className="text-sm font-medium text-[var(--color-text-secondary)]">Ưu tiên</label>
           <DropdownSelect
             onValueChange={(value) => setPriority(value as TodoDocument['priority'])}
             options={[
@@ -182,7 +182,7 @@ export function TodoForm({
         </div>
         {todo ? (
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Trạng thái</label>
+            <label className="text-sm font-medium text-[var(--color-text-secondary)]">Trạng thái</label>
             <DropdownSelect
               onValueChange={(value) => setStatus(value as TodoDocument['status'])}
               options={[
@@ -197,7 +197,7 @@ export function TodoForm({
         ) : null}
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700">Hình ảnh</label>
+        <label className="text-sm font-medium text-[var(--color-text-secondary)]">Hình ảnh</label>
         <AttachmentPicker onChange={setAttachmentDrafts} value={attachmentDrafts} />
       </div>
       <div className="flex items-center justify-end gap-2">

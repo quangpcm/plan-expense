@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
-import { LogOut, Settings, UserCircle2 } from 'lucide-react';
+import { Check, Computer, LogOut, Moon, Settings, Sun, UserCircle2 } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 import { useAuthActions } from '@/modules/auth/hooks/use-auth-actions';
 import { useAuthSession } from '@/modules/auth/hooks/use-auth-session';
@@ -12,6 +13,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
@@ -24,10 +26,17 @@ export function AccountMenu() {
   const { user } = useAuthSession();
   const { logout } = useAuthActions();
   const { userProfile } = useCurrentUserProfile();
+  const { resolvedTheme, setTheme, theme } = useTheme();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const isMounted = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  );
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'Người dùng';
   const initials = displayName.slice(0, 2).toUpperCase();
   const avatarSrc = userProfile?.avatarUrl ?? user?.photoURL ?? null;
+  const activeTheme = theme === 'system' ? 'system' : resolvedTheme === 'dark' ? 'dark' : 'light';
 
   async function handleLogout() {
     setIsLoggingOut(true);
@@ -71,6 +80,42 @@ export function AccountMenu() {
             Cài đặt
           </Link>
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <div className="px-1 py-1">
+          <DropdownMenuLabel className="px-2 pb-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)]">
+            Giao diện
+          </DropdownMenuLabel>
+          <DropdownMenuItem
+            className="justify-between"
+            onSelect={() => setTheme('system')}
+          >
+            <span className="flex items-center gap-3">
+              <Computer className="size-4 shrink-0" />
+              Hệ thống
+            </span>
+            {isMounted && activeTheme === 'system' ? <Check className="size-4 shrink-0" /> : null}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="justify-between"
+            onSelect={() => setTheme('light')}
+          >
+            <span className="flex items-center gap-3">
+              <Sun className="size-4 shrink-0" />
+              Sáng
+            </span>
+            {isMounted && activeTheme === 'light' ? <Check className="size-4 shrink-0" /> : null}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="justify-between"
+            onSelect={() => setTheme('dark')}
+          >
+            <span className="flex items-center gap-3">
+              <Moon className="size-4 shrink-0" />
+              Tối
+            </span>
+            {isMounted && activeTheme === 'dark' ? <Check className="size-4 shrink-0" /> : null}
+          </DropdownMenuItem>
+        </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem destructive disabled={isLoggingOut} onSelect={handleLogout}>
           <LogOut className="size-4 shrink-0" />

@@ -74,7 +74,7 @@ export function PasscodeSheet({ open, onClose, userId, hasPasscode, lockedPlanCo
 
         {view === 'status' ? (
           <div className="space-y-3">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-[var(--color-text-secondary)]">
               {hasPasscode ? 'Đã đặt mã bảo mật cá nhân.' : 'Chưa đặt mã bảo mật cá nhân.'}
             </p>
             <Button className="w-full" onClick={() => setView('edit')} variant="secondary">
@@ -93,7 +93,7 @@ export function PasscodeSheet({ open, onClose, userId, hasPasscode, lockedPlanCo
         ) : null}
 
         {view === 'confirm-clear' ? (
-          <div className="space-y-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="space-y-3 rounded-2xl border border-[var(--color-status-danger)]/25 bg-[var(--color-status-danger-surface)] p-4 text-sm text-[var(--color-status-danger)]">
             <p>
               {lockedPlanCount > 0
                 ? `Bạn đang khóa ${lockedPlanCount} kế hoạch cho riêng mình bằng mã này. Xóa mã sẽ tắt khóa ở tất cả các kế hoạch đó.`

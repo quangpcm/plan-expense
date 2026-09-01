@@ -215,7 +215,7 @@ export function IncomeForm({ planId, mode, income, defaultMilestoneId, onSuccess
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
       <div className="space-y-1 text-center">
-        <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#727687]" htmlFor="amount">
+        <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]" htmlFor="amount">
           Số tiền (VND)
         </label>
         <AmountInput
@@ -225,7 +225,7 @@ export function IncomeForm({ planId, mode, income, defaultMilestoneId, onSuccess
         />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700" htmlFor="title">
+        <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="title">
           {isDebtPlan ? 'Tên khoản hoàn trả' : 'Tên khoản thu'}
         </label>
         <Input
@@ -237,7 +237,7 @@ export function IncomeForm({ planId, mode, income, defaultMilestoneId, onSuccess
 
       {!shouldHideMilestoneSelector ? (
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="milestoneId">
+          <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="milestoneId">
             Mốc kế hoạch
           </label>
           <DropdownSelect
@@ -251,7 +251,7 @@ export function IncomeForm({ planId, mode, income, defaultMilestoneId, onSuccess
       ) : null}
 
       <div className="space-y-2">
-        <p className="text-sm font-medium text-slate-700">Danh mục</p>
+        <p className="text-sm font-medium text-[var(--color-text-secondary)]">Danh mục</p>
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
           {categories.map((category) => {
             const CategoryIcon = getCategoryIcon(category.icon);
@@ -263,8 +263,8 @@ export function IncomeForm({ planId, mode, income, defaultMilestoneId, onSuccess
                 className={cn(
                   'flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-medium transition',
                   isSelected
-                    ? 'border-[#0050cb] bg-[#0050cb] text-white'
-                    : 'border-[#c2c6d8] bg-white text-[#424656]',
+                    ? 'border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)] text-[var(--color-brand-foreground)]'
+                    : 'border-[var(--color-border-default)] bg-[var(--color-surface-default)] text-[var(--color-text-primary)]',
                 )}
                 onClick={() =>
                   form.setValue('categoryId', category.id, { shouldValidate: true, shouldDirty: true })
@@ -280,7 +280,7 @@ export function IncomeForm({ planId, mode, income, defaultMilestoneId, onSuccess
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700" htmlFor="contributedByMemberId">
+        <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="contributedByMemberId">
           {isDebtPlan ? 'Thành viên hoàn trả' : 'Người nạp'}
         </label>
         <DropdownSelect
@@ -306,7 +306,7 @@ export function IncomeForm({ planId, mode, income, defaultMilestoneId, onSuccess
 
       {!isDebtPlan ? (
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="allocatedToMemberId">
+          <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="allocatedToMemberId">
             Hoàn cho
           </label>
           <DropdownSelect
@@ -325,14 +325,14 @@ export function IncomeForm({ planId, mode, income, defaultMilestoneId, onSuccess
             placeholder="Chọn thành viên được hoàn"
             value={allocatedToMemberIdWatched ?? ''}
           />
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[var(--color-text-muted)]">
             Khoản tiền này sẽ được tính là phần hoàn lại cho thành viên được chọn.
           </p>
         </div>
       ) : null}
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700" htmlFor="receivedAt">
+        <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="receivedAt">
           {isDebtPlan ? 'Thời gian hoàn trả' : 'Thời gian nhận'}
         </label>
         <DateTimeInput id="receivedAt" {...form.register('receivedAt')} />

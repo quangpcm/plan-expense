@@ -256,7 +256,7 @@ export function DebtTransactionForm({
     <div className="space-y-5">
       <div className="space-y-1 text-center">
         <label
-          className="text-xs font-semibold uppercase tracking-[0.16em] text-[#727687]"
+          className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]"
           htmlFor="debt-amount"
         >
           Số tiền (VND)
@@ -266,7 +266,7 @@ export function DebtTransactionForm({
 
       <div className="space-y-2">
         <label
-          className="text-sm font-medium text-slate-700"
+          className="text-sm font-medium text-[var(--color-text-secondary)]"
           htmlFor="debt-title"
         >
           Tên giao dịch
@@ -286,7 +286,7 @@ export function DebtTransactionForm({
       {type === 'loan' ? (
         <div className="space-y-2">
           <label
-            className="text-sm font-medium text-slate-700"
+            className="text-sm font-medium text-[var(--color-text-secondary)]"
             htmlFor="debt-category"
           >
             Danh mục
@@ -308,8 +308,8 @@ export function DebtTransactionForm({
             className={cn(
               'rounded-2xl border px-4 py-3 text-sm font-medium',
               direction === 'receivable'
-                ? 'border-[#0050cb] bg-[#0050cb]/10 text-[#0050cb]'
-                : 'border-[#c2c6d8] bg-white text-slate-700',
+                ? 'border-[var(--color-brand-primary)] bg-[color-mix(in_srgb,var(--color-brand-primary)_12%,transparent)] text-[var(--color-brand-primary)]'
+                : 'border-[var(--color-border-default)] bg-[var(--color-surface-default)] text-[var(--color-text-primary)]',
             )}
             onClick={() => setDirection('receivable')}
             type="button"
@@ -320,8 +320,8 @@ export function DebtTransactionForm({
             className={cn(
               'rounded-2xl border px-4 py-3 text-sm font-medium',
               direction === 'payable'
-                ? 'border-[#0050cb] bg-[#0050cb]/10 text-[#0050cb]'
-                : 'border-[#c2c6d8] bg-white text-slate-700',
+                ? 'border-[var(--color-brand-primary)] bg-[color-mix(in_srgb,var(--color-brand-primary)_12%,transparent)] text-[var(--color-brand-primary)]'
+                : 'border-[var(--color-border-default)] bg-[var(--color-surface-default)] text-[var(--color-text-primary)]',
             )}
             onClick={() => setDirection('payable')}
             type="button"
@@ -333,7 +333,7 @@ export function DebtTransactionForm({
 
       {!isCounterpartyLocked ? (
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Người</label>
+          <label className="text-sm font-medium text-[var(--color-text-secondary)]">Người</label>
           <CounterpartyPicker
             currentMemberId={currentMember?.id ?? null}
             members={members}
@@ -345,9 +345,9 @@ export function DebtTransactionForm({
       ) : null}
 
       {type === 'repayment' && counterpartyMemberId ? (
-        <div className="rounded-2xl border border-[#c2c6d8] bg-white px-4 py-3 text-sm text-slate-700">
-          <span className="block text-xs text-[#727687]">Còn nợ</span>
-          <span className="mt-1 block font-medium text-[#191c1e]">
+        <div className="rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-4 py-3 text-sm text-[var(--color-text-secondary)]">
+          <span className="block text-xs text-[var(--color-text-muted)]">Còn nợ</span>
+          <span className="mt-1 block font-medium text-[var(--color-text-primary)]">
             {formatCurrency(outstanding)}
           </span>
         </div>
@@ -356,7 +356,7 @@ export function DebtTransactionForm({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-2">
           <label
-            className="text-sm font-medium text-slate-700"
+            className="text-sm font-medium text-[var(--color-text-secondary)]"
             htmlFor="debt-occurredAt"
           >
             {type === 'loan' ? 'Ngày vay' : 'Ngày trả'}
@@ -370,11 +370,11 @@ export function DebtTransactionForm({
         {type === 'loan' ? (
           <div className="space-y-2">
             <label
-              className="text-sm font-medium text-slate-700"
+              className="text-sm font-medium text-[var(--color-text-secondary)]"
               htmlFor="debt-dueDate"
             >
               Hạn trả{' '}
-              <span className="font-normal text-slate-400">
+              <span className="font-normal text-[var(--color-text-muted)]">
                 (không bắt buộc)
               </span>
             </label>
@@ -389,7 +389,7 @@ export function DebtTransactionForm({
 
       <div className="space-y-2">
         <label
-          className="text-sm font-medium text-slate-700"
+          className="text-sm font-medium text-[var(--color-text-secondary)]"
           htmlFor="debt-note"
         >
           Ghi chú
@@ -403,7 +403,7 @@ export function DebtTransactionForm({
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-medium text-slate-700">Đính kèm</p>
+        <p className="text-sm font-medium text-[var(--color-text-secondary)]">Đính kèm</p>
         <AttachmentPicker label="Thêm ảnh" onChange={setAttachments} value={attachments} />
       </div>
 

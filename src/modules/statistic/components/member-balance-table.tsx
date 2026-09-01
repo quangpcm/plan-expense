@@ -24,14 +24,14 @@ function ComparisonBar({
   return (
     <div>
       <div className="flex items-baseline justify-between gap-2 text-xs">
-        <span className="text-slate-500">{label}</span>
-        <span className="font-medium text-slate-700">{formatCurrency(amount)}</span>
+        <span className="text-[var(--color-text-muted)]">{label}</span>
+        <span className="font-medium text-[var(--color-text-secondary)]">{formatCurrency(amount)}</span>
       </div>
-      <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-100">
+      <div className="mt-1 h-2 overflow-hidden rounded-full bg-[var(--color-surface-subtle)]">
         <div
           className={cn(
             'h-full rounded-full',
-            tone === 'primary' ? 'bg-[var(--color-primary)]' : 'bg-slate-400',
+            tone === 'primary' ? 'bg-[var(--color-brand-primary)]' : 'bg-[var(--color-text-muted)]',
           )}
           style={{ width: `${widthPercent}%` }}
         />
@@ -56,7 +56,7 @@ export function MemberBalanceTable({ statistic }: MemberBalanceTableProps) {
 
   return (
     <Card className="gap-4">
-      <h3 className="text-lg font-semibold text-slate-950">Cân đối thành viên</h3>
+      <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Cân đối thành viên</h3>
       <div className="grid gap-3 xl:grid-cols-2">
         {rows.map((row) => {
           const netContribution = netContributions.get(row.memberId) ?? 0;
@@ -68,7 +68,7 @@ export function MemberBalanceTable({ statistic }: MemberBalanceTableProps) {
           ].filter((entry): entry is { label: string; amount: number } => entry !== null);
 
           return (
-            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3.5" key={row.memberId}>
+            <div className="rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-4 py-3.5" key={row.memberId}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2.5">
                   <Avatar
@@ -76,7 +76,7 @@ export function MemberBalanceTable({ statistic }: MemberBalanceTableProps) {
                     initials={row.nickname.slice(0, 2).toUpperCase()}
                     src={row.avatarUrl ?? null}
                   />
-                  <span className="truncate font-semibold text-slate-900">{row.nickname}</span>
+                  <span className="truncate font-semibold text-[var(--color-text-primary)]">{row.nickname}</span>
                 </div>
                 <div className="flex shrink-0 flex-col items-end">
                   <span
@@ -108,9 +108,9 @@ export function MemberBalanceTable({ statistic }: MemberBalanceTableProps) {
                 <div className="mt-2.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-[11px]">
                   {breakdownEntries.map((entry, index) => (
                     <span className="flex items-baseline gap-1" key={entry.label}>
-                      {index > 0 ? <span className="text-slate-400">·</span> : null}
-                      <span className="text-slate-500">{entry.label}</span>
-                      <span className="font-medium text-slate-600">{formatCurrency(entry.amount)}</span>
+                      {index > 0 ? <span className="text-[var(--color-text-muted)]">·</span> : null}
+                      <span className="text-[var(--color-text-muted)]">{entry.label}</span>
+                      <span className="font-medium text-[var(--color-text-secondary)]">{formatCurrency(entry.amount)}</span>
                     </span>
                   ))}
                 </div>
@@ -119,7 +119,7 @@ export function MemberBalanceTable({ statistic }: MemberBalanceTableProps) {
           );
         })}
         {rows.length === 0 ? (
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          <div className="rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-surface-subtle)] px-4 py-3 text-sm text-[var(--color-text-secondary)]">
             Chưa có dữ liệu để cân đối giữa các thành viên.
           </div>
         ) : null}
