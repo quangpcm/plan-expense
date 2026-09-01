@@ -105,8 +105,8 @@ export function TravelActivityList({
 
   if (activities.length === 0) {
     return (
-      <Card className="border-slate-200 bg-slate-50 shadow-none">
-        <p className="text-sm leading-6 text-slate-600">
+      <Card className="border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] shadow-none">
+        <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
           Chưa có hoạt động nào trong itinerary. Khi thêm hoạt động, lịch trình sẽ tự nhóm theo từng ngày để dễ theo dõi.
         </p>
       </Card>
@@ -121,7 +121,7 @@ export function TravelActivityList({
             'min-h-10 px-4 text-sm shadow-none',
             activeDayKey === 'all'
               ? ''
-              : 'bg-slate-100 text-slate-700 hover:bg-slate-200',
+              : 'bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-default)]',
           )}
           onClick={() => setActiveDayKey('all')}
           variant={activeDayKey === 'all' ? 'primary' : 'secondary'}
@@ -134,7 +134,7 @@ export function TravelActivityList({
               'min-h-10 px-4 text-sm shadow-none',
               activeDayKey === group.dayKey
                 ? ''
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200',
+                : 'bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-default)]',
             )}
             key={group.dayKey}
             onClick={() => setActiveDayKey(group.dayKey)}
@@ -154,12 +154,12 @@ export function TravelActivityList({
             </p>
           </div>
           <div className="space-y-1">
-            <p className="text-base font-semibold text-slate-950">
+            <p className="text-base font-semibold text-[var(--color-text-primary)]">
               {insight.activity.title}
             </p>
-            <p className="text-sm text-slate-600">{insight.detail}</p>
+            <p className="text-sm text-[var(--color-text-secondary)]">{insight.detail}</p>
             {insight.activity.locationName ? (
-              <p className="text-sm text-slate-500">{insight.activity.locationName}</p>
+              <p className="text-sm text-[var(--color-text-muted)]">{insight.activity.locationName}</p>
             ) : null}
           </div>
         </Card>
@@ -199,7 +199,7 @@ export function TravelActivityList({
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-primary)]">
                   {group.title}
                 </p>
-                <p className="text-sm text-slate-500">{group.subtitle}</p>
+                <p className="text-sm text-[var(--color-text-muted)]">{group.subtitle}</p>
               </div>
             </div>
 
@@ -257,7 +257,7 @@ function TravelActivityTimelineCard({
           isPast ? 'opacity-70' : '',
         )}
       >
-        <p className="text-sm font-semibold tabular-nums text-slate-800">
+        <p className="text-sm font-semibold tabular-nums text-[var(--color-text-primary)]">
           {startsAt ? formatTime(startsAt) : '--:--'}
         </p>
       </div>
@@ -281,7 +281,7 @@ function TravelActivityTimelineCard({
               ? 'border-[var(--color-primary)] bg-[var(--color-primary)]'
               : isNext
                 ? 'border-[var(--color-primary)] bg-white'
-                : 'border-slate-300 bg-white',
+                : 'border-[var(--color-border-default)] bg-[var(--color-surface-default)]',
             isPast ? 'opacity-75' : '',
           )}
         />
@@ -291,8 +291,8 @@ function TravelActivityTimelineCard({
         className={cn(
           'min-w-0 cursor-pointer gap-3 rounded-2xl p-4 pl-4 transition sm:rounded-[var(--radius-card)]',
           isPast
-            ? 'border-slate-200 bg-white/90 text-slate-500'
-            : 'bg-white',
+            ? 'border-[var(--color-border-subtle)] bg-[color:var(--color-surface-default)] text-[var(--color-text-muted)]'
+            : 'bg-[color:var(--color-surface-default)]',
           isSelected
             ? 'border-[var(--color-primary)] shadow-[0_22px_64px_rgba(36,59,107,0.12)]'
             : 'hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]',
@@ -314,18 +314,18 @@ function TravelActivityTimelineCard({
                 'inline-flex w-fit rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em]',
                 isCurrent
                   ? 'bg-[color:color-mix(in_srgb,var(--color-primary)_12%,white)] text-[var(--color-primary)]'
-                  : 'bg-slate-100 text-slate-700',
+                  : 'bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)]',
               )}
             >
               {isCurrent ? 'Đang diễn ra' : 'Tiếp theo'}
             </span>
           ) : null}
           <p className="flex items-start gap-1.5">
-            <CategoryIcon className="mt-0.5 size-4 shrink-0 text-slate-400" />
+            <CategoryIcon className="mt-0.5 size-4 shrink-0 text-[var(--color-text-muted)]" />
             <span
               className={cn(
                 'line-clamp-2 text-base font-semibold',
-                isPast ? 'text-slate-700' : 'text-slate-950',
+                isPast ? 'text-[var(--color-text-secondary)]' : 'text-[var(--color-text-primary)]',
               )}
             >
               {activity.title}
@@ -334,7 +334,7 @@ function TravelActivityTimelineCard({
           <div
             className={cn(
               'flex flex-wrap gap-x-4 gap-y-2 text-sm',
-              isPast ? 'text-slate-400' : 'text-slate-500',
+              isPast ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-text-secondary)]',
             )}
           >
             {activity.locationName ? (
@@ -345,7 +345,7 @@ function TravelActivityTimelineCard({
                     className={cn(
                       'inline-flex min-w-0 items-center gap-1 underline decoration-dotted underline-offset-2 hover:decoration-solid',
                       isPast
-                        ? 'text-slate-500'
+                        ? 'text-[var(--color-text-secondary)]'
                         : 'font-medium text-[var(--color-primary)]',
                     )}
                     href={toMapHref(activity.locationMapUrl)}
@@ -379,7 +379,7 @@ function TravelActivityTimelineCard({
           <p
             className={cn(
               'line-clamp-2 text-sm leading-6',
-              isPast ? 'text-slate-500' : 'text-slate-600',
+              isPast ? 'text-[var(--color-text-secondary)]' : 'text-[var(--color-text-secondary)]',
             )}
           >
             {activity.note}
