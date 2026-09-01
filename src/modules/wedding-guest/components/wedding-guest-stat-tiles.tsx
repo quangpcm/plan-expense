@@ -59,10 +59,10 @@ export function WeddingGuestStatTiles({
     <MetricGroup columns={4} density="compact">
       {tiles.map((tile) => (
         <Metric
-          className="rounded-2xl bg-slate-50 p-3 lg:p-4"
+          className="rounded-2xl bg-[var(--color-surface-subtle)] p-3 lg:p-4"
           key={tile.key}
           label={tile.label}
-          leading={<tile.icon className="size-3.5 text-slate-400 lg:size-4" />}
+          leading={<tile.icon className="size-3.5 text-[var(--color-text-muted)] lg:size-4" />}
           size="sm"
           value={tile.value}
         />

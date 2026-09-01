@@ -7,12 +7,12 @@ import { cn } from '@/shared/utils/cn';
 const CATEGORY_COLORS = [
   { dot: 'bg-amber-500', bar: 'bg-amber-500' },
   { dot: 'bg-indigo-500', bar: 'bg-indigo-500' },
-  { dot: 'bg-slate-500', bar: 'bg-slate-500' },
+  { dot: 'bg-[var(--color-surface-overlay)]', bar: 'bg-[var(--color-surface-overlay)]' },
   { dot: 'bg-emerald-600', bar: 'bg-emerald-600' },
   { dot: 'bg-rose-500', bar: 'bg-rose-500' },
   { dot: 'bg-sky-600', bar: 'bg-sky-600' },
 ];
-const FALLBACK_COLOR = { dot: 'bg-slate-400', bar: 'bg-slate-400' };
+const FALLBACK_COLOR = { dot: 'bg-[var(--color-surface-overlay)]', bar: 'bg-[var(--color-surface-overlay)]' };
 
 export function getCategoryColor(index: number) {
   return CATEGORY_COLORS[index] ?? FALLBACK_COLOR;
@@ -30,7 +30,7 @@ export function ShareBar({
     : 0;
 
   return (
-    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+    <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--color-surface-subtle)]">
       <div
         className={cn('h-full rounded-full', className)}
         style={{ width: `${safePercent}%` }}

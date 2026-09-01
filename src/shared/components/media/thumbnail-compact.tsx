@@ -68,7 +68,7 @@ export function ThumbnailCompact({ photos, onPhotoClick, ariaLabelSuffix }: Thum
         return (
           <button
             aria-label={label}
-            className="absolute size-12 overflow-hidden rounded-[var(--radius-ds-sm)] border border-slate-200 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] focus-visible:ring-offset-1"
+            className="absolute size-12 overflow-hidden rounded-[var(--radius-ds-sm)] border border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] focus-visible:ring-offset-1"
             key={photo.id}
             onClick={() => onPhotoClick?.(photo, index)}
             style={{
@@ -84,7 +84,7 @@ export function ThumbnailCompact({ photos, onPhotoClick, ariaLabelSuffix }: Thum
             {isOverlayCard ? (
               <span
                 aria-hidden="true"
-                className="absolute inset-0 flex items-center justify-center bg-slate-950/60 text-xs font-semibold text-white"
+                className="absolute inset-0 flex items-center justify-center bg-[var(--color-overlay-backdrop)] text-xs font-semibold text-white"
               >
                 +{hiddenCount}
               </span>

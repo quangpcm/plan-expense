@@ -31,7 +31,7 @@ export function IncomeDetailCard({ income, members, categories, milestones }: In
     <Card className="gap-5">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold text-slate-950">{income.title}</h1>
+          <h1 className="text-3xl font-semibold text-[var(--color-text-primary)]">{income.title}</h1>
           <div className="flex flex-wrap gap-2">
             {milestone ? <Badge variant="neutral">{milestone.title}</Badge> : null}
             <Badge variant="info">{category?.name || 'Không có danh mục'}</Badge>
@@ -39,30 +39,30 @@ export function IncomeDetailCard({ income, members, categories, milestones }: In
         </div>
         <p className="text-2xl font-semibold text-emerald-700">+{formatCurrency(income.amount)}</p>
       </div>
-      <div className="space-y-2 rounded-[24px] bg-slate-50 p-4 text-sm">
-        <div className="flex items-center gap-2 text-slate-800">
-          <Landmark className="size-4 shrink-0 text-slate-400" />
+      <div className="space-y-2 rounded-[24px] bg-[var(--color-surface-subtle)] p-4 text-sm">
+        <div className="flex items-center gap-2 text-[var(--color-text-primary)]">
+          <Landmark className="size-4 shrink-0 text-[var(--color-text-muted)]" />
           <span>
             <span className="font-medium">{contributor?.nickname || 'Không rõ'}</span> đã nạp ·{' '}
             {receivedAt ? formatDateTime(receivedAt) : 'Không rõ'}
           </span>
         </div>
-        <div className="flex items-center gap-2 text-slate-500">
-          <UserRoundPlus className="size-4 shrink-0 text-slate-400" />
+        <div className="flex items-center gap-2 text-[var(--color-text-muted)]">
+          <UserRoundPlus className="size-4 shrink-0 text-[var(--color-text-muted)]" />
           <span>
             Tạo bởi {createdBy?.nickname || 'Không rõ'} ·{' '}
             {createdAt ? formatDateTime(createdAt) : 'Không rõ'}
           </span>
         </div>
         {isEdited && updatedAt ? (
-          <div className="flex items-center gap-2 text-slate-500">
-            <History className="size-4 shrink-0 text-slate-400" />
+          <div className="flex items-center gap-2 text-[var(--color-text-muted)]">
+            <History className="size-4 shrink-0 text-[var(--color-text-muted)]" />
             <span>Cập nhật lần cuối · {formatDateTime(updatedAt)}</span>
           </div>
         ) : null}
       </div>
       {income.note ? (
-        <div className="space-y-2 rounded-[24px] bg-slate-50 p-4 text-sm leading-7 text-slate-700">
+        <div className="space-y-2 rounded-[24px] bg-[var(--color-surface-subtle)] p-4 text-sm leading-7 text-[var(--color-text-secondary)]">
           Ghi chú: {income.note}
         </div>
       ) : null}

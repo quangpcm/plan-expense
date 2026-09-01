@@ -62,14 +62,14 @@ export function TodoNotificationScreen({ plans, open, onClose }: TodoNotificatio
       title="Việc cần chú ý hôm nay"
     >
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 border-b border-slate-100 px-5 py-4 md:px-6 md:py-5">
+        <div className="shrink-0 border-b border-[var(--color-border-subtle)] px-5 py-4 md:px-6 md:py-5">
           <div className="flex min-w-0 items-center gap-3">
             <div className={`inline-flex size-11 shrink-0 items-center justify-center rounded-2xl ${getBellToneClass(bellTone)}`}>
               <BellRing className="size-5" />
             </div>
             <div className="min-w-0">
-              <p className="text-lg font-semibold text-slate-950">Việc cần chú ý hôm nay</p>
-              <p className="text-sm leading-6 text-slate-600">{description}</p>
+              <p className="text-lg font-semibold text-[var(--color-text-primary)]">Việc cần chú ý hôm nay</p>
+              <p className="text-sm leading-6 text-[var(--color-text-secondary)]">{description}</p>
             </div>
           </div>
         </div>
@@ -86,12 +86,12 @@ export function TodoNotificationScreen({ plans, open, onClose }: TodoNotificatio
               <Skeleton className="h-24 rounded-[24px] opacity-70" />
             </div>
           ) : attentionTodos.length === 0 ? (
-            <div className="flex min-h-[32vh] flex-col items-center justify-center rounded-[28px] border border-dashed border-slate-200 bg-slate-50 px-6 text-center">
+            <div className="flex min-h-[32vh] flex-col items-center justify-center rounded-[28px] border border-dashed border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-6 text-center">
               <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--color-brand-subtle)] text-[var(--color-brand-primary)] shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
                 <CalendarClock className="size-6" />
               </div>
-              <h3 className="mt-4 text-lg font-semibold text-slate-950">Hôm nay chưa có việc gấp</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <h3 className="mt-4 text-lg font-semibold text-[var(--color-text-primary)]">Hôm nay chưa có việc gấp</h3>
+              <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
                 Các công việc đến hạn hoặc bị trễ sẽ xuất hiện ở đây để bạn theo dõi nhanh.
               </p>
             </div>
@@ -102,20 +102,20 @@ export function TodoNotificationScreen({ plans, open, onClose }: TodoNotificatio
 
                 return (
                   <button
-                    className="block w-full rounded-[26px] border border-slate-200 bg-white px-4 py-4 text-left shadow-[0_10px_32px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_16px_40px_rgba(15,23,42,0.08)]"
+                    className="block w-full rounded-[26px] border border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] px-4 py-4 text-left shadow-[0_10px_32px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:border-[var(--color-border-default)] hover:shadow-[0_16px_40px_rgba(15,23,42,0.08)]"
                     key={item.todo.id}
                     onClick={() => handleOpenTodo(item)}
                     type="button"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="truncate text-base font-semibold text-slate-950">{item.todo.title}</p>
-                        <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-slate-500">
+                        <p className="truncate text-base font-semibold text-[var(--color-text-primary)]">{item.todo.title}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-[var(--color-text-muted)]">
                           <span className="inline-flex items-center gap-1.5">
-                            <FolderOpen className="size-3.5 text-slate-400" />
+                            <FolderOpen className="size-3.5 text-[var(--color-text-muted)]" />
                             {item.plan.planName}
                           </span>
-                          <span className="text-slate-300">|</span>
+                          <span className="text-[var(--color-text-muted)]">|</span>
                           <span className={`font-medium ${tone.priorityClass}`}>{priorityLabel[item.todo.priority]}</span>
                         </div>
                       </div>
@@ -124,12 +124,12 @@ export function TodoNotificationScreen({ plans, open, onClose }: TodoNotificatio
                       </span>
                     </div>
 
-                    <div className="mt-3 flex items-center justify-between gap-3 text-sm text-slate-600">
+                    <div className="mt-3 flex items-center justify-between gap-3 text-sm text-[var(--color-text-secondary)]">
                       <span className="inline-flex min-w-0 items-center gap-1.5 truncate">
                         <Clock3 className={`size-4 shrink-0 ${tone.iconClass}`} />
                         Hạn {formatDate(item.dueDate)}
                       </span>
-                      <span className="text-xs text-slate-400">Mở chi tiết</span>
+                      <span className="text-xs text-[var(--color-text-muted)]">Mở chi tiết</span>
                     </div>
                   </button>
                 );
@@ -138,7 +138,7 @@ export function TodoNotificationScreen({ plans, open, onClose }: TodoNotificatio
           )}
         </div>
 
-        <div className="shrink-0 border-t border-slate-100 px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 md:hidden">
+        <div className="shrink-0 border-t border-[var(--color-border-subtle)] px-5 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 md:hidden">
           <Button className="w-full justify-center" onClick={onClose} variant="secondary">
             Đóng
           </Button>

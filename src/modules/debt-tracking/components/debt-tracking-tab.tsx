@@ -43,35 +43,35 @@ export function DebtTrackingTab({
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+          <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
             Dư nợ còn lại
           </p>
-          <p className="mt-2 text-2xl font-semibold text-slate-950">
+          <p className="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">
             {formatCompactCurrency(summary.outstandingAmount)}
           </p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+          <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
             Tổng số tiền còn lại sau khi trừ toàn bộ khoản hoàn trả đã ghi nhận.
           </p>
         </Card>
         <Card>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+          <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
             Đã cho mượn
           </p>
-          <p className="mt-2 text-2xl font-semibold text-slate-950">
+          <p className="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">
             {formatCompactCurrency(summary.totalLentAmount)}
           </p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+          <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
             Tổng số tiền bạn đã chi ra để cho các thành viên trong plan mượn.
           </p>
         </Card>
         <Card>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+          <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
             Đã được hoàn trả
           </p>
           <p className="mt-2 text-2xl font-semibold text-[var(--color-expense)]">
             {formatCompactCurrency(summary.totalRepaidAmount)}
           </p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+          <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
             {summary.transactionCount} giao dịch liên quan, {summary.activeCounterpartCount} thành viên còn dư nợ, {summary.settledCounterpartCount} thành viên đã cân bằng.
           </p>
         </Card>
@@ -96,8 +96,8 @@ export function DebtTrackingTab({
               transactions={detailAggregate.transactions}
             />
           ) : (
-            <Card className="border-slate-200 bg-slate-50 shadow-none">
-              <p className="text-sm leading-6 text-slate-600">
+            <Card className="border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] shadow-none">
+              <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
                 Chọn một thành viên để xem snapshot công nợ và lịch sử giao dịch liên quan.
               </p>
             </Card>

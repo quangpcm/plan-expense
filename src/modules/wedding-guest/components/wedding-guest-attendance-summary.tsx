@@ -34,9 +34,9 @@ export function WeddingGuestAttendanceSummary({
     <Card>
       <SectionHeading eyebrow="Tổng hợp khách mời" title="Quy mô tham dự" />
 
-      <p className="text-3xl font-semibold text-slate-950">
+      <p className="text-3xl font-semibold text-[var(--color-text-primary)]">
         {stat.attendeeCount}
-        <span className="ml-1.5 text-sm font-normal text-slate-500">
+        <span className="ml-1.5 text-sm font-normal text-[var(--color-text-muted)]">
           người dự kiến
         </span>
       </p>
@@ -44,13 +44,13 @@ export function WeddingGuestAttendanceSummary({
       <ul className="space-y-2 text-sm">
         {rows.map((row) => (
           <li
-            className="flex items-center justify-between gap-2 text-slate-600"
+            className="flex items-center justify-between gap-2 text-[var(--color-text-secondary)]"
             key={row.key}
           >
             <span>
               {row.invitationCount} {row.label}
             </span>
-            <span className="font-medium text-slate-900">
+            <span className="font-medium text-[var(--color-text-primary)]">
               {row.attendeeCount} người
             </span>
           </li>

@@ -41,12 +41,12 @@ export function MilestoneExpensePanel({
     <Card className="gap-5 shadow-none">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-          <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-primary)]">
+          <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-brand-primary)]">
             <CircleDollarSign className="size-3.5" />
             Khoản chi
           </p>
-          <h3 className="text-xl font-semibold text-slate-950">{milestone.title}</h3>
-          <p className="text-sm font-medium text-slate-600">
+          <h3 className="text-xl font-semibold text-[var(--color-text-primary)]">{milestone.title}</h3>
+          <p className="text-sm font-medium text-[var(--color-text-secondary)]">
             {expenses.length} khoản chi · Tổng {formatCurrency(totalAmount)}
           </p>
         </div>
@@ -67,12 +67,12 @@ export function MilestoneExpensePanel({
             const paidByLabel = expense.paymentSourceType === 'fund' ? 'Quỹ chung' : paidBy?.nickname ?? 'Không rõ';
             const category = categories.find((item) => item.id === expense.categoryId);
             const CategoryIcon = category?.icon ? categoryIcons[category.icon] ?? Tag : Tag;
-            const iconColor = category?.iconColor ?? 'text-slate-600';
+            const iconColor = category?.iconColor ?? 'text-[var(--color-text-secondary)]';
             const spentAt = timestampToDate(expense.spentAt);
 
             return (
               <button
-                className="w-full rounded-[24px] border border-[var(--color-border)] bg-[var(--color-surface-soft)] px-4 py-4 text-left transition hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface)]"
+                className="w-full rounded-[24px] border border-[var(--color-border-default)] bg-[var(--color-surface-subtle)] px-4 py-4 text-left transition hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-default)]"
                 key={expense.id}
                 onClick={() => onSelectExpense(expense)}
                 type="button"
@@ -81,23 +81,23 @@ export function MilestoneExpensePanel({
                   <div className="min-w-0 space-y-1.5">
                     <div className="flex items-center gap-2">
                       <CategoryIcon className={cn('size-4 shrink-0', iconColor)} />
-                      <p className="truncate text-sm font-semibold text-slate-950">{expense.title}</p>
+                      <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">{expense.title}</p>
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs text-[var(--color-subtle)]">
+                    <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)]">
                       {/* <Avatar
                         className="size-5 shrink-0 text-[9px]"
                         initials={paidBy?.nickname.slice(0, 2).toUpperCase() ?? 'PE'}
                         src={paidBy?.avatarUrl ?? null}
                       /> */}
                       <span className="truncate">
-                        <span className="font-medium text-[var(--color-muted)]">{paidByLabel}</span>{' '}
+                        <span className="font-medium text-[var(--color-text-muted)]">{paidByLabel}</span>{' '}
                         đã chi · {spentAt ? formatDateTime(spentAt) : '--'}
                       </span>
                     </div>
                   </div>
-                  <p className="shrink-0 text-sm font-semibold text-[#c94f43]">−{formatCurrency(expense.amount)}</p>
+                  <p className="shrink-0 text-sm font-semibold text-[var(--color-expense)]">−{formatCurrency(expense.amount)}</p>
                 </div>
-                <div className="mt-2 flex items-center gap-3 text-xs text-[var(--color-subtle)]">
+                <div className="mt-2 flex items-center gap-3 text-xs text-[var(--color-text-muted)]">
                   <span className="flex shrink-0 items-center gap-1">
                     <Users className="size-3.5" />
                     {expense.participants.length}
@@ -114,8 +114,8 @@ export function MilestoneExpensePanel({
           })}
         </div>
       ) : (
-        <Card className="bg-[var(--color-surface-soft)] shadow-none">
-          <p className="text-sm leading-6 text-[var(--color-muted)]">
+        <Card className="bg-[var(--color-surface-subtle)] shadow-none">
+          <p className="text-sm leading-6 text-[var(--color-text-muted)]">
             Milestone này chưa có khoản chi nào. Bạn có thể thêm khoản chi mới để gắn dòng tiền vào đúng giai đoạn.
           </p>
         </Card>

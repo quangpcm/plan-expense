@@ -130,8 +130,8 @@ export class StatisticService {
         categoryName:
           input.categories.find((category) => category.id === categoryId)?.name || 'Chưa phân loại',
         icon: input.categories.find((category) => category.id === categoryId)?.icon || null,
-        iconColor: input.categories.find((category) => category.id === categoryId)?.iconColor || 'text-slate-600',
-        iconBgColor: input.categories.find((category) => category.id === categoryId)?.iconBgColor || 'bg-slate-100',
+        iconColor: input.categories.find((category) => category.id === categoryId)?.iconColor || 'text-[var(--color-text-secondary)]',
+        iconBgColor: input.categories.find((category) => category.id === categoryId)?.iconBgColor || 'bg-[var(--color-surface-subtle)]',
         totalAmount,
       }))
       .sort((a, b) => b.totalAmount - a.totalAmount);

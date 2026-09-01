@@ -83,7 +83,7 @@ export function MembersTab({
         <MemberManagementPanel currentMember={currentMember} plan={plan} />
       ) : (
         <Card>
-          <p className="text-sm leading-6 text-slate-600">
+          <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
             Bạn có thể xem danh sách thành viên, nhưng chỉ chủ kế hoạch
             mới được quản lý thành viên và lời mời.
           </p>

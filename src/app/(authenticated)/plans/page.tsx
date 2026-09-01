@@ -43,7 +43,7 @@ export default function PlansPage() {
   }, [plans, searchQuery, sortBy]);
 
   return (
-    <main className="relative flex flex-col gap-4 bg-[var(--color-background)]">
+    <main className="relative flex flex-col gap-4 bg-[var(--color-surface-page)]">
       <section className="space-y-4 px-1">
         <PageHeader description="Quản lý và theo dõi kế hoạch tài chính." title={greeting} />
 
@@ -63,7 +63,7 @@ export default function PlansPage() {
           }
           search={
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[var(--color-subtle)]" />
+              <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
               <Input
                 className="pl-10"
                 placeholder="Tìm kiếm kế hoạch..."
@@ -94,7 +94,7 @@ export default function PlansPage() {
           <CreatePlanCard onClick={() => setShowCreatePlanForm(true)} />
         </div>
       ) : plans.length > 0 ? (
-        <div className="rounded-[24px] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface)] p-5 text-sm leading-7 text-[var(--color-muted)]">
+        <div className="rounded-[24px] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface-default)] p-5 text-sm leading-7 text-[var(--color-text-muted)]">
           Không tìm thấy kế hoạch phù hợp với &ldquo;{searchQuery.trim()}&rdquo;.
         </div>
       ) : (

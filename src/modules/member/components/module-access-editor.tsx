@@ -25,13 +25,13 @@ export function ModuleAccessEditor({ role, enabledModuleIds, value, onChange }: 
   }
 
   return (
-    <div className="grid gap-2 rounded-2xl border border-slate-200 bg-white p-3">
+    <div className="grid gap-2 rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] p-3">
       {role === 'viewer' ? (
-        <p className="text-sm font-medium text-slate-700">Khu vực được phép xem</p>
+        <p className="text-sm font-medium text-[var(--color-text-secondary)]">Khu vực được phép xem</p>
       ) : (
         <div>
-          <p className="text-sm font-medium text-slate-700">Quyền theo khu vực</p>
-          <p className="text-sm text-slate-500">Chọn mức quyền của thành viên trong từng khu vực.</p>
+          <p className="text-sm font-medium text-[var(--color-text-secondary)]">Quyền theo khu vực</p>
+          <p className="text-sm text-[var(--color-text-muted)]">Chọn mức quyền của thành viên trong từng khu vực.</p>
         </div>
       )}
       {modules.map((moduleId) => {
@@ -44,7 +44,7 @@ export function ModuleAccessEditor({ role, enabledModuleIds, value, onChange }: 
 
           return (
             <label
-              className="flex items-center justify-between gap-2 text-sm text-slate-700"
+              className="flex items-center justify-between gap-2 text-sm text-[var(--color-text-secondary)]"
               key={moduleId}
             >
               <span>{definition.defaultLabel}</span>
@@ -61,7 +61,7 @@ export function ModuleAccessEditor({ role, enabledModuleIds, value, onChange }: 
 
         return (
           <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-[1fr_auto]" key={moduleId}>
-            <span className="text-sm text-slate-700">{definition.defaultLabel}</span>
+            <span className="text-sm text-[var(--color-text-secondary)]">{definition.defaultLabel}</span>
             <DropdownSelect
               onValueChange={(next) => onChange(moduleId, next as ModuleAccessLevel)}
               options={supportedLevels.map((level) => ({ value: level, label: getAccessLevelLabel(moduleId, level) }))}

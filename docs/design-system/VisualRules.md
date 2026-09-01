@@ -32,6 +32,28 @@ positive," reviewed and judged not a real confusion risk, and deliberately left 
 add new green/red usage, make sure it's clear which of these two meanings ("member owes/is owed"
 vs. "this is an income aggregate") applies, rather than introducing a third meaning.
 
+## Theme Baseline
+
+Every generic surface must be first-class in Light and Dark at the time it is introduced. Use the
+semantic CSS-variable roles already exposed by the foundation, for example:
+
+```tsx
+<div className="border border-[var(--color-border-default)] bg-[var(--color-surface-default)] text-[var(--color-text-primary)]" />
+```
+
+Do not use raw `bg-white`, `slate-*`, gray neutral hex values, or generic `dark:` utilities as the
+normal visual contract. `dark:` is valid only for a product/domain theme pair (Plan-Type or Todo
+category, for example) or a documented intentional exception. Numbered `--gp-*` scales are private
+foundation implementation details and must never appear in shared or product component code.
+
+Status roles have text/surface forms for `success`, `warning`, `danger`, and `info`; destructive
+solid controls additionally use the documented danger fill/hover/foreground roles. Status conveys
+application state, never Plan-Type, category, or finance identity.
+
+Raw color remains appropriate for data visualization, product-owned category/Plan-Type expression,
+and media-overlay/inverse-text treatment. It must be explainable by one of those roles, not used as
+generic UI hierarchy.
+
 ## Spacing & density
 
 4px grid. Related things stay closer together; different groups get more space — not uniform 16px

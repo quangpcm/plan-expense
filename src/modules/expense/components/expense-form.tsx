@@ -377,12 +377,12 @@ export function ExpenseForm({
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
       {activityIdWatched ? (
-        <div className="rounded-2xl border border-[var(--color-primary)]/16 bg-[color:color-mix(in_srgb,var(--color-primary)_6%,white)] px-4 py-3 text-sm leading-6 text-slate-700">
+        <div className="rounded-2xl border border-[var(--color-brand-primary)]/16 bg-[var(--color-brand-subtle)] px-4 py-3 text-sm leading-6 text-[var(--color-text-secondary)]">
           Khoản chi này sẽ được gắn với activity đang chọn trong lịch trình.
         </div>
       ) : null}
       <div className="space-y-1 text-center">
-        <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#727687]" htmlFor="amount">
+        <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]" htmlFor="amount">
           Số tiền (VND)
         </label>
         <AmountInput
@@ -393,7 +393,7 @@ export function ExpenseForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700" htmlFor="title">
+        <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="title">
           {isDebtPlan ? 'Tên khoản cho mượn' : 'Tên khoản chi'}
         </label>
         <Input
@@ -405,7 +405,7 @@ export function ExpenseForm({
 
       {!shouldHideMilestoneSelector ? (
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="milestoneId">
+          <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="milestoneId">
             Mốc kế hoạch
           </label>
           <DropdownSelect
@@ -422,7 +422,7 @@ export function ExpenseForm({
 
       <div className="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] gap-3">
         <div className="space-y-2">
-          <p className="text-sm font-medium text-slate-700">Danh mục</p>
+          <p className="text-sm font-medium text-[var(--color-text-secondary)]">Danh mục</p>
           <DropdownSelect
             id="categoryId"
             onValueChange={(value) => form.setValue('categoryId', value, { shouldValidate: true, shouldDirty: true })}
@@ -437,7 +437,7 @@ export function ExpenseForm({
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="spentAt">
+          <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="spentAt">
             {isDebtPlan ? 'Thời gian cho mượn' : 'Thời gian chi'}
           </label>
           <DateTimeInput
@@ -449,17 +449,17 @@ export function ExpenseForm({
       </div>
 
       {isDebtPlan ? (
-        <div className="rounded-2xl border border-[#c2c6d8] bg-white px-4 py-3 text-sm text-slate-700">
-          <span className="block text-xs text-[#727687]">Người cho mượn</span>
-          <span className="mt-1 block font-medium text-[#191c1e]">{currentMember?.nickname || paidByLabel}</span>
+        <div className="rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-4 py-3 text-sm text-[var(--color-text-secondary)]">
+          <span className="block text-xs text-[var(--color-text-muted)]">Người cho mượn</span>
+          <span className="mt-1 block font-medium text-[var(--color-text-primary)]">{currentMember?.nickname || paidByLabel}</span>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-2 rounded-2xl border border-[#c2c6d8] bg-slate-50 p-1">
+          <div className="grid grid-cols-2 gap-2 rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-surface-subtle)] p-1">
             <button
               className={cn(
                 'rounded-xl px-3 py-2 text-sm font-medium transition-colors',
-                paymentSourceTypeWatched === 'member' ? 'bg-white text-[#0050cb] shadow-sm' : 'text-[#727687]',
+                paymentSourceTypeWatched === 'member' ? 'bg-[var(--color-surface-default)] text-[var(--color-brand-primary)] shadow-sm' : 'text-[var(--color-text-muted)]',
               )}
               onClick={() => form.setValue('paymentSourceType', 'member', { shouldValidate: true, shouldDirty: true })}
               type="button"
@@ -469,7 +469,7 @@ export function ExpenseForm({
             <button
               className={cn(
                 'rounded-xl px-3 py-2 text-sm font-medium transition-colors',
-                paymentSourceTypeWatched === 'fund' ? 'bg-white text-[#0050cb] shadow-sm' : 'text-[#727687]',
+                paymentSourceTypeWatched === 'fund' ? 'bg-[var(--color-surface-default)] text-[var(--color-brand-primary)] shadow-sm' : 'text-[var(--color-text-muted)]',
               )}
               onClick={() => {
                 form.setValue('paymentSourceType', 'fund', { shouldValidate: true, shouldDirty: true });
@@ -482,30 +482,30 @@ export function ExpenseForm({
           </div>
 
           {paymentSourceTypeWatched === 'fund' ? (
-            <div className="rounded-2xl border border-[#c2c6d8] bg-white px-4 py-3 text-sm text-slate-700">
-              <span className="block text-xs text-[#727687]">Nguồn tiền</span>
-              <span className="mt-1 block font-medium text-[#191c1e]">Quỹ chung</span>
-              <span className="mt-1 block text-xs text-[#727687]">
+            <div className="rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-4 py-3 text-sm text-[var(--color-text-secondary)]">
+              <span className="block text-xs text-[var(--color-text-muted)]">Nguồn tiền</span>
+              <span className="mt-1 block font-medium text-[var(--color-text-primary)]">Quỹ chung</span>
+              <span className="mt-1 block text-xs text-[var(--color-text-muted)]">
                 Số dư hiện tại: {formatCurrency(fundBalance)}
               </span>
             </div>
           ) : (
             <>
               <button
-                className="flex w-full items-center justify-between rounded-2xl border border-[#c2c6d8] bg-white px-4 py-3 text-left"
+                className="flex w-full items-center justify-between rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-4 py-3 text-left"
                 onClick={() => setIsPaidByOpen(true)}
                 type="button"
               >
                 <span className="flex items-center gap-3">
-                  <span className="flex size-9 items-center justify-center rounded-full bg-[#0050cb]/10 text-[#0050cb]">
+                  <span className="flex size-9 items-center justify-center rounded-full bg-[var(--color-brand-subtle)] text-[var(--color-brand-primary)]">
                     <User className="size-4" />
                   </span>
                   <span>
-                    <span className="block text-xs text-[#727687]">Người chi trả</span>
-                    <span className="block text-sm font-medium text-[#191c1e]">{paidByLabel}</span>
+                    <span className="block text-xs text-[var(--color-text-muted)]">Người chi trả</span>
+                    <span className="block text-sm font-medium text-[var(--color-text-primary)]">{paidByLabel}</span>
                   </span>
                 </span>
-                <ChevronRight className="size-4 text-[#727687]" />
+                <ChevronRight className="size-4 text-[var(--color-text-muted)]" />
               </button>
 
               <ResponsiveModal
@@ -522,7 +522,7 @@ export function ExpenseForm({
                         key={member.id}
                         className={cn(
                           'flex min-h-11 items-center justify-between rounded-2xl border px-4 py-2 text-sm',
-                          isSelected ? 'border-[#0050cb] bg-[#0050cb]/10' : 'border-[#c2c6d8] bg-white',
+                          isSelected ? 'border-[var(--color-border-focus)] bg-[var(--color-brand-subtle)]' : 'border-[var(--color-border-default)] bg-[var(--color-surface-default)]',
                         )}
                         onClick={() => {
                           form.setValue('paidByMemberId', member.id, { shouldValidate: true, shouldDirty: true });
@@ -530,11 +530,11 @@ export function ExpenseForm({
                         }}
                         type="button"
                       >
-                        <span className="text-[#191c1e]">
+                        <span className="text-[var(--color-text-primary)]">
                           {member.nickname}
                           {member.id === currentMember?.id ? ' (Mặc định)' : ''}
                         </span>
-                        {isSelected ? <Check className="size-4 text-[#0050cb]" /> : null}
+                        {isSelected ? <Check className="size-4 text-[var(--color-brand-primary)]" /> : null}
                       </button>
                     );
                   })}
@@ -545,11 +545,11 @@ export function ExpenseForm({
         </>
       )}
 
-      <details className="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
-        <summary className="cursor-pointer text-sm font-semibold text-slate-800">Thiết lập nâng cao</summary>
+      <details className="rounded-[24px] border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] p-4">
+        <summary className="cursor-pointer text-sm font-semibold text-[var(--color-text-primary)]">Thiết lập nâng cao</summary>
         <div className="mt-4 space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700" htmlFor="splitMethod">
+            <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="splitMethod">
               {isDebtPlan ? 'Thành viên nhận tiền' : 'Chia tiền'}
             </label>
             {isDebtPlan ? (
@@ -589,14 +589,14 @@ export function ExpenseForm({
             )}
           </div>
           {!isDebtPlan && selectedSplitMethod === splitMethods.self ? (
-            <div className="px-1 py-1 text-sm italic text-[#7a8094]">
+            <div className="px-1 py-1 text-sm italic text-[var(--color-text-muted)]">
               Khoản chi này mặc định được tính cho{' '}
               <span className="font-medium text-amber-600 not-italic">{selfSplitLabel}</span>.
             </div>
           ) : null}
           {!isDebtPlan && selectedSplitMethod !== splitMethods.self ? (
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Người tham gia</label>
+              <label className="text-sm font-medium text-[var(--color-text-secondary)]">Người tham gia</label>
               <div className="grid gap-2">
                 {activeMembers.map((member) => {
                   const checked = selectedMembers.includes(member.id);
@@ -604,7 +604,7 @@ export function ExpenseForm({
                   return (
                     <label
                       key={member.id}
-                      className="inline-flex min-h-11 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700"
+                      className="inline-flex min-h-11 items-center gap-3 rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] px-4 py-2 text-sm text-[var(--color-text-secondary)]"
                     >
                       <input
                         checked={checked}
@@ -625,7 +625,7 @@ export function ExpenseForm({
           ) : null}
           {!isDebtPlan && selectedSplitMethod !== splitMethods.self && selectedSplitMethod !== 'equal' ? (
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">
+              <label className="text-sm font-medium text-[var(--color-text-secondary)]">
                 {selectedSplitMethod === 'exact'
                   ? 'Số tiền từng người'
                   : selectedSplitMethod === 'percentage'
@@ -637,20 +637,20 @@ export function ExpenseForm({
                   .filter((member) => selectedMembers.includes(member.id))
                   .map((member) => (
                     <div key={member.id} className="flex items-center gap-3">
-                      <span className="min-w-0 flex-1 truncate text-sm text-slate-700">{member.nickname}</span>
+                      <span className="min-w-0 flex-1 truncate text-sm text-[var(--color-text-secondary)]">{member.nickname}</span>
                       <Input
                         className="w-28 text-right"
                         inputMode="numeric"
                         type="number"
                         {...form.register(`splitValues.${member.id}`)}
                       />
-                      <span className="w-10 text-sm text-slate-500">
+                      <span className="w-10 text-sm text-[var(--color-text-muted)]">
                         {selectedSplitMethod === 'exact' ? 'đ' : selectedSplitMethod === 'percentage' ? '%' : 'phần'}
                       </span>
                     </div>
                   ))}
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 {selectedSplitMethod === 'exact'
                   ? `Tổng: ${formatCurrency(totalSplitValue)} / ${formatCurrency(Number(amountWatched) || 0)}`
                   : selectedSplitMethod === 'percentage'
@@ -661,7 +661,7 @@ export function ExpenseForm({
           ) : null}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700" htmlFor="merchantName">
+              <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="merchantName">
                 {isDebtPlan ? 'Nguồn / bối cảnh giao dịch' : 'Cửa hàng / đơn vị'}
               </label>
               <Input
@@ -671,7 +671,7 @@ export function ExpenseForm({
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700" htmlFor="locationName">
+              <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="locationName">
                 {isDebtPlan ? 'Nơi phát sinh' : 'Địa điểm'}
               </label>
               <Input
@@ -682,7 +682,7 @@ export function ExpenseForm({
             </div>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700" htmlFor="note">
+            <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="note">
               Ghi chú
             </label>
             <Textarea id="note" placeholder="Ghi chú thêm (không bắt buộc)" {...form.register('note')} />
@@ -691,13 +691,13 @@ export function ExpenseForm({
       </details>
 
       <div className="space-y-2">
-        <p className="text-sm font-medium text-slate-700">Hóa đơn đính kèm</p>
+        <p className="text-sm font-medium text-[var(--color-text-secondary)]">Hóa đơn đính kèm</p>
         <AttachmentPicker
           label="Thêm ảnh hóa đơn"
           onChange={(next) => form.setValue('attachments', next, { shouldDirty: true })}
           value={attachmentDrafts}
         />
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-[var(--color-text-muted)]">
           Tối đa 5 ảnh. {mode === 'create' ? 'Khoản chi chỉ được tạo' : 'Thay đổi chỉ được lưu'} sau khi tải ảnh lên
           thành công.
         </p>

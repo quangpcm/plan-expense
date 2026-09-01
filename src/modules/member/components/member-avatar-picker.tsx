@@ -49,7 +49,7 @@ export function MemberAvatarPicker({
 
   const content = (
     <div className="space-y-4">
-      <div className="flex items-center gap-4 rounded-[24px] bg-slate-50 p-4">
+      <div className="flex items-center gap-4 rounded-[24px] bg-[var(--color-surface-subtle)] p-4">
         <Avatar
           className="size-16 text-xl"
           initials={memberName.slice(0, 2).toUpperCase()}
@@ -62,12 +62,12 @@ export function MemberAvatarPicker({
           }
         />
         <div className="space-y-1">
-          <p className="font-semibold text-slate-950">{memberName}</p>
-          <p className="text-sm text-slate-600">Chọn icon, emoji hoặc dán URL ảnh đại diện.</p>
+          <p className="font-semibold text-[var(--color-text-primary)]">{memberName}</p>
+          <p className="text-sm text-[var(--color-text-secondary)]">Chọn icon, emoji hoặc dán URL ảnh đại diện.</p>
         </div>
       </div>
 
-      <div className="inline-flex rounded-full bg-slate-100 p-1">
+      <div className="inline-flex rounded-full bg-[var(--color-surface-subtle)] p-1">
         {[
           { id: 'icon', label: 'Icon', icon: Sparkles },
           { id: 'emoji', label: 'Emoji', icon: Smile },
@@ -80,7 +80,7 @@ export function MemberAvatarPicker({
               key={item.id}
               className={cn(
                 'inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-sm font-medium transition',
-                mode === item.id ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-600',
+                mode === item.id ? 'bg-[var(--color-surface-default)] text-[var(--color-text-primary)] shadow-sm' : 'text-[var(--color-text-secondary)]',
               )}
               onClick={() => setMode(item.id as 'icon' | 'emoji' | 'url')}
               type="button"
@@ -103,14 +103,14 @@ export function MemberAvatarPicker({
                 key={option.value}
                 className={cn(
                   'relative flex flex-col items-center gap-2 rounded-[24px] border p-3 transition',
-                  isSelected ? 'border-[#0050cb] bg-[#0050cb]/6' : 'border-slate-200 bg-white hover:border-slate-300',
+                  isSelected ? 'border-[var(--color-border-focus)] bg-[color:color-mix(in_srgb,var(--color-brand-primary)_6%,transparent)]' : 'border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] hover:border-[var(--color-border-default)]',
                 )}
                 onClick={() => setSelectedIcon(option.value)}
                 type="button"
               >
                 <Avatar className="size-12" src={`icon:${option.value}`} />
-                <span className="text-xs font-medium text-slate-700">{option.label}</span>
-                {isSelected ? <Check className="absolute top-3 right-3 size-4 text-[#0050cb]" /> : null}
+                <span className="text-xs font-medium text-[var(--color-text-secondary)]">{option.label}</span>
+                {isSelected ? <Check className="absolute top-3 right-3 size-4 text-[var(--color-brand-primary)]" /> : null}
               </button>
             );
           })}
@@ -125,7 +125,7 @@ export function MemberAvatarPicker({
             placeholder="Nhập hoặc dán emoji, ví dụ 👰 ✈️ 🎉"
             value={emojiValue}
           />
-          <p className="text-sm text-slate-500">Bạn có thể dùng emoji keyboard của hệ điều hành rồi dán trực tiếp vào ô này.</p>
+          <p className="text-sm text-[var(--color-text-muted)]">Bạn có thể dùng emoji keyboard của hệ điều hành rồi dán trực tiếp vào ô này.</p>
         </div>
       ) : null}
 
@@ -136,7 +136,7 @@ export function MemberAvatarPicker({
             placeholder="https://example.com/avatar.jpg"
             value={urlValue}
           />
-          <p className="text-sm text-slate-500">Nếu là link ảnh hợp lệ, avatar sẽ hiển thị bằng ảnh thay vì icon hoặc emoji.</p>
+          <p className="text-sm text-[var(--color-text-muted)]">Nếu là link ảnh hợp lệ, avatar sẽ hiển thị bằng ảnh thay vì icon hoặc emoji.</p>
         </div>
       ) : null}
 

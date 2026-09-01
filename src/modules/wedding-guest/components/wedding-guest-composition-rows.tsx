@@ -23,7 +23,7 @@ export function WeddingGuestCompositionRows({
   const totalBasis = rows.reduce((sum, row) => sum + row[metric], 0);
 
   if (rows.length === 0) {
-    return <p className="text-sm text-slate-500">Chưa có dữ liệu.</p>;
+    return <p className="text-sm text-[var(--color-text-muted)]">Chưa có dữ liệu.</p>;
   }
 
   return (
@@ -36,7 +36,7 @@ export function WeddingGuestCompositionRows({
 
         const content = (
           <>
-            <span className="flex items-center gap-2 text-sm text-slate-700">
+            <span className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
               <span
                 className={cn('size-2.5 shrink-0 rounded-full', color.dot)}
               />
@@ -46,10 +46,10 @@ export function WeddingGuestCompositionRows({
               <span className="hidden w-24 sm:block">
                 <ShareBar className={color.bar} percent={percent} />
               </span>
-              <span className="block w-10 shrink-0 text-sm font-semibold text-slate-950">
+              <span className="block w-10 shrink-0 text-sm font-semibold text-[var(--color-text-primary)]">
                 {Math.round(percent)}%
               </span>
-              <span className="block w-16 shrink-0 text-xs text-slate-500">
+              <span className="block w-16 shrink-0 text-xs text-[var(--color-text-muted)]">
                 {row.guestCount} khách
               </span>
             </span>
@@ -60,7 +60,7 @@ export function WeddingGuestCompositionRows({
           <li key={row.attributeId}>
             {onSelect ? (
               <button
-                className="flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-2.5 text-left transition hover:bg-slate-50"
+                className="flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-2.5 text-left transition hover:bg-[var(--color-surface-subtle)]"
                 onClick={() => onSelect(row.attributeId)}
                 type="button"
               >

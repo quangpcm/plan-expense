@@ -93,7 +93,7 @@ export function WeddingGuestFilterBar({
               'relative flex size-11 shrink-0 items-center justify-center rounded-full border transition',
               showFilters || hasActiveFilters
                 ? 'border-[var(--color-brand-primary)] bg-[var(--color-brand-selected)] text-[var(--color-brand-primary)]'
-                : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300',
+                : 'border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] text-[var(--color-text-muted)] hover:border-[var(--color-border-default)]',
             )}
             onClick={() => setShowFilters((value) => !value)}
             type="button"

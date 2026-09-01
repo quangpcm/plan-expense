@@ -131,14 +131,14 @@ export function MemberManagementPanel({
         >
           <form className="space-y-4" onSubmit={submitGuest}>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700" htmlFor="guest-nickname">
+              <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="guest-nickname">
                 Tên hiển thị
               </label>
               <Input id="guest-nickname" placeholder="Ví dụ: Nhà Trai, Mẹ, Anh Minh" {...guestForm.register('nickname')} />
             </div>
             <input type="hidden" {...guestForm.register('role')} />
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">Vai trò</label>
+              <label className="text-sm font-medium text-[var(--color-text-secondary)]">Vai trò</label>
               <DropdownSelect
                 onValueChange={(value) => guestForm.setValue('role', value as AddGuestSchema['role'], { shouldDirty: true, shouldValidate: true })}
                 options={[
@@ -148,7 +148,7 @@ export function MemberManagementPanel({
                 value={guestRole}
               />
             </div>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-[var(--color-text-muted)]">
               Thành viên có thể được chọn trong các khoản thu, chi và chia sẻ chi phí.
             </p>
             {guestError ? <AuthFormMessage message={guestError} type="error" /> : null}
@@ -171,7 +171,7 @@ export function MemberManagementPanel({
             <Input placeholder="member@example.com (tùy chọn)" {...inviteForm.register('email')} />
             <input type="hidden" {...inviteForm.register('role')} />
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">Vai trò</label>
+              <label className="text-sm font-medium text-[var(--color-text-secondary)]">Vai trò</label>
               <DropdownSelect
                 onValueChange={(value) => inviteForm.setValue('role', value as CreateInvitationSchema['role'], { shouldDirty: true, shouldValidate: true })}
                 options={[
@@ -181,7 +181,7 @@ export function MemberManagementPanel({
                 value={inviteRole}
               />
             </div>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-[var(--color-text-muted)]">
               Nếu không nhập email, liên kết mời có thể được chia sẻ với bất kỳ ai.
             </p>
             {inviteError ? <AuthFormMessage message={inviteError} type="error" /> : null}

@@ -69,7 +69,7 @@ export function TodoDetailView({
       <div className="flex items-start gap-3">
         <Avatar initials={assignee?.nickname.slice(0, 2).toUpperCase() ?? 'PE'} src={assignee?.avatarUrl ?? null} />
         <div className="min-w-0 flex-1 space-y-1.5">
-          <h4 className="text-base font-semibold text-slate-950">{todo.title}</h4>
+          <h4 className="text-base font-semibold text-[var(--color-text-primary)]">{todo.title}</h4>
           <div className="flex flex-wrap gap-1.5">
             <Badge variant={todo.status === 'done' ? 'success' : todo.status === 'cancelled' ? 'neutral' : 'info'}>
               {statusLabel[todo.status]}
@@ -79,39 +79,39 @@ export function TodoDetailView({
         </div>
       </div>
 
-      <p className="text-sm leading-6 text-slate-600">{todo.description || 'Chưa có mô tả.'}</p>
+      <p className="text-sm leading-6 text-[var(--color-text-secondary)]">{todo.description || 'Chưa có mô tả.'}</p>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Thời hạn</p>
-          <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-slate-900">
-            <CalendarDays className="size-4 text-slate-400" />
+          <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Thời hạn</p>
+          <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-text-primary)]">
+            <CalendarDays className="size-4 text-[var(--color-text-muted)]" />
             {dueDate ? formatDate(dueDate) : 'Chưa đặt'}
           </p>
         </div>
         <div>
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Ngân sách</p>
-          <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-slate-900">
-            <Wallet className="size-4 text-slate-400" />
+          <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Ngân sách</p>
+          <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-text-primary)]">
+            <Wallet className="size-4 text-[var(--color-text-muted)]" />
             {displayedBudget != null ? formatCurrency(displayedBudget) : 'Chưa đặt'}
           </p>
         </div>
       </div>
 
       {selectedVendor ? (
-        <div className="flex items-start justify-between gap-3 rounded-2xl border border-[#d7e5ff] bg-[#eff5ff] px-4 py-3">
+        <div className="flex items-start justify-between gap-3 rounded-2xl border border-[var(--color-info)]/25 bg-[var(--color-info-soft)] px-4 py-3">
           <div className="min-w-0">
-            <p className="text-xs uppercase tracking-[0.16em] text-[#6a84b6]">Nhà cung cấp đã chọn</p>
+            <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Nhà cung cấp đã chọn</p>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
-              <span className="truncate font-semibold text-[#1d3f7a]">{selectedVendor.name}</span>
-              <span className="text-[#6b84b1]">·</span>
-              <span className="font-medium text-[#36568f]">{formatCurrency(selectedVendor.price)}</span>
+              <span className="truncate font-semibold text-[var(--color-info)]">{selectedVendor.name}</span>
+              <span className="text-[var(--color-text-muted)]">·</span>
+              <span className="font-medium text-[var(--color-info)]">{formatCurrency(selectedVendor.price)}</span>
             </div>
           </div>
           {canManagePlan ? (
             <button
               aria-label="Bỏ chọn nhà cung cấp"
-              className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-[#5f79a8] transition hover:bg-white/70 hover:text-[#1d4ed8]"
+              className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--color-text-muted)] transition hover:bg-[color:color-mix(in_srgb,var(--color-surface-default)_70%,transparent)] hover:text-[var(--color-info)]"
               disabled={isSubmitting}
               onClick={() => onSelectVendor(todo, selectedVendor.id)}
               type="button"
@@ -123,7 +123,7 @@ export function TodoDetailView({
       ) : null}
 
       <div className="space-y-2">
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Danh sách nhà cung cấp</p>
+        <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Danh sách nhà cung cấp</p>
         {todo.vendors.length > 0 ? (
           <ul className="space-y-2">
             {todo.vendors.map((vendor) => {
@@ -137,8 +137,8 @@ export function TodoDetailView({
                 className={cn(
                   'flex items-start gap-2.5 rounded-2xl border px-3 py-2 text-sm transition',
                   vendor.id === todo.selectedTodoVendorId
-                    ? 'border-[#cfe0ff] bg-[#eef4ff]'
-                    : 'border-transparent bg-slate-50 hover:border-[#dbe5f7]',
+                    ? 'border-[var(--color-info)]/30 bg-[var(--color-info-soft)]'
+                    : 'border-transparent bg-[var(--color-surface-subtle)] hover:border-[var(--color-info)]/20',
                 )}
                 key={vendor.id}
                 onClick={() => onSelectVendor(todo, vendor.id)}
@@ -163,7 +163,7 @@ export function TodoDetailView({
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <span className="block truncate font-medium text-slate-900">
+                      <span className="block truncate font-medium text-[var(--color-text-primary)]">
                         {vendor.link ? (
                           <a
                             className="text-sky-700 hover:underline"
@@ -184,7 +184,7 @@ export function TodoDetailView({
                         <span
                           className={cn(
                             'mr-0.5 font-medium',
-                            vendor.id === todo.selectedTodoVendorId ? 'text-[#1d4ed8]' : 'text-slate-600',
+                            vendor.id === todo.selectedTodoVendorId ? 'text-[var(--color-info)]' : 'text-[var(--color-text-secondary)]',
                           )}
                         >
                           {formatCurrency(vendor.price)}
@@ -193,7 +193,7 @@ export function TodoDetailView({
                       {canManagePlan ? (
                         <button
                           aria-label={`Sửa nhà cung cấp ${vendor.name}`}
-                          className="inline-flex size-6 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-white hover:text-slate-700"
+                          className="inline-flex size-6 shrink-0 items-center justify-center rounded-full text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-default)] hover:text-[var(--color-text-secondary)]"
                           onClick={(event) => {
                             event.stopPropagation();
                             onEditVendor(todo, vendor.id);
@@ -206,7 +206,7 @@ export function TodoDetailView({
                       {canManagePlan ? (
                         <button
                           aria-label={`Xoá nhà cung cấp ${vendor.name}`}
-                          className="inline-flex size-6 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
+                          className="inline-flex size-6 shrink-0 items-center justify-center rounded-full text-[var(--color-text-muted)] transition hover:bg-rose-50 hover:text-rose-600"
                           onClick={(event) => {
                             event.stopPropagation();
                             onDeleteVendor(todo, vendor.id);
@@ -219,12 +219,12 @@ export function TodoDetailView({
                     </div>
                   </div>
                   {phoneNumber ? (
-                    <div className="flex items-center gap-1 text-xs text-slate-600" onClick={(event) => event.stopPropagation()}>
+                    <div className="flex items-center gap-1 text-xs text-[var(--color-text-secondary)]" onClick={(event) => event.stopPropagation()}>
                       <button
                         aria-label={
                           copiedVendorId === vendor.id ? 'Đã sao chép số điện thoại' : `Sao chép số điện thoại ${phoneNumber}`
                         }
-                        className="truncate text-left hover:text-slate-900"
+                        className="truncate text-left hover:text-[var(--color-text-primary)]"
                         onClick={() => handleCopyVendorPhone(vendor.id, phoneNumber)}
                         type="button"
                       >
@@ -232,7 +232,7 @@ export function TodoDetailView({
                       </button>
                       <a
                         aria-label={`Gọi ${phoneNumber}`}
-                        className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-[#1d4ed8] hover:bg-[#eef4ff]"
+                        className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-[var(--color-info)] hover:bg-[var(--color-info-soft)]"
                         href={toTelHref(phoneNumber)}
                       >
                         <Phone className="size-3.5" />
@@ -240,7 +240,7 @@ export function TodoDetailView({
                     </div>
                   ) : null}
                   {vendor.description ? (
-                    <p className="line-clamp-2 text-xs leading-5 text-slate-500">{vendor.description}</p>
+                    <p className="line-clamp-2 text-xs leading-5 text-[var(--color-text-muted)]">{vendor.description}</p>
                   ) : null}
                 </div>
               </li>
@@ -248,7 +248,7 @@ export function TodoDetailView({
             })}
           </ul>
         ) : (
-          <p className="text-sm text-slate-500">Chưa có nhà cung cấp nào.</p>
+          <p className="text-sm text-[var(--color-text-muted)]">Chưa có nhà cung cấp nào.</p>
         )}
         {canManagePlan ? (
           <Button className="w-full justify-center" onClick={() => onAddVendor(todo)} variant="ghost">
@@ -260,7 +260,7 @@ export function TodoDetailView({
 
       {canManagePlan ? (
         <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Chuyển sang mốc khác</p>
+          <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Chuyển sang mốc khác</p>
           <DropdownSelect
             disabled={isSubmitting}
             onValueChange={(value) => onMoveToMilestone(todo, value)}
@@ -273,7 +273,7 @@ export function TodoDetailView({
 
       {todo.attachments.length > 0 ? (
         <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Hình ảnh</p>
+          <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Hình ảnh</p>
           <AttachmentGallery attachments={todo.attachments} />
         </div>
       ) : null}

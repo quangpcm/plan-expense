@@ -28,7 +28,7 @@ export function AttachmentGallery({ attachments, emptyLabel }: AttachmentGallery
   );
 
   if (attachments.length === 0) {
-    return emptyLabel ? <p className="text-sm text-slate-600">{emptyLabel}</p> : null;
+    return emptyLabel ? <p className="text-sm text-[var(--color-text-secondary)]">{emptyLabel}</p> : null;
   }
 
   return (
@@ -43,7 +43,7 @@ export function AttachmentGallery({ attachments, emptyLabel }: AttachmentGallery
             return (
               <button
                 key={attachment.id}
-                className="block overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                className="block overflow-hidden rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-default)]"
                 onClick={() => setPreviewIndex(imageIndex)}
                 type="button"
               >
@@ -59,9 +59,9 @@ export function AttachmentGallery({ attachments, emptyLabel }: AttachmentGallery
               href={url}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700"
+              className="flex items-center gap-2 rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] px-4 py-3 text-sm text-[var(--color-text-secondary)]"
             >
-              <FileText className="size-4 shrink-0 text-slate-400" />
+              <FileText className="size-4 shrink-0 text-[var(--color-text-muted)]" />
               <span className="truncate">{attachment.fileName}</span>
             </a>
           );

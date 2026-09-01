@@ -76,7 +76,7 @@ export function WeddingGuestExportDialog({
     >
       <div className="space-y-5">
         <div className="space-y-1.5">
-          <p className="text-sm font-medium text-slate-700">Phạm vi export</p>
+          <p className="text-sm font-medium text-[var(--color-text-secondary)]">Phạm vi export</p>
           <DropdownSelect
             onValueChange={setSelectedGroupId}
             options={groupOptions}

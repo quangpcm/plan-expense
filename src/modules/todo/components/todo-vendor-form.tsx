@@ -121,15 +121,15 @@ export function TodoVendorForm({
         </div>
       ) : null}
       <div className="space-y-2 text-center">
-        <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#727687]">Giá tham khảo</label>
+        <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Giá tham khảo</label>
         <AmountInput onChange={setPrice} value={price} />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700">Tên nhà cung cấp</label>
+        <label className="text-sm font-medium text-[var(--color-text-secondary)]">Tên nhà cung cấp</label>
         <Input onChange={(event) => setName(event.target.value)} placeholder="Ví dụ: Studio Ali" value={name} />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700">Số điện thoại</label>
+        <label className="text-sm font-medium text-[var(--color-text-secondary)]">Số điện thoại</label>
         <Input
           onChange={(event) => setPhoneNumber(event.target.value)}
           placeholder="VD: 0905 123 456"
@@ -138,11 +138,11 @@ export function TodoVendorForm({
         />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700">Link tham khảo</label>
+        <label className="text-sm font-medium text-[var(--color-text-secondary)]">Link tham khảo</label>
         <Input onChange={(event) => setLink(event.target.value)} placeholder="Không bắt buộc" value={link} />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700">Mô tả ngắn</label>
+        <label className="text-sm font-medium text-[var(--color-text-secondary)]">Mô tả ngắn</label>
         <Textarea
           className="min-h-20"
           maxLength={280}
@@ -152,7 +152,7 @@ export function TodoVendorForm({
         />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700">Hình ảnh</label>
+        <label className="text-sm font-medium text-[var(--color-text-secondary)]">Hình ảnh</label>
         <AttachmentPicker onChange={setAttachmentDrafts} value={attachmentDrafts} />
       </div>
       <div className="flex items-center justify-end gap-2">

@@ -41,7 +41,7 @@ export function MilestoneSearchControl({ query, onQueryChange }: MilestoneSearch
         <button
           aria-label="Tìm công việc"
           className={cn(
-            'absolute inset-0 flex items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)] transition-opacity duration-150',
+            'absolute inset-0 flex items-center justify-center rounded-full border border-[var(--color-border-default)] bg-[var(--color-surface-default)] text-[var(--color-text-muted)] transition-opacity duration-150',
             isOpen ? 'pointer-events-none opacity-0' : 'opacity-100',
           )}
           onClick={handleOpen}
@@ -56,7 +56,7 @@ export function MilestoneSearchControl({ query, onQueryChange }: MilestoneSearch
             isOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
           )}
         >
-          <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[var(--color-subtle)]" />
+          <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
           <Input
             className="pl-10 pr-10"
             onBlur={handleBlur}
@@ -67,7 +67,7 @@ export function MilestoneSearchControl({ query, onQueryChange }: MilestoneSearch
           />
           <button
             aria-label="Xoá tìm kiếm"
-            className="absolute right-3 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full text-[var(--color-subtle)] transition hover:bg-[var(--color-accent-soft)] hover:text-[var(--color-foreground)]"
+            className="absolute right-3 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full text-[var(--color-text-muted)] transition hover:bg-[var(--color-brand-subtle)] hover:text-[var(--color-text-primary)]"
             onClick={handleClear}
             type="button"
           >

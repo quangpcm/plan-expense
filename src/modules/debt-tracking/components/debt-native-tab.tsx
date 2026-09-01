@@ -220,8 +220,8 @@ export function DebtNativeTab({
               className={cn(
                 'shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition',
                 isActive
-                  ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
-                  : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
+                  ? 'border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)]'
+                  : 'border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-default)]',
               )}
               key={option.value}
               onClick={() => setListFilter(option.value)}
@@ -235,7 +235,7 @@ export function DebtNativeTab({
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
         <div className="space-y-4">
-          <h3 className="text-base font-semibold text-slate-900">
+          <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
             Công nợ theo người
           </h3>
           {isLoading ? (
@@ -249,8 +249,8 @@ export function DebtNativeTab({
             />
           )}
         </div>
-        <div className="space-y-4 border-t border-slate-200 pt-5 xl:border-0 xl:pt-0">
-          <h3 className="text-base font-semibold text-slate-900">
+        <div className="space-y-4 border-t border-[var(--color-border-subtle)] pt-5 xl:border-0 xl:pt-0">
+          <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
             Chi tiết giao dịch
           </h3>
           {selectedLedger ? (
@@ -283,8 +283,8 @@ export function DebtNativeTab({
               transactions={selectedTransactions}
             />
           ) : (
-            <Card className="border-slate-200 bg-slate-50 shadow-none">
-              <p className="text-sm leading-6 text-slate-600">
+            <Card className="border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] shadow-none">
+              <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
                 {counterpartyLedgers.length === 0
                   ? 'Chưa có khoản nợ nào. Ghi nhận khoản vay đầu tiên để bắt đầu theo dõi.'
                   : filteredLedgers.length === 0

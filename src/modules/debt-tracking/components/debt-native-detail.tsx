@@ -97,7 +97,7 @@ function TransactionRow({
     categoryIconMap[transaction.category ?? 'other'] ?? categoryIconMap.other;
 
   return (
-    <div className="rounded-2xl border border-slate-200 p-4">
+    <div className="rounded-2xl border border-[var(--color-border-subtle)] p-4">
       <div className="flex items-start gap-3">
         <span
           className={cn(
@@ -111,7 +111,7 @@ function TransactionRow({
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <p className="truncate text-sm font-medium text-slate-900">
+            <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">
               {transaction.title || label}
             </p>
             <div className="flex shrink-0 items-center gap-1">
@@ -136,7 +136,7 @@ function TransactionRow({
                     Xác nhận xoá
                   </button>
                   <button
-                    className="rounded-full px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100"
+                    className="rounded-full px-2 py-1 text-xs font-medium text-[var(--color-text-muted)] hover:bg-[var(--color-surface-subtle)]"
                     onClick={() => setIsConfirmingDelete(false)}
                     type="button"
                   >
@@ -147,7 +147,7 @@ function TransactionRow({
                 <>
                   <button
                     aria-label="Sửa giao dịch"
-                    className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                    className="rounded-full p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-secondary)]"
                     onClick={onEdit}
                     type="button"
                   >
@@ -155,7 +155,7 @@ function TransactionRow({
                   </button>
                   <button
                     aria-label="Xoá giao dịch"
-                    className="rounded-full p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                    className="rounded-full p-1.5 text-[var(--color-text-muted)] hover:bg-red-50 hover:text-red-600"
                     onClick={() => setIsConfirmingDelete(true)}
                     type="button"
                   >
@@ -171,7 +171,7 @@ function TransactionRow({
               {getDebtTransactionCategoryLabel(transaction.category)}
             </Badge>
           ) : null}
-          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-slate-500">
+          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-[var(--color-text-muted)]">
             <Clock className="size-3.5 shrink-0" />
             <span>{formatDateTimePickerDisplay(occurredAt)}</span>
             {isLoan && transaction.dueDate ? (
@@ -188,7 +188,7 @@ function TransactionRow({
             ) : null}
           </div>
           {transaction.note ? (
-            <p className="mt-1 text-sm leading-6 text-slate-400">
+            <p className="mt-1 text-sm leading-6 text-[var(--color-text-muted)]">
               {transaction.note}
             </p>
           ) : null}
@@ -262,7 +262,7 @@ function DirectionTab({
           ? isReceivable
             ? 'bg-[color:var(--color-income-soft)]'
             : 'bg-[color:var(--color-expense-soft)]'
-          : 'bg-slate-50 hover:bg-slate-100',
+          : 'bg-[var(--color-surface-subtle)] hover:bg-[var(--color-surface-subtle)]',
       )}
       onClick={onClick}
       role="tab"
@@ -321,8 +321,8 @@ function DateRangeFilterBar({
             className={cn(
               'shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition',
               isActive
-                ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
-                : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
+                ? 'border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)]'
+                : 'border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-default)]',
             )}
             key={option.value}
             onClick={() => onSelectPreset(option.value)}
@@ -336,8 +336,8 @@ function DateRangeFilterBar({
         className={cn(
           'flex shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition',
           isCustomActive
-            ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
-            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
+            ? 'border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)]'
+            : 'border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-default)]',
         )}
         onClick={onOpenCustomRange}
         type="button"
@@ -460,7 +460,7 @@ export function DebtNativeDetail({
             src={counterpart?.avatarUrl ?? null}
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-lg font-semibold text-slate-950">
+            <p className="truncate text-lg font-semibold text-[var(--color-text-primary)]">
               {counterpart?.nickname ?? 'Chưa rõ đối tượng'}
             </p>
             <p
@@ -475,7 +475,7 @@ export function DebtNativeDetail({
               {formatCompactCurrency(ledger.netPosition)}
             </p>
             <Button
-              className="mt-3 min-h-0 w-fit border border-[var(--color-border-strong)] bg-white px-3 py-1.5 text-xs text-[var(--color-primary)]"
+              className="mt-3 min-h-0 w-fit border border-[var(--color-border-strong)] bg-[var(--color-surface-default)] px-3 py-1.5 text-xs text-[var(--color-brand-primary)]"
               onClick={() => onRecordLoan(activeDirection)}
               type="button"
               variant="ghost"
@@ -486,7 +486,7 @@ export function DebtNativeDetail({
         </div>
 
         <div
-          className="flex gap-2 border-t border-slate-100 px-4 py-3"
+          className="flex gap-2 border-t border-[var(--color-border-subtle)] px-4 py-3"
           role="tablist"
         >
           <DirectionTab
@@ -504,16 +504,16 @@ export function DebtNativeDetail({
         </div>
 
         <div className="space-y-3 p-5">
-          <div className="grid grid-cols-2 gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+          <div className="grid grid-cols-2 gap-3 rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-4 py-3">
             <div>
-              <p className="text-xs text-slate-500">Tổng khoản vay</p>
-              <p className="text-sm font-semibold text-slate-900">
+              <p className="text-xs text-[var(--color-text-muted)]">Tổng khoản vay</p>
+              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                 {formatCompactCurrency(activeLoanTotal)}
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-500">Đã trả</p>
-              <p className="text-sm font-semibold text-slate-900">
+              <p className="text-xs text-[var(--color-text-muted)]">Đã trả</p>
+              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                 {formatCompactCurrency(activeRepaidTotal)}
               </p>
             </div>
@@ -530,7 +530,7 @@ export function DebtNativeDetail({
           {activeOutstanding > 0 ? (
             <div className="flex justify-end">
               <Button
-                className="min-h-0 border border-[var(--color-border-strong)] bg-white px-3 py-1.5 text-xs text-[var(--color-primary)]"
+                className="min-h-0 border border-[var(--color-border-strong)] bg-[var(--color-surface-default)] px-3 py-1.5 text-xs text-[var(--color-brand-primary)]"
                 onClick={() => onRecordRepayment(activeDirection)}
                 type="button"
                 variant="ghost"
@@ -541,7 +541,7 @@ export function DebtNativeDetail({
           ) : null}
 
           {dateFilteredTransactions.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
+            <p className="rounded-2xl border border-dashed border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-4 py-6 text-center text-sm text-[var(--color-text-muted)]">
               {activeTransactions.length === 0
                 ? isReceivable
                   ? `Chưa có khoản ${counterpartName} nợ bạn.`
@@ -560,7 +560,7 @@ export function DebtNativeDetail({
               ))}
               {remainingCount > 0 ? (
                 <button
-                  className="w-full rounded-2xl border border-dashed border-slate-200 py-2.5 text-sm font-medium text-[var(--color-primary)] transition hover:bg-slate-50"
+                  className="w-full rounded-2xl border border-dashed border-[var(--color-border-subtle)] py-2.5 text-sm font-medium text-[var(--color-brand-primary)] transition hover:bg-[var(--color-surface-subtle)]"
                   onClick={() =>
                     setVisibleCount((count) => count + TRANSACTIONS_PAGE_SIZE)
                   }
@@ -584,7 +584,7 @@ export function DebtNativeDetail({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2">
               <label
-                className="text-sm font-medium text-slate-700"
+                className="text-sm font-medium text-[var(--color-text-secondary)]"
                 htmlFor="debt-date-range-from"
               >
                 Từ ngày
@@ -597,7 +597,7 @@ export function DebtNativeDetail({
             </div>
             <div className="space-y-2">
               <label
-                className="text-sm font-medium text-slate-700"
+                className="text-sm font-medium text-[var(--color-text-secondary)]"
                 htmlFor="debt-date-range-to"
               >
                 Đến ngày

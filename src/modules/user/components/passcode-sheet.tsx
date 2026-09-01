@@ -82,7 +82,7 @@ export function PasscodeSheet({ open, onClose, userId, hasPasscode, lockedPlanCo
             </Button>
             {hasPasscode ? (
               <button
-                className="w-full text-center text-sm font-medium text-red-600 hover:text-red-700"
+                className="w-full text-center text-sm font-medium text-[var(--color-status-danger)] hover:text-[var(--color-status-danger-fill-hover)]"
                 onClick={() => setView('confirm-clear')}
                 type="button"
               >
@@ -103,11 +103,7 @@ export function PasscodeSheet({ open, onClose, userId, hasPasscode, lockedPlanCo
               <Button onClick={() => setView('status')} variant="ghost">
                 Hủy
               </Button>
-              <Button
-                className="bg-red-600 text-white hover:bg-red-700"
-                disabled={isClearing}
-                onClick={handleClearPasscode}
-              >
+              <Button disabled={isClearing} onClick={handleClearPasscode} variant="destructive">
                 {isClearing ? 'Đang xóa...' : 'Xóa mã bảo mật'}
               </Button>
             </div>

@@ -66,7 +66,7 @@ function selectAttentionItems(todos: OverviewRendererProps['todos']) {
 function ViewAllAction({ onClick }: { onClick: () => void }) {
   return (
     <Button
-      className="h-auto min-h-0 gap-0 rounded-none p-0 text-sm font-medium text-[var(--color-brand-primary)] hover:bg-transparent hover:text-[color:color-mix(in_srgb,var(--color-brand-primary)_78%,black)]"
+      className="h-auto min-h-0 gap-0 rounded-none p-0 text-sm font-medium text-[var(--color-brand-primary)] hover:bg-transparent hover:text-[var(--color-brand-primary-hover)]"
       onClick={onClick}
       variant="ghost"
     >
@@ -132,25 +132,25 @@ function AttentionItemRow({
   return (
     <button
       className={cn(
-        'block w-full px-4 py-4 text-left transition hover:bg-slate-50',
+        'block w-full px-4 py-4 text-left transition hover:bg-[var(--color-surface-subtle)]',
         // Desktop: lightweight bordered row instead of a nested elevated card — matches the
         // canonical 20px radius already used by the "Sắp tới" DataRow rows below in this same
         // widget, no independent drop shadow/hover-lift layered on top of the parent Card.
-        'lg:rounded-[20px] lg:border lg:border-slate-200 lg:bg-white',
-        'lg:hover:border-slate-300 lg:hover:bg-slate-50',
+        'lg:rounded-[20px] lg:border lg:border-[var(--color-border-subtle)] lg:bg-[var(--color-surface-default)]',
+        'lg:hover:border-[var(--color-border-default)] lg:hover:bg-[var(--color-surface-subtle)]',
       )}
       onClick={onSelect}
       type="button"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-base font-semibold text-slate-950">{todo.title}</p>
-          <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-slate-500">
+          <p className="truncate text-base font-semibold text-[var(--color-text-primary)]">{todo.title}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-[var(--color-text-muted)]">
             <span className="inline-flex items-center gap-1.5">
-              <FolderOpen className="size-3.5 text-slate-400" />
+              <FolderOpen className="size-3.5 text-[var(--color-text-muted)]" />
               {milestoneTitle}
             </span>
-            <span className="text-slate-300">|</span>
+            <span className="text-[var(--color-text-muted)]">|</span>
             <span className={cn('font-medium', tone.priorityClass)}>{priorityLabel[todo.priority]}</span>
           </div>
         </div>
@@ -215,26 +215,26 @@ function WeddingAttentionSummaryWidget({
         <Card className="gap-5 rounded-[var(--radius-ds-lg)] shadow-none">
           <div className="space-y-3">
             <div className="space-y-1">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+              <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
                 Cần xử lý ngay
               </p>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-[var(--color-text-secondary)]">
                 {summary || 'Không có việc quá hạn hoặc đến hạn hôm nay.'}
               </p>
             </div>
             {/* Positive/all-clear state, not "nothing to show" — kept as a lightweight
                 product-specific state rather than EmptyState (Pilot review decision). */}
             {attentionItems.length === 0 ? (
-              <div className="flex items-center gap-3 rounded-[24px] border border-slate-200 bg-slate-50 px-4 py-4">
+              <div className="flex items-center gap-3 rounded-[24px] border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-4 py-4">
                 <CheckCircle2 className="size-5 shrink-0 text-[var(--color-status-success)]" />
-                <p className="text-sm leading-6 text-slate-600">
+                <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
                   Mọi việc đang trong tầm kiểm soát.
                 </p>
               </div>
             ) : (
               <div
                 className={cn(
-                  'gap-0 divide-y divide-slate-100 overflow-hidden rounded-[28px] border border-slate-200',
+                  'gap-0 divide-y divide-slate-100 overflow-hidden rounded-[28px] border border-[var(--color-border-subtle)]',
                   'lg:grid lg:gap-3 lg:divide-y-0 lg:overflow-visible lg:rounded-none lg:border-0',
                   visibleAttentionItems.length >= 3
                     ? 'lg:grid-cols-3'
@@ -257,17 +257,17 @@ function WeddingAttentionSummaryWidget({
             )}
           </div>
 
-          <div className="space-y-3 border-t border-slate-100 pt-1">
+          <div className="space-y-3 border-t border-[var(--color-border-subtle)] pt-1">
             <div className="space-y-1">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Sắp tới</p>
-              <p className="text-sm text-slate-600">
+              <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Sắp tới</p>
+              <p className="text-sm text-[var(--color-text-secondary)]">
                 Các công việc tiếp theo trong thời gian tới.
               </p>
             </div>
             {/* Sub-section zero state, not a full EmptyState — kept lightweight (Pilot review
                 decision). */}
             {nextTodoItems.length === 0 ? (
-              <p className="text-sm leading-6 text-slate-500">
+              <p className="text-sm leading-6 text-[var(--color-text-muted)]">
                 Không có công việc nào sắp đến hạn.
               </p>
             ) : (
@@ -276,21 +276,21 @@ function WeddingAttentionSummaryWidget({
                     AttentionItemRow below), so unlike that one this genuinely simplifies. */}
                 {nextTodoItems.map((item) => (
                   <DataRow
-                    className="rounded-[20px] border border-slate-200 px-4 hover:border-slate-300"
+                    className="rounded-[20px] border border-[var(--color-border-subtle)] px-4 hover:border-[var(--color-border-default)]"
                     key={item.todo.id}
                     main={
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-slate-950">
+                        <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
                           {item.todo.title}
                         </p>
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="mt-1 text-xs text-[var(--color-text-muted)]">
                           {milestoneTitleById.get(item.todo.milestoneId) ?? 'Không có mốc'}
                         </p>
                       </div>
                     }
                     onClick={() => onViewTodo(item.todo)}
                     trailing={
-                      <span className="shrink-0 text-sm font-medium text-slate-500">
+                      <span className="shrink-0 text-sm font-medium text-[var(--color-text-muted)]">
                         {formatDueCountdown(item.dueDate)}
                       </span>
                     }
@@ -327,16 +327,16 @@ function WeddingMilestoneCard({
       <div className="space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+            <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
               {title}
             </p>
-            <p className="mt-1 truncate text-lg font-semibold text-slate-950">
+            <p className="mt-1 truncate text-lg font-semibold text-[var(--color-text-primary)]">
               {milestone.title}
             </p>
           </div>
           <Badge variant={tone === 'current' ? 'warning' : 'info'}>{statusLabel}</Badge>
         </div>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-[var(--color-text-secondary)]">
           {milestone.completedTodoCount}/{milestone.todoCount} công việc
           {tone === 'current' ? ` · ${progress}%` : ''}
         </p>
@@ -344,22 +344,22 @@ function WeddingMilestoneCard({
       {tone === 'current' ? (
         <>
           <div className="space-y-1.5">
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-surface-subtle)]">
               <div
                 className="h-full rounded-full bg-[var(--color-brand-primary)]"
                 style={{ width: `${progress}%` }}
               />
             </div>
           </div>
-          <p className="text-sm text-slate-600">
-            <span className="font-semibold text-slate-950">
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            <span className="font-semibold text-[var(--color-text-primary)]">
               {formatCompactCurrency(milestone.totalExpense)}
             </span>{' '}
             đã chi · {formatCompactCurrency(estimatedTotal)} dự kiến
           </p>
         </>
       ) : (
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-[var(--color-text-secondary)]">
           {formatCompactCurrency(milestone.totalExpense)} đã chi ·{' '}
           {formatCompactCurrency(estimatedTotal)} dự kiến
         </p>
@@ -403,7 +403,7 @@ function WeddingMilestoneSnapshotWidget({
         <Skeleton className="h-32 rounded-[var(--radius-ds-lg)]" />
       ) : !currentMilestone ? (
         // EmptyState candidate approved in Pilot review — genuine "nothing to show" state.
-        <Card className="rounded-[var(--radius-ds-lg)] border-slate-200 bg-slate-50 shadow-none">
+        <Card className="rounded-[var(--radius-ds-lg)] border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] shadow-none">
           <EmptyState title="Không có mốc nào đang diễn ra hoặc sắp diễn ra." />
         </Card>
       ) : (
@@ -450,7 +450,7 @@ const RSVP_TONE: Record<RsvpStatus, { barClass: string; colorClass: string; icon
     icon: Clock3,
   },
   not_attending: {
-    // --color-muted aliases to --color-text-secondary (Wave 1), not --color-text-muted.
+    // --color-text-muted aliases to --color-text-secondary (Wave 1), not --color-text-muted.
     barClass: 'bg-[var(--color-text-secondary)]',
     colorClass: 'text-[var(--color-text-secondary)]',
     icon: XCircle,
@@ -516,7 +516,7 @@ function WeddingGuestSummaryWidget({ onOpenWeddingGuests, planId }: OverviewRend
             <Metric
               label="Lời mời"
               leading={
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-subtle)] text-[var(--color-brand-accent)]">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-subtle)] text-[var(--color-brand-primary)]">
                   <Users className="size-5" />
                 </div>
               }
@@ -530,7 +530,7 @@ function WeddingGuestSummaryWidget({ onOpenWeddingGuests, planId }: OverviewRend
 
                 return (
                   <div className="flex items-center justify-between" key={status}>
-                    <span className="inline-flex items-center gap-1.5 text-slate-600">
+                    <span className="inline-flex items-center gap-1.5 text-[var(--color-text-secondary)]">
                       <Icon className={cn('size-4 shrink-0', tone.colorClass)} />
                       {RSVP_LABEL[status]}
                     </span>
@@ -540,7 +540,7 @@ function WeddingGuestSummaryWidget({ onOpenWeddingGuests, planId }: OverviewRend
               })}
             </div>
             <div className="space-y-1.5">
-              <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+              <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-surface-subtle)]">
                 {(['attending', 'pending', 'not_attending'] as const).map((status) =>
                   rsvpBreakdown[status] > 0 ? (
                     <div
@@ -559,18 +559,18 @@ function WeddingGuestSummaryWidget({ onOpenWeddingGuests, planId }: OverviewRend
                   {rsvpBreakdown.pending} lời mời đang chờ phản hồi
                 </p>
                 {pendingGroups[0] ? (
-                  <p className="mt-1 text-xs text-slate-600">
+                  <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
                     Nhiều nhất ở nhóm {pendingGroups[0].group.name}
                   </p>
                 ) : null}
               </div>
             ) : null}
             {topGroups.length > 0 ? (
-              <div className="space-y-1.5 border-t border-slate-100 pt-3">
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Người tham dự</p>
+              <div className="space-y-1.5 border-t border-[var(--color-border-subtle)] pt-3">
+                <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Người tham dự</p>
                 {topGroups.map((row) => (
                   <div className="flex items-center justify-between text-sm" key={row.group.id}>
-                    <span className="text-slate-600">{row.group.name}</span>
+                    <span className="text-[var(--color-text-secondary)]">{row.group.name}</span>
                     <Badge variant="info">{row.attendeeCount} dự kiến</Badge>
                   </div>
                 ))}
@@ -621,12 +621,12 @@ function WeddingFinanceSummaryWidget({
     >
       <Card className="gap-3 rounded-[var(--radius-ds-lg)] shadow-none">
         <div className="space-y-1.5">
-          <p className="text-sm text-slate-600">
-            Đã chi <span className="font-semibold text-slate-950">{formatCompactCurrency(spent)}</span>
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            Đã chi <span className="font-semibold text-[var(--color-text-primary)]">{formatCompactCurrency(spent)}</span>
             {' / '}
             {formatCompactCurrency(estimatedTotal)}
           </p>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-surface-subtle)]">
             <div
               className={cn('h-full rounded-full', budgetTone.barClass)}
               style={{ width: `${Math.min(usedPercent, 100)}%` }}
@@ -635,16 +635,16 @@ function WeddingFinanceSummaryWidget({
           <p className={cn('text-xs font-medium', budgetTone.textClass)}>
             {usedPercent}% ngân sách{usedPercent > 100 ? ' — đã vượt dự kiến' : ''}
           </p>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-[var(--color-text-secondary)]">
             Còn dự kiến{' '}
-            <span className="font-semibold text-slate-950">
+            <span className="font-semibold text-[var(--color-text-primary)]">
               {formatCompactCurrency(remainingBudget)}
             </span>
           </p>
         </div>
         {topCategories.length > 0 ? (
           <div className="space-y-1.5">
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Chi nhiều nhất</p>
+            <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Chi nhiều nhất</p>
             {topCategories.map((category) => {
               const Icon = getCategoryIcon(category.icon);
 
@@ -662,9 +662,9 @@ function WeddingFinanceSummaryWidget({
                     >
                       <Icon className={cn('size-3.5', category.iconColor)} />
                     </span>
-                    <span className="truncate text-slate-600">{category.categoryName}</span>
+                    <span className="truncate text-[var(--color-text-secondary)]">{category.categoryName}</span>
                   </span>
-                  <span className="shrink-0 font-medium text-slate-900">
+                  <span className="shrink-0 font-medium text-[var(--color-text-primary)]">
                     {formatCompactCurrency(category.totalAmount)}
                   </span>
                 </div>

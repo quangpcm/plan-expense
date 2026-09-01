@@ -6,6 +6,11 @@ it is the standing engineering standard for every feature built after Go-Live
 agent (Claude Code, Codex, or any AGENTS.md-compatible agent) about to touch product
 UI, start here.
 
+Go Plan's production baseline is **Design System V2 + Option D + semantic Light/Dark
+themes**. Runtime theming uses `next-themes` with `attribute="class"`,
+`defaultTheme="system"`, and `enableSystem`; users can choose Hệ thống, Sáng, or Tối.
+This runtime and the semantic CSS-variable architecture are not experimental.
+
 This is the **single canonical source of truth** for Design System governance. `AGENTS.md`
 and `CLAUDE.md` are thin adapters that point here — they do not duplicate this content. If
 anything in this package appears to conflict with `AGENTS.md`/`CLAUDE.md`, this package wins
@@ -55,6 +60,41 @@ Before implementing or modifying product UI:
 4. Preserve business/permission/data semantics ([ProductSemantics.md](./ProductSemantics.md)).
 5. Follow [OverlayRules.md](./OverlayRules.md) for all modal/dialog/sheet behavior.
 6. Do not add shared component APIs/tokens without consumer evidence ([FeatureImplementationRules.md](./FeatureImplementationRules.md)).
+
+## Theme-Safe Feature Checklist
+
+Before completing any product UI change, confirm:
+
+- [ ] Existing shared primitives were reused where applicable.
+- [ ] Generic surfaces use `--color-surface-*`; generic text uses `--color-text-*`; generic borders use `--color-border-*`.
+- [ ] Brand is limited to interaction/emphasis, and status is not used as product identity.
+- [ ] Product/domain and data-visualization colors are deliberately owned in product code.
+- [ ] No component reads a private `--gp-*` foundation scale or introduces an unexplained raw neutral color.
+- [ ] No generic Light-only `bg-white`/`slate-*` composition or generic `dark:` workaround was introduced.
+- [ ] Light, Dark, focus, disabled, error, and responsive states were reviewed.
+
+For generic Cards, Forms, and Lists, compose existing primitives and use semantic roles only. For a
+product category, keep its color in product configuration. For status, use the existing semantic
+status roles. Propose a new semantic token only after the evidence gate proves a repeated,
+domain-neutral need.
+
+## AI Color Workflow
+
+Claude Code and Codex must classify each new or changed color before implementation:
+
+`GENERIC UI` → semantic `surface`/`text`/`border`/`focus` roles.
+
+`BRAND` → canonical `brand` or `text.link` roles.
+
+`STATUS` → `success`/`warning`/`danger`/`info`, never finance or category identity.
+
+`PRODUCT/DOMAIN` or `DATA VISUALIZATION` → local product configuration.
+
+`INTENTIONAL EXCEPTION` → retain only with a documented reason, such as a media viewer overlay.
+
+Generic UI normally must not use `dark:`. It is allowed only for documented product-theme pairs or
+intentional exceptions. Stop and surface a decision before adding a color family, a semantic role,
+or a shared API that existing composition cannot support.
 
 ## Source of truth rule
 

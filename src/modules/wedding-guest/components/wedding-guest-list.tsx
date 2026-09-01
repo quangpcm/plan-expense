@@ -41,7 +41,7 @@ export function WeddingGuestList({
 }: WeddingGuestListProps) {
   if (rows.length === 0) {
     return (
-      <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">
+      <p className="rounded-2xl bg-[var(--color-surface-subtle)] p-4 text-sm text-[var(--color-text-muted)]">
         {emptyMessage}
       </p>
     );
@@ -55,12 +55,12 @@ export function WeddingGuestList({
         return (
           <li className="flex items-center gap-2" key={guest.id}>
             <button
-              className="min-w-0 flex-1 rounded-2xl bg-slate-50 p-4 text-left transition hover:bg-slate-100"
+              className="min-w-0 flex-1 rounded-2xl bg-[var(--color-surface-subtle)] p-4 text-left transition hover:bg-[var(--color-surface-subtle)]"
               onClick={() => onSelectRow(row)}
               type="button"
             >
               <div className="flex items-center justify-between gap-2">
-                <p className="truncate text-sm font-semibold text-slate-950">
+                <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
                   {guest.name}
                 </p>
                 {invitation ? (
@@ -72,28 +72,28 @@ export function WeddingGuestList({
                   <Badge variant="info">{groupCount} nhóm</Badge>
                 ) : null}
               </div>
-              <p className="mt-1 truncate text-xs text-slate-500">
+              <p className="mt-1 truncate text-xs text-[var(--color-text-muted)]">
                 {getWeddingGuestSideLabel(guest.sideId)} •{' '}
                 {getWeddingGuestRelationshipLabel(guest.relationshipId)} •{' '}
                 {getWeddingGuestInvitedByLabel(guest.invitedById)}
               </p>
               {invitation ? (
                 <>
-                  <div className="my-2.5 h-px bg-slate-200" />
-                  <div className="flex items-center gap-4 text-xs text-slate-600">
+                  <div className="my-2.5 h-px bg-[var(--color-surface-overlay)]" />
+                  <div className="flex items-center gap-4 text-xs text-[var(--color-text-secondary)]">
                     <span className="flex items-center gap-1.5">
-                      <UsersRound className="size-3.5 text-slate-400" />
+                      <UsersRound className="size-3.5 text-[var(--color-text-muted)]" />
                       {invitation.attendeeCount} người
                     </span>
                     {invitation.moneyGiftAmount ? (
                       <span className="flex items-center gap-1.5">
-                        <Wallet className="size-3.5 text-slate-400" />
+                        <Wallet className="size-3.5 text-[var(--color-text-muted)]" />
                         {formatCurrency(invitation.moneyGiftAmount)}
                       </span>
                     ) : null}
                     {invitation.goldGiftAmount ? (
                       <span className="flex items-center gap-1.5">
-                        <Coins className="size-3.5 text-slate-400" />
+                        <Coins className="size-3.5 text-[var(--color-text-muted)]" />
                         {formatGoldGift(invitation.goldGiftAmount)}
                       </span>
                     ) : null}

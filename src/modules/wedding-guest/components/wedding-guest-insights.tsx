@@ -88,12 +88,12 @@ export function WeddingGuestInsights({
     <Card className="bg-orange-50">
       <div className="flex items-center gap-2">
         <Sparkles className="size-4 text-orange-500" />
-        <p className="text-sm font-semibold text-slate-900">Insights</p>
+        <p className="text-sm font-semibold text-[var(--color-text-primary)]">Insights</p>
       </div>
       <ul className="space-y-3">
         {insights.map((insight) => (
           <li
-            className="flex items-start gap-2 text-sm text-slate-700"
+            className="flex items-start gap-2 text-sm text-[var(--color-text-secondary)]"
             key={insight.text}
           >
             {insight.tone === 'action' ? (

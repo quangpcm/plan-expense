@@ -2,8 +2,8 @@
 
 ## 1. Status and Scope
 
-This document is the **approved architectural specification** for Go Plan's Option D color migration
-and future Light/Dark mode. It converts the findings in
+This document is the **approved architectural specification** for Go Plan's Option D color system
+and production Light/Dark mode. It converts the findings in
 [`ColorSystemAudit.Report.md`](./ColorSystemAudit.Report.md) plus a set of product/design decisions
 into a single implementation-ready contract.
 
@@ -17,6 +17,43 @@ so the amendment isn't mistaken for an oversight.
 `package.json`, or existing Design System governance docs (`README.md`, `VisualRules.md`,
 `ExceptionsAndDebt.md`, `ComponentUsage.md`, `ProductSemantics.md`) were modified to produce this
 document. The only file this task creates is this one.
+
+## Production Baseline Amendment (Phase 8)
+
+Phases 6B, 7, and 8 completed the runtime and product migration described by the earlier sections.
+Where this amendment conflicts with historical wording such as "future", "pending", or
+"provisional", this amendment is authoritative.
+
+- Runtime is production `next-themes` with `attribute="class"`, `defaultTheme="system"`, and
+  `enableSystem`. `<html>` receives the resolved class; Hệ thống, Sáng, and Tối are user-facing
+  options. Browser theme colors are Light `#F7F8FC` and Dark `#101525`.
+- Semantic surfaces are final: Dark default/subtle/raised/overlay map to Gray 2/3/3/4 and the
+  overlay backdrop is `rgb(2 6 23 / 55%)`. Sharing the subtle/raised physical value is intentional.
+  The §16 pilot acceptance criteria (App Shell, Card, Modal, Button, Typography) were satisfied
+  across the Phase 4–7 rollout and Phase 7's full-product manual Light/Dark review; §9's Dark
+  surface rows are relabeled **LOCKED** by this amendment (superseding their prior
+  PROVISIONAL — VISUAL PILOT status).
+- Status token *values* are final and shipped. Light keeps the established success/warning/danger/
+  info values; Dark uses Radix Green/Amber/Red/Blue Dark text/surface pairs: `#4cc38a/#0d281c`,
+  `#ffca16/#302008`, `#ff9592/#3b1219`, and `#70b8ff/#0d2847`. Danger fill has real shared Button
+  evidence and maps to Light `#dc2626`/`#b91c1c` and Dark `#b54548`/`#8c333a`, with white
+  foreground. **The §8 consumer role-classification is not finished**: ~60 call sites still use a
+  raw status token directly as normal-size text (e.g. `text-[var(--color-success)]` at 12–14px),
+  which inherits the pre-existing Light AA shortfall (`success`/`income` ≈3.6–3.8:1, `warning`
+  ≈3.0:1, `expense` ≈3.5:1 — all below the 4.5:1 normal-text floor). This is carried forward as
+  tracked, non-blocking debt (see [ExceptionsAndDebt.md](../design-system/ExceptionsAndDebt.md))
+  rather than silently re-hexed here — changing a status hex to fix contrast is a product/
+  accessibility decision, not a mechanical token edit, and needs the role classification first
+  (a color failing as *text* may be fine as an *icon/border/chart* fill, which is not equally
+  constrained).
+- `surface.*`, `text.*`, `border.*`, `brand.*`, `status.*`, `focus.*`, and `overlay.*` are the
+  public generic UI contract. `--gp-violet-*` and `--gp-gray-*` remain private foundation scales.
+- Legacy `--color-primary*`, `--color-accent*`, and generic background/surface/text/border aliases
+  have zero component consumers and were removed. `--color-secondary*` remains a deliberately
+  narrow neutral Badge compatibility alias until evidence warrants a semantic tier.
+- Plan-Type, Todo/Travel/Wedding category, finance, and chart colors remain product- or
+  data-visualization-owned. `dark:` is allowed only for documented product theme pairs, never as a
+  generic UI workaround.
 
 ---
 
@@ -314,10 +351,10 @@ because they currently share/resemble those hex values.
 | Semantic role | Light | Source | Dark | Source | Status |
 |---|---|---|---|---|---|
 | `surface.page` | `#F7F8FC` | Option D bg | `#101525` | Option D bg | LOCKED |
-| `surface.default` | `#FFFFFF` | — | `#181D23` | Dark gray-2 | PROVISIONAL — VISUAL PILOT |
-| `surface.subtle` | `#EEF2F7` | Light gray-2 | `#1F252E` | Dark gray-3 | PROVISIONAL — VISUAL PILOT |
-| `surface.raised` | `#FFFFFF` | — | `#1F252E` | Dark gray-3 | PROVISIONAL — VISUAL PILOT |
-| `surface.overlay` | `#FFFFFF` | — | `#232C37` | Dark gray-4 | PROVISIONAL — VISUAL PILOT |
+| `surface.default` | `#FFFFFF` | — | `#181D23` | Dark gray-2 | LOCKED (§16 pilot accepted) |
+| `surface.subtle` | `#EEF2F7` | Light gray-2 | `#1F252E` | Dark gray-3 | LOCKED (§16 pilot accepted) |
+| `surface.raised` | `#FFFFFF` | — | `#1F252E` | Dark gray-3 | LOCKED (§16 pilot accepted) |
+| `surface.overlay` | `#FFFFFF` | — | `#232C37` | Dark gray-4 | LOCKED (§16 pilot accepted) |
 | `surface.selected` | `#E6E9F8` | Light violet-3 | `#22204D` | Dark violet-3 | LOCKED |
 | `text.primary` | `#162130` | Light gray-12 | `#EAEEF5` | Dark gray-12 | LOCKED |
 | `text.secondary` | `#4D5D73` | Light gray-11 | `#A6B5CA` | Dark gray-11 | LOCKED |
@@ -337,9 +374,9 @@ because they currently share/resemble those hex values.
 | `brand.selected` | `#D9DFFE` | Light violet-4 | `#2C256C` | Dark violet-4 | LOCKED |
 | `focus.ring` | `#5147E5` | Light violet-9 | `#7067F0` | Dark violet-9 | LOCKED |
 | `focus.ring-soft` | `violet-a5` `#CBD3FF` | Light violet alpha | `violet-a5` `#6C56FF66` | Dark violet alpha | LOCKED |
-| `overlay.backdrop` | `rgb(2 6 23 / 40%)` | unchanged (harvested value, works correctly today) | `rgb(2 6 23 / ~55–60%)` | derived, not a direct Option D value | PROVISIONAL — VISUAL PILOT |
-| `status.success/warning/danger/info` | unchanged existing hex (Light) | pre-existing | — | Radix Green/Amber/Red/Blue Dark (not yet available) | **PENDING STATUS PALETTE** |
-| `income` / `expense` | unchanged existing hex (Light) | pre-existing | — | same as above | **PENDING STATUS PALETTE** |
+| `overlay.backdrop` | `rgb(2 6 23 / 40%)` | unchanged (harvested value, works correctly today) | `rgb(2 6 23 / 55%)` | derived, not a direct Option D value | LOCKED (§16 pilot accepted) |
+| `status.success/warning/danger/info` | unchanged existing hex (Light) | pre-existing | `#4cc38a`/`#ffca16`/`#ff9592`/`#70b8ff` (text), `#0d281c`/`#302008`/`#3b1219`/`#0d2847` (surface) | Radix Green/Amber/Red/Blue Dark | LOCKED values; consumer role-classification/AA still open (§8) |
+| `income` / `expense` | unchanged existing hex (Light) | pre-existing | shares status Green/Red Dark pairs above | same as above | LOCKED values; same open AA item as status |
 
 ---
 
@@ -405,9 +442,10 @@ finding (851 `slate-*`, same posture applies here).
 
 ---
 
-## 12. Dark Mode Runtime Direction
+## 12. Dark Mode Runtime Direction (Historical Plan, Superseded)
 
-**Approved future direction** (not implemented by this task):
+The Phase 8 Production Baseline Amendment above is the current runtime contract. This section
+records the original direction that was subsequently implemented:
 
 - **`next-themes`**, class-based theming: `attribute="class"`, `defaultTheme="system"`,
   `enableSystem`. `.dark` applied to the root `<html>` element (matches the selector already present
@@ -531,6 +569,13 @@ correctly" are perceptual judgments that require a rendered pilot, not another c
 Only after these are confirmed does an implementer relabel the affected §9 rows from
 **PROVISIONAL — VISUAL PILOT** to **LOCKED**.
 
+**Phase 8 closure**: the criteria above were exercised across the Phase 4 (App Shell), Phase 5
+(Today), Phase 6/6A/6A.1 (Dark runtime + safety), and Phase 7 (full-product) rollout, and Phase 7
+received a full-product manual Light/Dark user visual review. No perceptual defect against these
+criteria surfaced in that review or in the Phase 8 code-level audit (which did find and fix
+unrelated token-misuse regressions — see the Phase 8 report). The affected §9 rows are relabeled
+**LOCKED** as of Phase 8; see the Production Baseline Amendment at the top of this document.
+
 ---
 
 ## 17. Rollout Phases
@@ -595,14 +640,15 @@ Dark `brand.primary`, the accent/primary unification, `next-themes` as the runti
 `text.link = violet-11`, the `text.muted` AA requirement, and the deprecation of literal white/black
 `color-mix` for new code) is **locked** by §6/§7/§9/§11/§12 above and is not reopened here.
 
-1. **Radix Green/Amber/Red/Blue Light+Dark palette files are not yet present under `docs/palette/`.**
-   Required before Phase 7 (`status.*`, `income`, `expense` Dark values) can proceed. This spec
-   deliberately does not invent these values — they must be sourced/generated with the same care
-   Option D itself received, then reviewed the same way this spec reviewed Violet/Gray.
-2. **Exact Dark provisional surface mapping** (`surface.default/subtle/raised/overlay`,
-   `overlay.backdrop` opacity) — architecture and recommended values are set (§7/§9), but remain
-   subject to the visual pilot in §16 before being relabeled LOCKED.
-3. **Status-role token split** (§8) — whether the eventual architecture needs `status.success` /
-   `status.success-text` / `status.success-surface` (or a smaller equivalent) depends on the real
-   per-consumer role classification (text/icon/fill/surface/border/chart) called for in §8, which has
-   not been performed yet — it is Phase 7 work, not something this spec can pre-decide.
+1. **RESOLVED (Phase 7).** Radix Green/Amber/Red/Blue Dark text/surface values were sourced and are
+   live in `globals.css` and the Production Baseline Amendment above.
+2. **RESOLVED (Phase 8).** Dark surface mapping (`surface.default/subtle/raised/overlay`,
+   `overlay.backdrop` opacity) passed the §16 pilot acceptance pass and is relabeled LOCKED — see
+   §9 and the Phase 8 closure note in §16.
+3. **STILL OPEN.** Status-role token split (§8): a minimal two-role split now exists in code
+   (`--color-status-{success,warning,danger,info}` for text/icon, `-surface` for soft backgrounds),
+   but the full per-consumer classification (text vs. icon vs. fill vs. border vs. chart) was never
+   performed, and ~60 call sites still use a raw status token directly as normal-size text —
+   inheriting the pre-existing Light AA shortfall documented in §8. Resolving this requires a
+   product/accessibility decision (a new hex, a role split, or an accepted exception), not a
+   mechanical edit — tracked as remaining debt, not invented here.

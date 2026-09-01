@@ -19,7 +19,7 @@ type WeddingGuestActionNeededProps = {
 function ViewListLink({ onClick }: { onClick: () => void }) {
   return (
     <button
-      className="shrink-0 text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+      className="shrink-0 text-sm font-medium text-[var(--color-brand-primary)] transition hover:text-[var(--color-brand-primary-hover)]"
       onClick={onClick}
       type="button"
     >
@@ -61,10 +61,10 @@ export function WeddingGuestActionNeeded({
       <SectionHeading eyebrow="Tổng hợp khách mời" title="Cần xử lý" />
 
       {hasNothingToHandle ? (
-        <p className="text-sm text-slate-500">Không có việc cần xử lý.</p>
+        <p className="text-sm text-[var(--color-text-muted)]">Không có việc cần xử lý.</p>
       ) : activeGroupId ? (
         <div className="flex items-center justify-between gap-3 rounded-2xl bg-amber-50 px-4 py-3">
-          <span className="flex items-center gap-2 text-sm text-slate-800">
+          <span className="flex items-center gap-2 text-sm text-[var(--color-text-primary)]">
             <CircleAlert className="size-4 shrink-0 text-amber-500" />
             <strong className="font-semibold">
               {scopedPendingCount} khách
@@ -80,7 +80,7 @@ export function WeddingGuestActionNeeded({
               className="flex items-center justify-between gap-3 rounded-2xl bg-amber-50 px-4 py-3"
               key={row.group.id}
             >
-              <span className="flex items-center gap-2 text-sm text-slate-800">
+              <span className="flex items-center gap-2 text-sm text-[var(--color-text-primary)]">
                 <CircleAlert className="size-4 shrink-0 text-amber-500" />
                 <strong className="font-semibold">
                   {row.rsvpBreakdown.pending} khách

@@ -64,7 +64,7 @@ export function WeddingGuestGroupList({
       ) : null}
 
       {groups.length === 0 ? (
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-[var(--color-text-muted)]">
           Chưa có nhóm/tiệc nào. Tạo nhóm đầu tiên để bắt đầu thêm khách.
         </p>
       ) : null}
@@ -72,7 +72,7 @@ export function WeddingGuestGroupList({
       <ul className="space-y-2">
         {groups.map((group) => (
           <li
-            className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2"
+            className="flex items-center gap-2 rounded-2xl bg-[var(--color-surface-subtle)] px-3 py-2"
             key={group.id}
           >
             {editingGroupId === group.id ? (
@@ -92,7 +92,7 @@ export function WeddingGuestGroupList({
                 </Button>
                 <button
                   aria-label="Hủy"
-                  className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-200"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-surface-overlay)]"
                   onClick={() => setEditingGroupId(null)}
                   type="button"
                 >
@@ -101,14 +101,14 @@ export function WeddingGuestGroupList({
               </>
             ) : (
               <>
-                <span className="flex-1 text-sm font-medium text-slate-950">
+                <span className="flex-1 text-sm font-medium text-[var(--color-text-primary)]">
                   {group.name}
                 </span>
                 {canManage ? (
                   <>
                     <button
                       aria-label={`Sửa nhóm ${group.name}`}
-                      className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-200"
+                      className="flex size-9 shrink-0 items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-surface-overlay)]"
                       onClick={() => startEditing(group)}
                       type="button"
                     >

@@ -118,7 +118,7 @@ export function WeddingGuestCreateForm({
         ) : null}
         <div className="space-y-1.5">
           <label
-            className="text-sm font-medium text-slate-700"
+            className="text-sm font-medium text-[var(--color-text-secondary)]"
             htmlFor="wedding-guest-search"
           >
             Tên khách
@@ -134,8 +134,8 @@ export function WeddingGuestCreateForm({
 
         {suggestions.length > 0 ? (
           <div className="space-y-3">
-            <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-              <Lightbulb className="size-4 text-orange-500" />
+            <p className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
+              <Lightbulb className="size-4 text-[var(--color-warning)]" />
               Gợi ý khách trùng tên
             </p>
             <ul className="space-y-3">
@@ -144,33 +144,33 @@ export function WeddingGuestCreateForm({
 
                 return (
                   <li
-                    className="space-y-3 rounded-2xl border border-[#efd9c4] bg-[#f8ece0] p-4"
+                    className="space-y-3 rounded-2xl border border-[var(--color-warning)]/25 bg-[var(--color-warning-soft)] p-4"
                     key={guest.id}
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-base font-semibold text-slate-950">
+                      <p className="truncate text-base font-semibold text-[var(--color-text-primary)]">
                         {guest.name}
                       </p>
-                      <p className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-slate-600">
-                        <UsersRound className="size-3.5 shrink-0 text-slate-500" />
+                      <p className="mt-0.5 flex items-center gap-1.5 truncate text-sm text-[var(--color-text-secondary)]">
+                        <UsersRound className="size-3.5 shrink-0 text-[var(--color-text-muted)]" />
                         {getWeddingGuestSideLabel(guest.sideId)} ·{' '}
                         {getWeddingGuestRelationshipLabel(guest.relationshipId)}{' '}
                         · {getWeddingGuestInvitedByLabel(guest.invitedById)}
                       </p>
                     </div>
                     {groupNames.length > 0 ? (
-                      <div className="space-y-1 rounded-xl bg-[#fdf5ee] p-3">
-                        <p className="flex items-center gap-1.5 text-xs text-slate-600">
-                          <UsersRound className="size-3.5 shrink-0 text-slate-500" />
+                      <div className="space-y-1 rounded-xl bg-[var(--color-surface-default)] p-3">
+                        <p className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
+                          <UsersRound className="size-3.5 shrink-0 text-[var(--color-text-muted)]" />
                           Đã có trong {groupNames.length} nhóm:
                         </p>
-                        <p className="text-sm font-semibold text-slate-900">
+                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                           {groupNames.join(', ')}
                         </p>
                       </div>
                     ) : null}
                     <Button
-                      className="w-full justify-center gap-2 bg-white text-[var(--color-primary)] hover:bg-white/90"
+                      className="w-full justify-center gap-2 bg-[var(--color-surface-default)] text-[var(--color-brand-primary)] hover:bg-[color:color-mix(in_srgb,var(--color-surface-default)_90%,transparent)]"
                       disabled={isSubmitting}
                       onClick={() => onAddExistingGuestToGroup(guest.id)}
                       variant="secondary"
@@ -211,7 +211,7 @@ export function WeddingGuestCreateForm({
         onChange={setIdentity}
         values={identity}
       />
-      <div className="h-px bg-slate-100" />
+      <div className="h-px bg-[var(--color-surface-subtle)]" />
       <GuestInvitationFields
         onChange={setInvitationFields}
         values={invitationFields}

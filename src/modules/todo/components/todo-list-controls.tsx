@@ -50,8 +50,8 @@ export function TodoListControls({
         className={cn(
           'flex size-9 items-center justify-center rounded-full border transition',
           statusFilter === 'done'
-            ? 'border-[#0050cb] bg-[#0050cb]/10 text-[#0050cb]'
-            : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300',
+            ? 'border-[var(--color-border-focus)] bg-[var(--color-brand-subtle)] text-[var(--color-brand-primary)]'
+            : 'border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] text-[var(--color-text-muted)] hover:border-[var(--color-border-default)]',
         )}
         onClick={() => onStatusFilterChange(statusFilter === 'pending' ? 'done' : 'pending')}
         type="button"
@@ -64,7 +64,7 @@ export function TodoListControls({
           aria-expanded={isSortOpen}
           aria-haspopup="listbox"
           aria-label={`Sắp xếp theo hạn: ${SORT_OPTIONS.find((option) => option.value === sortOrder)?.label}`}
-          className="flex size-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300"
+          className="flex size-9 items-center justify-center rounded-full border border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] text-[var(--color-text-muted)] transition hover:border-[var(--color-border-default)]"
           onClick={() => setIsSortOpen((current) => !current)}
           type="button"
         >
@@ -72,7 +72,7 @@ export function TodoListControls({
         </button>
 
         {isSortOpen ? (
-          <div className="absolute right-0 z-30 mt-2 w-36 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.14)]">
+          <div className="absolute right-0 z-30 mt-2 w-36 overflow-hidden rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] shadow-[0_18px_50px_rgba(15,23,42,0.14)]">
             <ul className="py-1" role="listbox">
               {SORT_OPTIONS.map((option) => {
                 const isSelected = option.value === sortOrder;
@@ -81,8 +81,8 @@ export function TodoListControls({
                   <li key={option.value}>
                     <button
                       className={cn(
-                        'flex min-h-10 w-full items-center justify-between px-3 py-2 text-left text-sm transition hover:bg-slate-50',
-                        isSelected ? 'text-[#0050cb]' : 'text-slate-700',
+                        'flex min-h-10 w-full items-center justify-between px-3 py-2 text-left text-sm transition hover:bg-[var(--color-surface-subtle)]',
+                        isSelected ? 'text-[var(--color-brand-primary)]' : 'text-[var(--color-text-secondary)]',
                       )}
                       aria-selected={isSelected}
                       onClick={() => {

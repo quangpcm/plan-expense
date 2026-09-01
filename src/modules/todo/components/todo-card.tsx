@@ -31,7 +31,7 @@ export function TodoCard({ todo, assignee, milestone, onViewTodo }: TodoCardProp
 
   return (
     <Card
-      className="cursor-pointer gap-4 border-slate-200 bg-white shadow-none transition hover:border-slate-300"
+      className="cursor-pointer gap-4 border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] shadow-none transition hover:border-[var(--color-border-default)]"
       onClick={() => onViewTodo(todo)}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -50,7 +50,7 @@ export function TodoCard({ todo, assignee, milestone, onViewTodo }: TodoCardProp
         />
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex items-center justify-between gap-2">
-            <h4 className="min-w-0 truncate text-base font-semibold text-slate-950">{todo.title}</h4>
+            <h4 className="min-w-0 truncate text-base font-semibold text-[var(--color-text-primary)]">{todo.title}</h4>
             {milestone ? (
               <Badge className="shrink-0 px-2 py-0.5 text-[11px]" variant="neutral">
                 {milestone.title}
@@ -72,10 +72,10 @@ export function TodoCard({ todo, assignee, milestone, onViewTodo }: TodoCardProp
       </div>
 
       {todo.description ? (
-        <p className="line-clamp-1 text-sm leading-6 text-slate-600">{todo.description}</p>
+        <p className="line-clamp-1 text-sm leading-6 text-[var(--color-text-secondary)]">{todo.description}</p>
       ) : null}
 
-      <div className="-mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600">
+      <div className="-mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[var(--color-text-secondary)]">
         {isDone ? null : (
           <span
             className={cn(
@@ -94,7 +94,7 @@ export function TodoCard({ todo, assignee, milestone, onViewTodo }: TodoCardProp
                     ? 'text-[color:var(--color-danger)]'
                     : dueUrgency === 'warning'
                       ? 'text-[color:var(--color-warning)]'
-                      : 'text-slate-400',
+                      : 'text-[var(--color-text-muted)]',
                 )}
               />
             )}
@@ -103,21 +103,21 @@ export function TodoCard({ todo, assignee, milestone, onViewTodo }: TodoCardProp
         )}
         {displayedBudget != null ? (
           <span className="inline-flex items-center gap-1.5">
-            <Wallet className="size-4 text-slate-400" />
+            <Wallet className="size-4 text-[var(--color-text-muted)]" />
             {formatCompactCurrency(displayedBudget)}
           </span>
         ) : null}
         {todo.attachments.length > 0 ? (
           <span className="inline-flex items-center gap-1.5">
-            <Paperclip className="size-4 text-slate-400" />
+            <Paperclip className="size-4 text-[var(--color-text-muted)]" />
             {todo.attachments.length}
           </span>
         ) : null}
       </div>
 
       {selectedVendor ? (
-        <p className="text-sm text-slate-600">
-          Đã chọn dịch vụ: <span className="font-medium text-slate-900">{selectedVendor.name}</span>
+        <p className="text-sm text-[var(--color-text-secondary)]">
+          Đã chọn dịch vụ: <span className="font-medium text-[var(--color-text-primary)]">{selectedVendor.name}</span>
           {displayedBudget != null ? ` · ${formatCompactCurrency(displayedBudget)}` : ''}
         </p>
       ) : null}

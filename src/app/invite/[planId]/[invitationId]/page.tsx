@@ -127,11 +127,11 @@ export default function AcceptInvitationPage() {
       footer={null}
       title={isClaim ? 'Bạn được mời liên kết tài khoản' : 'Bạn được mời tham gia kế hoạch'}
     >
-      <div className="flex items-center gap-3 rounded-[24px] bg-slate-50 p-4">
-        <PlanIcon className="size-6 text-slate-600" />
+      <div className="flex items-center gap-3 rounded-[24px] bg-[var(--color-surface-subtle)] p-4">
+        <PlanIcon className="size-6 text-[var(--color-text-secondary)]" />
         <div>
-          <p className="font-semibold text-slate-950">{invitation.planName}</p>
-          <p className="text-sm text-slate-600">
+          <p className="font-semibold text-[var(--color-text-primary)]">{invitation.planName}</p>
+          <p className="text-sm text-[var(--color-text-secondary)]">
             {isClaim ? `Liên kết với: ${invitation.targetNickname}` : `Vai trò: ${ROLE_LABEL[invitation.role]}`}
           </p>
         </div>
@@ -177,7 +177,7 @@ export default function AcceptInvitationPage() {
       )}
 
       {status === 'unauthenticated' ? (
-        <p className="mt-4 flex items-center gap-2 text-xs text-slate-500">
+        <p className="mt-4 flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
           <UserPlus className="size-3.5" />
           Đăng nhập/đăng ký xong sẽ tự quay lại trang này.
         </p>

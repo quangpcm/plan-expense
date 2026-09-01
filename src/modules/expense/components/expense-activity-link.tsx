@@ -38,7 +38,7 @@ export function ExpenseActivityLink({
   if (variant === 'inline') {
     if (!interactive) {
       return (
-        <span className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-primary)]">
+        <span className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-brand-primary)]">
           <MapPinned className="size-4 shrink-0" />
           <span className="truncate">Liên kết itinerary: {label}</span>
         </span>
@@ -47,7 +47,7 @@ export function ExpenseActivityLink({
 
     return (
       <Link
-        className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+        className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-brand-primary)] transition hover:text-[var(--color-brand-primary-hover)]"
         href={href}
       >
         <MapPinned className="size-4 shrink-0" />

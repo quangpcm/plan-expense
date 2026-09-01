@@ -9,13 +9,10 @@ const buttonVariants = {
   secondary:
     'border border-[var(--color-border-default)] bg-[var(--color-surface-subtle)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-default)]',
   ghost: 'bg-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-brand-subtle)] hover:text-[var(--color-brand-primary)]',
-  // Harvested byte-for-byte from confirm-dialog.tsx's existing destructive className override
-  // (bg-red-600 text-white hover:bg-red-700) — --color-status-danger equals Tailwind's red-600
-  // exactly, so the base color is an exact rename. No shadow: the existing evidence doesn't have
-  // one, and inventing a new colored shadow here would repeat the Wave 1 lesson about not adding
-  // unsourced decorative values.
+  // Destructive is the status fill consumer: its fill stays separate from danger text so the
+  // inverse foreground remains accessible in both themes. No shadow is added.
   destructive:
-    'bg-[var(--color-status-danger)] text-[var(--color-text-inverse)] hover:bg-red-700 visited:text-[var(--color-text-inverse)] active:text-[var(--color-text-inverse)] focus:text-[var(--color-text-inverse)]',
+    'bg-[var(--color-status-danger-fill)] text-[var(--color-status-danger-foreground)] hover:bg-[var(--color-status-danger-fill-hover)] visited:text-[var(--color-status-danger-foreground)] active:text-[var(--color-status-danger-foreground)] focus:text-[var(--color-status-danger-foreground)]',
 } as const;
 
 const buttonSizes = {

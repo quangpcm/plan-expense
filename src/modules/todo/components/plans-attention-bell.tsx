@@ -16,7 +16,7 @@ function getBellToneClass(tone: AttentionBellTone) {
     return 'border-amber-200 bg-amber-50 text-amber-600 hover:border-amber-300 hover:text-amber-700';
   }
 
-  return 'border-[var(--color-border)] bg-white text-[var(--color-muted)] hover:border-[var(--color-brand-primary)] hover:text-[var(--color-brand-primary)]';
+  return 'border-[var(--color-border-default)] bg-[var(--color-surface-default)] text-[var(--color-text-muted)] hover:border-[var(--color-brand-primary)] hover:text-[var(--color-brand-primary)]';
 }
 
 // Global header's notification entry point — same attention-todo logic that used to live inline

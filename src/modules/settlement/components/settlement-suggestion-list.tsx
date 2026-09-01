@@ -48,7 +48,7 @@ export function SettlementSuggestionList({
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       {message ? <AuthFormMessage message={message} type="success" /> : null}
       {requiresFundAllocation ? (
-        <div className="flex items-start gap-2 rounded-2xl border border-[color:var(--color-warning)]/30 bg-[color:var(--color-warning)]/10 px-4 py-3 text-sm text-slate-700">
+        <div className="flex items-start gap-2 rounded-2xl border border-[color:var(--color-warning)]/30 bg-[color:var(--color-warning)]/10 px-4 py-3 text-sm text-[var(--color-text-secondary)]">
           <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[color:var(--color-warning)]" />
           <span>
             Quỹ chung còn {formatCurrency(unallocatedFundBalance)} chưa phân bổ — hãy chỉnh &quot;Hoàn cho&quot; ở
@@ -58,10 +58,10 @@ export function SettlementSuggestionList({
       ) : suggestions.length > 0 ? (
         <>
           <div className="space-y-1.5">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-[var(--color-text-secondary)]">
               Còn {suggestions.length} khoản cần chuyển · {formatCurrency(pendingAmount)}
             </p>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--color-surface-subtle)]">
               <div
                 className="h-full rounded-full bg-[color:var(--color-success)]"
                 style={{ width: `${settledPercent}%` }}
@@ -82,7 +82,7 @@ export function SettlementSuggestionList({
           </div>
         </>
       ) : (
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+        <div className="rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-4 py-3 text-sm text-[var(--color-text-secondary)]">
           Chi phí giữa các thành viên đã cân bằng, chưa cần chuyển khoản nào.
         </div>
       )}

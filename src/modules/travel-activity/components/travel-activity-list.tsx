@@ -146,8 +146,8 @@ export function TravelActivityList({
       </div>
 
       {insight ? (
-        <Card className="gap-3 border-[var(--color-primary)]/18 bg-[color:color-mix(in_srgb,var(--color-primary)_5%,white)] p-4 shadow-none">
-          <div className="flex items-center gap-2 text-[var(--color-primary)]">
+        <Card className="gap-3 border-[var(--color-brand-primary)]/18 bg-[var(--color-brand-subtle)] p-4 shadow-none">
+          <div className="flex items-center gap-2 text-[var(--color-brand-primary)]">
             <Sparkles className="size-4" />
             <p className="text-xs font-semibold uppercase tracking-[0.16em]">
               {insight.kind === 'current' ? 'Đang diễn ra' : 'Tiếp theo'}
@@ -191,12 +191,12 @@ export function TravelActivityList({
                 <span
                   className={cn(
                     DAY_NODE_SIZE_CLASS,
-                    'rounded-full bg-[var(--color-primary)] ring-4 ring-[color:color-mix(in_srgb,var(--color-primary)_15%,white)]',
+                    'rounded-full bg-[var(--color-brand-primary)] ring-4 ring-[color:color-mix(in_srgb,var(--color-brand-primary)_15%,transparent)]',
                   )}
                 />
               </div>
               <div className="space-y-1 pl-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-primary)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-brand-primary)]">
                   {group.title}
                 </p>
                 <p className="text-sm text-[var(--color-text-muted)]">{group.subtitle}</p>
@@ -268,7 +268,7 @@ function TravelActivityTimelineCard({
             'absolute top-[22px] left-1/2 h-px -translate-x-1/2',
             CONNECTOR_WIDTH_CLASS,
             isSelected || isTemporalAccent
-              ? 'bg-[var(--color-primary)]/45'
+              ? 'bg-[var(--color-brand-primary)]/45'
               : 'bg-[var(--color-border-strong)]/45',
           )}
         />
@@ -276,11 +276,11 @@ function TravelActivityTimelineCard({
           className={cn(
             ACTIVITY_NODE_SIZE_CLASS,
             'relative z-10 rounded-full border transition',
-            isSelected ? 'ring-4 ring-[color:color-mix(in_srgb,var(--color-primary)_15%,white)]' : '',
+            isSelected ? 'ring-4 ring-[color:color-mix(in_srgb,var(--color-brand-primary)_15%,transparent)]' : '',
             isCurrent
-              ? 'border-[var(--color-primary)] bg-[var(--color-primary)]'
+              ? 'border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]'
               : isNext
-                ? 'border-[var(--color-primary)] bg-white'
+                ? 'border-[var(--color-brand-primary)] bg-[var(--color-surface-default)]'
                 : 'border-[var(--color-border-default)] bg-[var(--color-surface-default)]',
             isPast ? 'opacity-75' : '',
           )}
@@ -294,7 +294,7 @@ function TravelActivityTimelineCard({
             ? 'border-[var(--color-border-subtle)] bg-[color:var(--color-surface-default)] text-[var(--color-text-muted)]'
             : 'bg-[color:var(--color-surface-default)]',
           isSelected
-            ? 'border-[var(--color-primary)] shadow-[0_22px_64px_rgba(36,59,107,0.12)]'
+            ? 'border-[var(--color-brand-primary)] shadow-[0_22px_64px_rgba(36,59,107,0.12)]'
             : 'hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]',
         )}
         onClick={() => onSelect(activity)}
@@ -313,7 +313,7 @@ function TravelActivityTimelineCard({
               className={cn(
                 'inline-flex w-fit rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em]',
                 isCurrent
-                  ? 'bg-[color:color-mix(in_srgb,var(--color-primary)_12%,white)] text-[var(--color-primary)]'
+                  ? 'bg-[var(--color-brand-subtle)] text-[var(--color-brand-primary)]'
                   : 'bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)]',
               )}
             >
@@ -346,7 +346,7 @@ function TravelActivityTimelineCard({
                       'inline-flex min-w-0 items-center gap-1 underline decoration-dotted underline-offset-2 hover:decoration-solid',
                       isPast
                         ? 'text-[var(--color-text-secondary)]'
-                        : 'font-medium text-[var(--color-primary)]',
+                        : 'font-medium text-[var(--color-brand-primary)]',
                     )}
                     href={toMapHref(activity.locationMapUrl)}
                     onClick={(event) => event.stopPropagation()}

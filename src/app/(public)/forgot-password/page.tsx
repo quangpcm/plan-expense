@@ -58,7 +58,7 @@ export default function ForgotPasswordPage() {
       footer={
         <>
           Đã nhớ mật khẩu?{' '}
-          <Link className="font-semibold text-sky-700" href={appRoutes.login}>
+          <Link className="font-semibold text-[var(--color-text-link)]" href={appRoutes.login}>
             Quay lại đăng nhập
           </Link>
         </>
@@ -66,7 +66,7 @@ export default function ForgotPasswordPage() {
     >
       <form className="space-y-4" onSubmit={onSubmit}>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="email">
+          <label className="text-sm font-medium text-[var(--color-text-primary)]" htmlFor="email">
             Email
           </label>
           <Input id="email" placeholder="ban@example.com" {...register('email')} />

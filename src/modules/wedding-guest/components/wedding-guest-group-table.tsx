@@ -35,13 +35,13 @@ export function WeddingGuestGroupTable({
     <Card>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <SectionHeading eyebrow="Tổng hợp khách mời" title="Theo nhóm/tiệc" />
-        <div className="flex items-center gap-1 rounded-full bg-slate-100 p-1">
+        <div className="flex items-center gap-1 rounded-full bg-[var(--color-surface-subtle)] p-1">
           <button
             className={cn(
               'rounded-full px-3 py-1 text-xs font-medium transition',
               metricMode === 'attendance'
-                ? 'bg-white text-slate-950 shadow-sm'
-                : 'text-slate-500',
+                ? 'bg-[var(--color-surface-default)] text-[var(--color-text-primary)] shadow-sm'
+                : 'text-[var(--color-text-muted)]',
             )}
             onClick={() => setMetricMode('attendance')}
             type="button"
@@ -52,8 +52,8 @@ export function WeddingGuestGroupTable({
             className={cn(
               'rounded-full px-3 py-1 text-xs font-medium transition',
               metricMode === 'gift'
-                ? 'bg-white text-slate-950 shadow-sm'
-                : 'text-slate-500',
+                ? 'bg-[var(--color-surface-default)] text-[var(--color-text-primary)] shadow-sm'
+                : 'text-[var(--color-text-muted)]',
             )}
             onClick={() => setMetricMode('gift')}
             type="button"
@@ -64,13 +64,13 @@ export function WeddingGuestGroupTable({
       </div>
 
       {byGroup.length === 0 ? (
-        <p className="text-sm text-slate-500">Chưa có nhóm nào.</p>
+        <p className="text-sm text-[var(--color-text-muted)]">Chưa có nhóm nào.</p>
       ) : (
         <>
           <div className="hidden overflow-x-auto lg:block">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-100 text-left text-xs uppercase tracking-wide text-slate-400">
+                <tr className="border-b border-[var(--color-border-subtle)] text-left text-xs uppercase tracking-wide text-[var(--color-text-muted)]">
                   <th className="py-2 pr-3 font-medium">Nhóm</th>
                   <th className="py-2 pr-3 text-right font-medium">
                     Khách mời
@@ -113,40 +113,40 @@ export function WeddingGuestGroupTable({
                   return (
                     <tr
                       className={cn(
-                        'border-b border-slate-50 last:border-0',
+                        'border-b border-[var(--color-border-subtle)] last:border-0',
                         isActive && ROW_HIGHLIGHT_CLASS,
                       )}
                       key={row.group.id}
                     >
-                      <td className="py-3 pr-3 font-medium text-slate-900">
+                      <td className="py-3 pr-3 font-medium text-[var(--color-text-primary)]">
                         {row.group.name}
                       </td>
-                      <td className="py-3 pr-3 text-right text-slate-700">
+                      <td className="py-3 pr-3 text-right text-[var(--color-text-secondary)]">
                         {row.guestCount}
                       </td>
-                      <td className="py-3 pr-3 text-right text-slate-700">
+                      <td className="py-3 pr-3 text-right text-[var(--color-text-secondary)]">
                         {row.attendeeCount}
                       </td>
                       {metricMode === 'attendance' ? (
                         <>
-                          <td className="py-3 pr-3 text-right text-slate-700">
+                          <td className="py-3 pr-3 text-right text-[var(--color-text-secondary)]">
                             {row.rsvpBreakdown.attending}
                           </td>
-                          <td className="py-3 pl-3 text-right text-slate-700">
+                          <td className="py-3 pl-3 text-right text-[var(--color-text-secondary)]">
                             {row.rsvpBreakdown.pending}
                           </td>
                         </>
                       ) : (
                         <>
-                          <td className="py-3 pr-3 text-right text-slate-700">
+                          <td className="py-3 pr-3 text-right text-[var(--color-text-secondary)]">
                             {formatCompactCurrency(row.moneyGiftTotal)}
                           </td>
-                          <td className="py-3 pr-3 text-right text-slate-700">
+                          <td className="py-3 pr-3 text-right text-[var(--color-text-secondary)]">
                             {row.goldGiftTotal > 0
                               ? formatGoldGift(row.goldGiftTotal)
                               : '—'}
                           </td>
-                          <td className="py-3 pl-3 text-right text-slate-700">
+                          <td className="py-3 pl-3 text-right text-[var(--color-text-secondary)]">
                             {formatCompactCurrency(average)}
                           </td>
                         </>
@@ -167,24 +167,24 @@ export function WeddingGuestGroupTable({
               return (
                 <li
                   className={cn(
-                    'space-y-2 rounded-2xl bg-slate-50 p-3',
+                    'space-y-2 rounded-2xl bg-[var(--color-surface-subtle)] p-3',
                     isActive && ROW_HIGHLIGHT_CLASS,
                   )}
                   key={row.group.id}
                 >
-                  <span className="text-sm font-semibold text-slate-950">
+                  <span className="text-sm font-semibold text-[var(--color-text-primary)]">
                     {row.group.name}
                   </span>
-                  <div className="grid grid-cols-2 gap-1.5 text-xs text-slate-600">
+                  <div className="grid grid-cols-2 gap-1.5 text-xs text-[var(--color-text-secondary)]">
                     <span>
                       Khách mời:{' '}
-                      <strong className="text-slate-900">
+                      <strong className="text-[var(--color-text-primary)]">
                         {row.guestCount}
                       </strong>
                     </span>
                     <span>
                       Người dự kiến:{' '}
-                      <strong className="text-slate-900">
+                      <strong className="text-[var(--color-text-primary)]">
                         {row.attendeeCount}
                       </strong>
                     </span>
@@ -192,13 +192,13 @@ export function WeddingGuestGroupTable({
                       <>
                         <span>
                           Đã xác nhận:{' '}
-                          <strong className="text-slate-900">
+                          <strong className="text-[var(--color-text-primary)]">
                             {row.rsvpBreakdown.attending}
                           </strong>
                         </span>
                         <span>
                           Chờ phản hồi:{' '}
-                          <strong className="text-slate-900">
+                          <strong className="text-[var(--color-text-primary)]">
                             {row.rsvpBreakdown.pending}
                           </strong>
                         </span>
@@ -207,13 +207,13 @@ export function WeddingGuestGroupTable({
                       <>
                         <span>
                           Tiền mừng:{' '}
-                          <strong className="text-slate-900">
+                          <strong className="text-[var(--color-text-primary)]">
                             {formatCompactCurrency(row.moneyGiftTotal)}
                           </strong>
                         </span>
                         <span>
                           Vàng:{' '}
-                          <strong className="text-slate-900">
+                          <strong className="text-[var(--color-text-primary)]">
                             {row.goldGiftTotal > 0
                               ? formatGoldGift(row.goldGiftTotal)
                               : '—'}
@@ -221,7 +221,7 @@ export function WeddingGuestGroupTable({
                         </span>
                         <span>
                           TB/khách:{' '}
-                          <strong className="text-slate-900">
+                          <strong className="text-[var(--color-text-primary)]">
                             {formatCompactCurrency(average)}
                           </strong>
                         </span>

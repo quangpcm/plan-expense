@@ -109,7 +109,7 @@ export function ArchivedPlanListItem({ plan, userId }: ArchivedPlanListItemProps
           </div>
         )
       ) : (
-        <p className="text-xs text-[var(--color-subtle)]">Chỉ chủ sở hữu mới có thể khôi phục hoặc xóa kế hoạch này.</p>
+        <p className="text-xs text-[var(--color-text-muted)]">Chỉ chủ sở hữu mới có thể khôi phục hoặc xóa kế hoạch này.</p>
       )}
     </Card>
   );

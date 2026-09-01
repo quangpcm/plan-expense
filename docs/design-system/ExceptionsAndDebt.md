@@ -43,10 +43,30 @@ A maintained registry, split into two kinds of entry. Don't confuse them:
    below for the token-extraction proposal this exception sits next to.
 
 6. **`StatisticOverview`'s green "Tổng thu"** — colored green as a plan-wide income aggregate, a
-   different, valid meaning from "member balance is positive" (the more common red/green usage
-   elsewhere). Reviewed and judged not a real confusion risk; preserved exactly as-is. If you add
-   new red/green usage, be clear about which of these two meanings applies — see
-   [VisualRules.md](./VisualRules.md) "Semantic colors."
+different, valid meaning from "member balance is positive" (the more common red/green usage
+elsewhere). Reviewed and judged not a real confusion risk; preserved exactly as-is. If you add
+new red/green usage, be clear about which of these two meanings applies — see
+[VisualRules.md](./VisualRules.md) "Semantic colors."
+
+7. **Media viewer and image overlays** — `PhotoPreview`, thumbnail count overlays, and image-delete
+controls retain black backdrops, inverse white text, and translucent white controls. Owner: shared
+media presentation. Reason: the colors establish contrast against arbitrary image content rather
+than generic application hierarchy. Scope is media-only; do not reuse this treatment for Cards,
+forms, or ordinary overlays.
+
+## Resolved Theme Debt
+
+Phase 8 closed the migration-only debt below. These are not deferred work:
+
+- Light-only shared/primitives and global Dark-runtime absence are resolved. `next-themes` class
+  runtime, browser theme colors, and the Hệ thống/Sáng/Tối selector are production baseline.
+- Generic primary/accent ambiguity is resolved. `--color-brand-primary` and its hover/active roles
+  are canonical; the legacy primary/accent aliases have zero component consumers and were removed.
+- Generic Light islands across primary product, public, invitation, error, and setup surfaces are
+  resolved. Residual raw colors are classified as product, status, data visualization, or media
+  exceptions in the Phase 8 closure report.
+- Dark destructive fill is resolved through the existing danger status architecture, with real
+  Button/passcode consumers establishing the required fill, hover, and foreground roles.
 
 ## Deferred improvements
 
@@ -103,6 +123,20 @@ A maintained registry, split into two kinds of entry. Don't confuse them:
     only if a second PlanType-heavy surface provides new evidence beyond Dashboard's single data
     point. Named sub-risk to watch if this work happens: Debt's amber accent color sits close to
     the semantic warning color — needs explicit attention, not silent resolution.
+
+11. **Status token AA contrast / consumer role-classification** (Phase 8 finding). `--color-success`,
+    `--color-warning`, `--color-danger`, and finance `income`/`expense` are used directly as
+    normal-size (12–14px) text color at ~60 call sites, inheriting a pre-existing Light AA shortfall
+    (`success`/`income` ≈3.6–3.8:1, `warning` ≈3.0:1, `expense` ≈3.5:1 — all below the 4.5:1 normal-
+    text floor; Dark values were not checked against this same use). A minimal text/surface role
+    split already exists in `globals.css` (`--color-status-*` vs. `--color-status-*-surface`), but
+    the full per-consumer classification (text vs. icon vs. fill vs. border vs. chart, per
+    [ColorArchitecture.Spec.md](../palette/ColorArchitecture.Spec.md) §8) was never performed.
+    **Not resolved silently**: changing a status hex to fix contrast is a product/accessibility
+    decision (see STOP conditions in
+    [FeatureImplementationRules.md](./FeatureImplementationRules.md)), not a mechanical token edit —
+    a color that fails as *text* may be perfectly fine as an *icon/border/chart* fill. Pick this up
+    with explicit product/accessibility sign-off, not opportunistically inside an unrelated feature.
 
 ## If you're about to duplicate a deferred item
 

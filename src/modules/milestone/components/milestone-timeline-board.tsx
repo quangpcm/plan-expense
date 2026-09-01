@@ -92,7 +92,7 @@ function getMilestoneCardTone(
       titleMuted: 'text-[var(--color-milestone-selected-muted)]',
       valueStrong: 'text-[var(--color-milestone-selected-foreground)]',
       valueSoft: 'text-[var(--color-milestone-selected-muted)]',
-      action: 'border border-white/20 bg-white/8 text-white hover:bg-white/14',
+      action: 'border border-white/20 bg-[color:color-mix(in_srgb,var(--color-surface-default)_8%,transparent)] text-white hover:bg-[color:color-mix(in_srgb,var(--color-surface-default)_14%,transparent)]',
       mobileExpenseAction: 'secondary' as const,
     };
   }
@@ -104,7 +104,7 @@ function getMilestoneCardTone(
       valueStrong: 'text-[var(--color-milestone-completed-foreground)]',
       valueSoft: 'text-[var(--color-milestone-completed-muted)]',
       action:
-        'bg-white/80 text-[var(--color-milestone-completed-foreground)] hover:bg-white',
+        'bg-[color:color-mix(in_srgb,var(--color-surface-default)_80%,transparent)] text-[var(--color-milestone-completed-foreground)] hover:bg-[var(--color-surface-default)]',
       mobileExpenseAction: 'ghost' as const,
     };
   }
@@ -112,7 +112,7 @@ function getMilestoneCardTone(
   return {
     card: 'border-[var(--color-milestone-upcoming-border)] bg-[var(--color-milestone-upcoming)] text-[var(--color-milestone-upcoming-foreground)] hover:border-[var(--color-border-strong)] hover:shadow-[0_14px_40px_rgba(15,23,42,0.08)]',
     titleMuted: 'text-[var(--color-milestone-upcoming-muted)]',
-    valueStrong: 'text-[var(--color-primary)]',
+    valueStrong: 'text-[var(--color-brand-primary)]',
     valueSoft: 'text-[var(--color-milestone-upcoming-muted)]',
     action: '',
     mobileExpenseAction: 'ghost' as const,
@@ -121,7 +121,7 @@ function getMilestoneCardTone(
 
 function getMilestoneBadgeClass(displayedStatus: MilestoneDocument['status']) {
   if (displayedStatus === 'completed') {
-    return 'bg-[var(--color-success-soft)] text-[#047857]';
+    return 'bg-[var(--color-success-soft)] text-[var(--color-status-success)]';
   }
 
   if (displayedStatus === 'cancelled') {
@@ -396,8 +396,8 @@ export function MilestoneTimelineBoard({
 
   if (milestones.length === 0) {
     return (
-      <Card className="border-slate-200 bg-slate-50 shadow-none">
-        <p className="text-sm leading-6 text-slate-600">
+      <Card className="border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] shadow-none">
+        <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
           Chưa có mốc kế hoạch nào. Hãy tạo mốc đầu tiên để bắt đầu tổ chức kế
           hoạch theo giai đoạn.
         </p>
@@ -550,8 +550,8 @@ export function MilestoneTimelineBoard({
         ) : null;
       })()}
       {isSearching && visibleMilestones.length === 0 ? (
-        <Card className="border-slate-200 bg-slate-50 shadow-none">
-          <p className="text-sm leading-6 text-slate-600">
+        <Card className="border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] shadow-none">
+          <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
             Không tìm thấy công việc nào phù hợp với từ khoá tìm kiếm.
           </p>
         </Card>
@@ -591,24 +591,26 @@ export function MilestoneTimelineBoard({
               <div className="mb-3 flex items-center gap-2 sm:mb-4 sm:gap-3">
                 <span
                   className={cn(
-                    'relative flex size-6 shrink-0 items-center justify-center rounded-full bg-white ring-2 sm:size-7 sm:ring-4',
-                    isMonthSelected ? 'ring-[#0050cb]/10' : 'ring-slate-100',
+                    'relative flex size-6 shrink-0 items-center justify-center rounded-full bg-[var(--color-surface-default)] ring-2 sm:size-7 sm:ring-4',
+                    isMonthSelected
+                      ? 'ring-[color:color-mix(in_srgb,var(--color-brand-primary)_10%,transparent)]'
+                      : 'ring-[var(--color-border-subtle)]',
                   )}
                 >
                   {isMonthSelected ? (
-                    <span className="absolute size-2.5 animate-ping-lg rounded-full bg-[#0050cb]/60 sm:size-3" />
+                    <span className="absolute size-2.5 animate-ping-lg rounded-full bg-[color:color-mix(in_srgb,var(--color-brand-primary)_6%,transparent)] sm:size-3" />
                   ) : null}
                   <span
                     className={cn(
                       'relative size-2.5 rounded-full sm:size-3',
-                      isMonthSelected ? 'bg-[#0050cb]' : 'bg-slate-300',
+                      isMonthSelected ? 'bg-[var(--color-brand-primary)]' : 'bg-[var(--color-surface-overlay)]',
                     )}
                   />
                 </span>
                 <p
                   className={cn(
                     'text-[11px] font-semibold uppercase tracking-[0.14em] sm:text-xs sm:tracking-[0.22em]',
-                    isMonthSelected ? 'text-[#0050cb]' : 'text-slate-400',
+                    isMonthSelected ? 'text-[var(--color-brand-primary)]' : 'text-[var(--color-text-muted)]',
                   )}
                 >
                   {monthLabel}
@@ -775,7 +777,7 @@ export function MilestoneTimelineBoard({
                 <div className="relative">
                   {milestoneTodos.length > 0 ? (
                     <>
-                      <span className="absolute left-3 top-0 bottom-0 z-0 w-px bg-[#e8edf7] sm:left-4 lg:left-3" />
+                      <span className="absolute left-3 top-0 bottom-0 z-0 w-px bg-[var(--color-border-subtle)] sm:left-4 lg:left-3" />
                       {milestoneTodos.map((todo) => {
                         const assignee =
                           members.find(
@@ -799,12 +801,12 @@ export function MilestoneTimelineBoard({
                             }}
                           >
                             <div className="relative w-6 shrink-0 sm:w-8 lg:w-6">
-                              <span className="absolute left-1/2 top-1/2 z-10 size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-300 sm:size-2" />
+                              <span className="absolute left-1/2 top-1/2 z-10 size-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--color-surface-overlay)] sm:size-2" />
                             </div>
                             <div className="min-w-0 flex-1">
                               {isDraggingTodo && activeDrag ? (
                                 <div
-                                  className="rounded-2xl border border-dashed border-[#c9d8f2] bg-[#f6f9ff] shadow-inner transition-all duration-200 animate-pulse sm:rounded-[24px]"
+                                  className="rounded-2xl border border-dashed border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] shadow-inner transition-all duration-200 animate-pulse sm:rounded-[24px]"
                                   style={{ height: activeDrag.height }}
                                 />
                               ) : (
@@ -844,7 +846,7 @@ export function MilestoneTimelineBoard({
                       })}
                     </>
                   ) : (
-                    <p className="px-1 text-sm text-slate-500">
+                    <p className="px-1 text-sm text-[var(--color-text-muted)]">
                       Milestone này chưa có todo nào.
                     </p>
                   )}
@@ -854,8 +856,8 @@ export function MilestoneTimelineBoard({
                   className={cn(
                     'flex min-h-11 w-full items-center justify-center gap-2 rounded-[18px] px-4 py-2.5 text-sm font-semibold transition',
                     canManageOwnPlanning && !isPlanClosed
-                      ? 'bg-transparent text-slate-600 hover:bg-white hover:text-[#0050cb]'
-                      : 'cursor-not-allowed bg-transparent text-slate-400',
+                      ? 'bg-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-default)] hover:text-[var(--color-brand-primary)]'
+                      : 'cursor-not-allowed bg-transparent text-[var(--color-text-muted)]',
                   )}
                   disabled={!canManageOwnPlanning || isPlanClosed}
                   onClick={(event) => {

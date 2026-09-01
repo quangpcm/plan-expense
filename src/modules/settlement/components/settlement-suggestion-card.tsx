@@ -30,22 +30,22 @@ export function SettlementSuggestionCard({
   const toName = toMember?.nickname || suggestion.toMemberId;
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] px-4 py-3">
       <div className="flex min-w-0 items-center gap-2 text-sm">
         <Avatar
           className="size-8 text-xs"
           initials={fromName.slice(0, 2).toUpperCase()}
           src={fromMember?.avatarUrl ?? null}
         />
-        <span className="truncate font-medium text-slate-900">{fromName}</span>
-        <ArrowRight className="size-4 shrink-0 text-slate-400" />
+        <span className="truncate font-medium text-[var(--color-text-primary)]">{fromName}</span>
+        <ArrowRight className="size-4 shrink-0 text-[var(--color-text-muted)]" />
         <Avatar
           className="size-8 text-xs"
           initials={toName.slice(0, 2).toUpperCase()}
           src={toMember?.avatarUrl ?? null}
         />
-        <span className="truncate font-medium text-slate-900">{toName}</span>
-        <span className="ml-1 shrink-0 font-semibold text-slate-950">{formatCurrency(suggestion.amount)}</span>
+        <span className="truncate font-medium text-[var(--color-text-primary)]">{toName}</span>
+        <span className="ml-1 shrink-0 font-semibold text-[var(--color-text-primary)]">{formatCurrency(suggestion.amount)}</span>
       </div>
       {canConfirm ? (
         <Button className="shrink-0" disabled={isSubmitting} onClick={() => setShowConfirm(true)} size="sm">

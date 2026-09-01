@@ -24,14 +24,14 @@ function getMaskedMoneyClassName(shouldMask: boolean, size: 'primary' | 'seconda
   }
 
   if (size === 'primary') {
-    return 'tracking-[0.18em] text-slate-400/95';
+    return 'tracking-[0.18em] text-[color:color-mix(in_srgb,var(--color-text-muted)_95%,transparent)]';
   }
 
   if (size === 'secondary') {
-    return 'tracking-[0.16em] text-slate-400/90';
+    return 'tracking-[0.16em] text-[color:color-mix(in_srgb,var(--color-text-muted)_90%,transparent)]';
   }
 
-  return 'tracking-[0.14em] text-slate-400/85';
+  return 'tracking-[0.14em] text-[color:color-mix(in_srgb,var(--color-text-muted)_85%,transparent)]';
 }
 
 export function PlanCard({ plan }: PlanCardProps) {
@@ -46,7 +46,7 @@ export function PlanCard({ plan }: PlanCardProps) {
 
   return (
     <Link className="block" href={`/plans/${plan.planId}`}>
-      <Card className="gap-4 rounded-[24px] border-[rgba(198,205,218,0.7)] bg-white shadow-[0_16px_40px_rgba(20,36,64,0.05)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
+      <Card className="gap-4 rounded-[24px] border-[rgba(198,205,218,0.7)] bg-[var(--color-surface-default)] shadow-[0_16px_40px_rgba(20,36,64,0.05)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
         <div className="flex items-center justify-between gap-3">
           {viewModel.coverImageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- external Cloudflare R2 URL, next/image domain not configured yet
@@ -68,12 +68,12 @@ export function PlanCard({ plan }: PlanCardProps) {
           )}
           <div className="flex shrink-0 gap-2">
             {plan.role === 'owner' ? null : (
-              <Badge className="border border-[var(--color-border)] bg-[var(--color-surface)] uppercase tracking-[0.08em] text-[var(--color-secondary-foreground)]">
+              <Badge className="border border-[var(--color-border-default)] bg-[var(--color-surface-default)] uppercase tracking-[0.08em] text-[var(--color-secondary-foreground)]">
                 {viewModel.roleLabel}
               </Badge>
             )}
             {plan.isLocked ? (
-              <span className="inline-flex size-6 items-center justify-center rounded-full bg-[var(--color-secondary)] text-[var(--color-muted)]">
+              <span className="inline-flex size-6 items-center justify-center rounded-full bg-[var(--color-secondary)] text-[var(--color-text-muted)]">
                 <Lock className="size-3.5" />
               </span>
             ) : null}
@@ -83,21 +83,21 @@ export function PlanCard({ plan }: PlanCardProps) {
                 Đang chạy
               </Badge>
             ) : (
-              <Badge className="inline-flex items-center gap-1.5 bg-[var(--color-secondary)] text-[var(--color-muted)]">
+              <Badge className="inline-flex items-center gap-1.5 bg-[var(--color-secondary)] text-[var(--color-text-muted)]">
                 {viewModel.statusLabel}
               </Badge>
             )}
           </div>
         </div>
         <div className="space-y-3">
-          <h2 className="truncate text-lg font-semibold text-[var(--color-foreground)]">{viewModel.title}</h2>
+          <h2 className="truncate text-lg font-semibold text-[var(--color-text-primary)]">{viewModel.title}</h2>
           <div className="grid grid-cols-2 gap-3">
             <div className="min-w-0 space-y-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-subtle)]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
                 {viewModel.primaryMetric.label}
               </p>
               <p
-                className={cn('truncate text-2xl font-bold text-[var(--color-foreground)]', {
+                className={cn('truncate text-2xl font-bold text-[var(--color-text-primary)]', {
                   [visual.accentTextClassName]: (viewModel.primaryMetric.tone ?? 'default') === 'primary',
                   'text-[var(--color-success)]': viewModel.primaryMetric.tone === 'success',
                   'text-[color:var(--color-warning)]': viewModel.primaryMetric.tone === 'warning',
@@ -109,7 +109,7 @@ export function PlanCard({ plan }: PlanCardProps) {
               {viewModel.primaryMetric.detail ? (
                 <p
                   className={cn(
-                    'truncate text-xs text-[var(--color-muted)]',
+                    'truncate text-xs text-[var(--color-text-muted)]',
                     getMaskedMoneyClassName(isMoneyMasked && Boolean(viewModel.primaryMetric.detailIsMonetary), 'detail'),
                   )}
                 >
@@ -121,11 +121,11 @@ export function PlanCard({ plan }: PlanCardProps) {
               ) : null}
             </div>
             <div className="min-w-0 space-y-1 text-right">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-subtle)]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
                 {viewModel.secondaryMetric.label}
               </p>
               <p
-                className={cn('truncate text-lg font-semibold text-[var(--color-foreground)]', {
+                className={cn('truncate text-lg font-semibold text-[var(--color-text-primary)]', {
                   [visual.accentTextClassName]: (viewModel.secondaryMetric.tone ?? 'default') === 'primary',
                   'text-[var(--color-success)]': viewModel.secondaryMetric.tone === 'success',
                   'text-[color:var(--color-warning)]': viewModel.secondaryMetric.tone === 'warning',
@@ -148,7 +148,7 @@ export function PlanCard({ plan }: PlanCardProps) {
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
-              <div className="flex items-center justify-between gap-3 text-xs text-[var(--color-muted)]">
+              <div className="flex items-center justify-between gap-3 text-xs text-[var(--color-text-muted)]">
                 <p
                   className={cn(
                     'min-w-0 truncate',
@@ -175,7 +175,7 @@ export function PlanCard({ plan }: PlanCardProps) {
           ) : secondaryDetail ? (
             <p
               className={cn(
-                'text-xs text-[var(--color-muted)]',
+                'text-xs text-[var(--color-text-muted)]',
                 getMaskedMoneyClassName(isMoneyMasked && Boolean(viewModel.secondaryMetric.detailIsMonetary), 'detail'),
               )}
             >
@@ -183,15 +183,15 @@ export function PlanCard({ plan }: PlanCardProps) {
             </p>
           ) : null}
         </div>
-        <div className="flex items-center justify-between gap-3 border-t border-[var(--color-border)] pt-3 text-xs text-[var(--color-subtle)]">
+        <div className="flex items-center justify-between gap-3 border-t border-[var(--color-border-default)] pt-3 text-xs text-[var(--color-text-muted)]">
           <span className="inline-flex items-center gap-1">
             <CalendarPlus className="size-3.5" />
             <span>{viewModel.footerLeft.label}</span>
-            <span className="font-medium text-[var(--color-muted)]">{viewModel.footerLeft.value}</span>
+            <span className="font-medium text-[var(--color-text-muted)]">{viewModel.footerLeft.value}</span>
           </span>
           <span>
             {viewModel.footerRight.label}{' '}
-            <span className="font-medium text-[var(--color-muted)]">{viewModel.footerRight.value}</span>
+            <span className="font-medium text-[var(--color-text-muted)]">{viewModel.footerRight.value}</span>
           </span>
         </div>
       </Card>

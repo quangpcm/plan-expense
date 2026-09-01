@@ -149,10 +149,10 @@ function TravelItinerarySummaryCard({
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">
           Lịch trình chuyến đi
         </p>
-        <h3 className="text-2xl font-semibold text-slate-950">
+        <h3 className="text-2xl font-semibold text-[var(--color-text-primary)]">
           {summary.totalActivities > 0 ? 'Chọn một activity để xem chi tiết' : 'Chưa có activity nào'}
         </h3>
-        <p className="text-sm leading-6 text-slate-600">
+        <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
           Timeline bên trái đã đủ thông tin để scan nhanh, còn khung này sẽ giữ vai trò summary hoặc inspector khi bạn chọn một activity.
         </p>
       </div>
@@ -197,13 +197,13 @@ function SummaryMetric({
   secondary: string;
 }) {
   return (
-    <div className="rounded-[24px] bg-slate-50 p-4">
-      <div className="flex items-center gap-2 text-slate-500">
+    <div className="rounded-[24px] bg-[var(--color-surface-subtle)] p-4">
+      <div className="flex items-center gap-2 text-[var(--color-text-muted)]">
         <Icon className="size-4" />
         <p className="text-xs font-semibold uppercase tracking-[0.16em]">{label}</p>
       </div>
-      <p className="mt-3 text-lg font-semibold text-slate-950">{value}</p>
-      <p className="mt-1 text-sm leading-6 text-slate-600">{secondary}</p>
+      <p className="mt-3 text-lg font-semibold text-[var(--color-text-primary)]">{value}</p>
+      <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">{secondary}</p>
     </div>
   );
 }

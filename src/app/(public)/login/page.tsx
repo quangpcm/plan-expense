@@ -85,7 +85,7 @@ export default function LoginPage() {
       footer={
         <>
           Chưa có tài khoản?{' '}
-          <Link className="font-semibold text-sky-700" href={appRoutes.register}>
+          <Link className="font-semibold text-[var(--color-text-link)]" href={appRoutes.register}>
             Tạo tài khoản
           </Link>
         </>
@@ -93,13 +93,13 @@ export default function LoginPage() {
     >
       <form className="space-y-4" onSubmit={onSubmit}>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="email">
+          <label className="text-sm font-medium text-[var(--color-text-primary)]" htmlFor="email">
             Email
           </label>
           <Input id="email" placeholder="ban@example.com" {...register('email')} />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="password">
+          <label className="text-sm font-medium text-[var(--color-text-primary)]" htmlFor="password">
             Mật khẩu
           </label>
           <Input id="password" type="password" placeholder="Tối thiểu 6 ký tự" {...register('password')} />
@@ -123,7 +123,7 @@ export default function LoginPage() {
         </div>
       </form>
       <div className="flex justify-end">
-        <Link className="text-sm font-medium text-sky-700" href={appRoutes.forgotPassword}>
+        <Link className="text-sm font-medium text-[var(--color-text-link)]" href={appRoutes.forgotPassword}>
           Quên mật khẩu?
         </Link>
       </div>

@@ -71,7 +71,7 @@ function hashValue(value: string) {
 
 export function getAvatarToneClass(seed: string | null | undefined) {
   if (!seed) {
-    return 'bg-slate-950 text-white';
+    return 'bg-[var(--color-surface-overlay)] text-[var(--color-text-primary)]';
   }
 
   return avatarToneClasses[hashValue(seed) % avatarToneClasses.length];

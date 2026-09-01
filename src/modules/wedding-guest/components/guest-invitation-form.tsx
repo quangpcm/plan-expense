@@ -99,11 +99,11 @@ export function GuestInvitationForm({
       ) : null}
 
       <div className="space-y-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
           Thông tin cơ bản
         </p>
         <WeddingGuestIdentityFields onChange={setIdentity} values={identity} />
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-[var(--color-text-muted)]">
           Áp dụng cho khách này trên toàn kế hoạch, không riêng nhóm này.
         </p>
         {duplicateMatches.length > 0 ? (
@@ -114,10 +114,10 @@ export function GuestInvitationForm({
         ) : null}
       </div>
 
-      <div className="h-px bg-slate-200" />
+      <div className="h-px bg-[var(--color-surface-overlay)]" />
 
       <div className="space-y-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
           Thông tin tham dự
         </p>
         <GuestInvitationFields

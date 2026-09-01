@@ -162,7 +162,7 @@ export function TravelActivityForm({
   return (
     <div className="space-y-4">
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
-      <label className="grid gap-2 text-sm text-slate-700">
+      <label className="grid gap-2 text-sm text-[var(--color-text-secondary)]">
         Tiêu đề
         <Input
           onChange={(event) => setTitle(event.target.value)}
@@ -171,7 +171,7 @@ export function TravelActivityForm({
         />
       </label>
 
-      <div className="grid gap-2 text-sm text-slate-700">
+      <div className="grid gap-2 text-sm text-[var(--color-text-secondary)]">
         Danh mục
         <DropdownSelect
           onValueChange={(value) => setCategory(value as TravelActivityCategory)}
@@ -181,7 +181,7 @@ export function TravelActivityForm({
       </div>
 
       <div className="space-y-2">
-        <label className="grid gap-2 text-sm text-slate-700">
+        <label className="grid gap-2 text-sm text-[var(--color-text-secondary)]">
           Địa điểm
           <Input
             onChange={(event) => setLocationName(event.target.value)}
@@ -190,7 +190,7 @@ export function TravelActivityForm({
           />
         </label>
         {isMapUrlVisible ? (
-          <label className="grid gap-2 text-sm text-slate-700">
+          <label className="grid gap-2 text-sm text-[var(--color-text-secondary)]">
             Link bản đồ
             <Input
               onChange={(event) => setLocationMapUrl(event.target.value)}
@@ -200,7 +200,7 @@ export function TravelActivityForm({
           </label>
         ) : (
           <button
-            className="w-fit text-sm font-medium text-[var(--color-primary)] hover:underline"
+            className="w-fit text-sm font-medium text-[var(--color-brand-primary)] hover:underline"
             onClick={() => setIsMapUrlVisible(true)}
             type="button"
           >
@@ -210,11 +210,11 @@ export function TravelActivityForm({
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <label className="grid gap-2 text-sm text-slate-700">
+        <label className="grid gap-2 text-sm text-[var(--color-text-secondary)]">
           Bắt đầu
           <DateTimeInput onChange={(event) => setStartsAt(event.target.value)} value={startsAt} />
         </label>
-        <div className="grid gap-2 text-sm text-slate-700">
+        <div className="grid gap-2 text-sm text-[var(--color-text-secondary)]">
           Thời lượng
           <DropdownSelect
             onValueChange={(value) => setDurationPreset(value as DurationPresetValue)}
@@ -225,13 +225,13 @@ export function TravelActivityForm({
       </div>
 
       {durationPreset === 'custom' ? (
-        <label className="grid gap-2 text-sm text-slate-700">
+        <label className="grid gap-2 text-sm text-[var(--color-text-secondary)]">
           Kết thúc
           <DateTimeInput onChange={(event) => setCustomEndsAt(event.target.value)} value={customEndsAt} />
         </label>
       ) : null}
 
-      <label className="grid gap-2 text-sm text-slate-700">
+      <label className="grid gap-2 text-sm text-[var(--color-text-secondary)]">
         Ghi chú
         <Textarea
           onChange={(event) => setNote(event.target.value)}
@@ -242,13 +242,13 @@ export function TravelActivityForm({
 
       <div className="space-y-2">
         {isAttachmentsVisible ? (
-          <div className="grid gap-2 text-sm text-slate-700">
+          <div className="grid gap-2 text-sm text-[var(--color-text-secondary)]">
             Ảnh đính kèm (vé, QR code, thông tin quan trọng...)
             <AttachmentPicker onChange={setAttachmentDrafts} value={attachmentDrafts} />
           </div>
         ) : (
           <button
-            className="w-fit text-sm font-medium text-[var(--color-primary)] hover:underline"
+            className="w-fit text-sm font-medium text-[var(--color-brand-primary)] hover:underline"
             onClick={() => setIsAttachmentsVisible(true)}
             type="button"
           >

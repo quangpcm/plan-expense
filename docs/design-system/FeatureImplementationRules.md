@@ -22,6 +22,10 @@ retired. Do not reintroduce it for ordinary feature work.
      [ComponentUsage.md](./ComponentUsage.md) for what "correctly stays custom" looks like).
    - `NEW-CAPABILITY-REVIEW` — you believe no existing component/variant/token fits and something
      shared needs to change. Go to the evidence gate below before writing code.
+   Before choosing a color, also classify it as `GENERIC UI`, `BRAND`, `STATUS`, `PRODUCT/DOMAIN`,
+   `DATA VISUALIZATION`, or `INTENTIONAL EXCEPTION`. Generic UI must use semantic roles and be
+   reviewed in both Light and Dark; private `--gp-*` scales and generic `dark:` workarounds are not
+   valid component contracts.
 5. **Implement product logic outside the Design System** — in product composition, hooks,
    services, domain utilities. Never inside `src/shared/components/ui/*`.
 6. **Verify business/permission/data invariants** are unchanged (see
@@ -155,6 +159,10 @@ require:
   reconsidered, say so explicitly rather than silently working around it.
 - Resolving an ambiguous domain rule without product guidance (e.g. an underspecified Debt rule —
   see [ProductSemantics.md](./ProductSemantics.md) "Note on Debt").
+- Accessibility requiring a change that conflicts with an approved product/brand semantic (e.g. a
+  status or Plan-Type color that fails contrast in a role it's newly being used in) — surface it
+  rather than picking a new hex on your own; see the status AA item in
+  [ExceptionsAndDebt.md](./ExceptionsAndDebt.md) for the standing example.
 
 For ordinary local UI composition using existing contracts, continue autonomously — these stop
 conditions are not a license to ask before every small decision.

@@ -104,8 +104,8 @@ export type CategoryIconTone = {
 };
 
 const DEFAULT_ICON_TONE: CategoryIconTone = {
-  iconColor: 'text-slate-600',
-  iconBgColor: 'bg-slate-100',
+  iconColor: 'text-[var(--color-text-secondary)]',
+  iconBgColor: 'bg-[var(--color-surface-subtle)]',
 };
 
 // Curated by hand (not hashed) so the same icon always gets the same, deliberately
@@ -129,8 +129,8 @@ const ICON_TONES: Record<string, CategoryIconTone> = {
   },
 
   Boxes: {
-    iconColor: 'text-slate-600',
-    iconBgColor: 'bg-slate-100',
+    iconColor: 'text-[var(--color-text-secondary)]',
+    iconBgColor: 'bg-[var(--color-surface-subtle)]',
   },
 
   CakeSlice: {
@@ -149,8 +149,8 @@ const ICON_TONES: Record<string, CategoryIconTone> = {
   },
 
   CircleEllipsis: {
-    iconColor: 'text-slate-600',
-    iconBgColor: 'bg-slate-100',
+    iconColor: 'text-[var(--color-text-secondary)]',
+    iconBgColor: 'bg-[var(--color-surface-subtle)]',
   },
 
   ConciergeBell: {
@@ -194,8 +194,8 @@ const ICON_TONES: Record<string, CategoryIconTone> = {
   },
 
   Laptop: {
-    iconColor: 'text-slate-600',
-    iconBgColor: 'bg-slate-100',
+    iconColor: 'text-[var(--color-text-secondary)]',
+    iconBgColor: 'bg-[var(--color-surface-subtle)]',
   },
 
   MailOpen: {
@@ -219,8 +219,8 @@ const ICON_TONES: Record<string, CategoryIconTone> = {
   },
 
   MonitorCog: {
-    iconColor: 'text-slate-600',
-    iconBgColor: 'bg-slate-100',
+    iconColor: 'text-[var(--color-text-secondary)]',
+    iconBgColor: 'bg-[var(--color-surface-subtle)]',
   },
 
   PackageOpen: {
@@ -249,13 +249,13 @@ const ICON_TONES: Record<string, CategoryIconTone> = {
   },
 
   ReceiptText: {
-    iconColor: 'text-slate-600',
-    iconBgColor: 'bg-slate-100',
+    iconColor: 'text-[var(--color-text-secondary)]',
+    iconBgColor: 'bg-[var(--color-surface-subtle)]',
   },
 
   RotateCcw: {
-    iconColor: 'text-slate-600',
-    iconBgColor: 'bg-slate-100',
+    iconColor: 'text-[var(--color-text-secondary)]',
+    iconBgColor: 'bg-[var(--color-surface-subtle)]',
   },
 
   Shirt: {

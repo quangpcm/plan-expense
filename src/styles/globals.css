@@ -326,76 +326,26 @@
   --color-focus-ring: var(--gp-violet-9);
   --color-focus-ring-soft: var(--gp-violet-a5);
 
-  /* Overlay backdrop — LOCKED (Light), unchanged value (already correct —
-     harvested from ResponsiveModal/BottomSheet's existing bg-slate-950/40).
-     Dark value is PROVISIONAL — see the .dark override block below. */
+  /* Overlay backdrop — LOCKED for the production runtime. */
   --color-overlay-backdrop: rgb(2 6 23 / 40%);
 
   /*
    * ==========================================================================
-   * Legacy compatibility aliases
+   * Retained neutral compatibility alias
    * ==========================================================================
-   * Kept working for existing raw-token consumers during migration. Alias
-   * direction is now canonical-semantic → legacy-raw (reversed from the old
-   * Wave 1 layout, which pointed the other way) per
-   * ColorArchitecture.Spec.md §10/§15 — new/touched code should reach for
-   * the semantic tokens above, not these.
+   * Badge neutral is the only verified consumer. Its role is deliberately
+   * narrower than the generic surface/text contract, so it remains private
+   * compatibility until repeated evidence establishes a true semantic tier.
    */
-
-  /* Foundation-compatibility holders: keep their names, values now sourced
-     from Option D via the semantic layer instead of hand-picked hex. */
-  --color-background: var(--color-surface-page);
-  --color-foreground: var(--color-text-primary);
-  --color-surface: var(--color-surface-default);
-  --color-surface-soft: var(--color-surface-subtle);
-  --color-muted: var(--color-text-secondary);
-  /* DEPRECATED compatibility token — text.muted now equals text.secondary's
-     value (see above), so a raw --color-subtle distinct from --color-muted
-     no longer has a real role. Kept resolving for its 18 existing
-     consumers; new code should use --color-text-secondary/--color-text-muted
-     directly. Remove once its consumer count reaches 0. */
-  --color-subtle: var(--color-text-muted);
-  --color-border: var(--color-border-default);
-
-  /* Brand-family compatibility (reversed alias direction — see header comment). */
-  --color-primary: var(--color-brand-primary);
-  --color-primary-hover: var(--color-brand-primary-hover);
-  --color-primary-foreground: var(--color-brand-foreground);
-
-  /* Secondary — intentionally NOT folded into the brand family (spec §18).
-     No dedicated `secondary.*` semantic tier exists yet, so these reference
-     the neutral foundation directly rather than through an intermediate
-     semantic token; Badge's documented `neutral` tone is the reason this
-     stays as-is (ComponentUsage.md — no exact semantic alias needed). */
   --color-secondary: var(--gp-gray-3);
   --color-secondary-foreground: var(--gp-gray-12);
-
-  /*
-   * DEPRECATED — per-consumer migration required (Phase 3/4, not this phase).
-   * --color-accent historically covers at least four different roles (nav
-   * active, link text, focus ring, border-focus) that the new architecture
-   * resolves to different tokens (mostly --color-brand-primary /
-   * --color-text-link / --color-focus-ring / --color-border-focus — see
-   * ColorArchitecture.Spec.md §3/§10/§16). Aliasing it to any single one of
-   * those now would silently change the others' historical meaning and
-   * would visibly recolor AppHeader's nav-active state ahead of its own
-   * migration phase. Frozen at its original literal value on purpose —
-   * zero behavior change for existing consumers until they're triaged
-   * individually.
-   */
-  --color-accent: #3b82f6;
-  --color-accent-soft: #e8f1ff;
-  /* Same status as --color-accent above — 2 existing consumers, unchanged
-     value, pending the same per-consumer triage. */
-  --color-brand-accent: var(--color-accent);
 
   /*
    * ==========================================================================
    * Status / domain palette
    * ==========================================================================
-   * Option D (Violet/Gray) does not own status meaning — preserved exactly
-   * as today. Dark status palette pending approved Radix Green/Amber/Red/Blue
-   * source scales (ColorArchitecture.Spec.md §8/§18) — not invented here.
+   * Option D (Violet/Gray) does not own status meaning. The Dark values below
+   * use the documented Radix Green/Amber/Red/Blue Dark scales.
    */
   --color-success: #059669;
   --color-success-soft: #dff7ec;
@@ -416,6 +366,11 @@
   --color-status-warning-surface: var(--color-warning-soft);
   --color-status-danger: var(--color-danger);
   --color-status-danger-surface: var(--color-danger-soft);
+  /* Solid destructive controls are a real status consumer. Keep their fill
+     distinct from danger text so white foreground remains accessible. */
+  --color-status-danger-fill: #dc2626;
+  --color-status-danger-fill-hover: #b91c1c;
+  --color-status-danger-foreground: #ffffff;
   --color-status-info: var(--color-info);
   --color-status-info-surface: var(--color-info-soft);
 
@@ -518,6 +473,35 @@
   --color-brand-primary: var(--gp-violet-10);
   --color-brand-primary-hover: var(--gp-violet-8);
   --color-brand-primary-active: var(--gp-violet-7);
+
+  /* Status colors retain their meaning in Dark instead of carrying Light's
+     pale surfaces into modal, list, and validation contexts. Values are
+     sourced from Radix Colors' Green, Amber, Red, and Blue Dark scales. */
+  --color-success: #4cc38a;
+  --color-success-soft: #0d281c;
+  --color-warning: #ffca16;
+  --color-warning-soft: #302008;
+  --color-danger: #ff9592;
+  --color-danger-soft: #3b1219;
+  --color-info: #70b8ff;
+  --color-info-soft: #0d2847;
+  --color-income: #4cc38a;
+  --color-income-soft: #0d281c;
+  --color-expense: #ff9592;
+  --color-expense-soft: #3b1219;
+  --color-status-danger-fill: #b54548;
+  --color-status-danger-fill-hover: #8c333a;
+
+  /* Milestone is product-owned, but its generic upcoming/completed surfaces
+     still need to participate in the active theme. */
+  --color-milestone-completed: #0d281c;
+  --color-milestone-completed-border: #16713a;
+  --color-milestone-completed-foreground: #e5fbeb;
+  --color-milestone-completed-muted: #4cc38a;
+  --color-milestone-upcoming: var(--color-surface-default);
+  --color-milestone-upcoming-border: var(--color-border-default);
+  --color-milestone-upcoming-foreground: var(--color-text-primary);
+  --color-milestone-upcoming-muted: var(--color-text-muted);
 
   /* Overlay backdrop — PROVISIONAL — VISUAL PILOT. Spec recommends a range
      (~55–60% opacity, vs. Light's 40%) since the same 40% reads too close

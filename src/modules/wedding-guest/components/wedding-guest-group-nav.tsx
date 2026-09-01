@@ -33,8 +33,8 @@ export function WeddingGuestGroupNav({
           className={cn(
             CHIP_CLASS,
             activeGroupId === null
-              ? 'bg-slate-950 text-white'
-              : 'bg-slate-100 text-slate-600',
+              ? 'bg-[var(--color-brand-primary)] text-[var(--color-brand-foreground)]'
+              : 'bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)]',
           )}
           onClick={() => onSelectGroup(null)}
           type="button"
@@ -46,8 +46,8 @@ export function WeddingGuestGroupNav({
             className={cn(
               CHIP_CLASS,
               activeGroupId === group.id
-                ? 'bg-slate-950 text-white'
-                : 'bg-slate-100 text-slate-600',
+                ? 'bg-[var(--color-brand-primary)] text-[var(--color-brand-foreground)]'
+                : 'bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)]',
             )}
             key={group.id}
             onClick={() => onSelectGroup(group.id)}
@@ -60,7 +60,7 @@ export function WeddingGuestGroupNav({
           <button
             className={cn(
               CHIP_CLASS,
-              'gap-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 lg:gap-2',
+              'gap-1.5 bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-selected)] lg:gap-2',
             )}
             onClick={onManageGroups}
             type="button"

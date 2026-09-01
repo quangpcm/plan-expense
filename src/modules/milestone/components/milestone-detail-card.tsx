@@ -25,11 +25,11 @@ export function MilestoneDetailCard({ milestone }: MilestoneDetailCardProps) {
     milestone.todoCount > 0 ? Math.round((milestone.completedTodoCount / milestone.todoCount) * 100) : 0;
 
   return (
-    <Card className="gap-4 border-slate-200 bg-slate-50 shadow-none">
+    <Card className="gap-4 border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] shadow-none">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-          <h3 className="text-lg font-semibold text-slate-950">{milestone.title}</h3>
-          <p className="text-sm leading-6 text-slate-600">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">{milestone.title}</h3>
+          <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
             {milestone.description || 'Chưa có mô tả cho mốc kế hoạch này.'}
           </p>
         </div>
@@ -48,34 +48,34 @@ export function MilestoneDetailCard({ milestone }: MilestoneDetailCardProps) {
         </Badge>
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl bg-white p-4">
-          <p className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-slate-400">
+        <div className="rounded-2xl bg-[var(--color-surface-default)] p-4">
+          <p className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
             <CalendarDays className="size-3.5" />
             Thời gian
           </p>
-          <p className="mt-2 text-sm font-medium text-slate-900">
+          <p className="mt-2 text-sm font-medium text-[var(--color-text-primary)]">
             {startDate ? formatDate(startDate) : 'Chưa đặt'} - {endDate ? formatDate(endDate) : 'Chưa đặt'}
           </p>
         </div>
-        <div className="rounded-2xl bg-white p-4">
-          <p className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-slate-400">
+        <div className="rounded-2xl bg-[var(--color-surface-default)] p-4">
+          <p className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
             <CircleDollarSign className="size-3.5" />
             Chi tiêu
           </p>
-          <p className="mt-2 text-sm font-medium text-slate-900">{formatCurrency(milestone.totalExpense)}</p>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-2 text-sm font-medium text-[var(--color-text-primary)]">{formatCurrency(milestone.totalExpense)}</p>
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
             {milestone.budgetAmount != null ? `Ngân sách: ${formatCurrency(milestone.budgetAmount)}` : 'Chưa đặt ngân sách'}
           </p>
         </div>
-        <div className="rounded-2xl bg-white p-4">
-          <p className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-slate-400">
+        <div className="rounded-2xl bg-[var(--color-surface-default)] p-4">
+          <p className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
             <ListChecks className="size-3.5" />
             Tiến độ
           </p>
-          <p className="mt-2 text-sm font-medium text-slate-900">
+          <p className="mt-2 text-sm font-medium text-[var(--color-text-primary)]">
             {milestone.completedTodoCount}/{milestone.todoCount} việc
           </p>
-          <p className="mt-1 text-xs text-slate-500">{progress}% hoàn thành</p>
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">{progress}% hoàn thành</p>
         </div>
       </div>
     </Card>

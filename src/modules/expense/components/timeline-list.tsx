@@ -101,7 +101,7 @@ export function TimelineList({
       <div className="space-y-4">
         {!hideMilestoneFilter ? (
           <div className="flex flex-col gap-2 sm:max-w-xs">
-            <label className="text-sm font-medium text-slate-700" htmlFor="timeline-milestone-filter">
+            <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="timeline-milestone-filter">
               Mốc kế hoạch
             </label>
             <DropdownSelect
@@ -116,7 +116,7 @@ export function TimelineList({
           </div>
         ) : null}
         <Card>
-          <p className="text-sm leading-6 text-[var(--color-muted)]">
+          <p className="text-sm leading-6 text-[var(--color-text-muted)]">
             {emptyStateDescription ??
               `Chưa có khoản chi hoặc khoản thu nào${
                 selectedMilestoneId !== 'all' ? ' trong mốc kế hoạch đang chọn' : ''
@@ -148,7 +148,7 @@ export function TimelineList({
     <div className="space-y-5">
       {!hideMilestoneFilter ? (
         <div className="flex flex-col gap-2 sm:max-w-xs">
-          <label className="text-sm font-medium text-slate-700" htmlFor="timeline-milestone-filter">
+          <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor="timeline-milestone-filter">
             Mốc kế hoạch
           </label>
           <DropdownSelect
@@ -169,9 +169,9 @@ export function TimelineList({
 
             <div className="relative flex items-center gap-3 pb-4">
               <span className="flex size-6 shrink-0 items-center justify-center">
-                <span className="size-3 rounded-full bg-[var(--color-primary)] ring-4 ring-[color:color-mix(in_srgb,var(--color-primary)_15%,white)]" />
+                <span className="size-3 rounded-full bg-[var(--color-brand-primary)] ring-4 ring-[color:color-mix(in_srgb,var(--color-brand-primary)_15%,transparent)]" />
               </span>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-primary)]">{day}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-brand-primary)]">{day}</p>
             </div>
 
             <div className="space-y-3">
@@ -231,7 +231,7 @@ function ExpenseTimelineCard({
   const milestone = milestones.find((item) => item.id === expense.milestoneId);
   const spentAt = timestampToDate(expense.spentAt);
   const CategoryIcon = category?.icon ? categoryIcons[category.icon] ?? Tag : Tag;
-  const iconColor = category?.iconColor ?? 'text-slate-600';
+  const iconColor = category?.iconColor ?? 'text-[var(--color-text-secondary)]';
 
   return (
     <div className="relative flex items-start gap-3">
@@ -243,19 +243,19 @@ function ExpenseTimelineCard({
         onClick={() => onSelectExpense(expense)}
         type="button"
       >
-        <Card className="gap-1.5 rounded-2xl border-[var(--color-danger-soft)] bg-[var(--color-surface)] p-4 sm:rounded-[var(--radius-card)] sm:gap-2 sm:p-4 transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
+        <Card className="gap-1.5 rounded-2xl border-[var(--color-danger-soft)] bg-[var(--color-surface-default)] p-4 sm:rounded-[var(--radius-card)] sm:gap-2 sm:p-4 transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
           <div className="flex items-center gap-2">
             <CategoryIcon className={cn('size-4 shrink-0', iconColor)} />
-            <h3 className="text-base font-semibold text-[var(--color-foreground)]">{expense.title}</h3>
+            <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{expense.title}</h3>
           </div>
-          <p className="text-sm text-[var(--color-subtle)]">
-            <span className="font-medium text-[var(--color-muted)]">{paidByLabel}</span> đã trả ·{' '}
-            <span className="font-medium text-[var(--color-muted)]">
+          <p className="text-sm text-[var(--color-text-muted)]">
+            <span className="font-medium text-[var(--color-text-muted)]">{paidByLabel}</span> đã trả ·{' '}
+            <span className="font-medium text-[var(--color-text-muted)]">
               {spentAt ? formatTime(spentAt) : '--:--'}
             </span>
           </p>
           <div className="flex items-center justify-between gap-2 sm:gap-3 sm:pt-1">
-            <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-[var(--color-subtle)] sm:gap-2 sm:text-xs">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-[var(--color-text-muted)] sm:gap-2 sm:text-xs">
               {milestone ? (
                 <>
                   <span className="truncate">{milestone.title}</span>
@@ -317,7 +317,7 @@ function IncomeTimelineCard({
   const milestone = milestones.find((item) => item.id === income.milestoneId);
   const receivedAt = timestampToDate(income.receivedAt);
   const CategoryIcon = category?.icon ? categoryIcons[category.icon] ?? Tag : Tag;
-  const iconColor = category?.iconColor ?? 'text-slate-600';
+  const iconColor = category?.iconColor ?? 'text-[var(--color-text-secondary)]';
 
   return (
     <div className="relative flex items-start gap-3">
@@ -332,16 +332,16 @@ function IncomeTimelineCard({
         <Card className="gap-1.5 rounded-2xl border-[var(--color-income-soft)] bg-[var(--color-income-soft)]/40 p-4 sm:rounded-[var(--radius-card)] sm:gap-2 sm:p-4 transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
           <div className="flex items-center gap-2">
             <CategoryIcon className={cn('size-4 shrink-0', iconColor)} />
-            <h3 className="text-base font-semibold text-[var(--color-foreground)]">{income.title}</h3>
+            <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{income.title}</h3>
           </div>
-          <p className="text-sm text-[var(--color-subtle)]">
-            <span className="font-medium text-[var(--color-muted)]">{contributor?.nickname || 'Không rõ'}</span> đã nạp ·{' '}
-            <span className="font-medium text-[var(--color-muted)]">
+          <p className="text-sm text-[var(--color-text-muted)]">
+            <span className="font-medium text-[var(--color-text-muted)]">{contributor?.nickname || 'Không rõ'}</span> đã nạp ·{' '}
+            <span className="font-medium text-[var(--color-text-muted)]">
               {receivedAt ? formatTime(receivedAt) : '--:--'}
             </span>
           </p>
           <div className="flex items-center justify-between gap-2 sm:gap-3 sm:pt-1">
-            <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-[var(--color-subtle)] sm:gap-2 sm:text-xs">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-[var(--color-text-muted)] sm:gap-2 sm:text-xs">
               {milestone ? <span className="truncate">{milestone.title}</span> : null}
             </div>
             <p className="shrink-0 text-base font-bold text-[var(--color-income)]">

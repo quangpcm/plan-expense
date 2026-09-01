@@ -228,7 +228,7 @@ export function WeddingGuestImportDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/40 px-4 lg:flex">
+    <div className="fixed inset-0 z-40 hidden items-center justify-center bg-[color:color-mix(in_srgb,var(--color-surface-overlay)_40%,transparent)] px-4 lg:flex">
       <input
         accept=".csv,text/csv"
         className="hidden"
@@ -257,16 +257,16 @@ export function WeddingGuestImportDialog({
           {step === 'upload' ? (
             <div className="space-y-4">
               <button
-                className="flex min-h-[240px] w-full flex-col items-center justify-center gap-3 rounded-[28px] border-2 border-dashed border-slate-300 bg-slate-50 text-center"
+                className="flex min-h-[240px] w-full flex-col items-center justify-center gap-3 rounded-[28px] border-2 border-dashed border-[var(--color-border-default)] bg-[var(--color-surface-subtle)] text-center"
                 onClick={() => fileInputRef.current?.click()}
                 type="button"
               >
-                <Upload className="size-8 text-slate-500" />
+                <Upload className="size-8 text-[var(--color-text-muted)]" />
                 <div className="space-y-1">
-                  <p className="text-base font-semibold text-slate-950">
+                  <p className="text-base font-semibold text-[var(--color-text-primary)]">
                     Chọn file CSV khách mời
                   </p>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-[var(--color-text-muted)]">
                     File cần đúng header theo tài liệu import/export guest wedding.
                   </p>
                 </div>
@@ -282,8 +282,8 @@ export function WeddingGuestImportDialog({
 
           {step === 'preview' ? (
             <div className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3">
-                <div className="flex items-center gap-3 text-sm text-slate-600">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[var(--color-surface-subtle)] px-4 py-3">
+                <div className="flex items-center gap-3 text-sm text-[var(--color-text-secondary)]">
                   <FileUp className="size-4" />
                   <span>{fileName}</span>
                 </div>

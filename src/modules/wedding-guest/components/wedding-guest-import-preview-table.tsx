@@ -51,7 +51,7 @@ function GuestDecisionChoice({
   onSelect: () => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3">
+    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] p-3">
       <input
         checked={checked}
         className="mt-1"
@@ -60,10 +60,10 @@ function GuestDecisionChoice({
         type="radio"
       />
       <span className="space-y-1">
-        <span className="block text-sm font-semibold text-slate-950">
+        <span className="block text-sm font-semibold text-[var(--color-text-primary)]">
           {label}
         </span>
-        <span className="block text-xs text-slate-500">{description}</span>
+        <span className="block text-xs text-[var(--color-text-muted)]">{description}</span>
       </span>
     </label>
   );
@@ -93,7 +93,7 @@ export function WeddingGuestImportPreviewTable({
       ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="text-sm text-slate-600">
+        <div className="text-sm text-[var(--color-text-secondary)]">
           {units.length} guest unit cần xem trước
         </div>
         <div className="flex flex-wrap gap-2">
@@ -119,11 +119,11 @@ export function WeddingGuestImportPreviewTable({
       <div className="space-y-3">
         {units.map((unit) => (
           <div
-            className="overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50"
+            className="overflow-hidden rounded-[24px] border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)]"
             key={unit.unitKey}
           >
             <button
-              className="flex w-full items-start justify-between gap-4 bg-white px-4 py-4 text-left"
+              className="flex w-full items-start justify-between gap-4 bg-[var(--color-surface-default)] px-4 py-4 text-left"
               onClick={() =>
                 setExpandedKeys((current) => ({
                   ...current,
@@ -134,7 +134,7 @@ export function WeddingGuestImportPreviewTable({
             >
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-base font-semibold text-slate-950">
+                  <p className="text-base font-semibold text-[var(--color-text-primary)]">
                     {unit.name}
                   </p>
                   <Badge
@@ -153,14 +153,14 @@ export function WeddingGuestImportPreviewTable({
                         : 'Khách mới'}
                   </Badge>
                 </div>
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-[var(--color-text-secondary)]">
                   {getImportIdentitySummary(unit)}
                 </p>
               </div>
               {isExpanded(unit.unitKey) ? (
-                <ChevronDown className="mt-1 size-5 shrink-0 text-slate-500" />
+                <ChevronDown className="mt-1 size-5 shrink-0 text-[var(--color-text-muted)]" />
               ) : (
-                <ChevronRight className="mt-1 size-5 shrink-0 text-slate-500" />
+                <ChevronRight className="mt-1 size-5 shrink-0 text-[var(--color-text-muted)]" />
               )}
             </button>
 
@@ -207,7 +207,7 @@ export function WeddingGuestImportPreviewTable({
                       <div className="space-y-2">
                         {unit.candidateMatches.map((match) => (
                           <div
-                            className="rounded-2xl bg-white px-3 py-2 text-sm text-slate-700"
+                            className="rounded-2xl bg-[var(--color-surface-default)] px-3 py-2 text-sm text-[var(--color-text-secondary)]"
                             key={match.guest.id}
                           >
                             <span className="font-medium">{match.guest.name}</span>{' '}
@@ -226,14 +226,14 @@ export function WeddingGuestImportPreviewTable({
                         'rounded-2xl border p-3',
                         invitation.status === 'invalid'
                           ? 'border-rose-200 bg-rose-50'
-                          : 'border-slate-200 bg-white',
+                          : 'border-[var(--color-border-subtle)] bg-[var(--color-surface-default)]',
                       )}
                       key={invitation.rowKey}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="space-y-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-sm font-semibold text-slate-950">
+                            <p className="text-sm font-semibold text-[var(--color-text-primary)]">
                               {invitation.resolvedGroupName}
                             </p>
                             {invitation.isNewGroup ? (
@@ -252,7 +252,7 @@ export function WeddingGuestImportPreviewTable({
                               <Badge variant="danger">Không hợp lệ</Badge>
                             ) : null}
                           </div>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-[var(--color-text-muted)]">
                             Dòng {invitation.rowNumber} · RSVP {invitation.rsvp}
                             {' · '}
                             {invitation.attendeeCount} người
@@ -266,7 +266,7 @@ export function WeddingGuestImportPreviewTable({
                           </div>
                         ) : null}
                         {invitation.status === 'unchanged' ? (
-                          <div className="flex items-center gap-2 text-sm text-slate-500">
+                          <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
                             <CircleSlash2 className="size-4" />
                             Không cần thao tác
                           </div>

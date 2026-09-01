@@ -42,7 +42,7 @@ function MemberBalanceRowItem({ row }: { row: MemberBalanceRow }) {
 
   return (
     <DataRow
-      className="rounded-2xl border border-slate-200 bg-white px-4"
+      className="rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] px-4"
       leading={
         <Avatar
           className="size-8 text-xs"
@@ -50,7 +50,7 @@ function MemberBalanceRowItem({ row }: { row: MemberBalanceRow }) {
           src={row.avatarUrl ?? null}
         />
       }
-      main={<span className="truncate font-medium text-slate-900">{row.nickname}</span>}
+      main={<span className="truncate font-medium text-[var(--color-text-primary)]">{row.nickname}</span>}
       trailing={
         <div className="flex flex-col items-end">
           <span
@@ -114,7 +114,7 @@ export function SettlementWorkspace({
       <SettlementProgressSummary progress={progress} />
 
       <div className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Cân đối</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Cân đối</h3>
         <div className="grid gap-2">
           {statistic.memberBalances.map((row) => (
             <MemberBalanceRowItem key={row.memberId} row={row} />
@@ -124,7 +124,7 @@ export function SettlementWorkspace({
 
       {suggestions.length > 0 ? (
         <div className="space-y-2">
-          <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Cần đối soát</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Cần đối soát</h3>
           <div className="grid gap-2">
             {suggestions.map((suggestion) => (
               <SettlementSuggestionCard
@@ -143,7 +143,7 @@ export function SettlementWorkspace({
       {settlements.length > 0 ? (
         <div className="space-y-2">
           <button
-            className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 transition hover:text-slate-600"
+            className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)] transition hover:text-[var(--color-text-secondary)]"
             onClick={() => setShowHistory((current) => !current)}
             type="button"
           >
@@ -163,7 +163,7 @@ export function SettlementWorkspace({
       ) : null}
 
       <button
-        className="text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+        className="text-sm font-medium text-[var(--color-brand-primary)] transition hover:text-[var(--color-brand-primary-hover)]"
         onClick={onOpenFullStatistics}
         type="button"
       >

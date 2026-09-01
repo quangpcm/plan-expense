@@ -59,22 +59,22 @@ export function TravelActivityDetail({
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">
               Chi tiết
             </p>
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-surface-subtle)] px-2.5 py-1 text-xs font-medium text-[var(--color-text-secondary)]">
               <CategoryIcon className="size-3.5 shrink-0" />
               {categoryMeta.label}
             </span>
           </div>
-          <h3 className="text-2xl font-semibold text-slate-950">{activity.title}</h3>
-          <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-500">
+          <h3 className="text-2xl font-semibold text-[var(--color-text-primary)]">{activity.title}</h3>
+          <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-[var(--color-text-muted)]">
             {startsAt ? (
               <p className="flex items-center gap-1.5">
-                <CalendarDays className="size-4 shrink-0 text-slate-400" />
+                <CalendarDays className="size-4 shrink-0 text-[var(--color-text-muted)]" />
                 <span>{formatFullDate(startsAt)}</span>
               </p>
             ) : null}
             {timeRangeLabel ? (
               <p className="flex items-center gap-1.5">
-                <Clock3 className="size-4 shrink-0 text-slate-400" />
+                <Clock3 className="size-4 shrink-0 text-[var(--color-text-muted)]" />
                 <span>
                   {timeRangeLabel}
                   {durationLabel ? ` · ${durationLabel}` : ''}
@@ -87,7 +87,7 @@ export function TravelActivityDetail({
           <div className="flex shrink-0 gap-1">
             <button
               aria-label={`Sửa hoạt động ${activity.title}`}
-              className="flex size-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
+              className="flex size-9 items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-surface-subtle)]"
               onClick={() => onEdit(activity)}
               type="button"
             >
@@ -105,16 +105,16 @@ export function TravelActivityDetail({
         ) : null}
       </div>
 
-      <div className="space-y-3 rounded-[24px] bg-slate-50 p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+      <div className="space-y-3 rounded-[24px] bg-[var(--color-surface-subtle)] p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
           Địa điểm
         </p>
         {activity.locationName ? (
-          <p className="flex items-start gap-2 text-sm leading-6 text-slate-700">
-            <MapPinned className="mt-0.5 size-4 shrink-0 text-slate-400" />
+          <p className="flex items-start gap-2 text-sm leading-6 text-[var(--color-text-secondary)]">
+            <MapPinned className="mt-0.5 size-4 shrink-0 text-[var(--color-text-muted)]" />
             {activity.locationMapUrl ? (
               <a
-                className="inline-flex items-center gap-1 font-medium text-[var(--color-primary)] underline decoration-dotted underline-offset-2 hover:decoration-solid"
+                className="inline-flex items-center gap-1 font-medium text-[var(--color-brand-primary)] underline decoration-dotted underline-offset-2 hover:decoration-solid"
                 href={toMapHref(activity.locationMapUrl)}
                 rel="noreferrer"
                 target="_blank"
@@ -127,23 +127,23 @@ export function TravelActivityDetail({
             )}
           </p>
         ) : (
-          <p className="text-sm leading-6 text-slate-500">Chưa có địa điểm cụ thể.</p>
+          <p className="text-sm leading-6 text-[var(--color-text-muted)]">Chưa có địa điểm cụ thể.</p>
         )}
       </div>
 
-      <div className="space-y-4 rounded-[24px] border border-[var(--color-border)] bg-[color:color-mix(in_srgb,var(--color-primary)_4%,white)] p-4">
+      <div className="space-y-4 rounded-[24px] border border-[var(--color-border-default)] bg-[var(--color-brand-subtle)] p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <Coins className="size-4 text-[var(--color-primary)]" />
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              <Coins className="size-4 text-[var(--color-brand-primary)]" />
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
                 Chi phí thực tế
               </p>
             </div>
-            <p className="text-2xl font-semibold text-slate-950">
+            <p className="text-2xl font-semibold text-[var(--color-text-primary)]">
               {formatCurrency(totalSpent)}
             </p>
-            <p className="text-sm leading-6 text-slate-600">
+            <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
               {linkedExpenses.length > 0
                 ? `${linkedExpenses.length} khoản chi đã gắn với activity này.`
                 : 'Chưa có khoản chi.'}
@@ -164,15 +164,15 @@ export function TravelActivityDetail({
 
       {activity.note ? (
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
             Ghi chú
           </p>
-          <p className="text-sm leading-7 text-slate-700">{activity.note}</p>
+          <p className="text-sm leading-7 text-[var(--color-text-secondary)]">{activity.note}</p>
         </div>
       ) : null}
 
       <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
           Đính kèm
         </p>
         <AttachmentGallery attachments={activity.attachments} emptyLabel="Chưa có đính kèm." />

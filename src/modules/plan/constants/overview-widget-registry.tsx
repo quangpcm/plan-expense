@@ -278,38 +278,38 @@ function TravelTripStatusWidget({
   }
 
   return (
-    <Card className="overflow-hidden border-slate-200 bg-[linear-gradient(135deg,rgba(14,165,233,0.12),rgba(255,255,255,0.96)_42%,rgba(15,23,42,0.03))]">
+    <Card className="overflow-hidden border-[var(--color-border-subtle)] bg-[linear-gradient(135deg,rgba(14,165,233,0.12),var(--color-surface-default)_42%,rgba(15,23,42,0.03))]">
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(260px,0.9fr)]">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">
             Chuyến đi
           </p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--color-text-primary)]">
             {title}
           </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">{subtitle}</p>
+          <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">{subtitle}</p>
 
-          <div className="mt-5 flex flex-wrap gap-3 text-sm text-slate-700">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5">
+          <div className="mt-5 flex flex-wrap gap-3 text-sm text-[var(--color-text-secondary)]">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[color:color-mix(in_srgb,var(--color-surface-default)_80%,transparent)] px-3 py-1.5">
               <CalendarDays className="size-4 text-sky-700" />
               {todayLabel}
             </span>
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[color:color-mix(in_srgb,var(--color-surface-default)_80%,transparent)] px-3 py-1.5">
               <Users className="size-4 text-sky-700" />
               {members.length} thành viên
             </span>
           </div>
         </div>
 
-        <div className="rounded-[24px] border border-white/70 bg-white/80 p-4 backdrop-blur">
-          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+        <div className="rounded-[24px] border border-[color:color-mix(in_srgb,var(--color-surface-default)_70%,transparent)] bg-[color:color-mix(in_srgb,var(--color-surface-default)_80%,transparent)] p-4 backdrop-blur">
+          <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
             Hành trình
           </p>
-          <p className="mt-2 flex items-start gap-2 text-sm font-medium text-slate-900">
+          <p className="mt-2 flex items-start gap-2 text-sm font-medium text-[var(--color-text-primary)]">
             <MapPinned className="mt-0.5 size-4 shrink-0 text-sky-700" />
             <span>{locationLabel}</span>
           </p>
-          <p className="mt-3 text-sm leading-6 text-slate-600">
+          <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
             {travelActivities.length > 0
               ? `${travelActivities.length} hoạt động đã được lên lịch cho chuyến đi này.`
               : 'Chưa có hoạt động nào trong lịch trình, bạn có thể bắt đầu từ tab Lịch trình.'}
@@ -358,16 +358,16 @@ function TravelPlanningProgressWidget({
         {currentMilestone ? (
           <div className="space-y-4">
             <button
-              className="block w-full rounded-[24px] border border-slate-200 bg-slate-50/70 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50"
+              className="block w-full rounded-[24px] border border-[var(--color-border-subtle)] bg-[color:color-mix(in_srgb,var(--color-surface-subtle)_70%,transparent)] p-4 text-left transition hover:border-[var(--color-border-default)] hover:bg-[var(--color-surface-subtle)]"
               onClick={() => onSelectUpcomingMilestone(currentMilestone.id)}
               type="button"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                  <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
                     Hiện tại
                   </p>
-                  <p className="mt-1 text-lg font-semibold text-slate-950">
+                  <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">
                     {currentMilestone.title}
                   </p>
                 </div>
@@ -375,17 +375,17 @@ function TravelPlanningProgressWidget({
                   Đang diễn ra
                 </span>
               </div>
-              <p className="mt-3 text-sm text-slate-600">
+              <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
                 {currentMilestone.completedTodoCount}/{currentMilestone.todoCount} công việc · {currentProgress}%
               </p>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--color-surface-subtle)]">
                 <div
                   className="h-full rounded-full bg-sky-600 transition-[width]"
                   style={{ width: `${currentProgress}%` }}
                 />
               </div>
-              <p className="mt-3 text-sm text-slate-600">
-                <span className="font-semibold text-slate-950">
+              <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
+                <span className="font-semibold text-[var(--color-text-primary)]">
                   {formatCompactCurrency(currentMilestone.totalExpense)}
                 </span>{' '}
                 đã chi
@@ -399,12 +399,12 @@ function TravelPlanningProgressWidget({
 
             {nextMilestone ? (
               <button
-                className="block w-full rounded-[24px] border border-dashed border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50"
+                className="block w-full rounded-[24px] border border-dashed border-[var(--color-border-subtle)] p-4 text-left transition hover:border-[var(--color-border-default)] hover:bg-[var(--color-surface-subtle)]"
                 onClick={() => onSelectUpcomingMilestone(nextMilestone.id)}
                 type="button"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+                  <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
                     Tiếp theo
                   </p>
                   {nextCountdown ? (
@@ -418,22 +418,22 @@ function TravelPlanningProgressWidget({
                     </span>
                   ) : null}
                 </div>
-                <p className="mt-2 text-lg font-semibold text-slate-950">
+                <p className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">
                   {nextMilestone.title}
                 </p>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-[var(--color-text-muted)]">
                   {nextCountdown?.dateLabel ?? 'Chưa có ngày bắt đầu'}
                 </p>
-                <p className="mt-3 text-sm text-slate-600">
+                <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
                   {nextMilestone.completedTodoCount}/{nextMilestone.todoCount} công việc · {nextProgress}%
                 </p>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--color-surface-subtle)]">
                   <div
-                    className="h-full rounded-full bg-slate-500 transition-[width]"
+                    className="h-full rounded-full bg-sky-600 transition-[width]"
                     style={{ width: `${nextProgress}%` }}
                   />
                 </div>
-                <p className="mt-3 text-sm text-slate-600">
+                <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
                   {estimatedByMilestoneId[nextMilestone.id]
                     ? `Dự kiến ${formatCompactCurrency(
                         estimatedByMilestoneId[nextMilestone.id] ?? 0,
@@ -442,19 +442,19 @@ function TravelPlanningProgressWidget({
                 </p>
               </button>
             ) : (
-              <div className="rounded-[24px] border border-dashed border-slate-200 px-4 py-4 text-sm leading-6 text-slate-600">
+              <div className="rounded-[24px] border border-dashed border-[var(--color-border-subtle)] px-4 py-4 text-sm leading-6 text-[var(--color-text-secondary)]">
                 Đây là mốc cuối của kế hoạch.
               </div>
             )}
           </div>
         ) : nextMilestone ? (
           <button
-            className="block w-full rounded-[24px] border border-dashed border-slate-200 p-4 text-left transition hover:border-slate-300 hover:bg-slate-50"
+            className="block w-full rounded-[24px] border border-dashed border-[var(--color-border-subtle)] p-4 text-left transition hover:border-[var(--color-border-default)] hover:bg-[var(--color-surface-subtle)]"
             onClick={() => onSelectUpcomingMilestone(nextMilestone.id)}
             type="button"
           >
             <div className="flex items-start justify-between gap-3">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+              <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
                 Mốc tiếp theo
               </p>
               {nextCountdown ? (
@@ -468,22 +468,22 @@ function TravelPlanningProgressWidget({
                 </span>
               ) : null}
             </div>
-            <p className="mt-2 text-lg font-semibold text-slate-950">
+            <p className="mt-2 text-lg font-semibold text-[var(--color-text-primary)]">
               {nextMilestone.title}
             </p>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-[var(--color-text-muted)]">
               {nextCountdown?.dateLabel ?? 'Chưa có ngày bắt đầu'}
             </p>
-            <p className="mt-3 text-sm text-slate-600">
+            <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
               {nextMilestone.completedTodoCount}/{nextMilestone.todoCount} công việc · {nextProgress}%
             </p>
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--color-surface-subtle)]">
               <div
-                className="h-full rounded-full bg-slate-500 transition-[width]"
+                className="h-full rounded-full bg-sky-600 transition-[width]"
                 style={{ width: `${nextProgress}%` }}
               />
             </div>
-            <p className="mt-3 text-sm text-slate-600">
+            <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
               {estimatedByMilestoneId[nextMilestone.id]
                 ? `Dự kiến ${formatCompactCurrency(
                     estimatedByMilestoneId[nextMilestone.id] ?? 0,
@@ -492,14 +492,14 @@ function TravelPlanningProgressWidget({
             </p>
           </button>
         ) : (
-          <p className="text-sm leading-6 text-slate-600">
+          <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
             Các mốc kế hoạch đã hoàn thành.
           </p>
         )}
 
         <div className="flex justify-end">
           <button
-            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-brand-primary)] transition hover:text-[var(--color-brand-primary-hover)]"
             onClick={onOpenPlanningMilestones}
             type="button"
           >
@@ -559,19 +559,19 @@ function TravelAttentionTodosWidget({
 
               return (
                 <button
-                  className="flex w-full items-start justify-between gap-4 rounded-[24px] border border-slate-200 px-4 py-3 text-left transition hover:border-sky-200 hover:bg-sky-50/40"
+                  className="flex w-full items-start justify-between gap-4 rounded-[24px] border border-[var(--color-border-subtle)] px-4 py-3 text-left transition hover:border-sky-200 hover:bg-sky-50/40"
                   key={todo.id}
                   onClick={() => onViewTodo(todo)}
                   type="button"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-950">
+                    <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
                       {todo.title}
                     </p>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-[var(--color-text-muted)]">
                       {assignee ? assignee.nickname : 'Chưa giao người phụ trách'}
                     </p>
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
                       {milestone?.title ?? 'Chưa thuộc milestone nào'}
                     </p>
                   </div>
@@ -585,13 +585,13 @@ function TravelAttentionTodosWidget({
                             ? 'text-amber-700'
                             : urgency === 'warning'
                               ? 'text-sky-700'
-                              : 'text-slate-500',
+                              : 'text-[var(--color-text-muted)]',
                       )}
                     >
                       {dueDate ? formatDueCountdown(dueDate) : 'Chưa có hạn'}
                     </p>
                     {dueDate ? (
-                      <p className="mt-1 text-xs text-slate-400">
+                      <p className="mt-1 text-xs text-[var(--color-text-muted)]">
                         {formatDate(dueDate)}
                       </p>
                     ) : null}
@@ -604,7 +604,7 @@ function TravelAttentionTodosWidget({
 
         <div className="flex justify-end">
           <button
-            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-brand-primary)] transition hover:text-[var(--color-brand-primary-hover)]"
             onClick={onOpenPlanningTodos}
             type="button"
           >
@@ -630,31 +630,31 @@ function PlanSummaryWidget({
   return (
     <Card className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
       <div>
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+        <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
           Trạng thái
         </p>
-        <p className="mt-1 text-lg font-semibold text-slate-950">
+        <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">
           {planStatus === 'completed'
             ? 'Hoàn thành'
             : planStatus === 'closed'
               ? 'Dừng theo dõi'
               : 'Đang hoạt động'}
         </p>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
           {isPlanEnded ? endedAtLabel : 'Đang theo dõi tiến độ'}
         </p>
       </div>
       <div>
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+        <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
           Thành viên
         </p>
-        <p className="mt-1 text-lg font-semibold text-slate-950">
+        <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">
           {members.length}
         </p>
-        <p className="mt-1 text-sm text-slate-500">Đang tham gia kế hoạch</p>
+        <p className="mt-1 text-sm text-[var(--color-text-muted)]">Đang tham gia kế hoạch</p>
       </div>
       <div>
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+        <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
           Tổng thu
         </p>
         <p className="mt-1 text-lg font-semibold text-emerald-700">
@@ -662,10 +662,10 @@ function PlanSummaryWidget({
         </p>
       </div>
       <div>
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+        <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
           Tổng chi
         </p>
-        <p className="mt-1 text-lg font-semibold text-slate-950">
+        <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">
           {formatCurrency(statistic.overview.totalExpense)}
         </p>
       </div>
@@ -740,14 +740,14 @@ function PlanningSnapshotWidget({
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <button
-          className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+          className="rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-subtle)]"
           onClick={onOpenPlanningMilestones}
           type="button"
         >
           Xem tất cả mốc
         </button>
         <button
-          className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+          className="rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-subtle)]"
           onClick={onOpenPlanningTodos}
           type="button"
         >
@@ -769,7 +769,7 @@ function FinanceSummaryWidget({
       <SectionHeading
         action={
           <button
-            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-brand-primary)] transition hover:text-[var(--color-brand-primary-hover)]"
             onClick={onOpenFinance}
             type="button"
           >
@@ -803,24 +803,24 @@ function TravelFinanceKpiRow({ statistic }: { statistic: OverviewRendererProps['
   return (
     <Card className="grid grid-cols-2 gap-4 xl:grid-cols-4">
       <div>
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Tổng chi</p>
-        <p className="mt-1 text-lg font-semibold text-slate-950">
+        <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Tổng chi</p>
+        <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">
           {formatCurrency(statistic.overview.totalExpense)}
         </p>
       </div>
       <div>
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Nạp quỹ</p>
-        <p className="mt-1 text-lg font-semibold text-slate-950">
+        <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Nạp quỹ</p>
+        <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">
           {formatCurrency(statistic.overview.totalIncome)}
         </p>
       </div>
       <div>
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Thành viên</p>
-        <p className="mt-1 text-lg font-semibold text-slate-950">{statistic.overview.memberCount}</p>
+        <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Thành viên</p>
+        <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">{statistic.overview.memberCount}</p>
       </div>
       <div>
-        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Khoản chi</p>
-        <p className="mt-1 text-lg font-semibold text-slate-950">{statistic.overview.expenseCount}</p>
+        <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Khoản chi</p>
+        <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">{statistic.overview.expenseCount}</p>
       </div>
     </Card>
   );
@@ -857,10 +857,10 @@ function TravelMemberBalanceOverviewCard({
 
   return (
     <Card className="gap-3">
-      <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Cân đối thành viên</h3>
+      <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Cân đối thành viên</h3>
       <SettlementProgressSummary progress={progress} />
       <button
-        className="self-end text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+        className="self-end text-sm font-medium text-[var(--color-brand-primary)] transition hover:text-[var(--color-brand-primary-hover)]"
         onClick={onOpenSettlements}
         type="button"
       >
@@ -881,9 +881,9 @@ function TravelCategoryOverviewCard({ statistic }: { statistic: OverviewRenderer
 
   return (
     <Card className="gap-3">
-      <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Chi tiêu theo danh mục</h3>
+      <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Chi tiêu theo danh mục</h3>
       {topRows.length === 0 ? (
-        <p className="text-sm text-slate-600">Chưa có khoản chi nào để phân tích.</p>
+        <p className="text-sm text-[var(--color-text-secondary)]">Chưa có khoản chi nào để phân tích.</p>
       ) : (
         <div className="space-y-3">
           {topRows.map((row) => {
@@ -894,7 +894,7 @@ function TravelCategoryOverviewCard({ statistic }: { statistic: OverviewRenderer
             return (
               <div key={row.categoryId ?? row.categoryName}>
                 <div className="flex items-center justify-between gap-2 text-sm">
-                  <span className="flex min-w-0 items-center gap-2 text-slate-700">
+                  <span className="flex min-w-0 items-center gap-2 text-[var(--color-text-secondary)]">
                     {Icon ? (
                       <span
                         className={cn(
@@ -907,11 +907,11 @@ function TravelCategoryOverviewCard({ statistic }: { statistic: OverviewRenderer
                     ) : null}
                     <span className="truncate">{row.categoryName}</span>
                   </span>
-                  <span className="shrink-0 whitespace-nowrap font-medium text-slate-900">
+                  <span className="shrink-0 whitespace-nowrap font-medium text-[var(--color-text-primary)]">
                     {formatCompactCurrency(row.totalAmount)} · {percent}%
                   </span>
                 </div>
-                <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-surface-subtle)]">
                   <div
                     className="h-full rounded-full"
                     style={{ backgroundColor: color, width: `${percent}%` }}
@@ -921,7 +921,7 @@ function TravelCategoryOverviewCard({ statistic }: { statistic: OverviewRenderer
             );
           })}
           {restCount > 0 ? (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[var(--color-text-muted)]">
               + {restCount} danh mục khác · {formatCompactCurrency(restAmount)}
             </p>
           ) : null}
@@ -952,7 +952,7 @@ function TravelFinanceSummaryWidget({
       <SectionHeading
         action={
           <button
-            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-brand-primary)] transition hover:text-[var(--color-brand-primary-hover)]"
             onClick={onOpenStatistics}
             type="button"
           >
@@ -992,13 +992,13 @@ function TravelFinanceSummaryWidget({
 function MemberSummaryWidget({ members }: OverviewRendererProps) {
   return (
     <Card>
-      <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+      <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
         Thành viên
       </p>
-      <p className="mt-2 text-2xl font-semibold text-slate-950">
+      <p className="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">
         {members.length}
       </p>
-      <p className="mt-2 text-sm leading-6 text-slate-600">
+      <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
         Tổng số người đang tham gia hoặc được gắn với kế hoạch.
       </p>
     </Card>
@@ -1022,7 +1022,7 @@ function TravelItinerarySummaryWidget({
         action={
           onOpenTravelItinerary ? (
             <button
-              className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+              className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-brand-primary)] transition hover:text-[var(--color-brand-primary-hover)]"
               onClick={onOpenTravelItinerary}
               type="button"
             >
@@ -1044,16 +1044,16 @@ function TravelItinerarySummaryWidget({
             <div>
               <div className="flex items-center gap-2">
                 {categoryMeta ? (
-                  <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-[var(--color-surface-subtle)] px-3 py-1 text-xs font-medium text-[var(--color-text-secondary)]">
                     <categoryMeta.icon className="size-3.5" />
                     {categoryMeta.label}
                   </span>
                 ) : null}
               </div>
-              <p className="mt-3 text-xl font-semibold text-slate-950">
+              <p className="mt-3 text-xl font-semibold text-[var(--color-text-primary)]">
                 {nextActivity.title}
               </p>
-              <div className="mt-3 space-y-2 text-sm text-slate-600">
+              <div className="mt-3 space-y-2 text-sm text-[var(--color-text-secondary)]">
                 <p className="flex items-center gap-2">
                   <Clock3 className="size-4 text-sky-700" />
                   {formatDateTime(nextActivity.startsAt.toDate())}
@@ -1070,19 +1070,19 @@ function TravelItinerarySummaryWidget({
             {/* Plain typography, no bordered/filled box — deliberately lower visual weight than
                 the upcoming activity title on the left (text-lg vs. that column's text-xl). */}
             <div className="text-right">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+              <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
                 Tổng lịch trình
               </p>
-              <p className="mt-2 text-lg font-semibold text-slate-700">
+              <p className="mt-2 text-lg font-semibold text-[var(--color-text-secondary)]">
                 {travelActivities.length}
               </p>
-              <p className="mt-1 text-xs leading-5 text-slate-500">
+              <p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">
                 hoạt động đã được ghi nhận cho chuyến đi.
               </p>
             </div>
           </div>
         ) : (
-          <div className="rounded-[24px] border border-dashed border-slate-200 px-4 py-5 text-sm leading-6 text-slate-600">
+          <div className="rounded-[24px] border border-dashed border-[var(--color-border-subtle)] px-4 py-5 text-sm leading-6 text-[var(--color-text-secondary)]">
             Chưa có hoạt động nào trong lịch trình. Bạn có thể thêm hoạt động đầu tiên ở tab Lịch trình.
           </div>
         )}
@@ -1103,7 +1103,7 @@ function DebtSummaryWidget(props: OverviewRendererProps) {
 
   return (
     <Card className="transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
-      <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+      <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
         Khoản vay
       </p>
       {debtTrackingError ? (
@@ -1112,15 +1112,15 @@ function DebtSummaryWidget(props: OverviewRendererProps) {
         <Skeleton className="mt-3 h-20 rounded-2xl" />
       ) : (
         <>
-          <p className="mt-2 text-2xl font-semibold text-slate-950">
+          <p className="mt-2 text-2xl font-semibold text-[var(--color-text-primary)]">
             {formatCompactCurrency(debtTrackingSummary.outstandingAmount)}
           </p>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+          <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
             {debtTrackingSummary.activeCounterpartCount} thành viên còn dư nợ,{' '}
             {debtTrackingSummary.settledCounterpartCount} thành viên đã cân bằng
           </p>
           <button
-            className="mt-3 text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+            className="mt-3 text-sm font-medium text-[var(--color-brand-primary)] transition hover:text-[var(--color-brand-primary-hover)]"
             onClick={onOpenDebtTracking}
             type="button"
           >
@@ -1160,14 +1160,14 @@ function DebtStatusOverviewCard({
 
   return (
     <Card className="transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
-      <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+      <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
         Công nợ hiện tại
       </p>
       <div className="mt-2 space-y-2">
         <div className="flex items-center gap-2">
           <ArrowUp className="size-4 shrink-0 text-[color:var(--color-income)]" />
-          <p className="text-sm text-slate-700">
-            <span className="font-semibold text-slate-950">
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            <span className="font-semibold text-[var(--color-text-primary)]">
               {receivableCount}
             </span>{' '}
             người đang nợ bạn
@@ -1175,8 +1175,8 @@ function DebtStatusOverviewCard({
         </div>
         <div className="flex items-center gap-2">
           <ArrowDown className="size-4 shrink-0 text-[color:var(--color-expense)]" />
-          <p className="text-sm text-slate-700">
-            <span className="font-semibold text-slate-950">{payableCount}</span>{' '}
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            <span className="font-semibold text-[var(--color-text-primary)]">{payableCount}</span>{' '}
             người bạn đang nợ
           </p>
         </div>
@@ -1212,7 +1212,7 @@ function DebtAttentionCard({
 
   return (
     <Card className="transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
-      <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+      <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
         Cần chú ý
       </p>
       <div className="mt-2 space-y-3">
@@ -1222,7 +1222,7 @@ function DebtAttentionCard({
             key={`${item.counterpartyMemberId}:${item.direction}`}
           >
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-slate-900">
+              <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">
                 {resolveCounterpartyName(members, item.counterpartyMemberId)}
               </p>
               <p className="mt-0.5 flex items-center gap-1 text-xs text-[color:var(--color-warning)]">
@@ -1246,7 +1246,7 @@ function DebtAttentionCard({
         ))}
       </div>
       {hiddenCount > 0 ? (
-        <p className="text-xs text-slate-400">+{hiddenCount} khoản khác</p>
+        <p className="text-xs text-[var(--color-text-muted)]">+{hiddenCount} khoản khác</p>
       ) : null}
     </Card>
   );
@@ -1270,11 +1270,11 @@ function DebtRecentActivityCard({
 
   return (
     <Card className="transition hover:-translate-y-0.5 hover:shadow-[0_20px_70px_rgba(23,32,51,0.08)]">
-      <p className="text-xs uppercase tracking-[0.16em] text-slate-400">
+      <p className="text-xs uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
         Hoạt động gần đây
       </p>
       {recentTransactions.length === 0 ? (
-        <p className="mt-2 text-sm text-slate-500">
+        <p className="mt-2 text-sm text-[var(--color-text-muted)]">
           Chưa có giao dịch nào được ghi nhận.
         </p>
       ) : (
@@ -1294,13 +1294,13 @@ function DebtRecentActivityCard({
                 key={transaction.id}
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-slate-900">
+                  <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">
                     {resolveCounterpartyName(
                       members,
                       transaction.counterpartyMemberId,
                     )}
                   </p>
-                  <p className="mt-0.5 text-xs text-slate-500">
+                  <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
                     {categoryLabel} · {formatDate(occurredAt)}
                   </p>
                 </div>
@@ -1321,7 +1321,7 @@ function DebtRecentActivityCard({
         </div>
       )}
       <button
-        className="text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+        className="text-sm font-medium text-[var(--color-brand-primary)] transition hover:text-[var(--color-brand-primary-hover)]"
         onClick={onOpenDebtTracking}
         type="button"
       >

@@ -165,7 +165,7 @@ function EditableMemberRow({
   const nameBlock = (
     <div className="min-w-0 flex-1 space-y-1">
       <div className="flex flex-wrap items-center gap-2">
-        <p className="truncate font-semibold text-slate-950">{member.nickname}</p>
+        <p className="truncate font-semibold text-[var(--color-text-primary)]">{member.nickname}</p>
         <Badge variant="info">{PLAN_ROLE_LABEL[member.role]}</Badge>
         {member.status !== 'active' ? (
           <Badge variant={member.status === 'invited' ? 'info' : 'neutral'}>
@@ -173,7 +173,7 @@ function EditableMemberRow({
           </Badge>
         ) : null}
       </div>
-      <p className="text-sm text-slate-500">{secondaryLine}</p>
+      <p className="text-sm text-[var(--color-text-muted)]">{secondaryLine}</p>
     </div>
   );
 
@@ -207,7 +207,7 @@ function EditableMemberRow({
   ];
 
   const editForm = (
-    <div className="grid gap-3 rounded-[24px] bg-slate-50 p-4">
+    <div className="grid gap-3 rounded-[24px] bg-[var(--color-surface-subtle)] p-4">
       <Input
         onChange={(event) => setNickname(event.target.value)}
         placeholder="Tên hiển thị"

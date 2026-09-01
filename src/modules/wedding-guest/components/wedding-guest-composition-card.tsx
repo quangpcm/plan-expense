@@ -50,14 +50,14 @@ export function WeddingGuestCompositionCard({
     <Card>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <SectionHeading eyebrow="Tổng hợp khách mời" title="Cơ cấu khách mời" />
-        <div className="flex items-center gap-1 rounded-full bg-slate-100 p-1">
+        <div className="flex items-center gap-1 rounded-full bg-[var(--color-surface-subtle)] p-1">
           {TABS.map((tab) => (
             <button
               className={cn(
                 'rounded-full px-3 py-1 text-xs font-medium transition',
                 activeTab === tab.key
-                  ? 'bg-white text-slate-950 shadow-sm'
-                  : 'text-slate-500',
+                  ? 'bg-[var(--color-surface-default)] text-[var(--color-text-primary)] shadow-sm'
+                  : 'text-[var(--color-text-muted)]',
               )}
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
@@ -70,13 +70,13 @@ export function WeddingGuestCompositionCard({
       </div>
 
       {activeTab === 'sideId' ? (
-        <div className="flex items-center gap-1 rounded-full bg-slate-100 p-1 self-start">
+        <div className="flex items-center gap-1 rounded-full bg-[var(--color-surface-subtle)] p-1 self-start">
           <button
             className={cn(
               'rounded-full px-3 py-1 text-xs font-medium transition',
               sideMetric === 'guestCount'
-                ? 'bg-white text-slate-950 shadow-sm'
-                : 'text-slate-500',
+                ? 'bg-[var(--color-surface-default)] text-[var(--color-text-primary)] shadow-sm'
+                : 'text-[var(--color-text-muted)]',
             )}
             onClick={() => setSideMetric('guestCount')}
             type="button"
@@ -87,8 +87,8 @@ export function WeddingGuestCompositionCard({
             className={cn(
               'rounded-full px-3 py-1 text-xs font-medium transition',
               sideMetric === 'moneyGiftTotal'
-                ? 'bg-white text-slate-950 shadow-sm'
-                : 'text-slate-500',
+                ? 'bg-[var(--color-surface-default)] text-[var(--color-text-primary)] shadow-sm'
+                : 'text-[var(--color-text-muted)]',
             )}
             onClick={() => setSideMetric('moneyGiftTotal')}
             type="button"

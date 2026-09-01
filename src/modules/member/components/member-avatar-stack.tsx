@@ -23,7 +23,7 @@ export function MemberAvatarStack({ members, maxVisible = 4 }: MemberAvatarStack
     <div className="flex items-center">
       {visibleMembers.map((member, index) => (
         <Avatar
-          className={cn('size-8 sm:size-9 text-xs ring-2 ring-[var(--color-background)]', index > 0 && '-ml-3')}
+          className={cn('size-8 sm:size-9 text-xs ring-2 ring-[var(--color-surface-page)]', index > 0 && '-ml-3')}
           initials={member.nickname.slice(0, 2).toUpperCase()}
           key={member.id}
           src={member.avatarUrl}
@@ -32,7 +32,7 @@ export function MemberAvatarStack({ members, maxVisible = 4 }: MemberAvatarStack
       {hasOverflow ? (
         <div
           className={cn(
-            'flex size-9 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-semibold text-slate-700 ring-2 ring-[var(--color-background)]',
+            'flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-surface-overlay)] text-xs font-semibold text-[var(--color-text-secondary)] ring-2 ring-[var(--color-surface-page)]',
             visibleMembers.length > 0 && '-ml-3',
           )}
         >

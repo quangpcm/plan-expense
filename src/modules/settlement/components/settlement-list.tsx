@@ -53,22 +53,22 @@ export function SettlementList({
 
         return (
           <DataRow
-            className="rounded-2xl border border-slate-200 bg-white px-4 text-sm"
+            className="rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] px-4 text-sm"
             key={settlement.id}
             leading={
               isCompleted ? (
                 <CheckCircle2 className="size-4 shrink-0 text-[color:var(--color-success)]" />
               ) : (
-                <XCircle className="size-4 shrink-0 text-slate-400" />
+                <XCircle className="size-4 shrink-0 text-[var(--color-text-muted)]" />
               )
             }
             main={
               <div className="flex flex-wrap items-center gap-2">
-                <span className={isCompleted ? 'font-medium text-slate-900' : 'font-medium text-slate-400 line-through'}>
+                <span className={isCompleted ? 'font-medium text-[var(--color-text-primary)]' : 'font-medium text-[var(--color-text-muted)] line-through'}>
                   {fromMember?.nickname || settlement.fromMemberId} {'->'} {toMember?.nickname || settlement.toMemberId}
                 </span>
-                <span className="text-slate-600">{formatCurrency(settlement.amount)}</span>
-                <span className="text-xs text-slate-400">
+                <span className="text-[var(--color-text-secondary)]">{formatCurrency(settlement.amount)}</span>
+                <span className="text-xs text-[var(--color-text-muted)]">
                   {settledAt ? formatDateTime(settledAt) : 'Không rõ thời gian'}
                 </span>
               </div>
@@ -76,7 +76,7 @@ export function SettlementList({
             trailing={
               canCancel && isCompleted ? (
                 <button
-                  className="shrink-0 text-xs font-medium text-slate-500 hover:text-rose-600 disabled:pointer-events-none disabled:opacity-60"
+                  className="shrink-0 text-xs font-medium text-[var(--color-text-muted)] hover:text-rose-600 disabled:pointer-events-none disabled:opacity-60"
                   disabled={isSubmitting}
                   onClick={() => setPendingCancel(settlement)}
                   type="button"
@@ -90,7 +90,7 @@ export function SettlementList({
       })}
       {!showAll && settlements.length > VISIBLE_LIMIT ? (
         <button
-          className="w-fit text-sm font-medium text-[var(--color-primary)] hover:underline"
+          className="w-fit text-sm font-medium text-[var(--color-brand-primary)] hover:underline"
           onClick={() => setShowAll(true)}
           type="button"
         >

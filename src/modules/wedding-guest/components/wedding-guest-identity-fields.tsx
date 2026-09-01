@@ -50,7 +50,7 @@ export function WeddingGuestIdentityFields({
     <div className="space-y-4">
       <div className="space-y-1.5">
         <label
-          className="text-sm font-medium text-slate-700"
+          className="text-sm font-medium text-[var(--color-text-secondary)]"
           htmlFor="wedding-guest-name"
         >
           Tên khách
@@ -67,7 +67,7 @@ export function WeddingGuestIdentityFields({
       </div>
 
       <div className="space-y-1.5">
-        <p className="text-sm font-medium text-slate-700">Phía</p>
+        <p className="text-sm font-medium text-[var(--color-text-secondary)]">Phía</p>
         <DropdownSelect
           onValueChange={(value) =>
             onChange({ ...values, sideId: value as WeddingGuestSideId })
@@ -79,7 +79,7 @@ export function WeddingGuestIdentityFields({
       </div>
 
       <div className="space-y-1.5">
-        <p className="text-sm font-medium text-slate-700">Quan hệ</p>
+        <p className="text-sm font-medium text-[var(--color-text-secondary)]">Quan hệ</p>
         <DropdownSelect
           onValueChange={(value) =>
             onChange({
@@ -94,7 +94,7 @@ export function WeddingGuestIdentityFields({
       </div>
 
       <div className="space-y-1.5">
-        <p className="text-sm font-medium text-slate-700">Khách của</p>
+        <p className="text-sm font-medium text-[var(--color-text-secondary)]">Khách của</p>
         <DropdownSelect
           onValueChange={(value) =>
             onChange({

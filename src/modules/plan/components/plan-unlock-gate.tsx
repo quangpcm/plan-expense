@@ -41,7 +41,7 @@ export function PlanUnlockGate({ secretNumberHash, onUnlock }: PlanUnlockGatePro
 
   return (
     <main
-      className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-6 overflow-y-auto bg-[var(--color-background)] px-4 py-10"
+      className="fixed inset-0 z-[60] flex flex-col items-center justify-center gap-6 overflow-y-auto bg-[var(--color-surface-page)] px-4 py-10"
       style={{
         paddingTop: 'max(2.5rem, env(safe-area-inset-top))',
         paddingBottom: 'max(2.5rem, env(safe-area-inset-bottom))',
@@ -52,8 +52,8 @@ export function PlanUnlockGate({ secretNumberHash, onUnlock }: PlanUnlockGatePro
       </div>
 
       <div className="space-y-1 text-center">
-        <h1 className="text-xl font-semibold text-[var(--color-foreground)]">Kế hoạch này đã được khóa cho bạn</h1>
-        <p className="text-sm leading-6 text-[var(--color-muted)]">Nhập mã bảo mật cá nhân của bạn để tiếp tục.</p>
+        <h1 className="text-xl font-semibold text-[var(--color-text-primary)]">Kế hoạch này đã được khóa cho bạn</h1>
+        <p className="text-sm leading-6 text-[var(--color-text-muted)]">Nhập mã bảo mật cá nhân của bạn để tiếp tục.</p>
       </div>
 
       <PinCodeInput

@@ -55,7 +55,7 @@ export function PasscodeForm({ userId, onClose, onSuccess }: PasscodeFormProps) 
 
   return (
     <div className="space-y-5">
-      <p className="text-center text-sm font-medium text-[var(--color-muted)]">
+      <p className="text-center text-sm font-medium text-[var(--color-text-muted)]">
         {step === 'enter' ? 'Nhập mã bảo mật cá nhân mới' : 'Nhập lại mã để xác nhận'}
       </p>
 

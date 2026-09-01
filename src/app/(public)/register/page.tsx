@@ -61,7 +61,7 @@ export default function RegisterPage() {
       footer={
         <>
           Đã có tài khoản?{' '}
-          <Link className="font-semibold text-sky-700" href={appRoutes.login}>
+          <Link className="font-semibold text-[var(--color-text-link)]" href={appRoutes.login}>
             Đăng nhập
           </Link>
         </>
@@ -69,25 +69,25 @@ export default function RegisterPage() {
     >
       <form className="space-y-4" onSubmit={onSubmit}>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="displayName">
+          <label className="text-sm font-medium text-[var(--color-text-primary)]" htmlFor="displayName">
             Tên hiển thị
           </label>
           <Input id="displayName" placeholder="Tên của bạn" {...register('displayName')} />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="email">
+          <label className="text-sm font-medium text-[var(--color-text-primary)]" htmlFor="email">
             Email
           </label>
           <Input id="email" placeholder="ban@example.com" {...register('email')} />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="password">
+          <label className="text-sm font-medium text-[var(--color-text-primary)]" htmlFor="password">
             Mật khẩu
           </label>
           <Input id="password" type="password" placeholder="Tối thiểu 6 ký tự" {...register('password')} />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor="confirmPassword">
+          <label className="text-sm font-medium text-[var(--color-text-primary)]" htmlFor="confirmPassword">
             Xác nhận mật khẩu
           </label>
           <Input

@@ -10,7 +10,7 @@ export function FirebaseSetupNotice() {
           title="Authentication is scaffolded but not configured yet."
           description="Add your Firebase Web App configuration to .env.local and enable the providers you want to use."
         />
-        <div className="rounded-[24px] bg-slate-100 p-4 text-sm leading-7 text-slate-700">
+        <div className="rounded-[24px] bg-[var(--color-surface-subtle)] p-4 text-sm leading-7 text-[var(--color-text-secondary)]">
           Required values:
           <br />
           NEXT_PUBLIC_FIREBASE_API_KEY
@@ -27,4 +27,3 @@ export function FirebaseSetupNotice() {
     </main>
   );
 }
-

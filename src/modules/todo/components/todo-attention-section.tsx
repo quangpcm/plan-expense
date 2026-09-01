@@ -45,8 +45,8 @@ export function TodoAttentionSection({ plans }: TodoAttentionSectionProps) {
               <BellRing className="size-4" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-[var(--color-foreground)]">Việc cần chú ý</h2>
-              <p className="text-xs leading-5 text-[var(--color-muted)]">Các việc đang trễ hoặc sắp tới hạn.</p>
+              <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Việc cần chú ý</h2>
+              <p className="text-xs leading-5 text-[var(--color-text-muted)]">Các việc đang trễ hoặc sắp tới hạn.</p>
             </div>
           </div>
         </div>
@@ -72,20 +72,20 @@ export function TodoAttentionSection({ plans }: TodoAttentionSectionProps) {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 space-y-1">
-                    <p className="truncate text-sm font-semibold text-[var(--color-foreground)]">{item.todo.title}</p>
-                    <p className="truncate text-xs text-[var(--color-muted)]">{item.plan.planName}</p>
+                    <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">{item.todo.title}</p>
+                    <p className="truncate text-xs text-[var(--color-text-muted)]">{item.plan.planName}</p>
                   </div>
                   <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${tone.badgeClass}`}>
                     {formatDueCountdown(item.dueDate)}
                   </span>
                 </div>
 
-                <div className="mt-3 flex items-center justify-between gap-3 text-xs text-[var(--color-muted)]">
+                <div className="mt-3 flex items-center justify-between gap-3 text-xs text-[var(--color-text-muted)]">
                   <div className="flex min-w-0 items-center gap-1.5">
                     <Clock3 className={`size-3.5 shrink-0 ${tone.iconClass}`} />
                     <span className="truncate">Hạn {formatDate(item.dueDate)}</span>
                   </div>
-                  <ArrowRight className="size-4 shrink-0 text-[var(--color-subtle)]" />
+                  <ArrowRight className="size-4 shrink-0 text-[var(--color-text-muted)]" />
                 </div>
               </Link>
             );

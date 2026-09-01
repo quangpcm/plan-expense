@@ -83,7 +83,7 @@ export function RsvpDonutChart({ breakdown }: RsvpDonutChartProps) {
             cy="60"
             fill="none"
             r={RADIUS}
-            stroke="var(--color-border)"
+            stroke="var(--color-border-default)"
             strokeWidth={STROKE_WIDTH}
           />
           {total > 0
@@ -110,10 +110,10 @@ export function RsvpDonutChart({ breakdown }: RsvpDonutChartProps) {
             : null}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center px-1 text-center">
-          <p className="text-base font-semibold text-slate-950 lg:text-3xl">
+          <p className="text-base font-semibold text-[var(--color-text-primary)] lg:text-3xl">
             {total > 0 ? `${respondedPercent}%` : '—'}
           </p>
-          <p className="text-[10px] font-medium leading-tight text-slate-600 lg:text-sm">
+          <p className="text-[10px] font-medium leading-tight text-[var(--color-text-secondary)] lg:text-sm">
             đã phản hồi
           </p>
         </div>
@@ -125,14 +125,14 @@ export function RsvpDonutChart({ breakdown }: RsvpDonutChartProps) {
             className="flex items-center justify-between gap-2 text-xs lg:text-sm"
             key={segment.key}
           >
-            <span className="flex items-center gap-1.5 text-slate-600 lg:gap-2">
+            <span className="flex items-center gap-1.5 text-[var(--color-text-secondary)] lg:gap-2">
               <segment.icon
                 className="size-3.5 shrink-0 lg:size-4"
                 style={{ color: segment.color }}
               />
               {segment.label}
             </span>
-            <span className="font-semibold text-slate-950">
+            <span className="font-semibold text-[var(--color-text-primary)]">
               {breakdown[segment.key]}
             </span>
           </li>

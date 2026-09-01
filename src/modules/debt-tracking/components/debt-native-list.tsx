@@ -34,8 +34,8 @@ export function DebtNativeList({
 }: DebtNativeListProps) {
   if (ledgers.length === 0) {
     return (
-      <Card className="border-slate-200 bg-slate-50 shadow-none">
-        <p className="text-sm leading-6 text-slate-600">
+      <Card className="border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] shadow-none">
+        <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
           Chưa có khoản nợ nào. Ghi nhận khoản vay đầu tiên để bắt đầu theo dõi.
         </p>
       </Card>
@@ -53,7 +53,7 @@ export function DebtNativeList({
 
         return (
           <Card
-            className={cn('gap-3', isSelected ? 'border-[#0050cb]' : undefined)}
+            className={cn('gap-3', isSelected ? 'border-[var(--color-border-focus)]' : undefined)}
             key={ledger.counterpartyMemberId}
           >
             <button
@@ -70,10 +70,10 @@ export function DebtNativeList({
                     src={counterpart?.avatarUrl ?? null}
                   />
                   <div className="min-w-0">
-                    <p className="truncate text-base font-semibold text-slate-950">
+                    <p className="truncate text-base font-semibold text-[var(--color-text-primary)]">
                       {counterpart?.nickname ?? 'Chưa rõ đối tượng'}
                     </p>
-                    <p className="mt-0.5 text-sm text-slate-500">
+                    <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">
                       {resolveLedgerStatusLabel(ledger)}
                     </p>
                   </div>
@@ -90,13 +90,13 @@ export function DebtNativeList({
                   {formatCompactCurrency(ledger.netPosition)}
                 </p>
               </div>
-              <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
-                <p className="text-xs text-slate-400">
+              <div className="mt-3 flex items-center justify-between border-t border-[var(--color-border-subtle)] pt-3">
+                <p className="text-xs text-[var(--color-text-muted)]">
                   {lastTransactionAt
                     ? `Cập nhật ${formatDate(lastTransactionAt)}`
                     : 'Chưa có ngày'}
                 </p>
-                <ChevronRight className="size-4 shrink-0 text-slate-300" />
+                <ChevronRight className="size-4 shrink-0 text-[var(--color-text-muted)]" />
               </div>
             </button>
           </Card>

@@ -104,7 +104,7 @@ export function FinanceTab({
               </Button>
             ) : (
               <Button
-                className="min-w-0 justify-center border border-[var(--color-income)]/14 bg-[var(--color-income-soft)] px-3 text-[var(--color-income)] hover:bg-[color-mix(in_srgb,var(--color-income-soft)_72%,white)]"
+                className="min-w-0 justify-center border border-[var(--color-income)]/14 bg-[var(--color-income-soft)] px-3 text-[var(--color-income)] hover:bg-[color:color-mix(in_srgb,var(--color-income)_16%,transparent)]"
                 onClick={() => onOpenCreateIncome(selectedMilestoneId ?? '')}
                 variant="secondary"
               >
@@ -117,7 +117,7 @@ export function FinanceTab({
               </Button>
             ) : (
               <Button
-                className="min-w-0 justify-center bg-[color:color-mix(in_srgb,var(--color-primary)_92%,white)] px-3"
+                className="min-w-0 justify-center px-3"
                 onClick={() => onOpenCreateExpense(selectedMilestoneId ?? '')}
               >
                 {expenseActionLabel}
@@ -143,7 +143,7 @@ export function FinanceTab({
                 </Button>
               ) : (
                 <Button
-                  className="min-w-0 justify-center border border-[var(--color-income)]/14 bg-[var(--color-income-soft)] text-[var(--color-income)] hover:bg-[color-mix(in_srgb,var(--color-income-soft)_72%,white)]"
+                  className="min-w-0 justify-center border border-[var(--color-income)]/14 bg-[var(--color-income-soft)] text-[var(--color-income)] hover:bg-[color:color-mix(in_srgb,var(--color-income)_16%,transparent)]"
                   onClick={() => onOpenCreateIncome(selectedMilestoneId ?? '')}
                   variant="secondary"
                 >
@@ -156,7 +156,7 @@ export function FinanceTab({
                 </Button>
               ) : (
                 <Button
-                  className="min-w-0 justify-center bg-[color:color-mix(in_srgb,var(--color-primary)_92%,white)]"
+                  className="min-w-0 justify-center"
                   onClick={() => onOpenCreateExpense(selectedMilestoneId ?? '')}
                 >
                   {expenseActionLabel}
@@ -226,14 +226,14 @@ export function FinanceTab({
               />
             )
           ) : (
-            <Card className="flex min-h-[360px] flex-col items-center justify-center gap-3 border-dashed border-slate-200 bg-slate-50 text-center shadow-none">
-              <div className="flex size-14 items-center justify-center rounded-2xl bg-white text-[var(--color-primary)] shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
+            <Card className="flex min-h-[360px] flex-col items-center justify-center gap-3 border-dashed border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] text-center shadow-none">
+              <div className="flex size-14 items-center justify-center rounded-2xl bg-[var(--color-surface-default)] text-[var(--color-brand-primary)] shadow-[0_12px_32px_rgba(15,23,42,0.06)]">
                 <Receipt className="size-6" />
               </div>
               <div className="space-y-1.5">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">Chi tiết giao dịch</p>
-                <h3 className="text-lg font-semibold text-slate-950">Chưa chọn khoản nào</h3>
-                <p className="max-w-xs text-sm leading-6 text-slate-600">
+                <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">Chưa chọn khoản nào</h3>
+                <p className="max-w-xs text-sm leading-6 text-[var(--color-text-secondary)]">
                   Chọn một khoản chi hoặc khoản thu trong danh sách bên trái để xem đầy đủ thông
                   tin, người tham gia và ảnh đính kèm.
                 </p>

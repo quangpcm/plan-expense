@@ -28,21 +28,21 @@ export const planTypeIcons: Record<PlanType, LucideIcon> = {
 };
 
 export const planTypeGradients: Record<PlanType, string> = {
-  debt: 'bg-gradient-to-br from-amber-100 via-orange-50 to-white',
-  travel: 'bg-gradient-to-br from-sky-100 via-cyan-50 to-white',
-  wedding: 'bg-gradient-to-br from-rose-100 via-pink-50 to-white',
-  saving: 'bg-gradient-to-br from-emerald-100 via-green-50 to-white',
-  birthday: 'bg-gradient-to-br from-amber-100 via-yellow-50 to-white',
-  event: 'bg-gradient-to-br from-violet-100 via-purple-50 to-white',
-  shared_living: 'bg-gradient-to-br from-teal-100 via-emerald-50 to-white',
-  project: 'bg-gradient-to-br from-indigo-100 via-blue-50 to-white',
-  general: 'bg-gradient-to-br from-slate-100 via-slate-50 to-white',
+  debt: 'bg-gradient-to-br from-amber-100 via-orange-50 to-white dark:from-amber-950/60 dark:via-orange-950/30 dark:to-[var(--color-surface-default)]',
+  travel: 'bg-gradient-to-br from-sky-100 via-cyan-50 to-white dark:from-sky-950/60 dark:via-cyan-950/30 dark:to-[var(--color-surface-default)]',
+  wedding: 'bg-gradient-to-br from-rose-100 via-pink-50 to-white dark:from-rose-950/60 dark:via-pink-950/30 dark:to-[var(--color-surface-default)]',
+  saving: 'bg-gradient-to-br from-emerald-100 via-green-50 to-white dark:from-emerald-950/60 dark:via-green-950/30 dark:to-[var(--color-surface-default)]',
+  birthday: 'bg-gradient-to-br from-amber-100 via-yellow-50 to-white dark:from-amber-950/60 dark:via-yellow-950/30 dark:to-[var(--color-surface-default)]',
+  event: 'bg-gradient-to-br from-violet-100 via-purple-50 to-white dark:from-violet-950/60 dark:via-purple-950/30 dark:to-[var(--color-surface-default)]',
+  shared_living: 'bg-gradient-to-br from-teal-100 via-emerald-50 to-white dark:from-teal-950/60 dark:via-emerald-950/30 dark:to-[var(--color-surface-default)]',
+  project: 'bg-gradient-to-br from-indigo-100 via-blue-50 to-white dark:from-indigo-950/60 dark:via-blue-950/30 dark:to-[var(--color-surface-default)]',
+  general: 'bg-gradient-to-br from-[var(--color-surface-subtle)] via-[var(--color-surface-default)] to-[var(--color-surface-default)]',
 };
 
 export const planTypeBadgeColors: Record<PlanType, string> = {
   debt: 'bg-[#8a5a2b]',
-  travel: 'bg-[var(--color-primary)]',
-  saving: 'bg-[var(--color-primary)]',
+  travel: 'bg-[var(--color-brand-primary)]',
+  saving: 'bg-[var(--color-brand-primary)]',
   wedding: 'bg-[#4f5f7f]',
   shared_living: 'bg-[#4f5f7f]',
   birthday: 'bg-[#7c5d3b]',

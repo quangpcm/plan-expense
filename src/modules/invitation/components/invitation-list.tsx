@@ -23,7 +23,7 @@ export function InvitationList({ invitations, canRevoke, isSubmitting, onRevoke 
   if (invitations.length === 0) {
     return (
       <Card>
-        <p className="text-sm leading-6 text-slate-600">Không có lời mời đang chờ.</p>
+        <p className="text-sm leading-6 text-[var(--color-text-secondary)]">Không có lời mời đang chờ.</p>
       </Card>
     );
   }
@@ -32,16 +32,16 @@ export function InvitationList({ invitations, canRevoke, isSubmitting, onRevoke 
     <div className="grid gap-2">
       {invitations.map((invitation) => (
         <DataRow
-          className="rounded-2xl border border-slate-200 px-4"
+          className="rounded-2xl border border-[var(--color-border-subtle)] px-4"
           key={invitation.id}
           main={
             <div className="min-w-0">
               {/* break-words, not truncate: a long invitation email must stay fully readable
                   (may wrap to 2 lines) rather than being clipped mid-address. */}
-              <p className="font-semibold break-words text-slate-950">
+              <p className="font-semibold break-words text-[var(--color-text-primary)]">
                 {invitation.email || 'Liên kết mời'}
               </p>
-              <p className="text-sm text-slate-500">{PLAN_ROLE_LABEL[invitation.role]}</p>
+              <p className="text-sm text-[var(--color-text-muted)]">{PLAN_ROLE_LABEL[invitation.role]}</p>
             </div>
           }
           trailing={

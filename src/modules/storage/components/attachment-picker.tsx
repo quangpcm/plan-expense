@@ -132,19 +132,19 @@ export function AttachmentPicker({
 
       {value.length === 0 ? (
         <button
-          className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#c2c6d8] bg-[#f7f9fb] py-8 text-center disabled:opacity-60"
+          className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--color-border-default)] bg-[var(--color-surface-subtle)] py-8 text-center disabled:opacity-60"
           disabled={disabled || isProcessingFiles}
           onClick={() => setSheetMode('choose')}
           type="button"
         >
-          <Camera className="size-6 text-[#727687]" />
-          <span className="text-sm text-[#727687]">{isProcessingFiles ? 'Đang xử lý ảnh...' : label}</span>
+          <Camera className="size-6 text-[var(--color-text-muted)]" />
+          <span className="text-sm text-[var(--color-text-muted)]">{isProcessingFiles ? 'Đang xử lý ảnh...' : label}</span>
         </button>
       ) : (
         <div className="grid grid-cols-3 gap-2">
           {value.map((draft) => (
             <div
-              className="relative aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-white"
+              className="relative aspect-square overflow-hidden rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-default)]"
               key={draft.id}
             >
               {/* eslint-disable-next-line @next/next/no-img-element -- local object URL / external URL preview, not a static asset */}
@@ -156,7 +156,7 @@ export function AttachmentPicker({
               {!disabled ? (
                 <button
                   aria-label="Xóa ảnh"
-                  className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-slate-950/60 text-white"
+                  className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-[var(--color-overlay-backdrop)] text-white"
                   onClick={() => handleRemove(draft.id)}
                   type="button"
                 >
@@ -167,7 +167,7 @@ export function AttachmentPicker({
           ))}
           {canAddMore && !disabled ? (
             <button
-              className="flex aspect-square items-center justify-center rounded-2xl border-2 border-dashed border-[#c2c6d8] bg-[#f7f9fb] text-[#727687] disabled:opacity-60"
+              className="flex aspect-square items-center justify-center rounded-2xl border-2 border-dashed border-[var(--color-border-default)] bg-[var(--color-surface-subtle)] text-[var(--color-text-muted)] disabled:opacity-60"
               disabled={isProcessingFiles}
               onClick={() => setSheetMode('choose')}
               type="button"
@@ -212,19 +212,19 @@ export function AttachmentPicker({
         ) : (
           <div className="grid gap-2">
             <button
-              className="flex min-h-11 items-center gap-3 rounded-2xl border border-[#c2c6d8] bg-white px-4 py-2 text-sm text-[#191c1e]"
+              className="flex min-h-11 items-center gap-3 rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-4 py-2 text-sm text-[var(--color-text-primary)]"
               onClick={() => fileInputRef.current?.click()}
               type="button"
             >
-              <Camera className="size-4 text-[#727687]" />
+              <Camera className="size-4 text-[var(--color-text-muted)]" />
               Thư viện / Chụp ảnh
             </button>
             <button
-              className="flex min-h-11 items-center gap-3 rounded-2xl border border-[#c2c6d8] bg-white px-4 py-2 text-sm text-[#191c1e]"
+              className="flex min-h-11 items-center gap-3 rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-surface-default)] px-4 py-2 text-sm text-[var(--color-text-primary)]"
               onClick={() => setSheetMode('url')}
               type="button"
             >
-              <Link2 className="size-4 text-[#727687]" />
+              <Link2 className="size-4 text-[var(--color-text-muted)]" />
               Nhập URL ảnh
             </button>
           </div>

@@ -36,14 +36,14 @@ export function WeddingGuestListComposition({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-1 rounded-full bg-slate-100 p-1 self-start">
+      <div className="flex items-center gap-1 rounded-full bg-[var(--color-surface-subtle)] p-1 self-start">
         {TABS.map((tab) => (
           <button
             className={cn(
               'rounded-full px-3 py-1 text-xs font-medium transition',
               activeTab === tab.key
-                ? 'bg-white text-slate-950 shadow-sm'
-                : 'text-slate-500',
+                ? 'bg-[var(--color-surface-default)] text-[var(--color-text-primary)] shadow-sm'
+                : 'text-[var(--color-text-muted)]',
             )}
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}

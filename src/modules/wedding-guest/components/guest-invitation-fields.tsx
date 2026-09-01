@@ -36,7 +36,7 @@ export function GuestInvitationFields({
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <p className="text-sm font-medium text-slate-700">Xác nhận</p>
+          <p className="text-sm font-medium text-[var(--color-text-secondary)]">Xác nhận</p>
           <DropdownSelect
             onValueChange={(value) =>
               onChange({ ...values, rsvp: value as GuestRsvpStatus })
@@ -48,7 +48,7 @@ export function GuestInvitationFields({
 
         <div className="space-y-1.5">
           <label
-            className="text-sm font-medium text-slate-700"
+            className="text-sm font-medium text-[var(--color-text-secondary)]"
             htmlFor="guest-invitation-attendee-count"
           >
             Số người tham dự
@@ -72,13 +72,13 @@ export function GuestInvitationFields({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <label
-            className="text-sm font-medium text-slate-700"
+            className="text-sm font-medium text-[var(--color-text-secondary)]"
             htmlFor="guest-invitation-money-gift"
           >
             Tiền mừng (VNĐ)
           </label>
           <div className="relative">
-            <span className="absolute left-2 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+            <span className="absolute left-2 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--color-surface-subtle)] text-[var(--color-text-muted)]">
               <Wallet className="size-3.5" />
             </span>
             <CurrencyField
@@ -94,7 +94,7 @@ export function GuestInvitationFields({
 
         <div className="space-y-1.5">
           <label
-            className="text-sm font-medium text-slate-700"
+            className="text-sm font-medium text-[var(--color-text-secondary)]"
             htmlFor="guest-invitation-gold-gift"
           >
             Vàng mừng (phân)
@@ -118,7 +118,7 @@ export function GuestInvitationFields({
               value={values.goldGiftAmount}
             />
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-[var(--color-text-muted)]">
             10 phân = 1 chỉ, 10 chỉ = 1 lượng
           </p>
         </div>
@@ -127,7 +127,7 @@ export function GuestInvitationFields({
       {values.goldGiftAmount > 0 ? (
         <div className="space-y-1.5">
           <label
-            className="text-sm font-medium text-slate-700"
+            className="text-sm font-medium text-[var(--color-text-secondary)]"
             htmlFor="guest-invitation-gold-gift-note"
           >
             Ghi chú giá vàng
@@ -145,7 +145,7 @@ export function GuestInvitationFields({
 
       <div className="space-y-1.5">
         <label
-          className="text-sm font-medium text-slate-700"
+          className="text-sm font-medium text-[var(--color-text-secondary)]"
           htmlFor="guest-invitation-note"
         >
           Ghi chú

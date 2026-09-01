@@ -102,7 +102,7 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
       {errorMessage ? <AuthFormMessage message={errorMessage} type="error" /> : null}
       {successMessage ? <AuthFormMessage message={successMessage} type="success" /> : null}
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700" htmlFor={`milestone-title-${milestone?.id ?? 'new'}`}>
+        <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor={`milestone-title-${milestone?.id ?? 'new'}`}>
           Tên mốc kế hoạch
         </label>
         <Input
@@ -113,7 +113,7 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
         />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700" htmlFor={`milestone-description-${milestone?.id ?? 'new'}`}>
+        <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor={`milestone-description-${milestone?.id ?? 'new'}`}>
           Mô tả
         </label>
         <Textarea
@@ -125,7 +125,7 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor={`milestone-start-${milestone?.id ?? 'new'}`}>
+          <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor={`milestone-start-${milestone?.id ?? 'new'}`}>
             Ngày bắt đầu
           </label>
           <DateField
@@ -135,7 +135,7 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
           />
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700" htmlFor={`milestone-end-${milestone?.id ?? 'new'}`}>
+          <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor={`milestone-end-${milestone?.id ?? 'new'}`}>
             Ngày kết thúc
           </label>
           <DateField
@@ -148,7 +148,7 @@ export function MilestoneForm({ plan, currentMember, currentUser, milestone, onS
       <div className="grid gap-3 sm:grid-cols-2">
         {milestone ? (
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700" htmlFor={`milestone-status-${milestone.id}`}>
+            <label className="text-sm font-medium text-[var(--color-text-secondary)]" htmlFor={`milestone-status-${milestone.id}`}>
               Trạng thái
             </label>
             <DropdownSelect

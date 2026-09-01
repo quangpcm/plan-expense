@@ -27,8 +27,8 @@ export function TodoList({
 }: TodoListProps) {
   if (todos.length === 0) {
     return (
-      <Card className="border-slate-200 bg-slate-50 shadow-none">
-        <p className="text-sm leading-6 text-slate-600">{emptyMessage}</p>
+      <Card className="border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] shadow-none">
+        <p className="text-sm leading-6 text-[var(--color-text-secondary)]">{emptyMessage}</p>
       </Card>
     );
   }

@@ -44,38 +44,38 @@ export function ExpenseDetailCard({
     <Card className="gap-5">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold text-slate-950">{expense.title}</h1>
+          <h1 className="text-3xl font-semibold text-[var(--color-text-primary)]">{expense.title}</h1>
           <div className="flex flex-wrap gap-2">
             <Badge variant="neutral">{milestone?.title || 'Không rõ mốc'}</Badge>
             <Badge variant="info">{category?.name || 'Không có danh mục'}</Badge>
             <Badge>{expense.splitMethod}</Badge>
           </div>
         </div>
-        <p className="text-2xl font-semibold text-slate-950">{formatCurrency(expense.amount)}</p>
+        <p className="text-2xl font-semibold text-[var(--color-text-primary)]">{formatCurrency(expense.amount)}</p>
       </div>
-      <div className="space-y-2 rounded-[24px] bg-slate-50 p-4 text-sm">
-        <div className="flex items-center gap-2 text-slate-800">
-          <User className="size-4 shrink-0 text-slate-400" />
+      <div className="space-y-2 rounded-[24px] bg-[var(--color-surface-subtle)] p-4 text-sm">
+        <div className="flex items-center gap-2 text-[var(--color-text-primary)]">
+          <User className="size-4 shrink-0 text-[var(--color-text-muted)]" />
           <span>
             <span className="font-medium">{paidByLabel}</span> đã trả ·{' '}
             {spentAt ? formatDateTime(spentAt) : 'Không rõ'}
           </span>
         </div>
-        <div className="flex items-center gap-2 text-slate-500">
-          <UserRoundPlus className="size-4 shrink-0 text-slate-400" />
+        <div className="flex items-center gap-2 text-[var(--color-text-muted)]">
+          <UserRoundPlus className="size-4 shrink-0 text-[var(--color-text-muted)]" />
           <span>
             Tạo bởi {createdBy?.nickname || 'Không rõ'} ·{' '}
             {createdAt ? formatDateTime(createdAt) : 'Không rõ'}
           </span>
         </div>
         {isEdited && updatedAt ? (
-          <div className="flex items-center gap-2 text-slate-500">
-            <History className="size-4 shrink-0 text-slate-400" />
+          <div className="flex items-center gap-2 text-[var(--color-text-muted)]">
+            <History className="size-4 shrink-0 text-[var(--color-text-muted)]" />
             <span>Cập nhật lần cuối · {formatDateTime(updatedAt)}</span>
           </div>
         ) : null}
         {expense.activityId ? (
-          <div className="flex items-center gap-2 text-slate-600">
+          <div className="flex items-center gap-2 text-[var(--color-text-secondary)]">
             <ExpenseActivityLink
               expense={expense}
               planId={planId}
@@ -86,7 +86,7 @@ export function ExpenseDetailCard({
         ) : null}
       </div>
       <div className="space-y-3">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Người tham gia</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Người tham gia</p>
         <div className="grid gap-3">
           {expense.participants.map((participant) => {
             const member = members.find((item) => item.id === participant.memberId);
@@ -94,10 +94,10 @@ export function ExpenseDetailCard({
             return (
               <div
                 key={participant.memberId}
-                className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
+                className="flex items-center justify-between rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-default)] px-4 py-3 text-sm"
               >
-                <span className="font-medium text-slate-800">{member?.nickname || participant.memberId}</span>
-                <span className="text-slate-600">
+                <span className="font-medium text-[var(--color-text-primary)]">{member?.nickname || participant.memberId}</span>
+                <span className="text-[var(--color-text-secondary)]">
                   {formatCurrency(participant.amount)}
                   {participant.percentage != null ? ` · ${participant.percentage}%` : null}
                   {participant.shares != null && expense.splitMethod === 'shares'
@@ -110,14 +110,14 @@ export function ExpenseDetailCard({
         </div>
       </div>
       {expense.merchantName || expense.locationName || expense.note ? (
-        <div className="space-y-2 rounded-[24px] bg-slate-50 p-4 text-sm leading-7 text-slate-700">
+        <div className="space-y-2 rounded-[24px] bg-[var(--color-surface-subtle)] p-4 text-sm leading-7 text-[var(--color-text-secondary)]">
           {expense.merchantName ? <div>Cửa hàng / đơn vị: {expense.merchantName}</div> : null}
           {expense.locationName ? <div>Địa điểm: {expense.locationName}</div> : null}
           {expense.note ? <div>Ghi chú: {expense.note}</div> : null}
         </div>
       ) : null}
       <div className="space-y-2">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">Ảnh đính kèm</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Ảnh đính kèm</p>
         <AttachmentGallery attachments={expense.attachments} emptyLabel="Chưa có ảnh đính kèm." />
       </div>
     </Card>

@@ -68,7 +68,7 @@ const GUEST_PREVIEW_LIMIT = 5;
 function ViewAllAction({ onClick }: { onClick: () => void }) {
   return (
     <button
-      className="text-sm font-medium text-[var(--color-primary)] transition hover:text-[color:color-mix(in_srgb,var(--color-primary)_78%,black)]"
+      className="text-sm font-medium text-[var(--color-brand-primary)] transition hover:text-[var(--color-brand-primary-hover)]"
       onClick={onClick}
       type="button"
     >
@@ -740,7 +740,7 @@ export function WeddingGuestPanel({
 
           {rows.length > GUEST_PREVIEW_LIMIT ? (
             <button
-              className="w-full rounded-2xl bg-slate-50 py-2.5 text-sm font-medium text-[var(--color-primary)] transition hover:bg-slate-100"
+              className="w-full rounded-2xl bg-[var(--color-surface-subtle)] py-2.5 text-sm font-medium text-[var(--color-brand-primary)] transition hover:bg-[var(--color-surface-subtle)]"
               onClick={() => setShowGuestListModal(true)}
               type="button"
             >
@@ -780,25 +780,25 @@ export function WeddingGuestPanel({
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <div className="flex flex-col gap-1 rounded-2xl bg-slate-50 p-3">
-              <div className="flex items-center gap-1.5 text-slate-400">
+            <div className="flex flex-col gap-1 rounded-2xl bg-[var(--color-surface-subtle)] p-3">
+              <div className="flex items-center gap-1.5 text-[var(--color-text-muted)]">
                 <UsersRound className="size-3.5" />
                 <p className="text-[10px] uppercase tracking-[0.1em]">
                   Khách mời
                 </p>
               </div>
-              <p className="text-lg font-semibold text-slate-950">
+              <p className="text-lg font-semibold text-[var(--color-text-primary)]">
                 {filteredStat.guestCount}
               </p>
             </div>
-            <div className="flex flex-col gap-1 rounded-2xl bg-slate-50 p-3">
-              <div className="flex items-center gap-1.5 text-slate-400">
+            <div className="flex flex-col gap-1 rounded-2xl bg-[var(--color-surface-subtle)] p-3">
+              <div className="flex items-center gap-1.5 text-[var(--color-text-muted)]">
                 <UserRoundCheck className="size-3.5" />
                 <p className="text-[10px] uppercase tracking-[0.1em]">
                   Dự kiến tham dự
                 </p>
               </div>
-              <p className="text-lg font-semibold text-slate-950">
+              <p className="text-lg font-semibold text-[var(--color-text-primary)]">
                 {filteredStat.attendeeCount}
               </p>
             </div>

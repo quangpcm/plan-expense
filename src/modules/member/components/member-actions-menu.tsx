@@ -26,8 +26,8 @@ function MenuItemButton({ item, onSelect }: { item: MemberActionMenuItem; onSele
   return (
     <button
       className={cn(
-        'flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition hover:bg-slate-100',
-        item.destructive ? 'text-red-600' : 'text-slate-700',
+        'flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition hover:bg-[var(--color-surface-subtle)]',
+        item.destructive ? 'text-red-600' : 'text-[var(--color-text-secondary)]',
       )}
       key={item.key}
       onClick={() => {
@@ -88,7 +88,7 @@ export function MemberActionsMenu({ items, disabled = false, ariaLabel = 'Thêm 
     <div className="relative shrink-0">
       <button
         aria-label={ariaLabel}
-        className="flex size-11 shrink-0 items-center justify-center rounded-full text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex size-11 shrink-0 items-center justify-center rounded-full text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-subtle)] disabled:cursor-not-allowed disabled:opacity-60"
         disabled={disabled}
         onClick={toggleOpen}
         ref={triggerRef}

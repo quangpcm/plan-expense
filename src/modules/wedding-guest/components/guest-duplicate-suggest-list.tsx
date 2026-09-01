@@ -40,12 +40,12 @@ export function GuestDuplicateSuggestList({
       <ul className="space-y-2">
         {items.map(({ guest, level }) => (
           <li
-            className="flex items-center justify-between gap-3 rounded-xl bg-white p-3"
+            className="flex items-center justify-between gap-3 rounded-xl bg-[var(--color-surface-default)] p-3"
             key={guest.id}
           >
             <div className="min-w-0 flex-1 space-y-1">
               <div className="flex items-center gap-2">
-                <p className="truncate text-sm font-semibold text-slate-950">
+                <p className="truncate text-sm font-semibold text-[var(--color-text-primary)]">
                   {guest.name}
                 </p>
                 {level === 'high' ? (
@@ -55,7 +55,7 @@ export function GuestDuplicateSuggestList({
                   <Badge variant="warning">Có khách cùng tên</Badge>
                 ) : null}
               </div>
-              <p className="truncate text-xs text-slate-500">
+              <p className="truncate text-xs text-[var(--color-text-muted)]">
                 {getWeddingGuestSideLabel(guest.sideId)} ·{' '}
                 {getWeddingGuestRelationshipLabel(guest.relationshipId)} ·{' '}
                 {getWeddingGuestInvitedByLabel(guest.invitedById)}
