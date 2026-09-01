@@ -384,12 +384,21 @@ function WeddingMilestoneSnapshotWidget({
     upcomingMilestones[0] ??
     null;
   const nextMilestone = currentMilestone
-    ? visibleMilestones.find(
-        (milestone) =>
-          milestone.id !== currentMilestone.id &&
-          milestone.orderIndex > currentMilestone.orderIndex &&
-          milestone.status !== 'cancelled',
-      ) ?? null
+    ? (() => {
+        const currentAnchorTime = getMilestoneAnchorDate(currentMilestone)?.getTime() ?? 0;
+        return (
+          visibleMilestones
+            .filter(
+              (milestone) =>
+                milestone.id !== currentMilestone.id &&
+                milestone.status !== 'cancelled' &&
+                (getMilestoneAnchorDate(milestone)?.getTime() ?? 0) > currentAnchorTime,
+            )
+            .sort(
+              (a, b) => (getMilestoneAnchorDate(a)?.getTime() ?? 0) - (getMilestoneAnchorDate(b)?.getTime() ?? 0),
+            )[0] ?? null
+        );
+      })()
     : upcomingMilestones[1] ?? null;
 
   return (
