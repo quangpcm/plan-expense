@@ -27,7 +27,7 @@ const CHUNK_SIZE = 450;
 
 export class FirestoreWeddingGuestRepository implements WeddingGuestRepository {
   private buildGuestAndInvitationDocs(
-    input: Omit<CreateWeddingGuestPersistenceInput, 'groupId' | 'rsvp' | 'attendeeCount' | 'moneyGiftAmount' | 'goldGiftAmount' | 'goldGiftNote' | 'note'> & {
+    input: Omit<CreateWeddingGuestPersistenceInput, 'groupId' | 'rsvp' | 'attendeeCount' | 'moneyGiftAmount' | 'goldGiftAmount' | 'goldGiftNote' | 'note' | 'transportArrangement'> & {
       groupId: string;
       rsvp: CreateWeddingGuestPersistenceInput['rsvp'];
       attendeeCount: number;
@@ -35,6 +35,7 @@ export class FirestoreWeddingGuestRepository implements WeddingGuestRepository {
       goldGiftAmount: number | null;
       goldGiftNote: string | null;
       note: string | null;
+      transportArrangement: CreateWeddingGuestPersistenceInput['transportArrangement'];
     },
     guestId?: string,
   ) {
@@ -76,6 +77,7 @@ export class FirestoreWeddingGuestRepository implements WeddingGuestRepository {
         goldGiftAmount: input.goldGiftAmount,
         goldGiftNote: input.goldGiftNote,
         note: input.note,
+        transportArrangement: input.transportArrangement,
         createdByUserId: input.createdByUserId,
         createdAt: now,
         updatedAt: now,
@@ -178,6 +180,7 @@ export class FirestoreWeddingGuestRepository implements WeddingGuestRepository {
           goldGiftAmount: invitation.goldGiftAmount,
           goldGiftNote: invitation.goldGiftNote,
           note: invitation.note,
+          transportArrangement: invitation.transportArrangement,
           createdByUserId: input.createdByUserId,
           createdAt: now,
           updatedAt: now,

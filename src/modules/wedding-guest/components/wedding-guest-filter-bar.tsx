@@ -5,11 +5,15 @@ import { SlidersHorizontal } from 'lucide-react';
 
 import {
   GUEST_RSVP_OPTIONS,
+  GUEST_TRANSPORT_ARRANGEMENT_OPTIONS,
   WEDDING_GUEST_INVITED_BY,
   WEDDING_GUEST_RELATIONSHIPS,
   WEDDING_GUEST_SIDES,
 } from '@/modules/wedding-guest/constants/wedding-guest-presets';
-import type { GuestRsvpStatus } from '@/modules/wedding-guest/types/guest-invitation';
+import type {
+  GuestRsvpStatus,
+  GuestTransportArrangement,
+} from '@/modules/wedding-guest/types/guest-invitation';
 import type {
   WeddingGuestInvitedById,
   WeddingGuestRelationshipId,
@@ -25,6 +29,7 @@ export type WeddingGuestFilters = {
   relationshipId: WeddingGuestRelationshipId | 'all';
   invitedById: WeddingGuestInvitedById | 'all';
   rsvp: GuestRsvpStatus | 'all';
+  transportArrangement: GuestTransportArrangement | 'all';
 };
 
 export const DEFAULT_WEDDING_GUEST_FILTERS: WeddingGuestFilters = {
@@ -32,6 +37,7 @@ export const DEFAULT_WEDDING_GUEST_FILTERS: WeddingGuestFilters = {
   relationshipId: 'all',
   invitedById: 'all',
   rsvp: 'all',
+  transportArrangement: 'all',
 };
 
 const SIDE_OPTIONS = [
@@ -59,6 +65,13 @@ const RSVP_OPTIONS = [
     label: option.label,
   })),
 ];
+const TRANSPORT_ARRANGEMENT_OPTIONS = [
+  { value: 'all', label: 'Tất cả di chuyển' },
+  ...GUEST_TRANSPORT_ARRANGEMENT_OPTIONS.map((option) => ({
+    value: option.id,
+    label: option.label,
+  })),
+];
 
 function isFiltersActive(filters: WeddingGuestFilters) {
   return Object.values(filters).some((value) => value !== 'all');
@@ -69,7 +82,7 @@ type WeddingGuestFilterBarProps = {
   onSearchQueryChange: (value: string) => void;
   filters: WeddingGuestFilters;
   onFiltersChange: (filters: WeddingGuestFilters) => void;
-  showRsvpFilter: boolean;
+  showInvitationFilters: boolean;
 };
 
 export function WeddingGuestFilterBar({
@@ -77,7 +90,7 @@ export function WeddingGuestFilterBar({
   onSearchQueryChange,
   filters,
   onFiltersChange,
-  showRsvpFilter,
+  showInvitationFilters,
 }: WeddingGuestFilterBarProps) {
   const [showFilters, setShowFilters] = useState(false);
   const hasActiveFilters = isFiltersActive(filters);
@@ -114,7 +127,7 @@ export function WeddingGuestFilterBar({
       />
 
       {showFilters ? (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           <DropdownSelect
             onValueChange={(value) =>
               onFiltersChange({
@@ -145,7 +158,7 @@ export function WeddingGuestFilterBar({
             options={INVITED_BY_OPTIONS}
             value={filters.invitedById}
           />
-          {showRsvpFilter ? (
+          {showInvitationFilters ? (
             <DropdownSelect
               onValueChange={(value) =>
                 onFiltersChange({
@@ -155,6 +168,19 @@ export function WeddingGuestFilterBar({
               }
               options={RSVP_OPTIONS}
               value={filters.rsvp}
+            />
+          ) : null}
+          {showInvitationFilters ? (
+            <DropdownSelect
+              onValueChange={(value) =>
+                onFiltersChange({
+                  ...filters,
+                  transportArrangement:
+                    value as WeddingGuestFilters['transportArrangement'],
+                })
+              }
+              options={TRANSPORT_ARRANGEMENT_OPTIONS}
+              value={filters.transportArrangement}
             />
           ) : null}
         </div>

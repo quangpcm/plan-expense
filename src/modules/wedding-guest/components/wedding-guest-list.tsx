@@ -1,9 +1,10 @@
 'use client';
 
-import { Coins, Trash2, UsersRound, Wallet } from 'lucide-react';
+import { Car, Coins, Trash2, UsersRound, Wallet } from 'lucide-react';
 
 import {
   getGuestRsvpLabel,
+  getGuestTransportArrangementLabel,
   getWeddingGuestInvitedByLabel,
   getWeddingGuestRelationshipLabel,
   getWeddingGuestSideLabel,
@@ -95,6 +96,15 @@ export function WeddingGuestList({
                       <span className="flex items-center gap-1.5">
                         <Coins className="size-3.5 text-[var(--color-text-muted)]" />
                         {formatGoldGift(invitation.goldGiftAmount)}
+                      </span>
+                    ) : null}
+                    {invitation.transportArrangement &&
+                    invitation.transportArrangement !== 'undecided' ? (
+                      <span className="flex items-center gap-1.5">
+                        <Car className="size-3.5 text-[var(--color-text-muted)]" />
+                        {getGuestTransportArrangementLabel(
+                          invitation.transportArrangement,
+                        )}
                       </span>
                     ) : null}
                   </div>

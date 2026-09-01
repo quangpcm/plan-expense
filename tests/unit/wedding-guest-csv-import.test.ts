@@ -51,6 +51,7 @@ function makeInvitation(
     goldGiftAmount: null,
     goldGiftNote: null,
     note: null,
+    transportArrangement: 'undecided',
     createdByUserId: 'user-1',
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
@@ -61,10 +62,10 @@ function makeInvitation(
 describe('wedding guest csv import', () => {
   it('parses rows, accepts thousand separators, and reports invalid data', () => {
     const csv = [
-      'Tên Nhóm Khách,Phía,Quan Hệ,Khách của,Tên khách mời,Trạng thái Xác Nhận,Số người dự kiến,Tiền mừng,Vàng mừng,Giá quy đổi vàng,Ghi chú',
-      'Bạn cô dâu,Nhà gái,Bạn bè,Cô dâu,Nguyen Van A,Tham dự,2,"1.500.000",,,"Mang em bé"',
-      'Họ nhà trai,Nhà trai,Họ hàng,Chú rể,Tran Thi B,Không tham dự,1,"250,000",,,',
-      ',Nhà trai,Họ hàng,Chú rể,,Không tham dự,1,abc,,,',
+      'Tên Nhóm Khách,Phía,Quan Hệ,Khách của,Tên khách mời,Trạng thái Xác Nhận,Số người dự kiến,Tiền mừng,Vàng mừng,Giá quy đổi vàng,Ghi chú,Di chuyển',
+      'Bạn cô dâu,Nhà gái,Bạn bè,Cô dâu,Nguyen Van A,Tham dự,2,"1.500.000",,,"Mang em bé",Đi cùng nhà gái',
+      'Họ nhà trai,Nhà trai,Họ hàng,Chú rể,Tran Thi B,Không tham dự,1,"250,000",,,,',
+      ',Nhà trai,Họ hàng,Chú rể,,Không tham dự,1,abc,,,,',
     ].join('\n');
 
     const result = parseWeddingGuestCsv(csv);
@@ -74,9 +75,24 @@ describe('wedding guest csv import', () => {
       attendeeCount: 2,
       moneyGiftAmount: 1500000,
       rsvp: 'attending',
+      transportArrangement: 'bride_side',
     });
     expect(result.rows[1]?.moneyGiftAmount).toBe(250000);
+    expect(result.rows[1]?.transportArrangement).toBe('undecided');
     expect(result.errors).toHaveLength(1);
+  });
+
+  it('rejects an unrecognized transport arrangement label', () => {
+    const csv = [
+      'Tên Nhóm Khách,Phía,Quan Hệ,Khách của,Tên khách mời,Trạng thái Xác Nhận,Số người dự kiến,Tiền mừng,Vàng mừng,Giá quy đổi vàng,Ghi chú,Di chuyển',
+      'Bạn cô dâu,Nhà gái,Bạn bè,Cô dâu,Nguyen Van A,Tham dự,2,1500000,,,,Xe nhà trai',
+    ].join('\n');
+
+    const result = parseWeddingGuestCsv(csv);
+
+    expect(result.rows).toHaveLength(0);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]?.message).toContain('phương tiện di chuyển');
   });
 
   it('builds preview with new/high/name-only matches, new groups, unchanged and sync rows', () => {

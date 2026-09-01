@@ -1,6 +1,7 @@
 import type {
   GuestInvitationDocument,
   GuestRsvpStatus,
+  GuestTransportArrangement,
 } from '@/modules/wedding-guest/types/guest-invitation';
 
 export type AddGuestInvitationPersistenceInput = {
@@ -13,6 +14,7 @@ export type AddGuestInvitationPersistenceInput = {
   goldGiftAmount: number | null;
   goldGiftNote: string | null;
   note: string | null;
+  transportArrangement: GuestTransportArrangement;
   createdByUserId: string;
 };
 
@@ -24,6 +26,7 @@ export type UpdateGuestInvitationPersistenceInput = {
   goldGiftAmount: number | null;
   goldGiftNote: string | null;
   note: string | null;
+  transportArrangement: GuestTransportArrangement;
 };
 
 export type BulkUpsertGuestInvitationPersistenceInput = Array<

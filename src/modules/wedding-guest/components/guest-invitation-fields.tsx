@@ -2,8 +2,14 @@
 
 import { Coins, Wallet } from 'lucide-react';
 
-import { GUEST_RSVP_OPTIONS } from '@/modules/wedding-guest/constants/wedding-guest-presets';
-import type { GuestRsvpStatus } from '@/modules/wedding-guest/types/guest-invitation';
+import {
+  GUEST_RSVP_OPTIONS,
+  GUEST_TRANSPORT_ARRANGEMENT_OPTIONS,
+} from '@/modules/wedding-guest/constants/wedding-guest-presets';
+import type {
+  GuestRsvpStatus,
+  GuestTransportArrangement,
+} from '@/modules/wedding-guest/types/guest-invitation';
 import { CurrencyField } from '@/shared/components/ui/currency-field';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
 import { Input } from '@/shared/components/ui/input';
@@ -14,6 +20,13 @@ const RSVP_OPTIONS = GUEST_RSVP_OPTIONS.map((option) => ({
   label: option.label,
 }));
 
+const TRANSPORT_ARRANGEMENT_OPTIONS = GUEST_TRANSPORT_ARRANGEMENT_OPTIONS.map(
+  (option) => ({
+    value: option.id,
+    label: option.label,
+  }),
+);
+
 export type GuestInvitationFieldValues = {
   rsvp: GuestRsvpStatus;
   attendeeCount: number;
@@ -21,6 +34,7 @@ export type GuestInvitationFieldValues = {
   goldGiftAmount: number;
   goldGiftNote: string;
   note: string;
+  transportArrangement: GuestTransportArrangement;
 };
 
 type GuestInvitationFieldsProps = {
@@ -67,6 +81,22 @@ export function GuestInvitationFields({
             value={values.attendeeCount}
           />
         </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <p className="text-sm font-medium text-[var(--color-text-secondary)]">
+          Di chuyển
+        </p>
+        <DropdownSelect
+          onValueChange={(value) =>
+            onChange({
+              ...values,
+              transportArrangement: value as GuestTransportArrangement,
+            })
+          }
+          options={TRANSPORT_ARRANGEMENT_OPTIONS}
+          value={values.transportArrangement}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-3">

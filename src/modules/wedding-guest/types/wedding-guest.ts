@@ -1,5 +1,7 @@
 import type { Timestamp } from 'firebase/firestore';
 
+import type { GuestTransportArrangement } from '@/modules/wedding-guest/types/guest-invitation';
+
 export type WeddingGuestSideId = 'bride_family' | 'groom_family' | 'shared';
 
 export type WeddingGuestRelationshipId =
@@ -36,6 +38,7 @@ export type CreateWeddingGuestInput = WeddingGuestIdentityInput & {
   goldGiftAmount?: number | undefined;
   goldGiftNote?: string | undefined;
   note?: string | undefined;
+  transportArrangement?: GuestTransportArrangement | undefined;
 };
 
 export type UpdateWeddingGuestInput = WeddingGuestIdentityInput & {

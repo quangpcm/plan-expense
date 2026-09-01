@@ -69,6 +69,7 @@ export class GuestInvitationService {
       goldGiftAmount: toNullableNonNegativeInt(input.goldGiftAmount),
       goldGiftNote: input.goldGiftNote?.trim() || null,
       note: input.note?.trim() || null,
+      transportArrangement: input.transportArrangement ?? 'undecided',
       createdByUserId: currentUser.uid,
     });
   }
@@ -89,6 +90,7 @@ export class GuestInvitationService {
       goldGiftAmount: toNullableNonNegativeInt(input.goldGiftAmount),
       goldGiftNote: input.goldGiftNote?.trim() || null,
       note: input.note?.trim() || null,
+      transportArrangement: input.transportArrangement ?? 'undecided',
     });
   }
 

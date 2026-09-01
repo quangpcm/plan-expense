@@ -48,6 +48,7 @@ function makeInvitation(
     goldGiftAmount: 5,
     goldGiftNote: '15 trieu/chi',
     note: 'An chay',
+    transportArrangement: 'groom_side',
     createdByUserId: 'user-1',
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
@@ -72,6 +73,7 @@ describe('buildWeddingGuestCsv', () => {
           goldGiftAmount: null,
           goldGiftNote: null,
           note: null,
+          transportArrangement: 'undecided',
         }),
       ],
     );
@@ -80,9 +82,25 @@ describe('buildWeddingGuestCsv', () => {
 
     expect(lines[0]).toContain('Tên Nhóm Khách');
     expect(lines[0]).toContain('Trạng thái Xác Nhận');
+    expect(lines[0]).toContain('Di chuyển');
     expect(lines).toHaveLength(3);
     expect(csv).toContain('Bạn cô dâu');
     expect(csv).toContain('Nhà gái');
     expect(csv).toContain('Chưa xác nhận');
+    expect(csv).toContain('Đi cùng nhà trai');
+  });
+
+  it('falls back to "Chưa xác định" for legacy invitations missing transportArrangement', () => {
+    const legacyInvitation = makeInvitation();
+    delete (legacyInvitation as { transportArrangement?: unknown })
+      .transportArrangement;
+
+    const csv = buildWeddingGuestCsv(
+      [makeGuest()],
+      [makeGroup()],
+      [legacyInvitation],
+    );
+
+    expect(csv).toContain('Chưa xác định');
   });
 });

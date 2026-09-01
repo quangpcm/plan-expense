@@ -54,6 +54,7 @@ export class FirestoreGuestInvitationRepository implements GuestInvitationReposi
       goldGiftAmount: input.goldGiftAmount,
       goldGiftNote: input.goldGiftNote,
       note: input.note,
+      transportArrangement: input.transportArrangement,
       createdByUserId: input.createdByUserId,
       createdAt: now,
       updatedAt: now,
@@ -92,6 +93,7 @@ export class FirestoreGuestInvitationRepository implements GuestInvitationReposi
           goldGiftAmount: input.goldGiftAmount,
           goldGiftNote: input.goldGiftNote,
           note: input.note,
+          transportArrangement: input.transportArrangement,
           createdByUserId: input.createdByUserId,
           createdAt: now,
           updatedAt: now,
@@ -104,6 +106,7 @@ export class FirestoreGuestInvitationRepository implements GuestInvitationReposi
           goldGiftAmount: input.goldGiftAmount,
           goldGiftNote: input.goldGiftNote,
           note: input.note,
+          transportArrangement: input.transportArrangement,
           updatedAt: now,
         });
       }
@@ -137,6 +140,7 @@ export class FirestoreGuestInvitationRepository implements GuestInvitationReposi
         goldGiftAmount: input.goldGiftAmount,
         goldGiftNote: input.goldGiftNote,
         note: input.note,
+        transportArrangement: input.transportArrangement,
         updatedAt: Timestamp.now(),
       })
       .commit();

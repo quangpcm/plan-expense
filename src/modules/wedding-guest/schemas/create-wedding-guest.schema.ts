@@ -10,6 +10,9 @@ export const createWeddingGuestSchema = weddingGuestIdentitySchema.extend({
   goldGiftAmount: z.coerce.number().int().nonnegative().optional(),
   goldGiftNote: z.string().trim().max(500).optional().or(z.literal('')),
   note: z.string().trim().max(500).optional().or(z.literal('')),
+  transportArrangement: z
+    .enum(['undecided', 'self_arranged', 'bride_side', 'groom_side'])
+    .default('undecided'),
 });
 
 export type CreateWeddingGuestSchema = z.infer<typeof createWeddingGuestSchema>;

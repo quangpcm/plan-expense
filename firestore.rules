@@ -712,7 +712,8 @@ service cloud.firestore {
         weddingGuestGroupDoc(planId, request.resource.data.groupId).data.planId == planId &&
         request.resource.data.rsvp in ['pending', 'attending', 'not_attending'] &&
         request.resource.data.attendeeCount is int &&
-        request.resource.data.attendeeCount >= 0;
+        request.resource.data.attendeeCount >= 0 &&
+        request.resource.data.transportArrangement in ['self_arranged', 'bride_side', 'groom_side', 'undecided'];
       allow update: if canManageWeddingGuest(planId) &&
         isPlanActive(planId) &&
         request.resource.data.id == resource.data.id &&
@@ -723,7 +724,8 @@ service cloud.firestore {
         request.resource.data.createdAt == resource.data.createdAt &&
         request.resource.data.rsvp in ['pending', 'attending', 'not_attending'] &&
         request.resource.data.attendeeCount is int &&
-        request.resource.data.attendeeCount >= 0;
+        request.resource.data.attendeeCount >= 0 &&
+        request.resource.data.transportArrangement in ['self_arranged', 'bride_side', 'groom_side', 'undecided'];
       allow delete: if canManageWeddingGuest(planId);
     }
 

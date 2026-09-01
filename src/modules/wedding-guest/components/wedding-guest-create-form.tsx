@@ -37,6 +37,7 @@ const DEFAULT_INVITATION_FIELDS: GuestInvitationFieldValues = {
   goldGiftAmount: 0,
   goldGiftNote: '',
   note: '',
+  transportArrangement: 'undecided',
 };
 
 type WeddingGuestCreateFormProps = {

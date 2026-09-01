@@ -3,6 +3,8 @@ import Papa from 'papaparse';
 import {
   getGuestRsvpIdByLabel,
   getGuestRsvpLabel,
+  getGuestTransportArrangementIdByLabel,
+  getGuestTransportArrangementLabel,
   getWeddingGuestInvitedByIdByLabel,
   getWeddingGuestInvitedByLabel,
   getWeddingGuestRelationshipIdByLabel,
@@ -13,6 +15,7 @@ import {
 import type {
   GuestInvitationDocument,
   GuestRsvpStatus,
+  GuestTransportArrangement,
 } from '@/modules/wedding-guest/types/guest-invitation';
 import type {
   ImportGuestUnit,
@@ -38,7 +41,8 @@ type CsvHeaderKey =
   | 'moneyGiftAmount'
   | 'goldGiftAmount'
   | 'goldGiftNote'
-  | 'note';
+  | 'note'
+  | 'transportArrangement';
 
 type RawCsvRow = Record<string, string | undefined>;
 
@@ -54,6 +58,7 @@ const CSV_HEADER_ALIASES: Record<CsvHeaderKey, string[]> = {
   goldGiftAmount: ['Vàng mừng'],
   goldGiftNote: ['Giá quy đổi vàng'],
   note: ['Ghi chú'],
+  transportArrangement: ['Di chuyển'],
 };
 
 function getValueByAlias(row: RawCsvRow, key: CsvHeaderKey): string {
@@ -162,6 +167,21 @@ function buildInvitationDiff(
     });
   }
 
+  const existingTransportArrangement =
+    existingInvitation.transportArrangement ?? 'undecided';
+
+  if (existingTransportArrangement !== row.transportArrangement) {
+    diffs.push({
+      field: 'transportArrangement',
+      currentValue: getGuestTransportArrangementLabel(
+        existingTransportArrangement,
+      ),
+      incomingValue: getGuestTransportArrangementLabel(
+        row.transportArrangement,
+      ),
+    });
+  }
+
   return diffs;
 }
 
@@ -231,6 +251,26 @@ export function parseWeddingGuestCsv(rawText: string): ParsedWeddingGuestCsvResu
           defaultValue: 1,
         }) ?? 1;
 
+      const transportArrangementLabel = getValueByAlias(
+        rawRow,
+        'transportArrangement',
+      );
+      let transportArrangement: GuestTransportArrangement = 'undecided';
+
+      if (transportArrangementLabel) {
+        const parsedTransportArrangement = getGuestTransportArrangementIdByLabel(
+          transportArrangementLabel,
+        );
+
+        if (!parsedTransportArrangement) {
+          throw new Error(
+            `Không nhận diện được phương tiện di chuyển "${transportArrangementLabel}".`,
+          );
+        }
+
+        transportArrangement = parsedTransportArrangement;
+      }
+
       rows.push({
         rowNumber,
         groupNameRaw: groupNameRaw.trim(),
@@ -257,6 +297,7 @@ export function parseWeddingGuestCsv(rawText: string): ParsedWeddingGuestCsvResu
         ),
         goldGiftNote: getValueByAlias(rawRow, 'goldGiftNote') || null,
         note: getValueByAlias(rawRow, 'note') || null,
+        transportArrangement,
       });
     } catch (error) {
       errors.push({
@@ -356,6 +397,7 @@ export function buildImportPreview(
         goldGiftAmount: row.goldGiftAmount,
         goldGiftNote: row.goldGiftNote,
         note: row.note,
+        transportArrangement: row.transportArrangement,
         existingInvitation: null,
         status: 'invalid',
         diff: [],
@@ -388,6 +430,7 @@ export function buildImportPreview(
       goldGiftAmount: row.goldGiftAmount,
       goldGiftNote: row.goldGiftNote,
       note: row.note,
+      transportArrangement: row.transportArrangement,
       existingInvitation,
       status: existingInvitation
         ? diff.length > 0

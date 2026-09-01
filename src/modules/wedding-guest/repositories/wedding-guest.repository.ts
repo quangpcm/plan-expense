@@ -1,4 +1,7 @@
-import type { GuestRsvpStatus } from '@/modules/wedding-guest/types/guest-invitation';
+import type {
+  GuestRsvpStatus,
+  GuestTransportArrangement,
+} from '@/modules/wedding-guest/types/guest-invitation';
 import type {
   WeddingGuestDocument,
   WeddingGuestInvitedById,
@@ -20,6 +23,7 @@ export type CreateWeddingGuestPersistenceInput = {
   goldGiftAmount: number | null;
   goldGiftNote: string | null;
   note: string | null;
+  transportArrangement: GuestTransportArrangement;
   createdByUserId: string;
 };
 

@@ -1,6 +1,7 @@
 import type {
   GuestInvitationDocument,
   GuestRsvpStatus,
+  GuestTransportArrangement,
 } from '@/modules/wedding-guest/types/guest-invitation';
 import type {
   DuplicateGuestMatch,
@@ -46,6 +47,7 @@ export type ParsedWeddingGuestCsvRow = ImportIdentity & {
   goldGiftAmount: number | null;
   goldGiftNote: string | null;
   note: string | null;
+  transportArrangement: GuestTransportArrangement;
 };
 
 export type RowParseError = {
@@ -64,7 +66,8 @@ export type ImportInvitationDiffField =
   | 'moneyGiftAmount'
   | 'goldGiftAmount'
   | 'goldGiftNote'
-  | 'note';
+  | 'note'
+  | 'transportArrangement';
 
 export type ImportInvitationDiff = {
   field: ImportInvitationDiffField;
@@ -85,6 +88,7 @@ export type ImportInvitationRow = {
   goldGiftAmount: number | null;
   goldGiftNote: string | null;
   note: string | null;
+  transportArrangement: GuestTransportArrangement;
   existingInvitation: GuestInvitationDocument | null;
   status: ImportInvitationRowStatus;
   diff: ImportInvitationDiff[];

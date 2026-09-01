@@ -2,6 +2,7 @@ import Papa from 'papaparse';
 
 import {
   getGuestRsvpLabel,
+  getGuestTransportArrangementLabel,
   getWeddingGuestInvitedByLabel,
   getWeddingGuestRelationshipLabel,
   getWeddingGuestSideLabel,
@@ -22,6 +23,7 @@ export const WEDDING_GUEST_CSV_HEADERS = [
   'Vàng mừng',
   'Giá quy đổi vàng',
   'Ghi chú',
+  'Di chuyển',
 ] as const;
 
 type BuildWeddingGuestCsvOptions = {
@@ -65,6 +67,9 @@ export function buildWeddingGuestCsv(
         [WEDDING_GUEST_CSV_HEADERS[8]]: invitation.goldGiftAmount ?? '',
         [WEDDING_GUEST_CSV_HEADERS[9]]: invitation.goldGiftNote ?? '',
         [WEDDING_GUEST_CSV_HEADERS[10]]: invitation.note ?? '',
+        [WEDDING_GUEST_CSV_HEADERS[11]]: getGuestTransportArrangementLabel(
+          invitation.transportArrangement ?? 'undecided',
+        ),
       };
     })
     .filter((row) => Boolean(row));

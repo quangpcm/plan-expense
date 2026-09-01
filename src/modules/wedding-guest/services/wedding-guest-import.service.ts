@@ -158,6 +158,7 @@ export class WeddingGuestImportService {
             goldGiftAmount: toNullableNonNegativeInt(invitation.goldGiftAmount),
             goldGiftNote: invitation.goldGiftNote?.trim() || null,
             note: invitation.note?.trim() || null,
+            transportArrangement: invitation.transportArrangement,
           }));
 
         if (invitationInputs.length > 0) {
@@ -258,6 +259,7 @@ export class WeddingGuestImportService {
         goldGiftAmount: toNullableNonNegativeInt(invitation.goldGiftAmount),
         goldGiftNote: invitation.goldGiftNote?.trim() || null,
         note: invitation.note?.trim() || null,
+        transportArrangement: invitation.transportArrangement,
         createdByUserId,
       };
     }
@@ -275,6 +277,7 @@ export class WeddingGuestImportService {
         goldGiftAmount: toNullableNonNegativeInt(invitation.goldGiftAmount),
         goldGiftNote: invitation.goldGiftNote?.trim() || null,
         note: invitation.note?.trim() || null,
+        transportArrangement: invitation.transportArrangement,
       };
     }
 

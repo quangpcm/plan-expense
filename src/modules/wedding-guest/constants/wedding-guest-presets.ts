@@ -1,3 +1,4 @@
+import type { GuestTransportArrangement } from '@/modules/wedding-guest/types/guest-invitation';
 import type {
   WeddingGuestInvitedById,
   WeddingGuestRelationshipId,
@@ -47,6 +48,16 @@ export const GUEST_RSVP_OPTIONS: Array<{
   { id: 'not_attending', label: 'Không tham dự' },
 ];
 
+export const GUEST_TRANSPORT_ARRANGEMENT_OPTIONS: Array<{
+  id: GuestTransportArrangement;
+  label: string;
+}> = [
+  { id: 'undecided', label: 'Chưa xác định' },
+  { id: 'self_arranged', label: 'Tự túc' },
+  { id: 'bride_side', label: 'Đi cùng nhà gái' },
+  { id: 'groom_side', label: 'Đi cùng nhà trai' },
+];
+
 export function getWeddingGuestSideLabel(sideId: WeddingGuestSideId): string {
   return (
     WEDDING_GUEST_SIDES.find((side) => side.id === sideId)?.label ?? sideId
@@ -76,6 +87,16 @@ export function getGuestRsvpLabel(
   rsvp: 'pending' | 'attending' | 'not_attending',
 ): string {
   return GUEST_RSVP_OPTIONS.find((option) => option.id === rsvp)?.label ?? rsvp;
+}
+
+export function getGuestTransportArrangementLabel(
+  transportArrangement: GuestTransportArrangement,
+): string {
+  return (
+    GUEST_TRANSPORT_ARRANGEMENT_OPTIONS.find(
+      (option) => option.id === transportArrangement,
+    )?.label ?? transportArrangement
+  );
 }
 
 export function getWeddingGuestAttributeLabel(
@@ -134,4 +155,10 @@ export function getGuestRsvpIdByLabel(
   label: string,
 ): 'pending' | 'attending' | 'not_attending' | null {
   return matchNormalizedLabel(GUEST_RSVP_OPTIONS, label);
+}
+
+export function getGuestTransportArrangementIdByLabel(
+  label: string,
+): GuestTransportArrangement | null {
+  return matchNormalizedLabel(GUEST_TRANSPORT_ARRANGEMENT_OPTIONS, label);
 }

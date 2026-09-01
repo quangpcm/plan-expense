@@ -29,6 +29,7 @@ import { WeddingGuestStats } from '@/modules/wedding-guest/components/wedding-gu
 import type { WeddingGuestIdentityValues } from '@/modules/wedding-guest/components/wedding-guest-identity-fields';
 import {
   getGuestRsvpLabel,
+  getGuestTransportArrangementLabel,
   getWeddingGuestInvitedByLabel,
   getWeddingGuestRelationshipLabel,
   getWeddingGuestSideLabel,
@@ -208,6 +209,14 @@ export function WeddingGuestPanel({
             return false;
           }
 
+          if (
+            filters.transportArrangement !== 'all' &&
+            (invitation.transportArrangement ?? 'undecided') !==
+              filters.transportArrangement
+          ) {
+            return false;
+          }
+
           const guest = guestById.get(invitation.guestId);
 
           return guest ? matchesIdentityFilters(guest) : false;
@@ -287,6 +296,12 @@ export function WeddingGuestPanel({
 
     if (activeGroupId && filters.rsvp !== 'all') {
       chips.push(`Xác nhận: ${getGuestRsvpLabel(filters.rsvp)}`);
+    }
+
+    if (activeGroupId && filters.transportArrangement !== 'all') {
+      chips.push(
+        `Di chuyển: ${getGuestTransportArrangementLabel(filters.transportArrangement)}`,
+      );
     }
 
     if (searchQuery.trim()) {
@@ -426,6 +441,7 @@ export function WeddingGuestPanel({
           goldGiftAmount: invitationDetails.goldGiftAmount || undefined,
           goldGiftNote: invitationDetails.goldGiftNote || undefined,
           note: invitationDetails.note || undefined,
+          transportArrangement: invitationDetails.transportArrangement,
         },
         user,
         currentMember,
@@ -572,6 +588,7 @@ export function WeddingGuestPanel({
           goldGiftAmount: values.goldGiftAmount || undefined,
           goldGiftNote: values.goldGiftNote || undefined,
           note: values.note || undefined,
+          transportArrangement: values.transportArrangement,
         },
         currentMember,
       );
@@ -712,7 +729,7 @@ export function WeddingGuestPanel({
             onFiltersChange={setFilters}
             onSearchQueryChange={setSearchQuery}
             searchQuery={searchQuery}
-            showRsvpFilter={activeGroupId !== null}
+            showInvitationFilters={activeGroupId !== null}
           />
 
           {actionError ? (

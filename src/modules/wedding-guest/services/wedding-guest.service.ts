@@ -92,6 +92,7 @@ export class WeddingGuestService {
       goldGiftAmount: toNullableNonNegativeInt(input.goldGiftAmount),
       goldGiftNote: input.goldGiftNote?.trim() || null,
       note: input.note?.trim() || null,
+      transportArrangement: input.transportArrangement ?? 'undecided',
       createdByUserId: currentUser.uid,
     });
   }

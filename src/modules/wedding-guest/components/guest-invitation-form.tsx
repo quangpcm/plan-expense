@@ -55,6 +55,7 @@ export function GuestInvitationForm({
       goldGiftAmount: invitation.goldGiftAmount ?? 0,
       goldGiftNote: invitation.goldGiftNote ?? '',
       note: invitation.note ?? '',
+      transportArrangement: invitation.transportArrangement ?? 'undecided',
     });
 
   const duplicateMatches = useMemo(
