@@ -121,16 +121,25 @@ export function ResponsiveModal({
           Không merge `className` của nơi gọi vào khung ngoài này. Class đó (thường là
           `max-h-[90vh] ... overflow-y-auto`) được viết cho `Dialog.Content` (desktop — không
           có sẵn vùng cuộn riêng nên cần className chỉnh max-height/overflow từ ngoài). Khung
-          Drawer ở đây đã tự quản lý đúng max-height (85vh) + overflow + tách sẵn header/nội
-          dung cuộn riêng — nếu merge className vào sẽ đè mất `max-h-[85vh]`/`overflow-hidden`
-          (tailwind-merge coi `max-h-[85vh]` vs `max-h-[90vh]` là xung đột, giữ cái sau; còn
+          Drawer ở đây đã tự quản lý đúng max-height (70vh) + overflow + tách sẵn header/nội
+          dung cuộn riêng — nếu merge className vào sẽ đè mất `max-h-[70vh]`/`overflow-hidden`
+          (tailwind-merge coi `max-h-[70vh]` vs `max-h-[90vh]` là xung đột, giữ cái sau; còn
           `overflow-hidden` vs `overflow-y-auto` bị giữ lại cả 2, thắng thua tùy thứ tự CSS),
           khiến khung Drawer bị "thổi" cao hơn nội dung thật — đây chính là nguyên nhân khoảng
           trắng dưới đáy sheet trên mobile. Trên mobile Drawer luôn full-width (`inset-x-0`) nên
           phần `max-w-*` của className vốn cũng không có tác dụng gì, không mất gì khi bỏ.
+
+          max-h giữ ở 70vh (không phải 85vh) để tránh ngưỡng nội bộ của vaul
+          (`isTallEnough = drawerHeight > 0.8 * viewportHeight`, xem node_modules/vaul/dist/index.mjs
+          quanh dòng 1125). Khi vượt ngưỡng đó, cơ chế `repositionInputs` mặc định của vaul (co
+          height + đẩy `bottom` theo chiều cao keyboard khi 1 input được focus) sẽ giữ nguyên
+          khoảng cách gốc từ đỉnh màn hình đến sheet (~15% viewport) làm mốc cố định thay vì co
+          về sát đỉnh (~26px) — khiến vùng nhìn thấy của form bị thu hẹp quá mức khi mở keyboard
+          trên mobile, gây khó nhập liệu. Giữ max-h dưới 80vh (đã chừa biên an toàn 10 điểm %)
+          đảm bảo luôn rơi vào nhánh co tối đa, không phải do khoảng trắng ở dòng 128 phía trên.
         */}
         <Drawer.Content
-          className="fixed inset-x-0 bottom-0 z-[var(--z-index-overlay)] flex max-h-[85vh] flex-col overflow-hidden rounded-t-[32px] border border-b-0 border-[var(--color-border-default)] bg-[var(--color-surface-overlay)] p-5 text-[var(--color-text-primary)] shadow-[var(--shadow-overlay)] focus:outline-none"
+          className="fixed inset-x-0 bottom-0 z-[var(--z-index-overlay)] flex max-h-[70vh] flex-col overflow-hidden rounded-t-[32px] border border-b-0 border-[var(--color-border-default)] bg-[var(--color-surface-overlay)] p-5 text-[var(--color-text-primary)] shadow-[var(--shadow-overlay)] focus:outline-none"
           onCloseAutoFocus={restoreFocusToTrigger}
         >
           <Drawer.Close aria-label="Đóng" className={closeButtonClassName}>
