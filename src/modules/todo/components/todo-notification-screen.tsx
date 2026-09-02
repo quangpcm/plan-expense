@@ -1,14 +1,10 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { BellRing, CalendarClock, Clock3, FolderOpen } from 'lucide-react';
+import { CalendarClock, Clock3, FolderOpen } from 'lucide-react';
 
 import type { PlanSummary } from '@/modules/plan/types/plan';
-import {
-  useAttentionTodos,
-  type AttentionBellTone,
-  type AttentionTodo,
-} from '@/modules/todo/hooks/use-attention-todos';
+import { useAttentionTodos, type AttentionTodo } from '@/modules/todo/hooks/use-attention-todos';
 import { priorityLabel } from '@/modules/todo/utils/todo-display';
 import { getTodoUrgencyTone } from '@/modules/todo/utils/todo-urgency';
 import { Button } from '@/shared/components/ui/button';
@@ -22,21 +18,9 @@ type TodoNotificationScreenProps = {
   onClose: () => void;
 };
 
-function getBellToneClass(tone: AttentionBellTone) {
-  if (tone === 'urgent') {
-    return 'bg-rose-100 text-rose-600';
-  }
-
-  if (tone === 'warning') {
-    return 'bg-amber-100 text-amber-600';
-  }
-
-  return 'bg-[var(--color-brand-subtle)] text-[var(--color-brand-primary)]';
-}
-
 export function TodoNotificationScreen({ plans, open, onClose }: TodoNotificationScreenProps) {
   const router = useRouter();
-  const { attentionTodos, errorMessage, isLoading, todayAttentionCount, bellTone } = useAttentionTodos(plans);
+  const { attentionTodos, errorMessage, isLoading, todayAttentionCount } = useAttentionTodos(plans);
 
   function handleOpenTodo(item: AttentionTodo) {
     onClose();
@@ -62,18 +46,6 @@ export function TodoNotificationScreen({ plans, open, onClose }: TodoNotificatio
       title="Việc cần chú ý hôm nay"
     >
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 border-b border-[var(--color-border-subtle)] px-5 py-4 md:px-6 md:py-5">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className={`inline-flex size-11 shrink-0 items-center justify-center rounded-2xl ${getBellToneClass(bellTone)}`}>
-              <BellRing className="size-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-lg font-semibold text-[var(--color-text-primary)]">Việc cần chú ý hôm nay</p>
-              <p className="text-sm leading-6 text-[var(--color-text-secondary)]">{description}</p>
-            </div>
-          </div>
-        </div>
-
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5 pt-4 md:px-6 md:pb-6">
           {errorMessage ? (
             <div className="rounded-[24px] border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-700">
