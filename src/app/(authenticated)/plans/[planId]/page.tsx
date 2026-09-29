@@ -57,6 +57,7 @@ import type {
 import { buildLinkedMemberIdSet } from '@/modules/member/utils/member-linkage';
 import type { ConfigurableModuleId, ModuleAccessLevel } from '@/modules/plan/types/plan-modular';
 import { EditPlanForm } from '@/modules/plan/components/edit-plan-form';
+import { PlanDetailMobileTabs } from '@/modules/plan/components/plan-detail-mobile-tabs';
 import { PlanUnlockGate } from '@/modules/plan/components/plan-unlock-gate';
 import { PLAN_ARCHIVE_RETENTION_DAYS, planTypeOptions } from '@/modules/plan/constants/plan.constants';
 import { planService } from '@/modules/plan/services';
@@ -2292,7 +2293,14 @@ export default function PlanDetailPage() {
       ) : null}
 
       <Card className="gap-4">
-        <div className="flex items-center gap-2">
+        <div className="sm:hidden">
+          <PlanDetailMobileTabs
+            activeTab={activeTab}
+            onSelectTab={(tabId) => openPlanTab(tabId as keyof typeof tabIcons)}
+            tabs={planDetailTabs}
+          />
+        </div>
+        <div className="hidden items-center gap-2 sm:flex">
           {planDetailTabs.map((tab) => {
             const Icon = tabIcons[tab.id];
             const isActive = activeTab === tab.id;
