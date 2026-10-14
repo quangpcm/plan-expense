@@ -1150,6 +1150,111 @@ describe('firestore rules', () => {
     await assertSucceeds(deleteDoc(doc(db, 'plans', 'plan-1', 'milestones', 'milestone-1')));
   });
 
+  it('lets an editor with planning=manage_all move a todo to a different milestone', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), 'plans', 'plan-1', 'members', 'member-editor'), {
+        permissions: { moduleAccess: { planning: 'manage_all' } },
+      });
+      await setDoc(doc(context.firestore(), 'plans', 'plan-1', 'milestones', 'milestone-2'), {
+        id: 'milestone-2',
+        planId: 'plan-1',
+        title: 'Prepare transport',
+        description: null,
+        iconId: null,
+        isSystemHidden: false,
+        startDate: null,
+        endDate: null,
+        status: 'upcoming',
+        orderIndex: 1,
+        budgetAmount: null,
+        totalExpense: 0,
+        todoCount: 0,
+        completedTodoCount: 0,
+        createdByUserId: 'owner-user',
+        createdAt: now,
+        updatedAt: now,
+        completedAt: null,
+        cancelledAt: null,
+      });
+    });
+
+    const db = testEnv.authenticatedContext('editor-user').firestore();
+
+    await assertSucceeds(
+      updateDoc(doc(db, 'plans', 'plan-1', 'todos', 'todo-1'), {
+        milestoneId: 'milestone-2',
+        updatedAt: now,
+      }),
+    );
+
+    // The target milestone still has to resolve inside the same plan and be writable.
+    await assertFails(
+      updateDoc(doc(db, 'plans', 'plan-1', 'todos', 'todo-1'), {
+        milestoneId: 'milestone-missing',
+        updatedAt: now,
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(db, 'plans', 'plan-1', 'todos', 'todo-1'), {
+        milestoneId: 'milestone-hidden',
+        updatedAt: now,
+      }),
+    );
+  });
+
+  it('blocks an editor with planning=manage_own (default) from moving their own todo to another milestone', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'plans', 'plan-1', 'milestones', 'milestone-2'), {
+        id: 'milestone-2',
+        planId: 'plan-1',
+        title: 'Prepare transport',
+        description: null,
+        iconId: null,
+        isSystemHidden: false,
+        startDate: null,
+        endDate: null,
+        status: 'upcoming',
+        orderIndex: 1,
+        budgetAmount: null,
+        totalExpense: 0,
+        todoCount: 0,
+        completedTodoCount: 0,
+        createdByUserId: 'owner-user',
+        createdAt: now,
+        updatedAt: now,
+        completedAt: null,
+        cancelledAt: null,
+      });
+    });
+
+    const db = testEnv.authenticatedContext('editor-user').firestore();
+    await assertSucceeds(
+      setDoc(doc(db, 'plans', 'plan-1', 'todos', 'todo-editor-owned'), {
+        id: 'todo-editor-owned',
+        planId: 'plan-1',
+        milestoneId: 'milestone-1',
+        title: 'Editor task',
+        description: null,
+        assigneeMemberId: 'member-editor',
+        dueDate: null,
+        priority: 'medium',
+        status: 'todo',
+        createdByUserId: 'editor-user',
+        createdAt: now,
+        updatedAt: now,
+        completedAt: null,
+        cancelledAt: null,
+      }),
+    );
+
+    await assertFails(
+      updateDoc(doc(db, 'plans', 'plan-1', 'todos', 'todo-editor-owned'), {
+        milestoneId: 'milestone-2',
+        updatedAt: now,
+      }),
+    );
+  });
+
   it('allows a member with finance=manage_all to edit someone else income too', async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await updateDoc(doc(context.firestore(), 'plans', 'plan-1', 'members', 'member-editor'), {

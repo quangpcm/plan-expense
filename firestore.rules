@@ -751,7 +751,10 @@ service cloud.firestore {
         request.resource.data.planId == resource.data.planId &&
         request.resource.data.createdByUserId == resource.data.createdByUserId &&
         request.resource.data.createdAt == resource.data.createdAt &&
-        request.resource.data.milestoneId == resource.data.milestoneId &&
+        (
+          request.resource.data.milestoneId == resource.data.milestoneId ||
+          canManageAllPlanning(planId)
+        ) &&
         milestoneDoc(planId, request.resource.data.milestoneId).data.planId == planId &&
         milestoneIsWritable(planId, request.resource.data.milestoneId) &&
         request.resource.data.title is string &&
