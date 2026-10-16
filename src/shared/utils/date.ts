@@ -80,6 +80,18 @@ export function formatDateTimePickerDisplay(
   return `${formatTime(date, locale)} ${formatDate(date, locale)}`;
 }
 
+// Dạng rút gọn cho danh sách dày đặc (không có năm), vd "11:05 · 18/08" — khác
+// formatDateTimePickerDisplay ở chỗ bỏ năm và nối bằng dấu giữa thay vì khoảng trắng.
+// Ghép day/month thủ công thay vì Intl.DateTimeFormat vì CLDR 'vi-VN' chỉ dùng dấu "/"
+// khi có year trong options — bỏ year khiến nó tự đổi sang "18-08" (đã verify bằng Node).
+export function formatCompactDateTime(input: DateInput, locale = 'vi-VN') {
+  const date = new Date(input);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+
+  return `${formatTime(date, locale)} · ${day}/${month}`;
+}
+
 const RELATIVE_TIME_DIVISIONS: {
   amount: number;
   unit: Intl.RelativeTimeFormatUnit;

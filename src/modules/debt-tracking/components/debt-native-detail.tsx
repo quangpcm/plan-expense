@@ -49,7 +49,7 @@ import { ConfirmDialog } from '@/shared/components/ui/confirm-dialog';
 import { DateField } from '@/shared/components/ui/date-field';
 import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 import { formatCompactCurrency } from '@/shared/utils/currency';
-import { formatDate, formatDateTimePickerDisplay } from '@/shared/utils/date';
+import { formatCompactDateTime, formatDate } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 import { cn } from '@/shared/utils/cn';
 
@@ -134,7 +134,7 @@ function TransactionRow({
   ];
 
   return (
-    <div className="rounded-2xl border border-[var(--color-border-subtle)] p-3 sm:p-4">
+    <div className="rounded-2xl border border-[var(--color-border-subtle)] p-3">
       <ConfirmDialog
         confirmLabel="Xoá"
         confirmVariant="destructive"
@@ -147,7 +147,7 @@ function TransactionRow({
         open={isConfirmDeleteOpen}
         title="Xoá giao dịch này?"
       />
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-2">
         <span
           className={cn(
             'flex size-9 shrink-0 items-center justify-center rounded-full',
@@ -174,11 +174,9 @@ function TransactionRow({
                 {balanceChangeSign}
                 {formatCompactCurrency(transaction.amount)}
               </p>
-              {/* MemberActionsMenu's trigger is 44px (size-11) để đủ tap-target, nhưng text
-                  text-sm xung quanh chỉ ~20px cao — nếu để nguyên, nó kéo cả hàng title/số
-                  tiền cao lên 44px (xem inspector: hàng này đo được 44px), tạo khoảng trống
-                  thừa phía dưới. Bọc margin âm để thu gọn chiều cao nó chiếm trong layout mà
-                  không giảm vùng bấm thực tế của nút. */}
+              {/* MemberActionsMenu's trigger cần đủ 44px (size-11) để làm tap-target, nhưng
+                  số tiền text-sm bên cạnh chỉ ~20px — margin âm để nút không kéo cả hàng
+                  cao lên 44px mà vẫn giữ nguyên vùng bấm thực tế. */}
               <div className="-my-2.5">
                 <MemberActionsMenu
                   ariaLabel="Thêm tùy chọn cho giao dịch"
@@ -188,7 +186,7 @@ function TransactionRow({
               </div>
             </div>
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-[var(--color-text-muted)]">
             <Badge
               className={cn(
                 'gap-1 px-2 py-0.5',
@@ -204,27 +202,31 @@ function TransactionRow({
               <CashFlowIcon className="size-3" />
               {cashFlowLabel}
             </span> */}
-          </div>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-[var(--color-text-muted)]">
-            <Clock className="size-3.5 shrink-0" />
-            <span>{formatDateTimePickerDisplay(occurredAt)}</span>
+            <div className="flex items-center gap-1">
+              <Clock className="size-3.5 shrink-0" />
+              <span>{formatCompactDateTime(occurredAt)}</span>
+            </div>
             {isLoan && transaction.dueDate ? (
               <span className="text-[color:var(--color-warning)]">
                 · Hạn trả:{' '}
                 {formatDate(timestampToDate(transaction.dueDate) ?? occurredAt)}
               </span>
             ) : null}
-            {transaction.attachments.length > 0 ? (
-              <span className="flex shrink-0 items-center gap-1">
-                · <Paperclip className="size-3.5" />
-                {transaction.attachments.length}
-              </span>
-            ) : null}
           </div>
-          {transaction.note ? (
-            <p className="mt-1 text-sm leading-6 text-[var(--color-text-muted)]">
-              {transaction.note}
-            </p>
+          {transaction.note || transaction.attachments.length > 0 ? (
+            <div className="mt-1 flex items-center gap-2">
+              {transaction.note ? (
+                <p className="min-w-0 flex-1 truncate text-sm leading-6 text-[var(--color-text-muted)]">
+                  {transaction.note}
+                </p>
+              ) : null}
+              {transaction.attachments.length > 0 ? (
+                <span className="flex shrink-0 items-center gap-1 text-xs text-[var(--color-text-muted)]">
+                  <Paperclip className="size-3.5" />
+                  {transaction.attachments.length}
+                </span>
+              ) : null}
+            </div>
           ) : null}
         </div>
       </div>
@@ -583,7 +585,7 @@ export function DebtNativeDetail({
                 : 'Không có giao dịch nào trong khoảng thời gian đã chọn.'}
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {visibleTransactions.map((transaction) => (
                 <TransactionRow
                   key={transaction.id}

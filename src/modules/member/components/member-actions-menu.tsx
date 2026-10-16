@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { MoreHorizontal } from 'lucide-react';
+import { EllipsisVertical } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 import { BottomSheet } from '@/shared/components/ui/bottom-sheet';
@@ -103,7 +103,7 @@ export function MemberActionsMenu({
         ref={triggerRef}
         type="button"
       >
-        <MoreHorizontal className="size-4" />
+        <EllipsisVertical className="size-4" />
       </button>
       {isOpen ? (
         <>
