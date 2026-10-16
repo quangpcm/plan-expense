@@ -2292,7 +2292,7 @@ export default function PlanDetailPage() {
         </div>
       ) : null}
 
-      <Card className="gap-4">
+      <Card className="gap-4 rounded-none border-0 p-3 shadow-none sm:rounded-[var(--radius-card)] sm:border sm:p-5 sm:shadow-[0_18px_54px_color-mix(in_srgb,var(--color-overlay-backdrop)_18%,transparent)]">
         <div className="sm:hidden">
           <PlanDetailMobileTabs
             activeTab={activeTab}

@@ -7,6 +7,7 @@ import {
   calculateDebtAttentionItems,
   calculateOutstanding,
   calculatePlanDebtSummary,
+  getDebtBalanceChangeSign,
   isDebtTransactionCashIn,
   validateRepaymentAmount,
 } from '@/modules/debt-tracking/calculators/debt-calculators';
@@ -265,6 +266,38 @@ describe('isDebtTransactionCashIn', () => {
     expect(
       isDebtTransactionCashIn({ type: 'repayment', direction: 'payable' }),
     ).toBe(false);
+  });
+});
+
+describe('getDebtBalanceChangeSign', () => {
+  it('is "+" for a loan regardless of direction (công nợ tăng: cho vay hoặc đi vay)', () => {
+    const receivableLoan = { type: 'loan', direction: 'receivable' } as const;
+    const payableLoan = { type: 'loan', direction: 'payable' } as const;
+
+    expect(getDebtBalanceChangeSign(receivableLoan)).toBe('+');
+    expect(getDebtBalanceChangeSign(payableLoan)).toBe('+');
+  });
+
+  it('is "-" for a repayment regardless of direction (công nợ giảm: được trả hoặc trả nợ)', () => {
+    const receivableRepayment = { type: 'repayment', direction: 'receivable' } as const;
+    const payableRepayment = { type: 'repayment', direction: 'payable' } as const;
+
+    expect(getDebtBalanceChangeSign(receivableRepayment)).toBe('-');
+    expect(getDebtBalanceChangeSign(payableRepayment)).toBe('-');
+  });
+
+  it('is independent of isDebtTransactionCashIn — the two helpers answer different questions', () => {
+    const receivableLoan = { type: 'loan', direction: 'receivable' } as const;
+    const payableRepayment = { type: 'repayment', direction: 'payable' } as const;
+
+    // receivableLoan: công nợ tăng (+) nhưng tiền ra ví (cash-out).
+    expect(getDebtBalanceChangeSign(receivableLoan)).toBe('+');
+    expect(isDebtTransactionCashIn(receivableLoan)).toBe(false);
+
+    // payableRepayment: công nợ giảm (-) nhưng tiền cũng ra ví (cash-out) — không phải lúc
+    // nào dấu biến động công nợ và chiều dòng tiền cũng trùng nhau.
+    expect(getDebtBalanceChangeSign(payableRepayment)).toBe('-');
+    expect(isDebtTransactionCashIn(payableRepayment)).toBe(false);
   });
 });
 

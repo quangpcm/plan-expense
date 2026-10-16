@@ -25,7 +25,7 @@ import { computeSettlementProgress } from '@/modules/settlement/utils/settlement
 import { TodoList } from '@/modules/todo';
 import {
   calculateDebtAttentionItems,
-  isDebtTransactionCashIn,
+  getDebtBalanceChangeSign,
 } from '@/modules/debt-tracking/calculators/debt-calculators';
 import { getDebtTransactionCategoryLabel } from '@/modules/debt-tracking/constants/debt-transaction-category';
 import { Card } from '@/shared/components/ui/card';
@@ -1280,7 +1280,8 @@ function DebtRecentActivityCard({
       ) : (
         <div className="mt-2 space-y-3">
           {recentTransactions.map((transaction) => {
-            const isCashIn = isDebtTransactionCashIn(transaction);
+            const isReceivable = transaction.direction === 'receivable';
+            const balanceChangeSign = getDebtBalanceChangeSign(transaction);
             const categoryLabel =
               transaction.type === 'loan'
                 ? getDebtTransactionCategoryLabel(transaction.category)
@@ -1307,12 +1308,12 @@ function DebtRecentActivityCard({
                 <p
                   className={cn(
                     'shrink-0 text-sm font-semibold',
-                    isCashIn
+                    isReceivable
                       ? 'text-[color:var(--color-income)]'
                       : 'text-[color:var(--color-expense)]',
                   )}
                 >
-                  {isCashIn ? '+' : '-'}
+                  {balanceChangeSign}
                   {formatCompactCurrency(transaction.amount)}
                 </p>
               </div>

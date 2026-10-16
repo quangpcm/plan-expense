@@ -249,7 +249,7 @@ export function DebtNativeTab({
             />
           )}
         </div>
-        <div className="space-y-4 border-t border-[var(--color-border-subtle)] pt-5 xl:border-0 xl:pt-0">
+        <div className="space-y-4 border-t border-[var(--color-border-subtle)] pt-4 sm:pt-5 xl:border-0 xl:pt-0">
           <h3 className="text-base font-semibold text-[var(--color-text-primary)]">
             Chi tiết giao dịch
           </h3>
@@ -283,7 +283,7 @@ export function DebtNativeTab({
               transactions={selectedTransactions}
             />
           ) : (
-            <Card className="border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] shadow-none">
+            <Card className="rounded-2xl border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] p-4 shadow-none sm:rounded-[var(--radius-card)] sm:p-5">
               <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
                 {counterpartyLedgers.length === 0
                   ? 'Chưa có khoản nợ nào. Ghi nhận khoản vay đầu tiên để bắt đầu theo dõi.'

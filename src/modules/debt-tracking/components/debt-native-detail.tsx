@@ -4,18 +4,23 @@ import { useMemo, useState } from 'react';
 import {
   ArrowDown,
   ArrowDownLeft,
+  ArrowDownToLine,
   ArrowUp,
+  ArrowUpFromLine,
   ArrowUpRight,
   CalendarRange,
   Clock,
+  HandCoins,
   Paperclip,
   Pencil,
   Trash2,
+  Wallet,
   type LucideIcon,
 } from 'lucide-react';
 
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import {
+  getDebtBalanceChangeSign,
   isDebtTransactionCashIn,
   type CounterpartyDebtLedger,
 } from '@/modules/debt-tracking/calculators/debt-calculators';
@@ -84,46 +89,63 @@ function TransactionRow({
   const occurredAt = timestampToDate(transaction.occurredAt) ?? new Date();
   const isLoan = transaction.type === 'loan';
   const isReceivable = transaction.direction === 'receivable';
+  // Nhãn hành động — 4 tổ hợp type×direction, đặt tên theo hành động (không dùng đại từ
+  // "Tôi"/"Đã") để nhất quán và không phụ thuộc người đọc tự suy ra ai là chủ thể.
   const label = isLoan
     ? isReceivable
       ? 'Cho vay'
-      : 'Tôi vay'
+      : 'Vay tiền'
     : isReceivable
-      ? 'Đã trả'
-      : 'Tôi trả';
+      ? 'Thu hồi nợ'
+      : 'Trả nợ';
+  // Icon/nhãn dòng tiền thực tế (vào/ra ví) — độc lập với dấu +/- (biến động công nợ) và
+  // với màu (loại công nợ). Dùng màu trung tính để không chồng ý nghĩa với xanh/đỏ.
   const isCashIn = isDebtTransactionCashIn(transaction);
-  const CashFlowIcon = isCashIn ? ArrowDownLeft : ArrowUpRight;
+  const CashFlowIcon = isCashIn ? ArrowDownToLine : ArrowUpFromLine;
+  const cashFlowLabel = isCashIn ? 'Tiền vào' : 'Tiền ra';
+  // Dấu +/- biểu thị biến động công nợ (tăng/giảm) — xem getDebtBalanceChangeSign.
+  const balanceChangeSign = getDebtBalanceChangeSign(transaction);
+  // Icon trạng thái giao dịch đi theo `type` (hành động: cho vay/vay tiền dùng HandCoins —
+  // đã là icon chuẩn cho "debt" plan type và category "Cho thành viên mượn" trong dự án;
+  // thu hồi/trả nợ dùng Wallet — đã là icon chuẩn cho category 'repayment'). Màu/nền icon
+  // vẫn đi theo `direction` (nhóm công nợ: phải thu/phải trả), không theo type hay dòng
+  // tiền — nhất quán với DirectionTab/DIRECTION_TAB_CONFIG.
+  const ActionIcon = isLoan ? HandCoins : Wallet;
+  // Icon riêng cho Tag trạng thái (khác icon tròn ở trên) — mũi tên theo `type`, không đổi
+  // theo direction: loan (cho vay/vay tiền) luôn arrow-up-right, repayment (thu hồi/trả nợ)
+  // luôn arrow-down-left. Màu tag vẫn theo `direction` như icon tròn.
+  const TagIcon = isLoan ? ArrowUpRight : ArrowDownLeft;
   const CategoryIcon =
     categoryIconMap[transaction.category ?? 'other'] ?? categoryIconMap.other;
 
   return (
-    <div className="rounded-2xl border border-[var(--color-border-subtle)] p-4">
+    <div className="rounded-2xl border border-[var(--color-border-subtle)] p-3 sm:p-4">
       <div className="flex items-start gap-3">
         <span
           className={cn(
             'flex size-9 shrink-0 items-center justify-center rounded-full',
-            isCashIn
+            isReceivable
               ? 'bg-[color:var(--color-income-soft)] text-[color:var(--color-income)]'
               : 'bg-[color:var(--color-expense-soft)] text-[color:var(--color-expense)]',
           )}
         >
-          <CashFlowIcon className="size-4" />
+          <ActionIcon className="size-4" />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">
+          <div className="flex items-start justify-between gap-2">
+            <p className="min-w-0 flex-1 line-clamp-2 break-words text-sm font-medium text-[var(--color-text-primary)]">
               {transaction.title || label}
             </p>
             <div className="flex shrink-0 items-center gap-1">
               <p
                 className={cn(
                   'text-sm font-semibold',
-                  isCashIn
+                  isReceivable
                     ? 'text-[color:var(--color-income)]'
                     : 'text-[color:var(--color-expense)]',
                 )}
               >
-                {isCashIn ? '+' : '-'}
+                {balanceChangeSign}
                 {formatCompactCurrency(transaction.amount)}
               </p>
               {isConfirmingDelete ? (
@@ -165,12 +187,29 @@ function TransactionRow({
               )}
             </div>
           </div>
-          {isLoan ? (
-            <Badge className="mt-1 gap-1 px-2 py-0.5" variant="neutral">
-              <CategoryIcon className="size-3" />
-              {getDebtTransactionCategoryLabel(transaction.category)}
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            <Badge
+              className={cn(
+                'gap-1 px-2 py-0.5',
+                isReceivable
+                  ? 'bg-[color:var(--color-income-soft)] text-[color:var(--color-income)]'
+                  : 'bg-[color:var(--color-expense-soft)] text-[color:var(--color-expense)]',
+              )}
+            >
+              <TagIcon className="size-3" />
+              {label}
             </Badge>
-          ) : null}
+            {isLoan ? (
+              <Badge className="gap-1 px-2 py-0.5" variant="neutral">
+                <CategoryIcon className="size-3" />
+                {getDebtTransactionCategoryLabel(transaction.category)}
+              </Badge>
+            ) : null}
+            {/* <span className="inline-flex items-center gap-1 text-xs text-[var(--color-text-muted)]">
+              <CashFlowIcon className="size-3" />
+              {cashFlowLabel}
+            </span> */}
+          </div>
           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-[var(--color-text-muted)]">
             <Clock className="size-3.5 shrink-0" />
             <span>{formatDateTimePickerDisplay(occurredAt)}</span>
@@ -452,8 +491,8 @@ export function DebtNativeDetail({
 
   return (
     <>
-      <Card className="gap-0 overflow-hidden p-0">
-        <div className="flex items-start gap-3 p-5">
+      <Card className="gap-0 overflow-hidden rounded-none border-0 p-0 shadow-none sm:rounded-[var(--radius-card)] sm:border sm:shadow-[0_18px_54px_color-mix(in_srgb,var(--color-overlay-backdrop)_18%,transparent)]">
+        <div className="flex items-start gap-3 p-4 sm:p-5">
           <Avatar
             className="size-12"
             initials={(counterpart?.nickname ?? '?').slice(0, 2).toUpperCase()}
@@ -503,8 +542,8 @@ export function DebtNativeDetail({
           />
         </div>
 
-        <div className="space-y-3 p-5">
-          <div className="grid grid-cols-2 gap-3 rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-4 py-3">
+        <div className="space-y-3 p-4 sm:p-5">
+          <div className="grid grid-cols-2 gap-3 rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-2.5 sm:px-4 sm:py-3">
             <div>
               <p className="text-xs text-[var(--color-text-muted)]">Tổng khoản vay</p>
               <p className="text-sm font-semibold text-[var(--color-text-primary)]">

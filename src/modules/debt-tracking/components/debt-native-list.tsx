@@ -34,7 +34,7 @@ export function DebtNativeList({
 }: DebtNativeListProps) {
   if (ledgers.length === 0) {
     return (
-      <Card className="border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] shadow-none">
+      <Card className="rounded-2xl border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] p-4 shadow-none sm:rounded-[var(--radius-card)] sm:p-5">
         <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
           Chưa có khoản nợ nào. Ghi nhận khoản vay đầu tiên để bắt đầu theo dõi.
         </p>
@@ -53,7 +53,10 @@ export function DebtNativeList({
 
         return (
           <Card
-            className={cn('gap-3', isSelected ? 'border-[var(--color-border-focus)]' : undefined)}
+            className={cn(
+              'gap-3 rounded-2xl p-4 shadow-none sm:rounded-[var(--radius-card)] sm:p-5 sm:shadow-[0_18px_54px_color-mix(in_srgb,var(--color-overlay-backdrop)_18%,transparent)]',
+              isSelected ? 'border-[var(--color-border-focus)]' : undefined,
+            )}
             key={ledger.counterpartyMemberId}
           >
             <button

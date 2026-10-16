@@ -210,6 +210,10 @@ export function calculatePlanDebtSummary(
 // không được chỉ dựa vào type (docs/debt-plan-specs.md thread: "amount sign/color cần được
 // xác định từ debt direction, không đơn thuần từ loan/repayment"). Single source of truth
 // để UI (danh sách giao dịch theo người, hoạt động gần đây...) không lệch quy ước nhau.
+//
+// LƯU Ý: hàm này chỉ trả lời "tiền có vào ví không", KHÔNG phải "công nợ tăng hay giảm" —
+// hai câu hỏi khác nhau. Dùng getDebtBalanceChangeSign() cho dấu +/- biểu thị biến động
+// công nợ (xem comment ở hàm đó).
 export function isDebtTransactionCashIn(
   transaction: Pick<DebtTransaction, 'type' | 'direction'>,
 ): boolean {
@@ -217,6 +221,20 @@ export function isDebtTransactionCashIn(
   const isReceivable = transaction.direction === 'receivable';
 
   return (isLoan && !isReceivable) || (!isLoan && isReceivable);
+}
+
+// Dấu +/- biểu thị BIẾN ĐỘNG SỐ DƯ CÔNG NỢ (của ledger theo direction đó), KHÔNG phải dòng
+// tiền thực tế vào/ra ví (xem isDebtTransactionCashIn cho ý nghĩa đó — hai khái niệm độc
+// lập, không suy ra lẫn nhau). `loan` luôn làm TĂNG công nợ — dù là receivable (mình cho
+// vay, phải thu tăng) hay payable (mình đi vay, phải trả tăng); `repayment` luôn làm GIẢM
+// công nợ — dù là receivable (được trả, phải thu giảm) hay payable (mình trả, phải trả
+// giảm). Vì vậy dấu chỉ phụ thuộc `type`, không phụ thuộc `direction`. Single source of
+// truth cho mọi nơi hiển thị dấu biến động công nợ (TransactionRow, Overview "Hoạt động
+// gần đây", ...) — không tính lại outstanding/netPosition, chỉ phục vụ hiển thị.
+export function getDebtBalanceChangeSign(
+  transaction: Pick<DebtTransaction, 'type'>,
+): '+' | '-' {
+  return transaction.type === 'loan' ? '+' : '-';
 }
 
 export type DebtAttentionItem = {
