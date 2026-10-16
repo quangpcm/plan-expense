@@ -1,7 +1,7 @@
-import { CircleDollarSign, Paperclip, Plus, ReceiptText, Tag, Users } from 'lucide-react';
+import { CircleDollarSign, Paperclip, Plus, ReceiptText, Users } from 'lucide-react';
 
 import type { Category } from '@/modules/category/types/category';
-import { categoryIcons } from '@/modules/category/utils/category-icon';
+import { getCategoryIcon } from '@/modules/category/utils/category-icon';
 import type { ExpenseDocument } from '@/modules/expense/types/expense';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import type { MilestoneDocument } from '@/modules/milestone/types/milestone';
@@ -66,7 +66,7 @@ export function MilestoneExpensePanel({
             const paidBy = members.find((member) => member.id === expense.paidByMemberId);
             const paidByLabel = expense.paymentSourceType === 'fund' ? 'Quỹ chung' : paidBy?.nickname ?? 'Không rõ';
             const category = categories.find((item) => item.id === expense.categoryId);
-            const CategoryIcon = category?.icon ? categoryIcons[category.icon] ?? Tag : Tag;
+            const CategoryIcon = getCategoryIcon(category?.icon);
             const iconColor = category?.iconColor ?? 'text-[var(--color-text-secondary)]';
             const spentAt = timestampToDate(expense.spentAt);
 

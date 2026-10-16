@@ -1,15 +1,18 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ComponentType } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 
 import { cn } from '@/shared/utils/cn';
 
 export type DropdownOption = {
   value: string;
   label: string;
-  icon?: LucideIcon;
+  // Widened from LucideIcon so category icons can resolve to either a Lucide
+  // component or an Iconify-backed wrapper (see getCategoryIcon()) — both are
+  // rendered identically as `<Icon className="..." />`.
+  icon?: ComponentType<{ className?: string }>;
 };
 
 type DropdownSelectProps = {

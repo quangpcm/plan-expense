@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Paperclip, Tag, Users } from 'lucide-react';
+import { Paperclip, Users } from 'lucide-react';
 
 import { Card } from '@/shared/components/ui/card';
 import { DropdownSelect } from '@/shared/components/ui/dropdown-select';
@@ -7,7 +7,7 @@ import { formatCurrency } from '@/shared/utils/currency';
 import { formatDate, formatTime } from '@/shared/utils/date';
 import { timestampToDate } from '@/shared/utils/firebase';
 import { cn } from '@/shared/utils/cn';
-import { categoryIcons } from '@/modules/category/utils/category-icon';
+import { getCategoryIcon } from '@/modules/category/utils/category-icon';
 import type { Category } from '@/modules/category/types/category';
 import { ExpenseActivityLink } from '@/modules/expense/components/expense-activity-link';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
@@ -230,7 +230,7 @@ function ExpenseTimelineCard({
   const category = categories.find((item) => item.id === expense.categoryId);
   const milestone = milestones.find((item) => item.id === expense.milestoneId);
   const spentAt = timestampToDate(expense.spentAt);
-  const CategoryIcon = category?.icon ? categoryIcons[category.icon] ?? Tag : Tag;
+  const CategoryIcon = getCategoryIcon(category?.icon);
   const iconColor = category?.iconColor ?? 'text-[var(--color-text-secondary)]';
 
   return (
@@ -316,7 +316,7 @@ function IncomeTimelineCard({
   const category = categories.find((item) => item.id === income.categoryId);
   const milestone = milestones.find((item) => item.id === income.milestoneId);
   const receivedAt = timestampToDate(income.receivedAt);
-  const CategoryIcon = category?.icon ? categoryIcons[category.icon] ?? Tag : Tag;
+  const CategoryIcon = getCategoryIcon(category?.icon);
   const iconColor = category?.iconColor ?? 'text-[var(--color-text-secondary)]';
 
   return (

@@ -20,6 +20,10 @@ type MemberActionsMenuProps = {
   items: MemberActionMenuItem[];
   disabled?: boolean;
   ariaLabel?: string;
+  // Tên component giữ nguyên vì lịch sử (sinh ra cho màn Thành viên), nhưng component không
+  // có gì đặc thù cho member — các module khác (vd debt-tracking) tái dùng được. `title` tách
+  // riêng để BottomSheet mobile không còn cứng "Tùy chọn thành viên" khi dùng ở nơi khác.
+  title?: string;
 };
 
 function MenuItemButton({ item, onSelect }: { item: MemberActionMenuItem; onSelect: () => void }) {
@@ -42,7 +46,12 @@ function MenuItemButton({ item, onSelect }: { item: MemberActionMenuItem; onSele
   );
 }
 
-export function MemberActionsMenu({ items, disabled = false, ariaLabel = 'Thêm tùy chọn' }: MemberActionsMenuProps) {
+export function MemberActionsMenu({
+  items,
+  disabled = false,
+  ariaLabel = 'Thêm tùy chọn',
+  title = 'Tùy chọn thành viên',
+}: MemberActionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   // Desktop dropdown position, computed from the trigger's real screen position on open (see
   // below for why this can't stay `absolute top-12 right-0` anymore). `openUpward` handles the
@@ -129,7 +138,7 @@ export function MemberActionsMenu({ items, disabled = false, ariaLabel = 'Thêm 
             </Card>
           </div>
           <div className="md:hidden">
-            <BottomSheet onClose={() => setIsOpen(false)} open={isOpen} title="Tùy chọn thành viên">
+            <BottomSheet onClose={() => setIsOpen(false)} open={isOpen} title={title}>
               <div className="grid gap-1">
                 {items.map((item) => (
                   <MenuItemButton item={item} key={item.key} onSelect={() => setIsOpen(false)} />

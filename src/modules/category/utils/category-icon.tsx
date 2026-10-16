@@ -45,6 +45,11 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
+import { type IconComponent, getIconifyIconComponent, isIconifyIconName } from '@/shared/utils/iconify-icon';
+
+export type CategoryIconComponent = IconComponent;
+export { isIconifyIconName };
+
 export const categoryIcons: Record<string, LucideIcon> = {
   BadgeDollarSign,
   BedDouble,
@@ -90,9 +95,13 @@ export const categoryIcons: Record<string, LucideIcon> = {
   Wrench,
 };
 
-export function getCategoryIcon(icon: string | null | undefined): LucideIcon {
+export function getCategoryIcon(icon: string | null | undefined): CategoryIconComponent {
   if (!icon) {
     return Tag;
+  }
+
+  if (isIconifyIconName(icon)) {
+    return getIconifyIconComponent(icon);
   }
 
   return categoryIcons[icon] ?? Tag;

@@ -211,7 +211,7 @@ export function DebtNativeTab({
         </Button>
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {DEBT_LIST_FILTER_OPTIONS.map((option) => {
           const isActive = listFilter === option.value;
 

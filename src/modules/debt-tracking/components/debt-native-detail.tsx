@@ -10,14 +10,16 @@ import {
   ArrowUpRight,
   CalendarRange,
   Clock,
-  HandCoins,
   Paperclip,
   Pencil,
   Trash2,
-  Wallet,
   type LucideIcon,
 } from 'lucide-react';
 
+import {
+  MemberActionsMenu,
+  type MemberActionMenuItem,
+} from '@/modules/member/components/member-actions-menu';
 import type { PlanMemberDocument } from '@/modules/member/types/member';
 import {
   getDebtBalanceChangeSign,
@@ -26,7 +28,7 @@ import {
 } from '@/modules/debt-tracking/calculators/debt-calculators';
 import {
   categoryIconMap,
-  getDebtTransactionCategoryLabel,
+  getDebtTransactionCategoryTone,
 } from '@/modules/debt-tracking/constants/debt-transaction-category';
 import type {
   DebtDirection,
@@ -43,6 +45,7 @@ import { Avatar } from '@/shared/components/ui/avatar';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
+import { ConfirmDialog } from '@/shared/components/ui/confirm-dialog';
 import { DateField } from '@/shared/components/ui/date-field';
 import { ResponsiveModal } from '@/shared/components/ui/responsive-modal';
 import { formatCompactCurrency } from '@/shared/utils/currency';
@@ -85,7 +88,7 @@ function TransactionRow({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const occurredAt = timestampToDate(transaction.occurredAt) ?? new Date();
   const isLoan = transaction.type === 'loan';
   const isReceivable = transaction.direction === 'receivable';
@@ -105,38 +108,61 @@ function TransactionRow({
   const cashFlowLabel = isCashIn ? 'Tiền vào' : 'Tiền ra';
   // Dấu +/- biểu thị biến động công nợ (tăng/giảm) — xem getDebtBalanceChangeSign.
   const balanceChangeSign = getDebtBalanceChangeSign(transaction);
-  // Icon trạng thái giao dịch đi theo `type` (hành động: cho vay/vay tiền dùng HandCoins —
-  // đã là icon chuẩn cho "debt" plan type và category "Cho thành viên mượn" trong dự án;
-  // thu hồi/trả nợ dùng Wallet — đã là icon chuẩn cho category 'repayment'). Màu/nền icon
-  // vẫn đi theo `direction` (nhóm công nợ: phải thu/phải trả), không theo type hay dòng
-  // tiền — nhất quán với DirectionTab/DIRECTION_TAB_CONFIG.
-  const ActionIcon = isLoan ? HandCoins : Wallet;
+  // Icon tròn đầu dòng: luôn hiển thị icon + màu của category (kể cả 'repayment', coi như
+  // 1 category cố định trong categoryIconMap/categoryIconToneMap) — không còn theo
+  // `direction` nữa, vì category đã đủ để nhận diện nội dung giao dịch, không cần tag
+  // category riêng bên dưới nữa (xem chỗ bỏ Badge category). Màu loại công nợ (phải thu/
+  // phải trả) vẫn còn ở tag trạng thái + số tiền bên dưới, không mất đi.
+  const CategoryIcon =
+    categoryIconMap[transaction.category ?? 'other'] ?? categoryIconMap.other;
+  const categoryTone = getDebtTransactionCategoryTone(transaction.category);
   // Icon riêng cho Tag trạng thái (khác icon tròn ở trên) — mũi tên theo `type`, không đổi
   // theo direction: loan (cho vay/vay tiền) luôn arrow-up-right, repayment (thu hồi/trả nợ)
   // luôn arrow-down-left. Màu tag vẫn theo `direction` như icon tròn.
   const TagIcon = isLoan ? ArrowUpRight : ArrowDownLeft;
-  const CategoryIcon =
-    categoryIconMap[transaction.category ?? 'other'] ?? categoryIconMap.other;
+  // Gộp Sửa/Xoá vào 1 menu "⋮" thay vì 2 icon-button luôn hiện cạnh nhau — đỡ chật chỗ trên
+  // mobile. Xoá vẫn phải qua ConfirmDialog (popup) riêng, không tự xoá ngay khi chọn menu.
+  const menuItems: MemberActionMenuItem[] = [
+    { key: 'edit', label: 'Sửa giao dịch', icon: Pencil, onSelect: onEdit },
+    {
+      key: 'delete',
+      label: 'Xoá giao dịch',
+      icon: Trash2,
+      destructive: true,
+      onSelect: () => setIsConfirmDeleteOpen(true),
+    },
+  ];
 
   return (
     <div className="rounded-2xl border border-[var(--color-border-subtle)] p-3 sm:p-4">
+      <ConfirmDialog
+        confirmLabel="Xoá"
+        confirmVariant="destructive"
+        description="Giao dịch này sẽ bị xoá vĩnh viễn và không thể hoàn tác."
+        onConfirm={() => {
+          onDelete();
+          setIsConfirmDeleteOpen(false);
+        }}
+        onOpenChange={setIsConfirmDeleteOpen}
+        open={isConfirmDeleteOpen}
+        title="Xoá giao dịch này?"
+      />
       <div className="flex items-start gap-3">
         <span
           className={cn(
             'flex size-9 shrink-0 items-center justify-center rounded-full',
-            isReceivable
-              ? 'bg-[color:var(--color-income-soft)] text-[color:var(--color-income)]'
-              : 'bg-[color:var(--color-expense-soft)] text-[color:var(--color-expense)]',
+            categoryTone.iconBgColor,
+            categoryTone.iconColor,
           )}
         >
-          <ActionIcon className="size-4" />
+          <CategoryIcon className="size-4" />
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <p className="min-w-0 flex-1 line-clamp-2 break-words text-sm font-medium text-[var(--color-text-primary)]">
               {transaction.title || label}
             </p>
-            <div className="flex shrink-0 items-center gap-1">
+            <div className="flex shrink-0 items-start gap-1">
               <p
                 className={cn(
                   'text-sm font-semibold',
@@ -148,43 +174,18 @@ function TransactionRow({
                 {balanceChangeSign}
                 {formatCompactCurrency(transaction.amount)}
               </p>
-              {isConfirmingDelete ? (
-                <>
-                  <button
-                    className="rounded-full px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
-                    onClick={onDelete}
-                    type="button"
-                  >
-                    Xác nhận xoá
-                  </button>
-                  <button
-                    className="rounded-full px-2 py-1 text-xs font-medium text-[var(--color-text-muted)] hover:bg-[var(--color-surface-subtle)]"
-                    onClick={() => setIsConfirmingDelete(false)}
-                    type="button"
-                  >
-                    Huỷ
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    aria-label="Sửa giao dịch"
-                    className="rounded-full p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-secondary)]"
-                    onClick={onEdit}
-                    type="button"
-                  >
-                    <Pencil className="size-4" />
-                  </button>
-                  <button
-                    aria-label="Xoá giao dịch"
-                    className="rounded-full p-1.5 text-[var(--color-text-muted)] hover:bg-red-50 hover:text-red-600"
-                    onClick={() => setIsConfirmingDelete(true)}
-                    type="button"
-                  >
-                    <Trash2 className="size-4" />
-                  </button>
-                </>
-              )}
+              {/* MemberActionsMenu's trigger is 44px (size-11) để đủ tap-target, nhưng text
+                  text-sm xung quanh chỉ ~20px cao — nếu để nguyên, nó kéo cả hàng title/số
+                  tiền cao lên 44px (xem inspector: hàng này đo được 44px), tạo khoảng trống
+                  thừa phía dưới. Bọc margin âm để thu gọn chiều cao nó chiếm trong layout mà
+                  không giảm vùng bấm thực tế của nút. */}
+              <div className="-my-2.5">
+                <MemberActionsMenu
+                  ariaLabel="Thêm tùy chọn cho giao dịch"
+                  items={menuItems}
+                  title="Tùy chọn giao dịch"
+                />
+              </div>
             </div>
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
@@ -199,12 +200,6 @@ function TransactionRow({
               <TagIcon className="size-3" />
               {label}
             </Badge>
-            {isLoan ? (
-              <Badge className="gap-1 px-2 py-0.5" variant="neutral">
-                <CategoryIcon className="size-3" />
-                {getDebtTransactionCategoryLabel(transaction.category)}
-              </Badge>
-            ) : null}
             {/* <span className="inline-flex items-center gap-1 text-xs text-[var(--color-text-muted)]">
               <CashFlowIcon className="size-3" />
               {cashFlowLabel}
@@ -350,7 +345,7 @@ function DateRangeFilterBar({
   const isCustomActive = filter.kind === 'custom';
 
   return (
-    <div className="-mx-5 flex gap-1.5 overflow-x-auto px-5 pb-1">
+    <div className="-mx-5 flex gap-1.5 overflow-x-auto px-5 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {dateRangePresetOptions.map((option) => {
         const isActive =
           filter.kind === 'preset' && filter.preset === option.value;
