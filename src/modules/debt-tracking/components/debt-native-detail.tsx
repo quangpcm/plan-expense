@@ -176,8 +176,9 @@ function TransactionRow({
               </p>
               {/* MemberActionsMenu's trigger cần đủ 44px (size-11) để làm tap-target, nhưng
                   số tiền text-sm bên cạnh chỉ ~20px — margin âm để nút không kéo cả hàng
-                  cao lên 44px mà vẫn giữ nguyên vùng bấm thực tế. */}
-              <div className="-my-2.5">
+                  cao lên 44px mà vẫn giữ nguyên vùng bấm thực tế. -mr-3 kéo nút vào phần
+                  padding p-3 của card để icon ⋮ (16px, căn giữa nút) sát mép phải nội dung. */}
+              <div className="-my-2.5 -mr-3">
                 <MemberActionsMenu
                   ariaLabel="Thêm tùy chọn cho giao dịch"
                   items={menuItems}

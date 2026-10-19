@@ -10,7 +10,7 @@ export function RouteLoadingScreen({
   description = 'Chỉ mất một chút thời gian.',
 }: RouteLoadingScreenProps) {
   return (
-    <div className="relative flex min-h-[70vh] items-center justify-center overflow-hidden rounded-[32px] border border-[var(--color-border-subtle)] bg-[var(--color-surface-raised)] px-6 py-10 shadow-[var(--shadow-overlay)]">
+    <div className="relative flex min-h-[70vh] items-center justify-center overflow-hidden bg-[color-mix(in_srgb,var(--color-surface-raised)_70%,transparent)] px-6 py-10 backdrop-blur-xl">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute top-[-3rem] left-[-1rem] size-32 rounded-full bg-[color-mix(in_srgb,var(--color-brand-primary)_14%,transparent)] blur-3xl animate-float-slow" />
         <div className="absolute right-[-2rem] bottom-[-2rem] size-36 rounded-full bg-[color-mix(in_srgb,var(--color-brand-primary)_12%,transparent)] blur-3xl animate-float-delayed" />

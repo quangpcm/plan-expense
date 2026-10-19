@@ -1,5 +1,3 @@
-import { CircleEllipsis } from 'lucide-react';
-
 import type { DebtTransactionType } from '@/modules/debt-tracking/types/debt-transaction';
 import type { CategoryIconTone } from '@/modules/category/utils/category-icon';
 import { type IconComponent, getIconifyIconComponent } from '@/shared/utils/iconify-icon';
@@ -19,6 +17,7 @@ const airplaneIcon = getIconifyIconComponent('emojione:airplane');
 const pillIcon = getIconifyIconComponent('emojione:pill');
 const familyIcon = getIconifyIconComponent('emojione:family');
 const giftIcon = getIconifyIconComponent('emojione:wrapped-gift');
+const otherIcon = getIconifyIconComponent('flat-color-icons:view-details');
 
 // Loan category trả lời "khoản tiền này dùng cho việc gì?" — hoàn toàn độc lập với
 // direction (họ nợ tôi / tôi nợ họ đều dùng chung 12 giá trị này).
@@ -73,7 +72,7 @@ export const loanCategoryOptions: Array<DebtTransactionCategoryOption & { value:
   { value: 'work_business', label: 'Công việc & kinh doanh', icon: businessIcon },
   { value: 'family', label: 'Gia đình', icon: familyIcon },
   { value: 'event_gift', label: 'Sự kiện & quà tặng', icon: giftIcon },
-  { value: 'other', label: 'Khác', icon: CircleEllipsis },
+  { value: 'other', label: 'Khác', icon: otherIcon },
 ];
 
 export const repaymentCategoryOptions: Array<DebtTransactionCategoryOption & { value: RepaymentCategory }> = [
@@ -112,7 +111,7 @@ export const categoryIconMap: Record<DebtTransactionCategory, IconComponent> = {
   work_business: businessIcon,
   family: familyIcon,
   event_gift: giftIcon,
-  other: CircleEllipsis,
+  other: otherIcon,
   repayment: moneyTransferIcon,
 };
 
