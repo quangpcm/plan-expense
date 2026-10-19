@@ -1,11 +1,13 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Plane } from 'lucide-react';
 
 import type { TodayContextItem } from '@/modules/today/types/today-summary';
 import { Badge } from '@/shared/components/ui/badge';
 import { formatCompactDateRange, formatTime } from '@/shared/utils/date';
+import { getIconifyIconComponent } from '@/shared/utils/iconify-icon';
+
+const PlaneIcon = getIconifyIconComponent('emojione:airplane');
 
 type TodayContextCardProps = {
   context: TodayContextItem;
@@ -38,7 +40,7 @@ export function TodayContextCard({ context }: TodayContextCardProps) {
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
           <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-subtle)] text-[var(--color-brand-primary)]">
-            <Plane aria-hidden="true" className="size-[18px]" />
+            <PlaneIcon aria-hidden="true" className="size-[18px]" />
           </div>
           <p className="truncate text-component-title text-[var(--color-text-primary)]">{context.planName}</p>
         </div>

@@ -1,11 +1,13 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Check } from 'lucide-react';
 
 import type { RecentlyCompletedItem } from '@/modules/today/types/today-summary';
 import { DataRow } from '@/shared/components/ui/data-row';
 import { formatRelativeTime } from '@/shared/utils/date';
+import { getIconifyIconComponent } from '@/shared/utils/iconify-icon';
+
+const CheckIcon = getIconifyIconComponent('flat-color-icons:checkmark');
 
 type RecentlyCompletedRowProps = {
   item: RecentlyCompletedItem;
@@ -26,7 +28,7 @@ export function RecentlyCompletedRow({ item }: RecentlyCompletedRowProps) {
       density="compact"
       leading={
         <div className="flex size-8 items-center justify-center rounded-full bg-[var(--color-surface-subtle)] text-[var(--color-text-secondary)]">
-          <Check aria-hidden="true" className="size-4" />
+          <CheckIcon aria-hidden="true" className="size-4" />
         </div>
       }
       main={

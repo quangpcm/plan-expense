@@ -1,12 +1,15 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { ChevronRight, Plane } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 import type { TodayContextItem } from '@/modules/today/types/today-summary';
 import { Badge } from '@/shared/components/ui/badge';
 import { cn } from '@/shared/utils/cn';
 import { formatTime } from '@/shared/utils/date';
+import { getIconifyIconComponent } from '@/shared/utils/iconify-icon';
+
+const PlaneIcon = getIconifyIconComponent('emojione:airplane');
 
 type TodayContextStripProps = {
   contexts: TodayContextItem[];
@@ -38,7 +41,7 @@ export function TodayContextStrip({ contexts }: TodayContextStripProps) {
     >
       <div className="flex min-w-0 items-start gap-3">
         <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-subtle)] text-[var(--color-brand-primary)]">
-          <Plane aria-hidden="true" className="size-4" />
+          <PlaneIcon aria-hidden="true" className="size-4" />
         </div>
         <div className="min-w-0">
           <div className="min-w-0 space-y-0.5">

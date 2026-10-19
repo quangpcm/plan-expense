@@ -1,16 +1,17 @@
-import type { LucideIcon } from 'lucide-react';
-import {
-  CalendarCheck,
-  CarFront,
-  FileText,
-  ListChecks,
-  MapPin,
-  Phone,
-  ShoppingBag,
-  Users,
-  UtensilsCrossed,
-  WalletCards,
-} from 'lucide-react';
+import { type IconComponent, getIconifyIconComponent } from '@/shared/utils/iconify-icon';
+
+// Ưu tiên bộ `flat-color-icons` (nhẹ, đã dùng sẵn); `round-pushpin`/`fork-and-knife-with-plate`
+// không có trong bộ đó nên lấy từ `emojione` (xem src/shared/utils/iconify-icon.tsx).
+const phoneIcon = getIconifyIconComponent('flat-color-icons:phone');
+const paymentIcon = getIconifyIconComponent('flat-color-icons:money-transfer');
+const bookingIcon = getIconifyIconComponent('flat-color-icons:calendar');
+const transportIcon = getIconifyIconComponent('flat-color-icons:automotive');
+const shoppingIcon = getIconifyIconComponent('flat-color-icons:shop');
+const documentIcon = getIconifyIconComponent('flat-color-icons:document');
+const peopleIcon = getIconifyIconComponent('flat-color-icons:collaboration');
+const locationIcon = getIconifyIconComponent('emojione:round-pushpin');
+const foodIcon = getIconifyIconComponent('emojione:fork-and-knife-with-plate');
+const generalIcon = getIconifyIconComponent('flat-color-icons:todo-list');
 
 export type TodoVisualCategory =
   | 'call'
@@ -25,59 +26,59 @@ export type TodoVisualCategory =
   | 'general';
 
 type TodoVisualMetadata = {
-  icon: LucideIcon;
+  icon: IconComponent;
   iconClassName: string;
   backgroundClassName: string;
 };
 
 export const TODO_VISUAL_CATEGORY_META: Record<TodoVisualCategory, TodoVisualMetadata> = {
   call: {
-    icon: Phone,
+    icon: phoneIcon,
     iconClassName: 'text-emerald-700 dark:text-emerald-300',
     backgroundClassName: 'bg-emerald-100 dark:bg-emerald-500/16',
   },
   payment: {
-    icon: WalletCards,
+    icon: paymentIcon,
     iconClassName: 'text-amber-700 dark:text-amber-300',
     backgroundClassName: 'bg-amber-100 dark:bg-amber-500/16',
   },
   booking: {
-    icon: CalendarCheck,
+    icon: bookingIcon,
     iconClassName: 'text-sky-700 dark:text-sky-300',
     backgroundClassName: 'bg-sky-100 dark:bg-sky-500/16',
   },
   transport: {
-    icon: CarFront,
+    icon: transportIcon,
     iconClassName: 'text-indigo-700 dark:text-indigo-300',
     backgroundClassName: 'bg-indigo-100 dark:bg-indigo-500/16',
   },
   shopping: {
-    icon: ShoppingBag,
+    icon: shoppingIcon,
     iconClassName: 'text-fuchsia-700 dark:text-fuchsia-300',
     backgroundClassName: 'bg-fuchsia-100 dark:bg-fuchsia-500/16',
   },
   document: {
-    icon: FileText,
+    icon: documentIcon,
     iconClassName: 'text-[var(--color-text-secondary)]',
     backgroundClassName: 'bg-[var(--color-surface-subtle)]',
   },
   people: {
-    icon: Users,
+    icon: peopleIcon,
     iconClassName: 'text-teal-700 dark:text-teal-300',
     backgroundClassName: 'bg-teal-100 dark:bg-teal-500/16',
   },
   location: {
-    icon: MapPin,
+    icon: locationIcon,
     iconClassName: 'text-rose-700 dark:text-rose-300',
     backgroundClassName: 'bg-rose-100 dark:bg-rose-500/16',
   },
   food: {
-    icon: UtensilsCrossed,
+    icon: foodIcon,
     iconClassName: 'text-orange-700 dark:text-orange-300',
     backgroundClassName: 'bg-orange-100 dark:bg-orange-500/16',
   },
   general: {
-    icon: ListChecks,
+    icon: generalIcon,
     iconClassName: 'text-[var(--color-text-secondary)]',
     backgroundClassName: 'bg-[var(--color-surface-subtle)]',
   },

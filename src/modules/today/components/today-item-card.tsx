@@ -1,13 +1,14 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { BriefcaseBusiness, CalendarClock, ListChecks, Plane } from 'lucide-react';
+import { BriefcaseBusiness } from 'lucide-react';
 
 import { Badge } from '@/shared/components/ui/badge';
 import { DataRow } from '@/shared/components/ui/data-row';
 import { formatDueCountdown, formatTime } from '@/shared/utils/date';
 import type { TodaySummaryItem, TodaySummaryItemKind } from '@/modules/today/types/today-summary';
 import { inferTodoVisualCategory, TODO_VISUAL_CATEGORY_META } from '@/modules/today/utils/todo-visual-category';
+import { type IconComponent, getIconifyIconComponent } from '@/shared/utils/iconify-icon';
 
 type TodayItemCardProps = {
   item: TodaySummaryItem;
@@ -19,9 +20,11 @@ const TYPE_LABEL: Record<TodaySummaryItemKind, string> = {
   travelActivity: 'Lịch trình',
 };
 
-export const TYPE_ICON: Record<TodaySummaryItemKind, typeof ListChecks> = {
-  todo: ListChecks,
-  travelActivity: CalendarClock,
+const TravelActivityIcon = getIconifyIconComponent('emojione:airplane');
+
+export const TYPE_ICON: Record<TodaySummaryItemKind, IconComponent> = {
+  todo: getIconifyIconComponent('flat-color-icons:todo-list'),
+  travelActivity: TravelActivityIcon,
 };
 
 const URGENCY_BADGE_VARIANT: Record<TodaySummaryItem['urgency'], 'neutral' | 'info' | 'warning' | 'danger'> = {
@@ -102,7 +105,7 @@ function renderLeading(item: TodaySummaryItem, section: TodayItemCardProps['sect
 
   return (
     <div className="flex size-9 items-center justify-center rounded-full bg-[var(--color-brand-subtle)] text-[var(--color-brand-primary)]">
-      <Plane aria-hidden="true" className="size-4" />
+      <TravelActivityIcon aria-hidden="true" className="size-4" />
       <span className="sr-only">{TYPE_LABEL[item.kind]}</span>
     </div>
   );
