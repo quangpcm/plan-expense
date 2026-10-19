@@ -204,7 +204,7 @@ function TransactionRow({
               {cashFlowLabel}
             </span> */}
             <div className="flex items-center gap-1">
-              <Clock className="size-3.5 shrink-0" />
+              {/* <Clock className="size-3.5 shrink-0" /> */}
               <span>{formatCompactDateTime(occurredAt)}</span>
             </div>
             {isLoan && transaction.dueDate ? (
@@ -268,33 +268,47 @@ function formatDirectionAmount(amount: number, direction: DebtDirection) {
   return formatCompactCurrency(amount);
 }
 
-const DIRECTION_TAB_CONFIG: Record<
-  DebtDirection,
-  { label: string; icon: LucideIcon }
-> = {
-  receivable: { label: 'Phải thu', icon: ArrowUp },
-  payable: { label: 'Phải trả', icon: ArrowDown },
+const DIRECTION_TAB_ICON: Record<DebtDirection, LucideIcon> = {
+  receivable: ArrowUp,
+  payable: ArrowDown,
+};
+
+// Caption tĩnh "Còn phải thu/trả" — tách riêng khỏi label (có tên người, có thể dài/tràn
+// trên mobile hẹp) để luôn đọc được dù label bị truncate.
+const DIRECTION_OUTSTANDING_CAPTION: Record<DebtDirection, string> = {
+  receivable: 'Còn phải thu',
+  payable: 'Còn phải trả',
 };
 
 function DirectionTab({
   amount,
   direction,
+  counterpartName,
   isActive,
   onClick,
 }: {
   amount: number;
   direction: DebtDirection;
+  counterpartName: string;
   isActive: boolean;
   onClick: () => void;
 }) {
   const isReceivable = direction === 'receivable';
-  const { label, icon: Icon } = DIRECTION_TAB_CONFIG[direction];
+  const Icon = DIRECTION_TAB_ICON[direction];
+  // Label nêu rõ ai nợ ai (thay vì chỉ "Phải thu"/"Phải trả" chung chung) — số dư ở dòng
+  // dưới đã là "cái nổi bật nhất" nên label chỉ cần đủ ý, không lặp lại số tiền.
+  const label = isReceivable
+    ? `${counterpartName} nợ bạn`
+    : `Bạn nợ ${counterpartName}`;
+  const colorClass = isReceivable
+    ? 'text-[color:var(--color-income)]'
+    : 'text-[color:var(--color-expense)]';
 
   return (
     <button
       aria-selected={isActive}
       className={cn(
-        'flex flex-1 flex-col items-center gap-1.5 rounded-2xl px-4 py-3 text-center transition',
+        'flex flex-1 flex-col items-center gap-1 rounded-2xl px-3 py-3 text-center transition',
         isActive
           ? isReceivable
             ? 'bg-[color:var(--color-income-soft)]'
@@ -305,27 +319,16 @@ function DirectionTab({
       role="tab"
       type="button"
     >
-      <span
-        className={cn(
-          'flex items-center gap-1.5 text-sm font-medium',
-          isReceivable
-            ? 'text-[color:var(--color-income)]'
-            : 'text-[color:var(--color-expense)]',
-        )}
-      >
-        <Icon className="size-3.5" />
-        {label}
+      <span className={cn('flex max-w-full items-center gap-1 text-xs font-medium', colorClass)}>
+        <Icon className="size-3.5 shrink-0" />
+        <span className="truncate">{label}</span>
       </span>
-      <span
-        className={cn(
-          'text-base font-semibold',
-          isReceivable
-            ? 'text-[color:var(--color-income)]'
-            : 'text-[color:var(--color-expense)]',
-        )}
-      >
+      <span className={cn('text-lg font-semibold', colorClass)}>
         {formatDirectionAmount(amount, direction)}
       </span>
+      {/* <span className={cn('text-[11px]', colorClass)}>
+        {DIRECTION_OUTSTANDING_CAPTION[direction]}
+      </span> */}
     </button>
   );
 }
@@ -407,6 +410,23 @@ export function DebtNativeDetail({
   const activeRepaidTotal = isReceivable
     ? ledger.receivableRepayment
     : ledger.payableRepayment;
+  // netPosition > 0: người liên quan đang nợ ròng (xanh). < 0: mình đang nợ ròng (đỏ).
+  // === 0: hai bên đã cân bằng — trung tính, không phải "mặc định xanh" như trước đây.
+  const netPositionColorClass =
+    ledger.netPosition > 0
+      ? 'text-[color:var(--color-income)]'
+      : ledger.netPosition < 0
+        ? 'text-[color:var(--color-expense)]'
+        : 'text-[var(--color-text-secondary)]';
+  // Gộp số tiền vào thẳng câu diễn giải — không hiện riêng số có dấu +/- lẫn câu
+  // "Bạn đang nợ..." tách biệt (2 cách nói cùng một ý, dư thừa trên UI).
+  const netPositionText =
+    ledger.netPosition > 0
+      ? `${counterpartName} nợ bạn ${formatCompactCurrency(Math.abs(ledger.netPosition))}`
+      : ledger.netPosition < 0
+        ? `Bạn nợ ${counterpartName} ${formatCompactCurrency(Math.abs(ledger.netPosition))}`
+        : 'Đã cân bằng công nợ';
+  const summaryTitle = isReceivable ? 'Tổng quan Phải thu' : 'Tổng quan Phải trả';
 
   // Cố định "now" tại thời điểm mở trang chi tiết — ranh giới tháng/năm không cần trôi
   // theo từng giây, và tránh việc list nhảy giữa lúc user đang xem.
@@ -490,36 +510,35 @@ export function DebtNativeDetail({
   return (
     <>
       <Card className="gap-0 overflow-hidden rounded-none border-0 p-0 shadow-none sm:rounded-[var(--radius-card)] sm:border sm:shadow-[0_18px_54px_color-mix(in_srgb,var(--color-overlay-backdrop)_18%,transparent)]">
-        <div className="flex items-start gap-3 p-4 sm:p-5">
-          <Avatar
-            className="size-12"
-            initials={(counterpart?.nickname ?? '?').slice(0, 2).toUpperCase()}
-            src={counterpart?.avatarUrl ?? null}
-          />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-lg font-semibold text-[var(--color-text-primary)]">
-              {counterpart?.nickname ?? 'Chưa rõ đối tượng'}
-            </p>
-            <p
-              className={cn(
-                'mt-0.5 text-base font-semibold',
-                ledger.netPosition >= 0
-                  ? 'text-[color:var(--color-income)]'
-                  : 'text-[color:var(--color-expense)]',
-              )}
-            >
-              {ledger.netPosition >= 0 ? '+' : ''}
-              {formatCompactCurrency(ledger.netPosition)}
-            </p>
-            <Button
-              className="mt-3 min-h-0 w-fit border border-[var(--color-border-strong)] bg-[var(--color-surface-default)] px-3 py-1.5 text-xs text-[var(--color-brand-primary)]"
-              onClick={() => onRecordLoan(activeDirection)}
-              type="button"
-              variant="ghost"
-            >
-              + Ghi khoản vay
-            </Button>
+        <div className="flex flex-wrap items-start justify-between gap-3 p-4 sm:p-5">
+          <div className="flex min-w-0 items-start gap-3">
+            <Avatar
+              className="size-12"
+              initials={(counterpart?.nickname ?? '?').slice(0, 2).toUpperCase()}
+              src={counterpart?.avatarUrl ?? null}
+            />
+            <div className="min-w-0">
+              <p className="truncate text-base font-semibold text-[var(--color-text-primary)]">
+                {counterpart?.nickname ?? 'Chưa rõ đối tượng'}
+              </p>
+              <p
+                className={cn(
+                  'mt-0.5 truncate text-sm font-semibold',
+                  netPositionColorClass,
+                )}
+              >
+                {netPositionText}
+              </p>
+            </div>
           </div>
+          <Button
+            className="min-h-0 w-fit shrink-0 border border-[var(--color-border-strong)] bg-[var(--color-surface-default)] px-3 py-1.5 text-xs text-[var(--color-brand-primary)]"
+            onClick={() => onRecordLoan(activeDirection)}
+            type="button"
+            variant="ghost"
+          >
+            + Ghi khoản vay
+          </Button>
         </div>
 
         <div
@@ -528,12 +547,14 @@ export function DebtNativeDetail({
         >
           <DirectionTab
             amount={ledger.receivableOutstanding}
+            counterpartName={counterpartName}
             direction="receivable"
             isActive={isReceivable}
             onClick={() => setActiveDirection('receivable')}
           />
           <DirectionTab
             amount={ledger.payableOutstanding}
+            counterpartName={counterpartName}
             direction="payable"
             isActive={!isReceivable}
             onClick={() => setActiveDirection('payable')}
@@ -541,18 +562,38 @@ export function DebtNativeDetail({
         </div>
 
         <div className="space-y-3 p-4 sm:p-5">
-          <div className="grid grid-cols-2 gap-3 rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-2.5 sm:px-4 sm:py-3">
-            <div>
-              <p className="text-xs text-[var(--color-text-muted)]">Tổng khoản vay</p>
-              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                {formatCompactCurrency(activeLoanTotal)}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-[var(--color-text-muted)]">Đã trả</p>
-              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                {formatCompactCurrency(activeRepaidTotal)}
-              </p>
+          <div className="rounded-2xl border border-[var(--color-border-subtle)] bg-[var(--color-surface-subtle)] px-3 py-2.5 sm:px-4 sm:py-3">
+            <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+              {summaryTitle}
+            </p>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              <div className="min-w-0">
+                <p className="truncate text-xs text-[var(--color-text-secondary)]">Đã vay</p>
+                <p className="mt-0.5 truncate text-base font-semibold text-[var(--color-text-primary)]">
+                  {formatCompactCurrency(activeLoanTotal)}
+                </p>
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-xs text-[var(--color-text-secondary)]">Đã trả</p>
+                <p className="mt-0.5 truncate text-base font-semibold text-[var(--color-text-primary)]">
+                  {formatCompactCurrency(activeRepaidTotal)}
+                </p>
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-xs text-[var(--color-text-secondary)]">
+                  {DIRECTION_OUTSTANDING_CAPTION[activeDirection]}
+                </p>
+                <p
+                  className={cn(
+                    'mt-0.5 truncate text-base font-semibold',
+                    isReceivable
+                      ? 'text-[color:var(--color-income)]'
+                      : 'text-[color:var(--color-expense)]',
+                  )}
+                >
+                  {formatCompactCurrency(activeOutstanding)}
+                </p>
+              </div>
             </div>
           </div>
 

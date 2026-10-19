@@ -93,14 +93,14 @@ export function DebtNativeList({
                   {formatCompactCurrency(ledger.netPosition)}
                 </p>
               </div>
-              <div className="mt-3 flex items-center justify-between border-t border-[var(--color-border-subtle)] pt-3">
+              {/* <div className="mt-3 flex items-center justify-between border-t border-[var(--color-border-subtle)] pt-3">
                 <p className="text-xs text-[var(--color-text-muted)]">
                   {lastTransactionAt
                     ? `Cập nhật ${formatDate(lastTransactionAt)}`
                     : 'Chưa có ngày'}
                 </p>
                 <ChevronRight className="size-4 shrink-0 text-[var(--color-text-muted)]" />
-              </div>
+              </div> */}
             </button>
           </Card>
         );
